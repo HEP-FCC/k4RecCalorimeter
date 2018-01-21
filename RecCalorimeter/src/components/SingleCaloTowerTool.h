@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
-#define RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
+#ifndef RECCALORIMETER_SINGLECALOTOWERTOOL_H
+#define RECCALORIMETER_SINGLECALOTOWERTOOL_H
 
 // from Gaudi
 #include "GaudiAlg/GaudiTool.h"
@@ -21,23 +21,20 @@ class Segmentation;
 }
 }
 
-/** @class LayeredCaloTowerTool
- * Reconstruction/RecCalorimeter/src/components/LayeredCaloTowerTool.h
- * LayeredCaloTowerTool.h
+/** @class SingleCaloTowerTool
+ * Reconstruction/RecCalorimeter/src/components/SingleCaloTowerTool.h
+ * SingleCaloTowerTool.h
  *
  *  Tool building the calorimeter towers for the sliding window algorithm.
  *  Towers are built of cells in eta-phi, summed over all radial layers.
  *  A tower contains all cells within certain eta and phi (tower size: '\b
  * deltaEtaTower', '\b deltaPhiTower').
  *  Distance in r plays no role, however `\b radiusForPosition` needs to be
- *  defined (e.g. to inner radius of the detector) for the cluster position
+ *  defined (e.g. to inner radius of the detector) for the cluster position 
  *  calculation. By default the radius is equal to 1.
  *
  *  This tool creates towers from a single cell collection (from one
  * calorimeter).
- *
- *  It will only consider cells within the defined layers of the calorimeter, if the layers are defined by 'layer'
- * bitfield. By default it uses 0 to 130th layer.
  *
  *  For more explanation please [see reconstruction documentation](@ref
  * md_reconstruction_doc_reccalorimeter).
@@ -46,10 +43,10 @@ class Segmentation;
  *  @author Jana Faltova
  */
 
-class LayeredCaloTowerTool : public GaudiTool, virtual public ITowerTool {
+class SingleCaloTowerTool : public GaudiTool, virtual public ITowerTool {
 public:
-  LayeredCaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent);
-  virtual ~LayeredCaloTowerTool() = default;
+  SingleCaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent);
+  virtual ~SingleCaloTowerTool() = default;
   /**  Initialize.
    *   @return status code
    */
@@ -67,7 +64,7 @@ public:
    */
   virtual tower towersNumber() final;
   /**  Build calorimeter towers.
-   *   Tower is segmented in eta and phi, with the energy from all layers
+   *   Tower is segmented in eta and phi, with the energy from all layers 
    *   (no segmentation).
    *   @param[out] aTowers Calorimeter towers.
    *   @return Size of the cell collection.
@@ -110,13 +107,12 @@ public:
    * the full coverage in phi.
    *   Full coverage means that first tower in phi, with ID = 0 is a direct
    * neighbour of the last tower in phi with ID = m_nPhiTower - 1).
-   *   @param[in] aIPhi requested ID of a phi tower,
+   *   @param[in] aIPhi requested ID of a phi tower, 
    *   may be < 0 or >=m_nPhiTower
-   *   @return  ID of a tower - shifted and corrected
+   *   @return  ID of a tower - shifted and corrected 
    * (in [0, m_nPhiTower) range)
    */
   uint phiNeighbour(int aIPhi) const;
-  std::shared_ptr<dd4hep::DDSegmentation::BitField64> m_decoder;
 
 private:
   /// Handle for calo cells (input collection)
@@ -139,16 +135,10 @@ private:
   Gaudi::Property<float> m_deltaEtaTower{this, "deltaEtaTower", 0.01, "Size of the tower in eta"};
   /// Size of the tower in phi
   Gaudi::Property<float> m_deltaPhiTower{this, "deltaPhiTower", 0.01, "Size of the tower in phi"};
-  // Minimum layer (0 = first layer)
-  Gaudi::Property<float> m_minimumLayer{this, "minimumLayer", 0, "Minimum cell layer"};
-  // Maximum layer (130 = last layer in ECalBarrel inclined)
-  Gaudi::Property<float> m_maximumLayer{this, "maximumLayer", 130, "Maximum cell layer"};
-  // Restrict tower building in layers if bitfield: layer exists
-  bool addLayerRestriction = false;
   /// number of towers in eta (calculated from m_deltaEtaTower and m_etaMax)
-  int m_nEtaTower;
+  uint m_nEtaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)
-  int m_nPhiTower;
+  uint m_nPhiTower;
 };
 
-#endif /* RECCALORIMETER_LAYEREDCALOTOWERTOOL_H */
+#endif /* RECCALORIMETER_SINGLECALOTOWERTOOL_H */
