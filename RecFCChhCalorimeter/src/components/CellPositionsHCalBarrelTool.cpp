@@ -1,18 +1,17 @@
-#include "CellPositionsTailCatcherTool.h"
+#include "CellPositionsHCalBarrelTool.h"
 
 #include "datamodel/CaloHitCollection.h"
 #include "datamodel/PositionedCaloHitCollection.h"
 
-DECLARE_TOOL_FACTORY(CellPositionsTailCatcherTool)
+DECLARE_TOOL_FACTORY(CellPositionsHCalBarrelTool)
 
-CellPositionsTailCatcherTool::CellPositionsTailCatcherTool(const std::string& type,
-                                                           const std::string& name,
-                                                           const IInterface* parent)
+CellPositionsHCalBarrelTool::CellPositionsHCalBarrelTool(const std::string& type, const std::string& name,
+                                                         const IInterface* parent)
     : GaudiTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
-StatusCode CellPositionsTailCatcherTool::initialize() {
+StatusCode CellPositionsHCalBarrelTool::initialize() {
   StatusCode sc = GaudiTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
@@ -25,7 +24,7 @@ StatusCode CellPositionsTailCatcherTool::initialize() {
       m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
-    return StatusCode::FAILURE;
+    // return StatusCode::FAILURE;
   }
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
@@ -42,12 +41,12 @@ StatusCode CellPositionsTailCatcherTool::initialize() {
   return sc;
 }
 
-void CellPositionsTailCatcherTool::getPositions(const fcc::CaloHitCollection& aCells,
-                                                fcc::PositionedCaloHitCollection& outputColl) {
+void CellPositionsHCalBarrelTool::getPositions(const fcc::CaloHitCollection& aCells,
+                                               fcc::PositionedCaloHitCollection& outputColl) {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
-    auto outSeg = CellPositionsTailCatcherTool::xyzPosition(cell.core().cellId);
+    auto outSeg = CellPositionsHCalBarrelTool::xyzPosition(cell.core().cellId);
 
     auto edmPos = fcc::Point();
     edmPos.x = outSeg.x() / dd4hep::mm;
@@ -55,7 +54,6 @@ void CellPositionsTailCatcherTool::getPositions(const fcc::CaloHitCollection& aC
     edmPos.z = outSeg.z() / dd4hep::mm;
 
     auto positionedHit = outputColl.create(edmPos, cell.core());
-    ;
 
     // Debug information about cell position
     debug() << "Cell energy (GeV) : " << cell.core().energy << "\tcellID " << cell.core().cellId << endmsg;
@@ -65,32 +63,25 @@ void CellPositionsTailCatcherTool::getPositions(const fcc::CaloHitCollection& aC
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const uint64_t& aCellId) const {
-  double radius;
+dd4hep::Position CellPositionsHCalBarrelTool::xyzPosition(const uint64_t& aCellId) const {
+  dd4hep::DDSegmentation::CellID volumeId = aCellId;
+  m_decoder->set(volumeId,"phi",0);
+  m_decoder->set(volumeId,"eta",0);
 
-  auto detelement = m_volman.lookupDetElement(aCellId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();
-  double outGlobal[3];
-  double inLocal[] = {0, 0, 0};
-  transformMatrix.LocalToMaster(inLocal, outGlobal);
-
-  debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-          << outGlobal[2] / dd4hep::mm << endmsg;
-
+  int layer = m_decoder->get(volumeId, "layer");
+    
   // radius calculated from segmenation + z postion of volumes
   auto inSeg = m_segmentation->position(aCellId);
-  double eta = m_segmentation->eta(aCellId);
-  radius = outGlobal[2] / std::sinh(eta);
-  debug() << "Radius : " << radius << endmsg;
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, outGlobal[2]);
-
-  if (outGlobal[2] == 0) {     // central tail catcher
-    radius = m_centralRadius;  // 901.5cm
-    outSeg.SetCoordinates(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
-  }
+  // get radius in cm
+  double radius = m_radii[layer];
+  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
   return outSeg;
 }
 
-int CellPositionsTailCatcherTool::layerId(const uint64_t& /*aCellId*/) { return 0; }
+int CellPositionsHCalBarrelTool::layerId(const uint64_t& aCellId) {
+  int layer;
+  layer = m_decoder->get(aCellId,"layer");
+  return layer;
+}
 
-StatusCode CellPositionsTailCatcherTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsHCalBarrelTool::finalize() { return GaudiTool::finalize(); }
