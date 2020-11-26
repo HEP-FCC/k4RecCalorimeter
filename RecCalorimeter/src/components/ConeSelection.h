@@ -2,8 +2,8 @@
 #define RECCALORIMETER_CONESELECTION_H
 
 // FCCSW
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ICellPositionsTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICellPositionsTool.h"
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"

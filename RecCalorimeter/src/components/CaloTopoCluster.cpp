@@ -3,7 +3,7 @@
 
 // FCCSW
 #include "DetCommon/DetUtils.h"
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
 
 // datamodel
 #include "edm4hep/Cluster.h"

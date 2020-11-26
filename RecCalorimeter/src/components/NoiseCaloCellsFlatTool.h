@@ -8,7 +8,7 @@
 //class IRndmGenSvc;
 
 // FCCSW
-#include "RecInterface/INoiseCaloCellsTool.h"
+#include "k4Interface/INoiseCaloCellsTool.h"
 
 /** @class NoiseCaloCellsFlatTool
  *

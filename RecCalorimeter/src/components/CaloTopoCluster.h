@@ -6,12 +6,12 @@
 #include "GaudiKernel/ToolHandle.h"
 
 // FCCSW
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ICaloReadCellNoiseMap.h"
-#include "RecInterface/ICaloReadNeighboursMap.h"
-#include "RecInterface/ICalorimeterTool.h"
-#include "RecInterface/ICellPositionsTool.h"
-#include "RecInterface/ITopoClusterInputTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICaloReadCellNoiseMap.h"
+#include "k4Interface/ICaloReadNeighboursMap.h"
+#include "k4Interface/ICalorimeterTool.h"
+#include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/ITopoClusterInputTool.h"
 
 class IGeoSvc;
 

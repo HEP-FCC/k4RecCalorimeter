@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CORRECTECALBARRELSLIWINCLUSTER_H
 
 // FCCSW
-#include "FWCore/DataHandle.h"
+#include "k4FWCore/DataHandle.h"
 #include "GaudiKernel/RndmGenerators.h"
 class IGeoSvc;
 class IRndmGenSvc;

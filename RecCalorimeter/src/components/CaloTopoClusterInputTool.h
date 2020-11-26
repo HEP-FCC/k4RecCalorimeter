@@ -4,8 +4,8 @@
 #include "GaudiAlg/GaudiTool.h"
 
 // FCCSW
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ITopoClusterInputTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ITopoClusterInputTool.h"
 
 class IGeoSvc;
 

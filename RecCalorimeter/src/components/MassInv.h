@@ -2,9 +2,9 @@
 #define RECCALORIMETER_MASSINV_H
 
 // FCCSW
-#include "FWCore/DataHandle.h"
+#include "k4FWCore/DataHandle.h"
 #include "GaudiKernel/RndmGenerators.h"
-#include "RecInterface/ITowerTool.h"
+#include "k4Interface/ITowerTool.h"
 class IGeoSvc;
 class IRndmGenSvc;
 class ITHistSvc;

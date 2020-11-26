@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiTool.h"
 
 // FCCSW
-#include "RecInterface/ICaloReadNeighboursMap.h"
+#include "k4Interface/ICaloReadNeighboursMap.h"
 
 class IGeoSvc;
 

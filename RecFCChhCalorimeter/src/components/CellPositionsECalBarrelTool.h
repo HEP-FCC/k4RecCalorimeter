@@ -7,10 +7,10 @@
 
 // FCCSW
 #include "DetCommon/DetUtils.h"
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
 #include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ICellPositionsTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICellPositionsTool.h"
 
 // DD4hep
 #include "DD4hep/Readout.h"

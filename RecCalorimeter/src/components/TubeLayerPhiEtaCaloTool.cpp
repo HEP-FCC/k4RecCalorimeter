@@ -4,7 +4,7 @@
 #include "DD4hep/Detector.h"
 #include "DD4hep/MultiSegmentation.h"
 #include "DetCommon/DetUtils.h"
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
 
 DECLARE_COMPONENT(TubeLayerPhiEtaCaloTool)
 

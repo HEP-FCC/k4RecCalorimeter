@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiTool.h"
 
 // FCCSW
-#include "RecInterface/ICalorimeterTool.h"
+#include "k4Interface/ICalorimeterTool.h"
 
 class IGeoSvc;
 

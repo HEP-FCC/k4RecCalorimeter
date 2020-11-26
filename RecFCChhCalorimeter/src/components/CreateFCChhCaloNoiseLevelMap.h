@@ -3,9 +3,9 @@
 
 // Gaudi
 #include "GaudiKernel/Service.h"
-#include "RecInterface/ICaloCreateMap.h"
-#include "RecInterface/INoiseConstTool.h"
-#include "RecInterface/ICellPositionsTool.h"
+#include "k4Interface/ICaloCreateMap.h"
+#include "k4Interface/INoiseConstTool.h"
+#include "k4Interface/ICellPositionsTool.h"
 
 class IGeoSvc;
 

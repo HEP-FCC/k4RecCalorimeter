@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiTool.h"
 
 // FCCSW
-#include "RecInterface/ICaloReadCellNoiseMap.h"
+#include "k4Interface/ICaloReadCellNoiseMap.h"
 
 class IGeoSvc;
 

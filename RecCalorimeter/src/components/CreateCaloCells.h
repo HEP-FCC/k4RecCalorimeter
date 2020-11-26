@@ -2,10 +2,10 @@
 #define RECCALORIMETER_CREATECALOCELLS_H
 
 // FCCSW
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ICalibrateCaloHitsTool.h"
-#include "RecInterface/ICalorimeterTool.h"
-#include "RecInterface/INoiseCaloCellsTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICalibrateCaloHitsTool.h"
+#include "k4Interface/ICalorimeterTool.h"
+#include "k4Interface/INoiseCaloCellsTool.h"
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"

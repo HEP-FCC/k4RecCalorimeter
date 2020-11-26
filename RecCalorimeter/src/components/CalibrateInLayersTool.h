@@ -6,7 +6,7 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
-#include "RecInterface/ICalibrateCaloHitsTool.h"
+#include "k4Interface/ICalibrateCaloHitsTool.h"
 class IGeoSvc;
 
 #include <vector>

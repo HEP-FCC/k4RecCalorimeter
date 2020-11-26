@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CREATEEMPTYCALOCELLSCOLLECTION_H
 
 //FCCSW
-#include "FWCore/DataHandle.h"
+#include "k4FWCore/DataHandle.h"
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"

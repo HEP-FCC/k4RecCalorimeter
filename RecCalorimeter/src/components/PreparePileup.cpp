@@ -1,7 +1,7 @@
 #include "PreparePileup.h"
 
 // FCCSW
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"

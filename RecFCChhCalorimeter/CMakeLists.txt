@@ -1,42 +1,35 @@
 ################################################################################
 # Package: RecFCChhCalorimeter
 ################################################################################
-gaudi_subdir(RecFCChhCalorimeter v1r0)
 
-# this declaration will not be needed in the future
-gaudi_depends_on_subdirs(GaudiAlg FCCFWCore Detector/DetInterface Detector/DetSegmentation Detector/DetCommon Reconstruction/RecInterface Reconstruction/RecCalorimeter)
+file(GLOB _module_sources src/components/*.cpp)
+gaudi_add_module(k4RecFCChhCalorimeterPlugins
+                 SOURCES ${_module_sources}
+                 LINK k4FWCore::k4FWCorePlugins GaudiAlgLib  GaudiKernel DD4hep::DDCore EDM4HEP::edm4hep  k4FWCore::k4Interface FCCDetectors::DetSegmentation DD4hep::DDG4 datamodel datamodelDict ROOT::Core ROOT::Hist) # todo: remove fccedm
 
-find_package(FastJet)
-find_package(ROOT COMPONENTS Physics Tree)
-find_package(FCCEDM)
-find_package(PODIO)
-find_package(HepMC)
+install(TARGETS k4RecFCChhCalorimeterPlugins
+  EXPORT k4RecCalorimeterTargets
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+  COMPONENT dev)
 
-
-
-gaudi_add_module(RecFCChhCalorimeterPlugins
-                 src/components/*.cpp
-                 INCLUDE_DIRS FCCFWCore FastJet ROOT FCCFWCore HepMC FCCEDM PODIO DD4hep DetInterface DetSegmentation Geant4 DetCommon RecInterface RecCalorimeter RecFCChhCalorimeter
-                 LINK_LIBRARIES FWCore Fastjet ROOT GaudiAlgLib FCCEDM PODIO HepMC DD4hep DetSegmentation DetCommon)
-target_link_libraries(RecFCChhCalorimeterPlugins ${Geant4_LIBRARIES})
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCChhCalorimeter)
 
-include(CTest)
 
-gaudi_add_test(simulateFullCaloSystemForCellPositions
-	       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	       FRAMEWORK ../RecCalorimeter/tests/options/runFullCaloSystem_SimAndDigitisation.py)
-
-gaudi_add_test(reconstructFullCaloSystemCellPositions
-               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	       DEPENDS simulateFullCaloSystemForCellPositions
-	       FRAMEWORK tests/options/recoPositions_fullCaloSystem.py)
-
-gaudi_add_test(buildingCellNoiseMap
-               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	       FRAMEWORK tests/options/noiseLevelPerCell.py)
-
-gaudi_add_test(buildingCellNeighboursMap
-               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	       FRAMEWORK tests/options/neighbours.py)
+#gaudi_add_test(simulateFullCaloSystemForCellPositions
+#	       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+#	       FRAMEWORK ../RecCalorimeter/tests/options/runFullCaloSystem_SimAndDigitisation.py)
+#
+#gaudi_add_test(reconstructFullCaloSystemCellPositions
+#               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+#	       DEPENDS simulateFullCaloSystemForCellPositions
+#	       FRAMEWORK tests/options/recoPositions_fullCaloSystem.py)
+#
+#gaudi_add_test(buildingCellNoiseMap
+#               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+#	       FRAMEWORK tests/options/noiseLevelPerCell.py)
+#
+#gaudi_add_test(buildingCellNeighboursMap
+#               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+#	       FRAMEWORK tests/options/neighbours.py)

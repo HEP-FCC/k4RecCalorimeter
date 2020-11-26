@@ -3,7 +3,7 @@
 
 // Gaudi
 #include "GaudiKernel/Service.h"
-#include "RecInterface/ICaloCreateMap.h"
+#include "k4Interface/ICaloCreateMap.h"
 class IGeoSvc;
 
 /** @class CreateFCChhCaloNeighbours

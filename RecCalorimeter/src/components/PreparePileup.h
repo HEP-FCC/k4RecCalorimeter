@@ -3,9 +3,9 @@
 
 // FCCSW
 #include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ICalorimeterTool.h"
-#include "RecInterface/ITowerTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICalorimeterTool.h"
+#include "k4Interface/ITowerTool.h"
 class IGeoSvc;
 
 // Gaudi

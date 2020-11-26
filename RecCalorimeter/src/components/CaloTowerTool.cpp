@@ -1,7 +1,7 @@
 #include "CaloTowerTool.h"
 
 // FCCSW
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
 
 // datamodel
 #include "datamodel/CaloHit.h"

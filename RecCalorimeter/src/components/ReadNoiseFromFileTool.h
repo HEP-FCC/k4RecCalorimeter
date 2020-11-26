@@ -6,11 +6,11 @@
 #include "GaudiKernel/ToolHandle.h"
 
 // FCCSW
-#include "FWCore/DataHandle.h"
+#include "k4FWCore/DataHandle.h"
 #include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "RecInterface/ICalorimeterTool.h"
-#include "RecInterface/INoiseConstTool.h"
-#include "RecInterface/ICellPositionsTool.h"
+#include "k4Interface/ICalorimeterTool.h"
+#include "k4Interface/INoiseConstTool.h"
+#include "k4Interface/ICellPositionsTool.h"
 
 class IGeoSvc;
 

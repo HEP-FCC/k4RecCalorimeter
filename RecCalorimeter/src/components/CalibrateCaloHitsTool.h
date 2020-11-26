@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiTool.h"
 
 // FCCSW
-#include "RecInterface/ICalibrateCaloHitsTool.h"
+#include "k4Interface/ICalibrateCaloHitsTool.h"
 
 #include <vector>
 

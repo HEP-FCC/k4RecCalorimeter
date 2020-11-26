@@ -7,7 +7,7 @@ class IRndmGenSvc;
 
 // FCCSW
 #include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "RecInterface/INoiseConstTool.h"
+#include "k4Interface/INoiseConstTool.h"
 class IGeoSvc;
 
 #include <map>

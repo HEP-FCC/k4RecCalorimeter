@@ -8,8 +8,8 @@
 
 // FCCSW
 #include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "RecInterface/INoiseCaloCellsTool.h"
-#include "RecInterface/ICellPositionsTool.h"
+#include "k4Interface/INoiseCaloCellsTool.h"
+#include "k4Interface/ICellPositionsTool.h"
 class IGeoSvc;
 
 //DD4hep

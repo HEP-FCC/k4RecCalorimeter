@@ -6,8 +6,8 @@
 #include "GaudiKernel/ToolHandle.h"
 
 // FCCSW
-#include "FWCore/DataHandle.h"
-#include "RecInterface/ITowerTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ITowerTool.h"
 
 // datamodel
 namespace fcc {

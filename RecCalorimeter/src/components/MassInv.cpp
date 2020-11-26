@@ -2,7 +2,7 @@
 
 // FCCSW
 #include "DetCommon/DetUtils.h"
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
 #include "DetSegmentation/FCCSWGridPhiEta.h"
 #include "GaudiKernel/ITHistSvc.h"
 
