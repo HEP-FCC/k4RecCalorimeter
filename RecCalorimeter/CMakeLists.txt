@@ -15,9 +15,13 @@ install(TARGETS k4RecCalorimeterPlugins
   COMPONENT dev)
 
 
+include(CTest)
+
+add_test(NAME TemporaryTest
+         COMMAND k4run -h)
+
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
 #
-#include(CTest)
 #gaudi_add_test(genJetClustering
 #               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 #               FRAMEWORK tests/options/genJetClustering.py)
