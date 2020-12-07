@@ -1,4 +1,4 @@
-name: k4SimGeant4CITestsNightlies
+name: CITestsNightlies
 on: [push, pull_request]
 jobs:
   build:
