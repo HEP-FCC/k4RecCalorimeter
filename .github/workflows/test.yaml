@@ -1,11 +1,14 @@
-name: k4SimGeant4CITests
+name: CITests
 on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        SPEC: ['k4reccalorimeter@master']
     steps:
     - uses: actions/checkout@v2
-    - uses: cvmfs-contrib/github-action-cvmfs@main
+    - uses: cvmfs-contrib/github-action-cvmfs@v1
       with:
         cvmfs_repositories: 'sw.hsf.org,sw-nightlies.hsf.org,sft-nightlies.cern.ch,sft.cern.ch,geant4.cern.ch'
     - name: Start container
@@ -23,4 +26,14 @@ jobs:
       run: |
         docker exec CI_container /bin/bash -c 'cd ./Package; 
         source spack/share/spack/setup-env.sh;\
-        spack dev-build k4reccalorimeter@master;' # --test=all needs some work
+        spack dev-build ${{ matrix.SPEC }};' # --test=all needs some work
+
+    - name: Test
+      run: |
+        docker exec CI_container /bin/bash -c 'cd ./Package; 
+        source spack/share/spack/setup-env.sh;\
+        spack load cmake;\
+        spack load ${{ matrix.SPEC }};\
+        rm spack-build-*.txt;\
+        cd spack-build-*;\
+        ctest --output-on-failure;'
