@@ -31,4 +31,4 @@ jobs:
       run: |
         docker exec CI_container /bin/bash -c 'cd ./Package; source ${{ matrix.SETUP }};\
          cd build;\
-         ctest -j `getconf _NPROCESSORS_ONLN`; --output-on-failure;'
+         ctest -j `getconf _NPROCESSORS_ONLN` --output-on-failure;'
