@@ -8,10 +8,7 @@
 #include "DD4hep/Detector.h"
 
 // EDM
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/PositionedCaloHitCollection.h"
-#include "datamodel/PositionedTrackHitCollection.h"
-#include "datamodel/TrackHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CreateCaloCellPositionsFCCee)
 
@@ -45,7 +42,8 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
   auto edmPositionedHitCollection = m_positionedHits.createAndPut();
 
   for (const auto& hit : *hits) {
-    dd4hep::DDSegmentation::CellID cellId = hit.core().cellId;
+    auto positionedHit = hit.clone();
+    dd4hep::DDSegmentation::CellID cellId = positionedHit.getCellID();
     // identify calo system
     auto systemId = m_decoder->get(cellId, "system");
     dd4hep::Position posCell;
@@ -65,15 +63,16 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
     else if (systemId == 11)  // HFWD system id
       posCell = m_cellPositionsHFwdTool->xyzPosition(cellId);
 
-    auto edmPos = fcc::Point();
+    auto edmPos = edm4hep::Vector3f();
     edmPos.x = posCell.x() / dd4hep::mm;
     edmPos.y = posCell.y() / dd4hep::mm;
     edmPos.z = posCell.z() / dd4hep::mm;
 
-    auto positionedHit = edmPositionedHitCollection->create(edmPos, hit.core());
+    positionedHit.setPosition(edmPos);
+    edmPositionedHitCollection->push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << hit.core().energy << "\tcellID " << hit.core().cellId << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
     debug() << "Position of cell (mm) : \t" << posCell.x() / dd4hep::mm << "\t" << posCell.y() / dd4hep::mm << "\t"
             << posCell.z() / dd4hep::mm << endmsg;
   }
