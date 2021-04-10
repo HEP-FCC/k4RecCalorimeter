@@ -9,10 +9,8 @@
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/PositionedCaloHit.h"
-#include "datamodel/PositionedCaloHitCollection.h"
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 class IGeoSvc;
 
@@ -48,9 +46,9 @@ private:
   /// Handle for tool to get positions
   ToolHandle<ICellPositionsTool> m_cellPositionsTool;
   /// Input collection
-  DataHandle<fcc::CaloHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Output collection
-  DataHandle<fcc::PositionedCaloHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONS_H */

@@ -8,10 +8,7 @@
 #include "DD4hep/Detector.h"
 
 // EDM
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/PositionedCaloHitCollection.h"
-#include "datamodel/PositionedTrackHitCollection.h"
-#include "datamodel/TrackHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CreateCellPositions)
 
