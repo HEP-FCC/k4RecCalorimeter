@@ -44,7 +44,7 @@ public:
 
   virtual StatusCode finalize() final;
 
-  virtual void getPositions(const fcc::CaloHitCollection& aCells, fcc::PositionedCaloHitCollection& outputColl) final;
+  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells, edm4hep::CalorimeterHitCollection& outputColl) final;
 
   virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
 

@@ -1,8 +1,7 @@
 #include "CellPositionsECalBarrelTool.h"
 
 // EDM
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/PositionedCaloHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CellPositionsECalBarrelTool)
 
@@ -42,22 +41,24 @@ StatusCode CellPositionsECalBarrelTool::initialize() {
   return sc;
 }
 
-void CellPositionsECalBarrelTool::getPositions(const fcc::CaloHitCollection& aCells,
-                                               fcc::PositionedCaloHitCollection& outputColl) {
+void CellPositionsECalBarrelTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
+                                               edm4hep::CalorimeterHitCollection& outputColl) {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
-    auto outSeg = CellPositionsECalBarrelTool::xyzPosition(cell.core().cellId);
-    auto edmPos = fcc::Point();
+    auto outSeg = CellPositionsECalBarrelTool::xyzPosition(cell.getCellID());
+    auto edmPos = edm4hep::Vector3f();
     edmPos.x = outSeg.x() / dd4hep::mm;
     edmPos.y = outSeg.y() / dd4hep::mm;
     edmPos.z = outSeg.z() / dd4hep::mm;
 
-    auto positionedHit = outputColl.create(edmPos, cell.core());
+    auto positionedHit = cell.clone();
+    positionedHit.setPosition(edmPos);
+    outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << cell.core().energy << "\tcellID " << cell.core().cellId << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << "\n"
             << endmsg;
