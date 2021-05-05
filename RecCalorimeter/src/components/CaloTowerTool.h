@@ -103,7 +103,7 @@ public:
    *   @param[out] aEdmCluster Cluster where cells are attached to
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
-                           fcc::CaloCluster& aEdmCluster, bool aEllipse = false) final;
+                           fcc::CaloCluster& aEdmCluster, fcc::CaloHitCollection* aEdmClusterCells, bool aEllipse = false) final;
 
 private:
   /// Type of the segmentation
