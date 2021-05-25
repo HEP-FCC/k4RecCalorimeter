@@ -7,9 +7,8 @@
 // DD4hep
 #include "DD4hep/Detector.h"
 
-// our EDM
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
+// EDM4HEP
+#include "edm4hep/CalorimeterHit.h"
 
 DECLARE_COMPONENT(CreateCaloCells)
 
@@ -63,7 +62,7 @@ StatusCode CreateCaloCells::initialize() {
 
 StatusCode CreateCaloCells::execute() {
   // Get the input collection with Geant4 hits
-  const fcc::CaloHitCollection* hits = m_hits.get();
+  const edm4hep::SimCalorimeterHitCollection* hits = m_hits.get();
   debug() << "Input Hit collection size: " << hits->size() << endmsg;
 
   // 0. Clear all cells
@@ -77,8 +76,8 @@ StatusCode CreateCaloCells::execute() {
   // If running with noise map already was prepared. Otherwise it is being
   // created below
   for (const auto& hit : *hits) {
-    verbose() << "CellID : " << hit.core().cellId << endmsg;
-    m_cellsMap[hit.core().cellId] += hit.core().energy;
+    verbose() << "CellID : " << hit.getCellID() << endmsg;
+    m_cellsMap[hit.getCellID()] += hit.getEnergy();
   }
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
@@ -96,12 +95,13 @@ StatusCode CreateCaloCells::execute() {
   }
 
   // 4. Copy information to CaloHitCollection
-  fcc::CaloHitCollection* edmCellsCollection = new fcc::CaloHitCollection();
+  edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
   for (const auto& cell : m_cellsMap) {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {
-      fcc::CaloHit newCell = edmCellsCollection->create();
-      newCell.core().energy = cell.second;
-      newCell.core().cellId = cell.first;
+      edm4hep::CalorimeterHit newCell = edm4hep::CalorimeterHit();
+      newCell.setEnergy(cell.second);
+      newCell.setCellID(cell.first);
+      edmCellsCollection->push_back(newCell);
     }
   }
 
