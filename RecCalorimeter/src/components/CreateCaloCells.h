@@ -15,6 +15,11 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
 
+// DD4hep
+#include "DD4hep/Detector.h"
+#include "DD4hep/Volumes.h"
+#include "TGeoManager.h"
+
 class IGeoSvc;
 
 /** @class CreateCaloCells
@@ -65,6 +70,9 @@ private:
   /// Save only cells with energy above threshold?
   Gaudi::Property<bool> m_filterCellNoise{this, "filterCellNoise", false,
                                           "Save only cells with energy above threshold?"};
+  // Add position information to the cells? (based on Volumes, not cells, could be improved)
+  Gaudi::Property<bool> m_addPosition{this, "addPosition", false, "Add position information to the cells?"};
+
   /// Handle for calo hits (input collection)
   DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
   /// Handle for calo cells (output collection)
@@ -99,6 +107,7 @@ private:
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
+  dd4hep::VolumeManager m_volman;
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   std::unordered_map<uint64_t, double> m_cellsMap;
 };

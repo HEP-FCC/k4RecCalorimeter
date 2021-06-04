@@ -6,6 +6,8 @@
 
 // DD4hep
 #include "DD4hep/Detector.h"
+#include "DD4hep/Volumes.h"
+#include "TGeoManager.h"
 
 // EDM4HEP
 #include "edm4hep/CalorimeterHit.h"
@@ -30,6 +32,7 @@ StatusCode CreateCaloCells::initialize() {
   info() << "do calibration : " << m_doCellCalibration << endmsg;
   info() << "add cell noise      : " << m_addCellNoise << endmsg;
   info() << "remove noise cells below threshold : " << m_filterCellNoise << endmsg;
+  info() << "add position information to the cell : " << m_addPosition << endmsg;
 
   // Initialization of tools
   // Calibrate Geant4 energy to EM scale tool
@@ -56,6 +59,9 @@ StatusCode CreateCaloCells::initialize() {
       error() << "Unable to create empty cells!" << endmsg;
       return StatusCode::FAILURE;
     }
+  }
+  if (m_addPosition){
+    m_volman = m_geoSvc->lcdd()->volumeManager();
   }
   return StatusCode::SUCCESS;
 }
@@ -100,7 +106,17 @@ StatusCode CreateCaloCells::execute() {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {
       edm4hep::CalorimeterHit newCell = edm4hep::CalorimeterHit();
       newCell.setEnergy(cell.second);
-      newCell.setCellID(cell.first);
+      uint64_t cellid = cell.first;
+      newCell.setCellID(cellid);
+      if (m_addPosition){
+        auto detelement = m_volman.lookupDetElement(cellid);
+        const auto& transformMatrix = detelement.nominal().worldTransformation();
+        double outGlobal[3];
+        double inLocal[] = {0, 0, 0};
+        transformMatrix.LocalToMaster(inLocal, outGlobal);
+        edm4hep::Vector3f position = edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
+        newCell.setPosition(position);
+      }
       edmCellsCollection->push_back(newCell);
     }
   }
