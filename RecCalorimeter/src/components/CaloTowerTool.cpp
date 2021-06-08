@@ -4,8 +4,8 @@
 #include "k4Interface/IGeoSvc.h"
 
 // datamodel
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/Cluster.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
@@ -198,7 +198,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
   // 1. ECAL barrel
   // Get the input collection with calorimeter cells
-  const fcc::CaloHitCollection* ecalBarrelCells = m_ecalBarrelCells.get();
+  const edm4hep::CalorimeterHitCollection* ecalBarrelCells = m_ecalBarrelCells.get();
   debug() << "Input Ecal barrel cell collection size: " << ecalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_ecalBarrelSegmentation != nullptr) {
@@ -207,7 +207,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
 
   // 2. ECAL endcap calorimeter
-  const fcc::CaloHitCollection* ecalEndcapCells = m_ecalEndcapCells.get();
+  const edm4hep::CalorimeterHitCollection* ecalEndcapCells = m_ecalEndcapCells.get();
   debug() << "Input Ecal endcap cell collection size: " << ecalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_ecalEndcapSegmentation != nullptr) {
@@ -216,7 +216,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
 
   // 3. ECAL forward calorimeter
-  const fcc::CaloHitCollection* ecalFwdCells = m_ecalFwdCells.get();
+  const edm4hep::CalorimeterHitCollection* ecalFwdCells = m_ecalFwdCells.get();
   debug() << "Input Ecal forward cell collection size: " << ecalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_ecalFwdSegmentation != nullptr) {
@@ -225,7 +225,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
 
   // 4. HCAL barrel
-  const fcc::CaloHitCollection* hcalBarrelCells = m_hcalBarrelCells.get();
+  const edm4hep::CalorimeterHitCollection* hcalBarrelCells = m_hcalBarrelCells.get();
   debug() << "Input hadronic barrel cell collection size: " << hcalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_hcalBarrelSegmentation != nullptr) {
@@ -234,7 +234,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
 
   // 5. HCAL extended barrel
-  const fcc::CaloHitCollection* hcalExtBarrelCells = m_hcalExtBarrelCells.get();
+  const edm4hep::CalorimeterHitCollection* hcalExtBarrelCells = m_hcalExtBarrelCells.get();
   debug() << "Input hadronic extended barrel cell collection size: " << hcalExtBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_hcalExtBarrelSegmentation != nullptr) {
@@ -243,7 +243,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
 
   // 6. HCAL endcap calorimeter
-  const fcc::CaloHitCollection* hcalEndcapCells = m_hcalEndcapCells.get();
+  const edm4hep::CalorimeterHitCollection* hcalEndcapCells = m_hcalEndcapCells.get();
   debug() << "Input Hcal endcap cell collection size: " << hcalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_hcalEndcapSegmentation != nullptr) {
@@ -252,7 +252,7 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   }
 
   // 7. HCAL forward calorimeter
-  const fcc::CaloHitCollection* hcalFwdCells = m_hcalFwdCells.get();
+  const edm4hep::CalorimeterHitCollection* hcalFwdCells = m_hcalFwdCells.get();
   debug() << "Input Hcal forward cell collection size: " << hcalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_hcalFwdSegmentation != nullptr) {
@@ -295,7 +295,7 @@ uint CaloTowerTool::phiNeighbour(int aIPhi) const {
 float CaloTowerTool::radiusForPosition() const { return m_radius; }
 
 void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
-                                    const fcc::CaloHitCollection* aCells,
+                                    const edm4hep::CalorimeterHitCollection* aCells,
                                     dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {
   // Loop over a collection of calorimeter cells and build calo towers
   // borders of the cell in eta/phi
@@ -323,20 +323,20 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
   for (const auto& cell : *aCells) {
     // if multisegmentation is used - first find out which segmentation to use
     if( aType == SegmentationType::kMulti) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&multisegmentation->subsegmentation(cell.core().cellId));
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&multisegmentation->subsegmentation(cell.getCellID()));
     }
     if (m_useHalfTower) {
-        uint layerId = m_decoder->get(cell.core().cellId, "layer");
+        uint layerId = m_decoder->get(cell.getCellID(), "layer");
         if ( layerId > 3 ) {
           pass = false;
         }
     }
     if (pass) {
       // find to which tower(s) the cell belongs
-      etaCellMin = segmentation->eta(cell.core().cellId) - segmentation->gridSizeEta() * 0.5;
-      etaCellMax = segmentation->eta(cell.core().cellId) + segmentation->gridSizeEta() * 0.5;
-      phiCellMin = segmentation->phi(cell.core().cellId) - M_PI / (double)segmentation->phiBins();
-      phiCellMax =segmentation->phi(cell.core().cellId) + M_PI / (double)segmentation->phiBins();
+      etaCellMin = segmentation->eta(cell.getCellID()) - segmentation->gridSizeEta() * 0.5;
+      etaCellMax = segmentation->eta(cell.getCellID()) + segmentation->gridSizeEta() * 0.5;
+      phiCellMin = segmentation->phi(cell.getCellID()) - M_PI / (double)segmentation->phiBins();
+      phiCellMax =segmentation->phi(cell.getCellID()) + M_PI / (double)segmentation->phiBins();
       iEtaMin = idEta(etaCellMin + epsilon);
       iPhiMin = idPhi(phiCellMin + epsilon);
       iEtaMax = idEta(etaCellMax - epsilon);
@@ -388,8 +388,8 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
             ratioPhi = fracPhiMiddle;
           }
           aTowers[iEta][phiNeighbour(iPhi)] +=
-            cell.core().energy / cosh(segmentation->eta(cell.core().cellId)) * ratioEta * ratioPhi;
-          m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].push_back(cell.core());
+            cell.getEnergy() / cosh(segmentation->eta(cell.getCellID())) * ratioEta * ratioPhi;
+          m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].push_back(cell);
           if ( fabs(etaCellMin) < 1.5 && m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() > 8 ) verbose() << "NUM CELLs IN TOWER : " << m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() << endmsg;
         }
       }
@@ -429,7 +429,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType
   return std::make_pair(segmentation, SegmentationType::kWrong);
 }
 
-void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin, fcc::CaloCluster& aEdmCluster, fcc::CaloHitCollection* aEdmClusterCells, bool aEllipse) {
+void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin, edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
   int etaId = idEta(eta);
   int phiId = idPhi(phi);
   int num1 = 0;
@@ -440,7 +440,7 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
         if (pow( (etaId - iEta) / (halfEtaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
           for (const auto& cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
             aEdmClusterCells->push_back(cell);
-            aEdmCluster.addhits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
+            aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
             num1++;
           }
         }
@@ -451,7 +451,7 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
         for (const auto& cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
           aEdmClusterCells->push_back(cell);
-          aEdmCluster.addhits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
+          aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
           num2++;
         }
       }

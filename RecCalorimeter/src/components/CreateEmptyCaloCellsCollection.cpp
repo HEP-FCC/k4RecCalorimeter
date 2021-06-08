@@ -1,7 +1,7 @@
 #include "CreateEmptyCaloCellsCollection.h"
 
 // datamodel
-#include "datamodel/CaloHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CreateEmptyCaloCellsCollection)
 

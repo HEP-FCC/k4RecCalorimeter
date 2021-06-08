@@ -13,10 +13,10 @@ class IGeoSvc;
 #include "DDSegmentation/MultiSegmentation.h"
 
 // datamodel
-# include "datamodel/BareHit.h"
-namespace fcc {
-class CaloHitCollection;
-class CaloHit;
+namespace edm4hep {
+class CalorimeterHitCollection;
+class CalorimeterHit;
+class Cluster;
 }
 
 namespace dd4hep {
@@ -103,7 +103,7 @@ public:
    *   @param[out] aEdmCluster Cluster where cells are attached to
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
-                           fcc::CaloCluster& aEdmCluster, fcc::CaloHitCollection* aEdmClusterCells, bool aEllipse = false) final;
+                           edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
 
 private:
   /// Type of the segmentation
@@ -123,7 +123,7 @@ private:
    *   @param[in] aCells Calorimeter cells collection.
    *   @param[in] aSegmentation Segmentation of the calorimeter
    */
-  void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const fcc::CaloHitCollection* aCells,
+  void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
                        dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType);
   /**  Check if the readout name exists. If so, it returns the eta-phi segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
@@ -131,19 +131,19 @@ private:
   std::pair<double, double> retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType);
   std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> retrieveSegmentation(std::string aReadoutName);
   /// Handle for electromagnetic barrel cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
   /// Handle for ecal endcap calorimeter cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_ecalEndcapCells{"ecalEndcapCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_ecalEndcapCells{"ecalEndcapCells", Gaudi::DataHandle::Reader, this};
   /// Handle for ecal forward calorimeter cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_ecalFwdCells{"ecalFwdCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_ecalFwdCells{"ecalFwdCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic extended barrel cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hcal endcap calorimeter cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_hcalEndcapCells{"hcalEndcapCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_hcalEndcapCells{"hcalEndcapCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hcal forward calorimeter cells (input collection)
-  DataHandle<fcc::CaloHitCollection> m_hcalFwdCells{"hcalFwdCells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_hcalFwdCells{"hcalFwdCells", Gaudi::DataHandle::Reader, this};
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   /// Name of the electromagnetic barrel readout
@@ -213,7 +213,7 @@ private:
   int m_nPhiTower;
   /// map to cells contained within a tower so they can be attached to a reconstructed cluster (note that fraction of
   /// their energy assigned to a cluster is not acknowledged)
-  std::map<std::pair<uint, uint>, std::vector<fcc::BareHit>> m_cellsInTowers;
+  std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> m_cellsInTowers;
   /// Use only half of calorimeter
   Gaudi::Property<bool> m_useHalfTower{this, "halfTower", false, "Use half tower"};
 };

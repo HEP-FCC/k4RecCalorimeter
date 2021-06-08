@@ -86,7 +86,7 @@ tower LayeredCaloTowerTool::towersNumber() {
 uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   // Get the input collection with cells from simulation + digitisation (after
   // calibration and with noise)
-  const fcc::CaloHitCollection* cells = m_cells.get();
+  const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
   debug() << "Input cell collection size: " << cells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   // borders of the cell in eta/phi
@@ -106,12 +106,12 @@ uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers)
   float epsilon = 0.0001;
   for (const auto& cell : *cells) {
     // find to which tower(s) the cell belongs
-    etaCellMin = m_segmentation->eta(cell.core().cellId) - m_segmentation->gridSizeEta() * 0.5;
-    etaCellMax = m_segmentation->eta(cell.core().cellId) + m_segmentation->gridSizeEta() * 0.5;
-    phiCellMin = m_segmentation->phi(cell.core().cellId) - M_PI / (double)m_segmentation->phiBins();
-    phiCellMax = m_segmentation->phi(cell.core().cellId) + M_PI / (double)m_segmentation->phiBins();
+    etaCellMin = m_segmentation->eta(cell.getCellID()) - m_segmentation->gridSizeEta() * 0.5;
+    etaCellMax = m_segmentation->eta(cell.getCellID()) + m_segmentation->gridSizeEta() * 0.5;
+    phiCellMin = m_segmentation->phi(cell.getCellID()) - M_PI / (double)m_segmentation->phiBins();
+    phiCellMax = m_segmentation->phi(cell.getCellID()) + M_PI / (double)m_segmentation->phiBins();
     if (m_addLayerRestriction == true) {
-      dd4hep::DDSegmentation::CellID cID = cell.core().cellId;
+      dd4hep::DDSegmentation::CellID cID = cell.getCellID();
       layerCell = m_decoder->get(cID, "layer");
       debug() << "Cell' layer = " << layerCell << endmsg;
     }
@@ -168,11 +168,11 @@ uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers)
         if (m_addLayerRestriction == true) {
           if (layerCell >= m_minimumLayer && layerCell <= m_maximumLayer) {
             aTowers[iEta][phiNeighbour(iPhi)] +=
-                cell.core().energy / cosh(m_segmentation->eta(cell.core().cellId)) * ratioEta * ratioPhi;
+                cell.getEnergy() / cosh(m_segmentation->eta(cell.getCellID())) * ratioEta * ratioPhi;
           }
         } else
           aTowers[iEta][phiNeighbour(iPhi)] +=
-              cell.core().energy / cosh(m_segmentation->eta(cell.core().cellId)) * ratioEta * ratioPhi;
+              cell.getEnergy() / cosh(m_segmentation->eta(cell.getCellID())) * ratioEta * ratioPhi;
       }
     }
   }
@@ -211,14 +211,14 @@ uint LayeredCaloTowerTool::phiNeighbour(int aIPhi) const {
 float LayeredCaloTowerTool::radiusForPosition() const { return m_radius; }
 
 void LayeredCaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin,
-                                       fcc::CaloCluster& aEdmCluster, fcc::CaloHitCollection* aEdmClusterCells, bool) {
-  const fcc::CaloHitCollection* cells = m_cells.get();
+                                       edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool) {
+  const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
   for (const auto& cell : *cells) {
-    float etaCell = m_segmentation->eta(cell.core().cellId);
-    float phiCell = m_segmentation->phi(cell.core().cellId);
+    float etaCell = m_segmentation->eta(cell.getCellID());
+    float phiCell = m_segmentation->phi(cell.getCellID());
     if ((abs(static_cast<long int>(idEta(etaCell)) - static_cast<long int>(idEta(eta))) <= halfEtaFin) && (abs(static_cast<long int>(idPhi(phiCell)) - static_cast<long int>(idPhi(phi))) <= halfPhiFin)) {
       aEdmClusterCells->push_back(cell);
-      aEdmCluster.addhits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
+      aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
     }
   }
   return;
