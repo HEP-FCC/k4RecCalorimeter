@@ -9,8 +9,7 @@
 #include "GaudiKernel/ToolHandle.h"
 
 //EDM
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 class IGeoSvc;
 
@@ -41,7 +40,7 @@ public:
 
 private:
   /// Handle for the calo cells (output collection)
-  DataHandle<fcc::CaloHitCollection> m_caloCells{"cells", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_caloCells{"cells", Gaudi::DataHandle::Writer, this};
 };
 
 #endif /* RECCALORIMETER_CREATEEMPTYCALOCELLSCOLLECTION_H */

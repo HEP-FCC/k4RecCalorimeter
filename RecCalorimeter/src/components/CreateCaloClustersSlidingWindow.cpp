@@ -4,7 +4,8 @@
 #include "GaudiKernel/PhysicalConstants.h"
 
 // datamodel
-#include "datamodel/CaloClusterCollection.h"
+#include "edm4hep/ClusterCollection.h"
+#include "edm4hep/Vector3f.h"
 
 DECLARE_COMPONENT(CreateCaloClustersSlidingWindow)
 
@@ -58,7 +59,6 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
   }
 
   // preclusters with phi, eta weighted position and transverse energy
-  std::vector<cluster> m_preClusters;
   int halfEtaPos = floor(m_nEtaPosition / 2.);
   int halfPhiPos = floor(m_nPhiPosition / 2.);
   float posEta = 0;
@@ -285,16 +285,13 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
     // check ET thereshold once more (ET could change with the energy sharing correction)
     if (clusterEnergy / cosh(clu.eta) > m_energyThreshold) {
       auto edmCluster = edmClusters->create();
-      auto& edmClusterCore = edmCluster.core();
-      edmClusterCore.position.x = radius * cos(clu.phi);
-      edmClusterCore.position.y = radius * sin(clu.phi);
-      edmClusterCore.position.z = radius * sinh(clu.eta);
-      edmClusterCore.energy = clusterEnergy;
+      edmCluster.setPosition(edm4hep::Vector3f(radius * cos(clu.phi), radius * sin(clu.phi), radius * sinh(clu.eta)));
+      edmCluster.setEnergy(clusterEnergy);
       if (m_attachCells)
         m_towerTool->attachCells(clu.eta, clu.phi, halfEtaFin, halfPhiFin, edmCluster, edmClusterCells, m_ellipseFinalCluster);
-      debug() << "Cluster eta: " << clu.eta << " phi: " << clu.phi << " x: " << edmClusterCore.position.x
-              << " y: " << edmClusterCore.position.y << " z: " << edmClusterCore.position.z
-              << " energy: " << edmClusterCore.energy << " contains: " << edmCluster.hits_size() << " cells" << endmsg;
+      debug() << "Cluster eta: " << clu.eta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
+              << " y: " << edmCluster.getPosition().y << " z: " << edmCluster.getPosition().z
+              << " energy: " << edmCluster.getEnergy() << " contains: " << edmCluster.hits_size() << " cells" << endmsg;
     }
   }
   return StatusCode::SUCCESS;
