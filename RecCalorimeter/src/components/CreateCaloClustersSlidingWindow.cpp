@@ -59,6 +59,7 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
   }
 
   // preclusters with phi, eta weighted position and transverse energy
+  m_preClusters.clear();
   int halfEtaPos = floor(m_nEtaPosition / 2.);
   int halfPhiPos = floor(m_nPhiPosition / 2.);
   float posEta = 0;
