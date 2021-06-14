@@ -439,8 +439,8 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
         if (pow( (etaId - iEta) / (halfEtaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
           for (const auto& cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-            aEdmClusterCells->push_back(cell);
-            aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
+            aEdmClusterCells->push_back(cell.clone());
+            aEdmCluster.addToHits(cell);
             num1++;
           }
         }
@@ -450,8 +450,8 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
     for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
         for (const auto& cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-          aEdmClusterCells->push_back(cell);
-          aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
+          aEdmClusterCells->push_back(cell.clone());
+          aEdmCluster.addToHits(cell);
           num2++;
         }
       }
