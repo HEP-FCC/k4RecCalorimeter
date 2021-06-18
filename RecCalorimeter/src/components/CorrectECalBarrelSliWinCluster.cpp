@@ -10,12 +10,12 @@
 #include "DD4hep/Detector.h"
 #include "DDSegmentation/MultiSegmentation.h"
 
-// our EDM
-#include "datamodel/CaloCluster.h"
-#include "datamodel/CaloClusterCollection.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/MCParticleCollection.h"
-#include "datamodel/GenVertexCollection.h"
+// our EDM4HEP
+#include "edm4hep/Cluster.h"
+#include "edm4hep/ClusterCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/MCParticleCollection.h"
+#include "edm4hep/VertexCollection.h"
 
 // Root
 #include "TFile.h"
@@ -203,8 +203,8 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
 
 StatusCode CorrectECalBarrelSliWinCluster::execute() {
   // Get the input collection with clusters
-  const fcc::CaloClusterCollection* inClusters = m_inClusters.get();
-  fcc::CaloClusterCollection* correctedClusters = m_correctedClusters.createAndPut();
+  const edm4hep::ClusterCollection* inClusters = m_inClusters.get();
+  edm4hep::ClusterCollection* correctedClusters = m_correctedClusters.createAndPut();
 
   // for single particle events compare with truth particles
   TVector3 momentum;
@@ -216,10 +216,10 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
   const auto vertex = m_vertex.get();
   if (particle->size() == 1 && vertex->size() == 1) {
     for(const auto& part : *particle) {
-      momentum = TVector3(part.core().p4.px, part.core().p4.py, part.core().p4.pz);
+      momentum = TVector3(part.getMomentum().x, part.getMomentum().y, part.getMomentum().z);
       etaVertex = momentum.Eta();
       phiVertex = momentum.Phi();
-      zVertex =  vertex->begin()->position().z;
+      zVertex =  vertex->begin()->getPosition().z;
       thetaVertex = 2 * atan( exp( - etaVertex ) );
     verbose() << " vertex eta " << etaVertex << "   phi = " << phiVertex << " theta = " << thetaVertex << " z = " << zVertex << endmsg;
    }
@@ -236,14 +236,14 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
   std::vector<TLorentzVector> clustersMassInvScaled;
   for (const auto& cluster : *inClusters) {
     double oldEnergy = 0;
-    TVector3 pos(cluster.core().position.x, cluster.core().position.y, cluster.core().position.z);
+    TVector3 pos(cluster.getPosition().x, cluster.getPosition().y, cluster.getPosition().z);
     double oldEta = pos.Eta();
     double oldPhi = pos.Phi();
     for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); cell++) {
-      oldEnergy += cell->core().energy;
+      oldEnergy += cell->getEnergy();
     }
     verbose() << " OLD ENERGY = " << oldEnergy << " from " << cluster.hits_size() << " cells" << endmsg;
-    verbose() << " OLD CLUSTER ENERGY = " << cluster.core().energy << endmsg;
+    verbose() << " OLD CLUSTER ENERGY = " << cluster.getEnergy() << endmsg;
 
     // Do everything only using the first defined calorimeter (default: Ecal barrel)
     double oldEtaId = -1;
@@ -254,38 +254,36 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     }
 
     // 0. Create new cluster, copy information from input
-    fcc::CaloCluster newCluster = correctedClusters->create();
+    edm4hep::Cluster newCluster = correctedClusters->create();
     double energy = 0;
-    newCluster.core().position.x = cluster.core().position.x;
-    newCluster.core().position.y = cluster.core().position.y;
-    newCluster.core().position.z = cluster.core().position.z;
+    newCluster.setPosition(cluster.getPosition());
     for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); cell++) {
       if (m_segmentationMulti[systemId] != nullptr) {
-        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti[systemId]->subsegmentation(cell->core().cellId));
+        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
         oldEtaId = int(floor((oldEta + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
         oldPhiId = int(floor((oldPhi + 0.5 * segmentation->gridSizePhi() - segmentation->offsetPhi()) / segmentation->gridSizePhi()));
       }
-      if (m_decoder[systemId]->get(cell->core().cellId, "system") == systemId) {
-        uint layerId = m_decoder[systemId]->get(cell->core().cellId, "layer");
+      if (m_decoder[systemId]->get(cell->getCellID(), "system") == systemId) {
+        uint layerId = m_decoder[systemId]->get(cell->getCellID(), "layer");
         if(m_nPhiFinal[layerId] > 0 && m_nEtaFinal[layerId] > 0) {
-          uint etaId = m_decoder[systemId]->get(cell->core().cellId, "eta");
-          uint phiId = m_decoder[systemId]->get(cell->core().cellId, "phi");
+          uint etaId = m_decoder[systemId]->get(cell->getCellID(), "eta");
+          uint phiId = m_decoder[systemId]->get(cell->getCellID(), "phi");
           if ( etaId >= (oldEtaId - m_halfEtaFin[layerId]) &&  etaId <= (oldEtaId + m_halfEtaFin[layerId]) &&
                phiId >= phiNeighbour((oldPhiId - m_halfPhiFin[layerId]), segmentation->phiBins()) &&  phiId <= phiNeighbour((oldPhiId + m_halfPhiFin[layerId]), segmentation->phiBins()) ) {
             if (m_ellipseFinalCluster) {
               if ( pow( (etaId - oldEtaId) / (m_nEtaFinal[layerId] / 2.), 2) + pow( (phiId - oldPhiId) / (m_nPhiFinal[layerId] / 2.), 2) < 1) {
-                newCluster.addhits(*cell);
-                energy += cell->core().energy;
+                newCluster.addToHits(*cell);
+                energy += cell->getEnergy();
               }
             } else {
-              newCluster.addhits(*cell);
-              energy += cell->core().energy;
+              newCluster.addToHits(*cell);
+              energy += cell->getEnergy();
             }
           }
         }
       }
     }
-    newCluster.core().energy = energy;
+    newCluster.setEnergy(energy);
 
     // 1. Correct eta position with log-weighting
     double sumEnFirstLayer = 0;
@@ -300,9 +298,9 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     sumWeightLayer.assign(m_numLayers, 0);
     // first check the energy deposited in each layer
     for (auto cell = newCluster.hits_begin(); cell != newCluster.hits_end(); cell++) {
-      dd4hep::DDSegmentation::CellID cID = cell->core().cellId;
+      dd4hep::DDSegmentation::CellID cID = cell->getCellID();
       uint layer = m_decoder[systemId]->get(cID, m_layerFieldName) + m_firstLayerId;
-      sumEnLayer[layer] += cell->core().energy;
+      sumEnLayer[layer] += cell->getEnergy();
     }
     // sort energy to check value of 2nd highest, 3rd highest etc
     for (uint iLayer = 0; iLayer < m_numLayers; iLayer++) {
@@ -313,12 +311,12 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     // repeat but calculating eta barycentre in each layer
     for (auto cell = newCluster.hits_begin(); cell != newCluster.hits_end(); cell++) {
       if (m_segmentationMulti[systemId] != nullptr) {
-        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti[systemId]->subsegmentation(cell->core().cellId));
+        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
       }
-      dd4hep::DDSegmentation::CellID cID = cell->core().cellId;
+      dd4hep::DDSegmentation::CellID cID = cell->getCellID();
       uint layer = m_decoder[systemId]->get(cID, m_layerFieldName) + m_firstLayerId;
-      double weightLog = std::max(0., m_etaRecalcLayerWeights[layer] + log(cell->core().energy / sumEnLayer[layer]));
-      double eta = segmentation->eta(cell->core().cellId);
+      double weightLog = std::max(0., m_etaRecalcLayerWeights[layer] + log(cell->getEnergy() / sumEnLayer[layer]));
+      double eta = segmentation->eta(cell->getCellID());
       sumEtaLayer[layer] += (weightLog * eta);
       sumWeightLayer[layer] += weightLog;
     }
@@ -349,9 +347,8 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     // alter Cartesian position of a cluster using new eta position
     double radius = pos.Perp();
     double phi = pos.Phi();
-    newCluster.core().position.x = radius * cos(phi);
-    newCluster.core().position.y = radius * sin(phi);
-    newCluster.core().position.z = radius * sinh(newEta);
+    auto newClusterPosition = edm4hep::Vector3f(radius * cos(phi), radius * sin(phi), radius * sinh(newEta));
+    newCluster.setPosition(newClusterPosition);
 
     // 2. Correct energy for pileup noise
     uint numCells = newCluster.hits_size();
@@ -363,7 +360,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     } else {
       noise = m_constPileupNoise * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
     }
-    newCluster.core().energy += noise;
+    newCluster.setEnergy(newCluster.getEnergy() + noise);
     m_hPileupEnergy->Fill(noise);
 
     // 3. Correct for energy upstream
@@ -384,16 +381,16 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
       warning() << "cluster eta = " << newEta << " is larger than last defined eta values." << endmsg;
       //return StatusCode::FAILURE;
     }
-    double presamplerShift = P00 + P01 * cluster.core().energy;
-    double presamplerScale = P10 + P11 * sqrt(cluster.core().energy);
+    double presamplerShift = P00 + P01 * cluster.getEnergy();
+    double presamplerScale = P10 + P11 * sqrt(cluster.getEnergy());
     double energyFront = presamplerShift + presamplerScale * sumEnFirstLayer * m_samplingFraction[0];
     m_hUpstreamEnergy->Fill(energyFront);
-    newCluster.core().energy += energyFront;
+    newCluster.setEnergy(newCluster.getEnergy() + energyFront);
 
     // Fill histograms
     m_hEnergyPreAnyCorrections->Fill(oldEnergy);
-    m_hEnergyPostAllCorrections->Fill(newCluster.core().energy);
-    m_hEnergyPostAllCorrectionsAndScaling->Fill(newCluster.core().energy / m_response);
+    m_hEnergyPostAllCorrections->Fill(newCluster.getEnergy());
+    m_hEnergyPostAllCorrectionsAndScaling->Fill(newCluster.getEnergy() / m_response);
 
     // Position resolution
     m_hEta->Fill(newEta);

@@ -1,16 +1,17 @@
 #ifndef RECCALORIMETER_CONESELECTION_H
 #define RECCALORIMETER_CONESELECTION_H
 
-// FCCSW
-#include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
-
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/MCParticleCollection.h"
+// Key4HEP
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICellPositionsTool.h"
+
+// EDM4HEP
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/MCParticleCollection.h"
 
 class IGeoSvc;
 
@@ -39,11 +40,11 @@ private:
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
 
   /// Handle for calo hits (input collection)
-  DataHandle<fcc::CaloHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
   /// Handle for calo hits (input collection)
-  DataHandle<fcc::MCParticleCollection> m_particles{"particles", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::MCParticleCollection> m_particles{"particles", Gaudi::DataHandle::Reader, this};
   /// Handle for calo cells (output collection)
-  DataHandle<fcc::CaloHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer, this};
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   std::unordered_map<uint64_t, double> m_cellsMap;
 

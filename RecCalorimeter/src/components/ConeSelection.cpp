@@ -1,6 +1,6 @@
 #include "ConeSelection.h"
 
-// FCCSW
+// FCC Detectors
 #include "DetCommon/DetUtils.h"
 
 // DD4hep
@@ -11,10 +11,10 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-// our EDM
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/MCParticleCollection.h"
+// EDM4HEP
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/MCParticleCollection.h"
 
 DECLARE_COMPONENT(ConeSelection)
 
@@ -47,39 +47,39 @@ StatusCode ConeSelection::execute() {
   m_cellsMap.clear();
 
   // Get the input collection with Geant4 hits
-  const fcc::CaloHitCollection* cells = m_cells.get();
+  const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
   debug() << "Input Cell collection size: " << cells->size() << endmsg;
   // Get the input particle collection 
-  const fcc::MCParticleCollection* particles = m_particles.get();
+  const edm4hep::MCParticleCollection* particles = m_particles.get();
   debug() << "Input Particle collection size: " << particles->size() << endmsg;
 
-  fcc::CaloHitCollection* edmCellsCollection = new fcc::CaloHitCollection();
+  edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
   // Loop over all generated particles
   for (const auto& part : *particles) {
-    TVector3 genVec(part.p4().px,part.p4().py,part.p4().pz);
+    TVector3 genVec(part.getMomentum().x,part.getMomentum().y,part.getMomentum().z);
     auto genEta = genVec.Eta();
     auto genPhi = genVec.Phi();
     
     debug() << "Particle direction eta= " << genEta << ", phi= " << genPhi << endmsg;
     // Select cells within cone around particle direction
     for (const auto& cell : *cells) {
-      auto posCell = m_cellPositionsTool->xyzPosition(cell.cellId());
+      auto posCell = m_cellPositionsTool->xyzPosition(cell.getCellID());
       auto eta = posCell.Eta();
       auto phi = posCell.Phi();
       auto circPhi = TVector2::Phi_mpi_pi(phi-genPhi);
       double deltaR = double(sqrt(pow(circPhi,2)+pow((eta-genEta),2)));
       if (deltaR < m_r){
-	//debug() << "Found a cell in cone: " << cell.cellId() << endmsg;
-	m_cellsMap[cell.cellId()] = cell.energy();
+	//debug() << "Found a cell in cone: " << cell.getCellID() << endmsg;
+	m_cellsMap[cell.getCellID()] = cell.getEnergy();
       }
     }
     debug() << "Number of selected cells: " << m_cellsMap.size() << endmsg;
   }
 
   for (const auto& cell : m_cellsMap) {
-    fcc::CaloHit newCell = edmCellsCollection->create();
-    newCell.core().energy = cell.second;
-    newCell.core().cellId = cell.first;
+    edm4hep::CalorimeterHit newCell = edmCellsCollection->create();
+    newCell.setEnergy(cell.second);
+    newCell.setCellID(cell.first);
   }
   
   // push the CaloHitCollection to event store

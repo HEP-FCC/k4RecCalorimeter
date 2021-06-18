@@ -1,9 +1,8 @@
 #ifndef RECCALORIMETER_CORRECTECALBARRELSLIWINCLUSTER_H
 #define RECCALORIMETER_CORRECTECALBARRELSLIWINCLUSTER_H
 
-// FCCSW
+// Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "GaudiKernel/RndmGenerators.h"
 class IGeoSvc;
 class IRndmGenSvc;
 class ITHistSvc;
@@ -11,12 +10,14 @@ class ITHistSvc;
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
+#include "GaudiKernel/RndmGenerators.h"
 
-namespace fcc {
-class CaloClusterCollection;
-class CaloHitCollection;
+// EDM4HEP
+namespace edm4hep {
+class ClusterCollection;
+class CalorimeterHitCollection;
 class MCParticleCollection;
-class GenVertexCollection;
+class VertexCollection;
 }
 
 namespace dd4hep {
@@ -87,13 +88,13 @@ private:
    */
   double getNoiseConstantPerCluster(double aEta, uint numCells);
   /// Handle for clusters (input collection)
-  DataHandle<fcc::CaloClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  DataHandle<fcc::CaloClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
-  DataHandle<fcc::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Handle for the genvertices to read vertex position information
-  DataHandle<fcc::GenVertexCollection> m_vertex{"vertices", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::VertexCollection> m_vertex{"vertices", Gaudi::DataHandle::Reader, this};
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
   /// Pointer to the geometry service
