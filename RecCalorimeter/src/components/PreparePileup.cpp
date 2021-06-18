@@ -1,18 +1,20 @@
 #include "PreparePileup.h"
 
-// FCCSW
+// Gaudi
+#include "GaudiKernel/ITHistSvc.h"
+
+// Key4HEP
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
 
-// our EDM
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
+// EDM4HEP
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 // ROOT
-#include "GaudiKernel/ITHistSvc.h"
 #include "TH1F.h"
 #include "TH2F.h"
 
@@ -145,7 +147,7 @@ StatusCode PreparePileup::initialize() {
 
 StatusCode PreparePileup::execute() {
   // Get the input collection with Geant4 hits
-  const fcc::CaloHitCollection* hits = m_hits.get();
+  const edm4hep::CalorimeterHitCollection* hits = m_hits.get();
   debug() << "Input Hit collection size: " << hits->size() << endmsg;
 
   // 0. Clear all cells
@@ -154,8 +156,8 @@ StatusCode PreparePileup::execute() {
 
   // Merge signal events with empty cells
   for (const auto& hit : *hits) {
-    m_cellsMap[hit.core().cellId] += hit.core().energy;
-    m_sumEnergyCellsMap[hit.core().cellId] += hit.core().energy;
+    m_cellsMap[hit.getCellID()] += hit.getEnergy();
+    m_sumEnergyCellsMap[hit.getCellID()] += hit.getEnergy();
   }
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 

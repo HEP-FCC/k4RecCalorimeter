@@ -1,20 +1,22 @@
 #ifndef RECCALORIMETER_PREPAREPILEUP_H
 #define RECCALORIMETER_PREPAREPILEUP_H
 
-// FCCSW
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+// Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/ITowerTool.h"
 class IGeoSvc;
 
+// FCC Detectors
+#include "DetSegmentation/FCCSWGridPhiEta.h"
+
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// EDM
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
+// EDM4HEP
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/CalorimeterHitCollection.h"
 
 #include "DDSegmentation/BitFieldCoder.h"
 
@@ -72,7 +74,7 @@ private:
   int m_nPhiTower;
 
   /// Handle for calo hits (input collection)
-  DataHandle<fcc::CaloHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
 
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   std::unordered_map<uint64_t, double> m_cellsMap;

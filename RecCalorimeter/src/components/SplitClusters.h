@@ -1,7 +1,7 @@
 #ifndef RECCALORIMETER_SPLITCLUSTERS_H
 #define RECCALORIMETER_SPLITCLUSTERS_H
 
-// FCCSW
+// Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseConstTool.h"
@@ -16,11 +16,12 @@
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/ITHistSvc.h"
 
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloCluster.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/CaloClusterCollection.h"
-#include "datamodel/MCParticleCollection.h"
+// EDM4HEP
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/Cluster.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/ClusterCollection.h"
+#include "edm4hep/MCParticleCollection.h"
 
 class IGeoSvc;
 namespace DD4hep {
@@ -92,11 +93,11 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Handle for calo clusters (input collection)
-  DataHandle<fcc::CaloClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (output collection)
-  DataHandle<fcc::CaloClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
   // Handle for calo cells (output collection)
-  DataHandle<fcc::CaloHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
   /// Handle for neighbours tool 
   ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 

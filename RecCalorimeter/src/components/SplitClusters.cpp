@@ -1,18 +1,21 @@
 #include "SplitClusters.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// Key4HEP
 #include "k4Interface/IGeoSvc.h"
+
+// FCC Detectors
+#include "DetCommon/DetUtils.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 
+// ROOT
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
-// datamodel
+// EDM4HEP
 #include "datamodel/CaloCluster.h"
 #include "datamodel/CaloClusterCollection.h"
 #include "datamodel/CaloHit.h"
@@ -81,11 +84,11 @@ StatusCode SplitClusters::initialize() {
 
 StatusCode SplitClusters::execute() {
   // Get the input collection with Geant4 hits
-  const fcc::CaloClusterCollection* clusters = m_clusters.get();
+  const edm4hep::ClusterCollection* clusters = m_clusters.get();
   debug() << "Input Cluster collection size: " << clusters->size() << endmsg;
   // Output collections
   auto edmClusters = m_newClusters.createAndPut();
-  fcc::CaloHitCollection* edmClusterCells = new fcc::CaloHitCollection();
+  edm4hep::CalorimeterHitCollection* edmClusterCells = new edm4hep::CalorimeterHitCollection();
 
   debug() << "Loop through " << clusters->size() << " clusters, " <<  endmsg;
   std::map<uint64_t, int> allCells;
@@ -97,7 +100,7 @@ StatusCode SplitClusters::execute() {
 
   for (auto& cluster : *clusters) {
     // sanity checks
-    totEnergyBefore += cluster.core().energy;
+    totEnergyBefore += cluster.getEnergy();
     totCellsBefore += cluster.hits_size();
     
     std::map<uint64_t, int> cellsType;
@@ -114,26 +117,26 @@ StatusCode SplitClusters::execute() {
     // Loop over cluster cells 
     for (auto it = cluster.hits_begin(); it != cluster.hits_end(); ++it){
       auto cell = *it;
-      cellsType.emplace( cell.cellId(), cell.bits() );
-      cellsEnergy.push_back( std::make_pair(cell.cellId(), cell.energy()) );
+      cellsType.emplace( cell.getCellID(), cell.getType() );
+      cellsEnergy.push_back( std::make_pair(cell.getCellID(), cell.getEnergy()) );
 
       // get cell position by cellID
       // identify calo system
-      auto systemId = m_decoder->get(cell.cellId(), "system");
+      auto systemId = m_decoder->get(cell.getCellID(), "system");
       dd4hep::Position posCell;
       if (systemId == 5)  // ECAL BARREL system id
-        posCell = m_cellPositionsECalBarrelTool->xyzPosition(cell.cellId());
+        posCell = m_cellPositionsECalBarrelTool->xyzPosition(cell.getCellID());
       else if (systemId == 8){  // HCAL BARREL system id
 	if (m_noSegmentationHCalUsed)
-	  posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cell.cellId());
+	  posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cell.getCellID());
 	else{
-	  posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cell.cellId());
+	  posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cell.getCellID());
 	}}
       else
         warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
 
-      cellsPosition.emplace( std::pair<uint64_t, TLorentzVector>(cell.cellId(), TLorentzVector(posCell.X(), posCell.Y(), posCell.Z(), cell.energy()) ) );
-      allCells.emplace( cell.cellId(), cell.bits() );
+      cellsPosition.emplace( std::pair<uint64_t, TLorentzVector>(cell.getCellID(), TLorentzVector(posCell.X(), posCell.Y(), posCell.Z(), cell.getEnergy()) ) );
+      allCells.emplace( cell.getCellID(), cell.getType() );
     }
     
     // sort cells by energy
@@ -307,8 +310,7 @@ StatusCode SplitClusters::execute() {
 	warning() << "NUMBER OF CELLS BEFORE " << cluster.hits_size() << " AND AFTER CLUSTER SPLITTING (map) " << clusterOfCell.size() << "!!" << endmsg;
 	warning() << "Elements in cells types after sub-cluster building: " << cellsType.size() << endmsg;                                                                        
 	
-	fcc::CaloCluster cluster;
-	auto& clusterCore = cluster.core();
+	edm4hep::Cluster cluster;
 	double posX = 0.;
         double posY = 0.;
         double posZ = 0.;
@@ -323,8 +325,8 @@ StatusCode SplitClusters::execute() {
 						  return bool(elem.first == uint64_t(cID));
 						});
 	  auto fNEnergy = *fNeighbourEnergy;
-	  newCell.core().energy = fNEnergy.second;
-	  newCell.core().cellId = cID;
+	  newCell.setEnergy(fNEnergy.second);
+	  newCell.setCellID(cID);
           // get cell position by cellID
 	  // identify calo system
           auto systemId = m_decoder->get(cID, "system");
@@ -337,28 +339,26 @@ StatusCode SplitClusters::execute() {
             else{
               posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cID);
             }}
-	  posX += posCell.X() * newCell.core().energy;
-          posY += posCell.Y() * newCell.core().energy;
-          posZ += posCell.Z() * newCell.core().energy;
+	  posX += posCell.X() * newCell.getEnergy();
+          posY += posCell.Y() * newCell.getEnergy();
+          posZ += posCell.Z() * newCell.getEnergy();
 	  // left over cells
-	  newCell.core().bits = 4;
+	  newCell.setType(4);
 	  energy += fNEnergy.second;
 	}
-	clusterCore.bits = 3;
-	clusterCore.energy = energy;
-	clusterCore.position.x = posX / energy;
-        clusterCore.position.y = posY / energy;
-        clusterCore.position.z = posZ / energy;
+	cluster.setType(3);
+	cluster.setEnergy(energy);
+        auto clusterPosition = edm4hep::Vector3f(posX/energy, posY/energy, posZ/energy);
+        cluster.setPosition(clusterPosition);
         totEnergyAfter += energy;
 
         edmClusters->push_back(cluster);
-	debug() << "Left-over cluster energy:     " << clusterCore.energy << endmsg;
+	debug() << "Left-over cluster energy:     " << cluster.getEnergy() << endmsg;
       }
 
       // fill clusters into edm format
       for (auto i : preClusterCollection) {
-	fcc::CaloCluster cluster;
-	auto& clusterCore = cluster.core();
+	edm4hep::Cluster cluster;
 	double posX = 0.;
 	double posY = 0.;
 	double posZ = 0.;
@@ -375,9 +375,9 @@ StatusCode SplitClusters::execute() {
 						  return bool(elem.first == uint64_t(cID));
 						});
 	  auto fNEnergy = *fNeighbourEnergy;
-	  newCell.core().energy = fNEnergy.second;
-	  newCell.core().cellId = cID;
-	  newCell.core().bits = pair.second;
+	  newCell.setEnergy(fNEnergy.second);
+	  newCell.setCellID(cID);
+	  newCell.setType(pair.second);
 	  energy += fNEnergy.second;
 
 	  // get cell position by cellID
@@ -396,21 +396,20 @@ StatusCode SplitClusters::execute() {
 	  else
 	    warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
 
-	  posX += posCell.X() * newCell.core().energy;
-	  posY += posCell.Y() * newCell.core().energy;
-	  posZ += posCell.Z() * newCell.core().energy;
+	  posX += posCell.X() * newCell.getEnergy();
+	  posY += posCell.Y() * newCell.getEnergy();
+	  posZ += posCell.Z() * newCell.getEnergy();
 	  
-	  cluster.addhits(newCell);
+	  cluster.addToHits(newCell);
 	  auto check = allCells.erase(cID);
 	  if (check!=1)
 	    error() << "Cell id is not deleted from map. " << endmsg;
 	}
-	clusterCore.energy = energy;
-	clusterCore.position.x = posX / energy;
-	clusterCore.position.y = posY / energy;
-	clusterCore.position.z = posZ / energy;
-	clusterCore.bits = 2;
-	debug() << "Cluster energy:     " << clusterCore.energy << endmsg;
+	cluster.setEnergy(energy);
+  auto clusterPosition = edm4hep::Vector3f(posX/energy, posY/energy, posZ/energy);
+	cluster.setPosition(clusterPosition);
+	cluster.setType(2);
+	debug() << "Cluster energy:     " << cluster.getEnergy() << endmsg;
 	totEnergyAfter += energy;
 	edmClusters->push_back(cluster);
       }
@@ -424,17 +423,17 @@ StatusCode SplitClusters::execute() {
     
     else{
       // fill cluster without changes
-      fcc::CaloCluster clu = cluster.clone();
-      clu.core().bits = 1;
-      totEnergyAfter += clu.core().energy;
+      edm4hep::Cluster clu = cluster.clone();
+      clu.setType(1);
+      totEnergyAfter += clu.getEnergy();
       edmClusters->push_back(clu);
       for (uint oldCells=0; oldCells<clu.hits_size(); oldCells++){
-	totCellsAfter++;
-	auto newCell = edmClusterCells->create();
-	newCell.core() = clu.hits(oldCells).core();
-	auto check = allCells.erase(newCell.core().cellId);
-	if (check!=1)
-	  error() << "Cell id is not deleted from map. " << endmsg;
+        totCellsAfter++;
+        auto newCell = clu.getHits(oldCells).clone();
+        edmClusterCells->push_back(newCell);
+        auto check = allCells.erase(newCell.getCellID());
+        if (check!=1)
+          error() << "Cell id is not deleted from map. " << endmsg;
       }
     }
 

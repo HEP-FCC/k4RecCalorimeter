@@ -1,21 +1,24 @@
 #include "CreateCaloClusters.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// Key4HEP
 #include "k4Interface/IGeoSvc.h"
+
+// FCC Detectors
+#include "DetCommon/DetUtils.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 
+// ROOT
 #include "TH1F.h"
 #include "TH2F.h"
 
-// datamodel
-#include "datamodel/CaloCluster.h"
-#include "datamodel/CaloClusterCollection.h"
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/MCParticleCollection.h"
+// EDM4HEP
+#include "edm4hep/Cluster.h"
+#include "edm4hep/ClusterCollection.h"
+#include "edm4hep/CalorimeterHit.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/MCParticleCollection.h"
 
 DECLARE_COMPONENT(CreateCaloClusters)
 
@@ -142,21 +145,21 @@ StatusCode CreateCaloClusters::initialize() {
 
 StatusCode CreateCaloClusters::execute() {
   // Get the input collection with Geant4 hits
-  const fcc::CaloClusterCollection* clusters = m_clusters.get();
+  const edm4hep::ClusterCollection* clusters = m_clusters.get();
   debug() << "Input Cluster collection size: " << clusters->size() << endmsg;
-  const fcc::MCParticleCollection* particles = m_genParticles.get();
+  const edm4hep::MCParticleCollection* particles = m_genParticles.get();
   debug() << "Input genParticle collection size: " << particles->size() << endmsg;
 
   double Etruth = 0.;
 
   for (auto& iparticle : *particles){
-    Etruth += sqrt(pow(iparticle.core().p4.mass,2)+pow(iparticle.core().p4.px,2)+pow(iparticle.core().p4.py,2)+pow(iparticle.core().p4.pz,2));
+    Etruth += sqrt(pow(iparticle.getMass(),2)+pow(iparticle.getMomentum().x,2)+pow(iparticle.getMomentum().y,2)+pow(iparticle.getMomentum().z,2));
   }
   info() << "Truth energy of particle : " << std::floor(Etruth) << endmsg;
 
   // Output collections
   auto edmClusters = m_newClusters.createAndPut();
-  auto edmClusterCells = m_newCells.createAndPut(); // new fcc::CaloHitCollection();
+  auto edmClusterCells = m_newCells.createAndPut(); // new edm4hep::CalorimeterHitCollection();
 
   int sharedClusters = 0;
   int clustersEM = 0;
@@ -172,7 +175,7 @@ StatusCode CreateCaloClusters::execute() {
 
   if(m_doCalibration) { 
     for (auto& cluster : *clusters) {
-      m_clusterEnergy->Fill(cluster.core().energy);
+      m_clusterEnergy->Fill(cluster.getEnergy());
       // 1. Identify clusters with cells in different sub-systems
       bool cellsInBoth = false;
       std::map<uint,double> energyBoth;
@@ -180,18 +183,18 @@ StatusCode CreateCaloClusters::execute() {
       double energyLastECal = 0.;
       double energyFirstHCal = 0.;
       double lastBenchmarkTerm = 0.;
-      if (cluster.core().energy > 1){
+      if (cluster.getEnergy() > 1){
 	nClusters_1GeV++;
-	m_energyCalibCluster_1GeV->Fill(cluster.core().energy);
+	m_energyCalibCluster_1GeV->Fill(cluster.getEnergy());
       }
-      if (cluster.core().energy > Etruth/2.){
+      if (cluster.getEnergy() > Etruth/2.){
 	nClusters_halfTrueEnergy++;
-	m_energyCalibCluster_halfTrueEnergy->Fill(cluster.core().energy);
+	m_energyCalibCluster_halfTrueEnergy->Fill(cluster.getEnergy());
       }
       // Loop over cluster cells 
       for (uint it = 0; it < cluster.hits_size(); it++){
-	dd4hep::DDSegmentation::CellID cID = cluster.hits(it).core().cellId;
-	auto cellEnergy = cluster.hits(it).core().energy;
+	dd4hep::DDSegmentation::CellID cID = cluster.getHits(it).getCellID();
+	auto cellEnergy = cluster.getHits(it).getEnergy();
 	uint systemId = m_decoder->get(cID, "system");
 	int layerId;
 	if (systemId == m_systemIdECal){
@@ -216,15 +219,15 @@ StatusCode CreateCaloClusters::execute() {
 	cellsInBoth = true;
 
       // check if cluster energy is equal to sum over cells
-      if (static_cast<int>(cluster.core().energy*100.0) != static_cast<int>((energyBoth[m_systemIdECal] + energyBoth[m_systemIdHCal])*100.0))
-	warning() << "The cluster energy is not equal to sum over cell energy: " << cluster.core().energy << ", " << (energyBoth[m_systemIdECal] + energyBoth[m_systemIdHCal]) << endmsg;
+      if (static_cast<int>(cluster.getEnergy()*100.0) != static_cast<int>((energyBoth[m_systemIdECal] + energyBoth[m_systemIdHCal])*100.0))
+	warning() << "The cluster energy is not equal to sum over cell energy: " << cluster.getEnergy() << ", " << (energyBoth[m_systemIdECal] + energyBoth[m_systemIdHCal]) << endmsg;
       
       // 2. Calibrate the cluster if it contains cells in both systems
       if(cellsInBoth) {
 	sharedClusters ++;
-	m_sharedClusterEnergy->Fill(cluster.core().energy);
+	m_sharedClusterEnergy->Fill(cluster.getEnergy());
 	// Calculate the fraction of energy in ECal
-	auto energyFraction = energyBoth[m_systemIdECal] / cluster.core().energy;
+	auto energyFraction = energyBoth[m_systemIdECal] / cluster.getEnergy();
 	debug() << "Energy fraction in ECal : " << energyFraction << endmsg;
 	// calibrate ECal cells to hadron scale
 	// assuming ECal cells are calibrated to EM scale
@@ -232,24 +235,24 @@ StatusCode CreateCaloClusters::execute() {
 	bool calibECal = true;
 	clustersHad++;
 	m_energyScale->Fill(1);
-	m_energyScaleVsClusterEnergy->Fill(1.,cluster.core().energy);
-	totClusterEnergy += cluster.core().energy;
+	m_energyScaleVsClusterEnergy->Fill(1.,cluster.getEnergy());
+	totClusterEnergy += cluster.getEnergy();
 	
 	// Building new calibrated cluster
-	fcc::CaloCluster newCluster;
+	edm4hep::Cluster newCluster;
 	double posX = 0.;
 	double posY = 0.;
 	double posZ = 0.;
 	double energy = 0.;
 	// Add cells to cluster
 	for (uint it = 0; it < cluster.hits_size(); it++){
-	  fcc::CaloHit newCell;
+	  edm4hep::CalorimeterHit newCell;
 	  
-	  auto cellId = cluster.hits(it).core().cellId;
-	  auto cellEnergy = cluster.hits(it).core().energy;
+	  auto cellId = cluster.getHits(it).getCellID();
+	  auto cellEnergy = cluster.getHits(it).getEnergy();
 	  
-	  newCell.core().cellId = cellId;
-	  newCell.core().bits = cluster.hits(it).core().bits;
+	  newCell.setCellID(cellId);
+	  newCell.setType(cluster.getHits(it).getType());
 	  
 	  uint systemId = m_decoder->get(cellId, "system");
 	  
@@ -272,12 +275,12 @@ StatusCode CreateCaloClusters::execute() {
 	      cellEnergy = cellEnergy;
 	  }
 
-	  newCell.core().energy = cellEnergy;
+	  newCell.setEnergy(cellEnergy);
 	  posX += posCell.X() * cellEnergy;
 	  posY += posCell.Y() * cellEnergy;
 	  posZ += posCell.Z() * cellEnergy;
 
-	  newCluster.addhits(newCell);
+	  newCluster.addToHits(newCell);
 	  edmClusterCells->push_back(newCell);
 	  energy += cellEnergy;
 	}
@@ -285,11 +288,10 @@ StatusCode CreateCaloClusters::execute() {
 	m_clusterEnergyCalibrated->Fill(energy);
 	totCalibClusterEnergy += energy;
 
-	newCluster.core().position.x = posX / energy;
-	newCluster.core().position.y = posY / energy;
-	newCluster.core().position.z = posZ / energy;
+  edm4hep::Vector3f newClusterPosition = edm4hep::Vector3f(posX / energy, posY / energy, posZ / energy);
+	newCluster.setPosition(newClusterPosition);
         // setting the deltaR determined on EM scale
-	newCluster.core().time = cluster.time();
+	// newCluster.setTime(cluster.getTime());
 
 	// Correct for lost energy in cryostat
 	if ( m_doCryoCorrection ){
@@ -304,7 +306,7 @@ StatusCode CreateCaloClusters::execute() {
 	  m_clusterEnergyBenchmark->Fill(energy);
 	  totBenchmarkEnergy += energy;
 	}
-	newCluster.core().energy = energy;
+	newCluster.setEnergy(energy);
 	edmClusters->push_back(newCluster);
 	// close loop over shared cluster
       }
@@ -312,19 +314,19 @@ StatusCode CreateCaloClusters::execute() {
 	auto newCluster = cluster.clone();
 	for (uint it = 0; it <cluster.hits_size(); it++){
 	  auto newCell = edmClusterCells->create();
-	  auto cellId = cluster.hits(it).core().cellId;
-	  auto cellEnergy = cluster.hits(it).core().energy;
+	  auto cellId = cluster.getHits(it).getCellID();
+	  auto cellEnergy = cluster.getHits(it).getEnergy();
 
-	  newCell.core().energy = cellEnergy;
-	  newCell.core().cellId = cellId;
-	  newCell.core().bits = cluster.hits(it).core().bits;
-	  newCluster.addhits(newCell);
+	  newCell.setEnergy(cellEnergy);
+	  newCell.setCellID(cellId);
+	  newCell.setType(cluster.getHits(it).getType());
+	  newCluster.addToHits(newCell);
 	}
 	edmClusters->push_back(newCluster);
 	// add the unchanged cluster energies 
-	totClusterEnergy += newCluster.core().energy;
-	totBenchmarkEnergy += newCluster.core().energy;
-	totCalibClusterEnergy += newCluster.core().energy;
+	totClusterEnergy += newCluster.getEnergy();
+	totBenchmarkEnergy += newCluster.getEnergy();
+	totCalibClusterEnergy += newCluster.getEnergy();
       }
       energyBoth.clear();
     } // closing the loop over all input cluster

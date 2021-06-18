@@ -1,22 +1,23 @@
 #ifndef RECCALORIMETER_MASSINV_H
 #define RECCALORIMETER_MASSINV_H
 
-// FCCSW
-#include "k4FWCore/DataHandle.h"
+// Gaudi
 #include "GaudiKernel/RndmGenerators.h"
+#include "GaudiAlg/GaudiAlgorithm.h"
+#include "GaudiKernel/ToolHandle.h"
+
+// Key4HEP
+#include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerTool.h"
 class IGeoSvc;
 class IRndmGenSvc;
 class ITHistSvc;
 
-// Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
-#include "GaudiKernel/ToolHandle.h"
-
-namespace fcc {
-class CaloClusterCollection;
-class CaloHitCollection;
-class MCParticleCollection;
+// EDM4HEP
+namespace edm4hep {
+  class ClusterCollection;
+  class CalorimeterHitCollection;
+  class MCParticleCollection;
 }
 
 namespace dd4hep {
@@ -88,11 +89,11 @@ private:
    */
   double getNoiseConstantPerCluster(double aEta, uint numCells);
   /// Handle for clusters (input collection)
-  DataHandle<fcc::CaloClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  DataHandle<fcc::CaloClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
-  DataHandle<fcc::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
+  DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
   /// Pointer to the geometry service
