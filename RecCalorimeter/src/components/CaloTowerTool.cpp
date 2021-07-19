@@ -193,9 +193,7 @@ tower CaloTowerTool::towersNumber() {
 
 uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers) {
   uint totalNumberOfCells = 0;
-  for (auto& towerInMap : m_cellsInTowers) {
-    towerInMap.second.clear();
-  }
+  m_cellsInTowers.clear();
   // 1. ECAL barrel
   // Get the input collection with calorimeter cells
   const edm4hep::CalorimeterHitCollection* ecalBarrelCells = m_ecalBarrelCells.get();
