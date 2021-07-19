@@ -457,5 +457,6 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
       }
     }
   }
+  m_cellsInTowers.clear();
   return;
 }
