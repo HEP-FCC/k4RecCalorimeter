@@ -162,12 +162,6 @@ private:
   Gaudi::Property<std::vector<size_t>> m_lastLayerIDs {
       this, "lastLayerIDs", {7}, "IDs of last layers in the systems"
   };
-  /// Values of sampling fractions used for energy calibration of the systems
-  Gaudi::Property<std::vector<std::vector<double>>> m_samplingFractions {
-      this, "samplingFractions",
-      {{0.299041341789, 0.1306220735, 0.163243999965, 0.186360269398,
-        0.203778124831, 0.216211280314, 0.227140796653, 0.243315422934}},
-      "Values of sampling fractions used in energy calibration of the systems"};
 
   /// Upstream correction parameters (a, b, c, ...)
   Gaudi::Property<std::vector<std::vector<double>>> m_upstreamParams {
