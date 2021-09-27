@@ -70,10 +70,6 @@ StatusCode CorrectCaloClusters::initialize() {
     error() << "Sizes of systemIDs vector and firstLayerIDs vector does not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
-  if (m_systemIDs.size() != m_samplingFractions.size()) {
-    error() << "Sizes of systemIDs vector and samplingFractions vector does not match, exiting!" << endmsg;
-    return StatusCode::FAILURE;
-  }
   if (m_systemIDs.size() != m_upstreamFormulas.size()) {
     error() <<  "Sizes of systemIDs vector and upstreamFormulas vector does not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
