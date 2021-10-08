@@ -3,9 +3,6 @@
 // FCCSW
 #include "k4Interface/IGeoSvc.h"
 
-// datamodel
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
