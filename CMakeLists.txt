@@ -14,8 +14,6 @@ find_package(FCCDetectors)
 #---------------------------------------------------------------
 
 
-# todo: remove
-find_package(fccedm)
 
 include(GNUInstallDirs)
 include(CTest)
