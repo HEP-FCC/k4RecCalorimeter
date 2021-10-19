@@ -6,7 +6,7 @@
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecCalorimeterPlugins
                  SOURCES ${_module_sources}
-                 LINK k4FWCore::k4FWCorePlugins GaudiAlgLib  GaudiKernel DD4hep::DDCore EDM4HEP::edm4hep  k4FWCore::k4Interface FCCDetectors::DetSegmentation DD4hep::DDG4 ROOT::Core ROOT::Hist)
+                 LINK k4FWCore::k4FWCore GaudiAlgLib  GaudiKernel DD4hep::DDCore EDM4HEP::edm4hep  k4FWCore::k4Interface FCCDetectors::DetSegmentation DD4hep::DDG4 ROOT::Core ROOT::Hist FCCDetectors::DetCommon)
 
 install(TARGETS k4RecCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
