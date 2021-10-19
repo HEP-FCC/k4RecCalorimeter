@@ -100,7 +100,12 @@ StatusCode CaloTowerTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTowerTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CaloTowerTool::finalize() { 
+  for (auto& towerInMap : m_cellsInTowers) {
+    towerInMap.second.clear();
+    }
+  return GaudiTool::finalize();
+  }
 
 std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {
   double phiMax = -1;
@@ -389,7 +394,7 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
           }
           aTowers[iEta][phiNeighbour(iPhi)] +=
             cell.getEnergy() / cosh(segmentation->eta(cell.getCellID())) * ratioEta * ratioPhi;
-          m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].push_back(cell);
+          m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].push_back(cell.clone());
           if ( fabs(etaCellMin) < 1.5 && m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() > 8 ) verbose() << "NUM CELLs IN TOWER : " << m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() << endmsg;
         }
       }
@@ -438,9 +443,10 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
     for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
         if (pow( (etaId - iEta) / (halfEtaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
-          for (const auto& cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-            aEdmClusterCells->push_back(cell.clone());
-            aEdmCluster.addToHits(cell);
+          for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
+            auto cellclone = cell.clone();
+            aEdmClusterCells->push_back(cellclone);
+            aEdmCluster.addToHits(cellclone);
             num1++;
           }
         }
@@ -449,9 +455,11 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
   } else {
     for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
-        for (const auto& cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-          aEdmClusterCells->push_back(cell.clone());
-          aEdmCluster.addToHits(cell);
+        for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
+
+          auto cellclone = cell.clone();
+          aEdmClusterCells->push_back(cellclone);
+          aEdmCluster.addToHits(cellclone);
           num2++;
         }
       }
