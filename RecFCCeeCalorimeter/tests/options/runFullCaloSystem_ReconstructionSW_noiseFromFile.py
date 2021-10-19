@@ -5,7 +5,7 @@ ecalBarrelCellsName = "ECalBarrelCells"
 ecalBarrelReadoutName = "ECalBarrelPhiEta"
 
 # Number of events
-num_events = -1
+num_events = 10
 
 from Gaudi.Configuration import *
 from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
@@ -13,7 +13,7 @@ import sys
 
 podioevent = FCCDataSvc("EventDataSvc")
 import glob
-podioevent.inputs=glob.glob("output_fullCalo_SimAndDigi_*.root")
+podioevent.inputs=glob.glob("output_fullCalo_SimAndDigi.root")
 # reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput
 podioinput = PodioInput("PodioReader",
@@ -25,7 +25,7 @@ podioinput = PodioInput("PodioReader",
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc")
 # if FCC_DETECTORS is empty, this should use relative path to working directory
-path_to_detector = os.environ.get("FCC_DETECTORS", "")
+path_to_detector = os.environ.get("FCCDETECTORS", "")
 detectors_to_use=[
                     'Detector/DetFCCeeIDEA-LAr/compact/FCCee_DectMaster.xml'
                   ]
@@ -54,8 +54,8 @@ barrelGeometry = TubeLayerPhiEtaCaloTool("EcalBarrelGeo",
                                          fieldNames = ["system"],
                                          fieldValues = [4],
                                          activeVolumesNumber = 8)
-from Configurables import CreateCaloCells
-createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
+from Configurables import CreateCaloCellsNoise
+createEcalBarrelCells = CreateCaloCellsNoise("CreateECalBarrelCells",
                                         geometryTool = barrelGeometry,
                                         doCellCalibration=False, # already calibrated
                                         addCellNoise=True, filterCellNoise=False,
@@ -111,11 +111,11 @@ createClusters = CreateCaloClustersSlidingWindow("CreateClusters",
                                                  nEtaDuplicates = dupE, nPhiDuplicates = dupP,
                                                  nEtaFinal = finE, nPhiFinal = finP,
                                                  energyThreshold = threshold)
-createClusters.clusters.Path = "CaloClusters"
+createClusters.clusters.Path = "CaloClustersFinal"
+createClusters.clusterCells.Path = "CaloClusterCellsFinal"
 
 import uuid
 out = PodioOutput("out", filename="output_allCalo_reco_noise_" + uuid.uuid4().hex + ".root")
-out.outputCommands = ["keep *"]
 
 #CPU information
 from Configurables import AuditorSvc, ChronoAuditor
