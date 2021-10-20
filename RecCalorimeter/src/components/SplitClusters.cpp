@@ -15,12 +15,6 @@
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
-// EDM4HEP
-#include "datamodel/CaloCluster.h"
-#include "datamodel/CaloClusterCollection.h"
-#include "datamodel/CaloHit.h"
-#include "datamodel/CaloHitCollection.h"
-#include "datamodel/MCParticleCollection.h"
 
 #include <algorithm>
 #include <utility>
@@ -98,7 +92,7 @@ StatusCode SplitClusters::execute() {
   double totEnergyBefore=0.;
   double totEnergyAfter=0.;
 
-  for (auto& cluster : *clusters) {
+  for (auto cluster : *clusters) {
     // sanity checks
     totEnergyBefore += cluster.getEnergy();
     totCellsBefore += cluster.hits_size();

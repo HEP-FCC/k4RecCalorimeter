@@ -152,7 +152,7 @@ StatusCode CreateCaloClusters::execute() {
 
   double Etruth = 0.;
 
-  for (auto& iparticle : *particles){
+  for (auto iparticle : *particles){
     Etruth += sqrt(pow(iparticle.getMass(),2)+pow(iparticle.getMomentum().x,2)+pow(iparticle.getMomentum().y,2)+pow(iparticle.getMomentum().z,2));
   }
   info() << "Truth energy of particle : " << std::floor(Etruth) << endmsg;
@@ -174,7 +174,7 @@ StatusCode CreateCaloClusters::execute() {
   float totBenchmarkCorr = 0.;
 
   if(m_doCalibration) { 
-    for (auto& cluster : *clusters) {
+    for (auto cluster : *clusters) {
       m_clusterEnergy->Fill(cluster.getEnergy());
       // 1. Identify clusters with cells in different sub-systems
       bool cellsInBoth = false;
