@@ -5,7 +5,7 @@ from GaudiKernel import PhysicalConstants as constants
 from GaudiKernel.SystemOfUnits import MeV, GeV, tesla
 
 from Configurables import ApplicationMgr
-ApplicationMgr().EvtSel = 'NONE' 
+ApplicationMgr().EvtSel = 'NONE'
 ApplicationMgr().EvtMax = 2
 ApplicationMgr().OutputLevel = INFO
 ApplicationMgr().StopOnSignal = True
@@ -58,13 +58,6 @@ ApplicationMgr().ExtSvc += [geoservice]
 # Geant4 service
 # Configures the Geant simulation: geometry, physics list and user actions
 
-# Uncomment if history from Geant4 decays is needed (e.g. to get the photons from pi0) and set actions=actions in SimG4Svc
-#from Configurables import SimG4FullSimActions
-#actions = SimG4FullSimActions()
-#actions.enableHistory=True
-#actions.energyCut = 0.2 * GeV 
-# from Configurables import SimG4SaveParticleHistory
-#saveHistTool = SimG4SaveParticleHistory("saveHistory")
 
 # Geant4 service
 # Configures the Geant simulation: geometry, physics list and user actions
@@ -126,6 +119,16 @@ from Configurables import SimG4Alg
 geantsim = SimG4Alg("SimG4Alg")
 geantsim.eventProvider = particle_converter
 ApplicationMgr().TopAlg += [geantsim]
+
+# Uncomment the following if history from Geant4 decays is needed (e.g. to get the photons from pi0)
+#from Configurables import SimG4FullSimActions, SimG4SaveParticleHistory
+#actions = SimG4FullSimActions()
+#actions.enableHistory = True
+#actions.energyCut = 0.2 * GeV
+#saveHistTool = SimG4SaveParticleHistory("saveHistory")
+#SimG4Alg("SimG4Alg").outputs += [saveHistTool]
+#geantservice.actions = actions
+
 
 ############## Digitization (Merging hits into cells, EM scale calibration)
 # EM scale calibration (sampling fraction)
@@ -202,7 +205,6 @@ createHcalBarrelCells.hits = "HCalBarrelPositionedHits"
 createHcalBarrelCells.cells = "HCalBarrelCells"
 ApplicationMgr().TopAlg += [createHcalBarrelCells]
 
-# sliding window clustering #FIXME not yet ready for key4hep
 #Empty cells for parts of calorimeter not implemented yet
 from Configurables import CreateEmptyCaloCellsCollection
 createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
@@ -249,6 +251,27 @@ createClusters.clusters.Path = "CaloClusters"
 createClusters.clusterCells.Path = "CaloClusterCells"
 ApplicationMgr().TopAlg += [createClusters]
 
+# Add position to the cells attached to the cluster
+createEcalBarrelPositionedCaloClusterCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCaloClusterCells")
+createEcalBarrelPositionedCaloClusterCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
+createEcalBarrelPositionedCaloClusterCells.hits.Path = "CaloClusterCells"
+createEcalBarrelPositionedCaloClusterCells.positionedHits.Path = "PositionedCaloClusterCells"
+
+# Dead material correction
+from Configurables import CorrectCaloClusters
+correctCaloClusters = CorrectCaloClusters("correctCaloClusters")
+correctCaloClusters.inClusters = createClusters.clusters.Path
+correctCaloClusters.outClusters = "Corrected"+createClusters.clusters.Path
+correctCaloClusters.numLayers = [12]
+correctCaloClusters.firstLayerIDs = [0]
+correctCaloClusters.lastLayerIDs = [11]
+correctCaloClusters.readoutNames = [ecalBarrelReadoutNamePhiEta]
+correctCaloClusters.upstreamParameters = [[0.09959407679400918, -10.509139028589276, -141.62311185316685, 2.8931723031040435, -397.6783011336018, -317.53288225142427]]
+correctCaloClusters.upstreamFormulas = [['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])']]
+correctCaloClusters.downstreamParameters = [[0.002296666086130359, 0.004644766599619741, 1.4031343062273582, -1.8105436592714355, -0.02976924247722723, 12.875501324136625]]
+correctCaloClusters.downstreamFormulas = [['[0]+[1]*x', '[0]+[1]/sqrt(x)', '[0]+[1]/x']]
+correctCaloClusters.OutputLevel = INFO
+ApplicationMgr().TopAlg += [correctCaloClusters]
 
 ################ Output
 from Configurables import PodioOutput
