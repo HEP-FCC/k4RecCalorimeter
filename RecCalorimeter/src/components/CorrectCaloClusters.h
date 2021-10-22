@@ -19,6 +19,7 @@ class ITHistSvc;
 // EDM4HEP
 namespace edm4hep {
   class Cluster;
+  class ConstCluster;
   class ClusterCollection;
   class CalorimeterHitCollection;
   class MCParticleCollection;
@@ -112,7 +113,7 @@ private:
    *
    * @return                   Energy in layer.
    */
-  double getEnergyInLayer(const edm4hep::Cluster& cluster,
+  double getEnergyInLayer(edm4hep::ConstCluster cluster,
                           const std::string& readoutName,
                           size_t systemID,
                           size_t layerID);
@@ -124,7 +125,7 @@ private:
    *
    * @return              theta angle value.
    */
-  double getClusterTheta(const edm4hep::Cluster& cluster);
+  double getClusterTheta(edm4hep::ConstCluster cluster);
 
   /// Handle for input calorimeter clusters collection
   DataHandle<edm4hep::ClusterCollection> m_inClusters {
