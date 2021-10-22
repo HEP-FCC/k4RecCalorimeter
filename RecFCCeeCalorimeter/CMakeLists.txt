@@ -19,11 +19,11 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DA
 
 
 add_test(NAME FCCeeLAr_reproduceSegfault
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/reproduceSegfault.py)
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/reproduceSegfault.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 add_test(NAME FCCeeLAr_simulateForReco
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloSim.py)
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloSim.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 add_test(NAME FCCeeLAr_slidingWindowClustering
          COMMAND k4run RecFCCeeCalorimeter/tests/options/runFullCaloSystem_ReconstructionSW_noiseFromFile.py
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

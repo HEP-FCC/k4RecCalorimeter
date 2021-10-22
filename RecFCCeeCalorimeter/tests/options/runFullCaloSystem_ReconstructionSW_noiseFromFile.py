@@ -12,8 +12,7 @@ from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
 import sys
 
 podioevent = FCCDataSvc("EventDataSvc")
-import glob
-podioevent.inputs=glob.glob("output_fullCalo_SimAndDigi.root")
+podioevent.input = "output_fullCalo_SimAndDigi.root"
 # reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput
 podioinput = PodioInput("PodioReader",
@@ -134,5 +133,5 @@ ApplicationMgr(
               out
               ],
     EvtSel = 'NONE',
-    EvtMax   = num_events,
+    EvtMax   = 5,
     ExtSvc = [podioevent, geoservice])
