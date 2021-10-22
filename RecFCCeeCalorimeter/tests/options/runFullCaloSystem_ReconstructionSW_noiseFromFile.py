@@ -4,8 +4,6 @@ ecalBarrelCellsName = "ECalBarrelCells"
 # Readouts
 ecalBarrelReadoutName = "ECalBarrelPhiEta"
 
-# Number of events
-num_events = 10
 
 from Gaudi.Configuration import *
 from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
@@ -133,5 +131,5 @@ ApplicationMgr(
               out
               ],
     EvtSel = 'NONE',
-    EvtMax   = 5,
+    EvtMax   = 2,
     ExtSvc = [podioevent, geoservice])
