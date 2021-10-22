@@ -34,7 +34,12 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
     error() << "Couldn't get RndmGenSvc!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+
+  if (m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)).isFailure()) {
+    error() << "Couldn't initialize RndmGenSvc!!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
 
   // open and check file, read the histograms with noise constants
   if (initNoiseFromFile().isFailure()) {
