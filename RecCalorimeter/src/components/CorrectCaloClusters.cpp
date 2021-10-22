@@ -307,7 +307,7 @@ StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollec
 }
 
 
-double CorrectCaloClusters::getEnergyInLayer(const edm4hep::Cluster& cluster,
+double CorrectCaloClusters::getEnergyInLayer(edm4hep::ConstCluster cluster,
                                              const std::string& readoutName,
                                              size_t systemID,
                                              size_t layerID) {
@@ -330,7 +330,7 @@ double CorrectCaloClusters::getEnergyInLayer(const edm4hep::Cluster& cluster,
 }
 
 
-double CorrectCaloClusters::getClusterTheta(const edm4hep::Cluster& cluster) {
+double CorrectCaloClusters::getClusterTheta(edm4hep::ConstCluster cluster) {
   double rxy = std::sqrt(std::pow(cluster.getPosition().x, 2) + std::pow(cluster.getPosition().y, 2));
   double theta = ::fabs(std::atan2(rxy, cluster.getPosition().z));
   theta = 180 * theta / M_PI;
