@@ -320,7 +320,7 @@ ApplicationMgr(
               out
               ],
     EvtSel = 'NONE',
-    EvtMax   = 1000,
+    EvtMax   = 10,
     ExtSvc = [geoservice, podioevent, geantservice, audsvc],
     StopOnSignal = True,
  )
