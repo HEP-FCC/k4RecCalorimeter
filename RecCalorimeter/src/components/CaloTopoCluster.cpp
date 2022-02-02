@@ -113,7 +113,7 @@ StatusCode CaloTopoCluster::execute() {
   double checkTotEnergy = 0.;
   int clusterWithMixedCells = 0;
   for (auto i : preClusterCollection) {
-    edm4hep::Cluster cluster;
+    edm4hep::MutableCluster cluster;
     //auto& clusterCore = cluster.core();
     double posX = 0.;
     double posY = 0.;

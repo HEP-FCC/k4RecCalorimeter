@@ -103,7 +103,7 @@ public:
    *   @param[out] aEdmCluster Cluster where cells are attached to
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
-                           edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
+                           edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
 
 private:
   /// Type of the segmentation
@@ -213,7 +213,7 @@ private:
   int m_nPhiTower;
   /// map to cells contained within a tower so they can be attached to a reconstructed cluster (note that fraction of
   /// their energy assigned to a cluster is not acknowledged)
-  std::map<std::pair<uint, uint>, std::vector<edm4hep::ConstCalorimeterHit>> m_cellsInTowers;
+  std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> m_cellsInTowers;
   /// Use only half of calorimeter
   Gaudi::Property<bool> m_useHalfTower{this, "halfTower", false, "Use half tower"};
 };

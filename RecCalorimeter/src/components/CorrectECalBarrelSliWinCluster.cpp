@@ -254,7 +254,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     }
 
     // 0. Create new cluster, copy information from input
-    edm4hep::Cluster newCluster = correctedClusters->create();
+    edm4hep::MutableCluster newCluster = correctedClusters->create();
     double energy = 0;
     newCluster.setPosition(cluster.getPosition());
     for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); cell++) {

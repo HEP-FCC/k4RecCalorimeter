@@ -304,7 +304,7 @@ StatusCode SplitClusters::execute() {
 	warning() << "NUMBER OF CELLS BEFORE " << cluster.hits_size() << " AND AFTER CLUSTER SPLITTING (map) " << clusterOfCell.size() << "!!" << endmsg;
 	warning() << "Elements in cells types after sub-cluster building: " << cellsType.size() << endmsg;                                                                        
 	
-	edm4hep::Cluster cluster;
+	auto l_cluster = edmClusters->create();
 	double posX = 0.;
         double posY = 0.;
         double posZ = 0.;
@@ -340,19 +340,18 @@ StatusCode SplitClusters::execute() {
 	  newCell.setType(4);
 	  energy += fNEnergy.second;
 	}
-	cluster.setType(3);
-	cluster.setEnergy(energy);
+	l_cluster.setType(3);
+	l_cluster.setEnergy(energy);
         auto clusterPosition = edm4hep::Vector3f(posX/energy, posY/energy, posZ/energy);
-        cluster.setPosition(clusterPosition);
+        l_cluster.setPosition(clusterPosition);
         totEnergyAfter += energy;
 
-        edmClusters->push_back(cluster);
-	debug() << "Left-over cluster energy:     " << cluster.getEnergy() << endmsg;
+	debug() << "Left-over cluster energy:     " << l_cluster.getEnergy() << endmsg;
       }
 
       // fill clusters into edm format
       for (auto i : preClusterCollection) {
-	edm4hep::Cluster cluster;
+	edm4hep::MutableCluster cluster;
 	double posX = 0.;
 	double posY = 0.;
 	double posZ = 0.;
@@ -417,7 +416,7 @@ StatusCode SplitClusters::execute() {
     
     else{
       // fill cluster without changes
-      edm4hep::Cluster clu = cluster.clone();
+      auto clu = cluster.clone();
       clu.setType(1);
       totEnergyAfter += clu.getEnergy();
       edmClusters->push_back(clu);

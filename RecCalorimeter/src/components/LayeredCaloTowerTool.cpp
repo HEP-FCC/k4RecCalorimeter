@@ -1,12 +1,15 @@
 #include "LayeredCaloTowerTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
+
+// EDM4hep
+#include "edm4hep/MutableCluster.h"
 
 DECLARE_COMPONENT(LayeredCaloTowerTool)
 
@@ -208,7 +211,7 @@ uint LayeredCaloTowerTool::phiNeighbour(int aIPhi) const {
 float LayeredCaloTowerTool::radiusForPosition() const { return m_radius; }
 
 void LayeredCaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin,
-                                       edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool) {
+                                       edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool) {
   const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
   for (const auto& cell : *cells) {
     float etaCell = m_segmentation->eta(cell.getCellID());

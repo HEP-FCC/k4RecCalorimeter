@@ -166,7 +166,7 @@ edm4hep::ClusterCollection* CorrectCaloClusters::initializeOutputClusters(
   edm4hep::ClusterCollection* outClusters = m_outClusters.createAndPut();
 
   for (auto const& inCluster: *inClusters) {
-    edm4hep::Cluster outCluster = outClusters->create();
+    auto outCluster = outClusters->create();
 
     outCluster.setPosition(inCluster.getPosition());
     verbose() << "Cluster position:" << endmsg;
@@ -307,7 +307,7 @@ StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollec
 }
 
 
-double CorrectCaloClusters::getEnergyInLayer(edm4hep::ConstCluster cluster,
+double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
                                              const std::string& readoutName,
                                              size_t systemID,
                                              size_t layerID) {
@@ -330,7 +330,7 @@ double CorrectCaloClusters::getEnergyInLayer(edm4hep::ConstCluster cluster,
 }
 
 
-double CorrectCaloClusters::getClusterTheta(edm4hep::ConstCluster cluster) {
+double CorrectCaloClusters::getClusterTheta(edm4hep::Cluster cluster) {
   double rxy = std::sqrt(std::pow(cluster.getPosition().x, 2) + std::pow(cluster.getPosition().y, 2));
   double theta = ::fabs(std::atan2(rxy, cluster.getPosition().z));
   theta = 180 * theta / M_PI;
