@@ -77,7 +77,7 @@ StatusCode ConeSelection::execute() {
   }
 
   for (const auto& cell : m_cellsMap) {
-    edm4hep::CalorimeterHit newCell = edmCellsCollection->create();
+    auto newCell = edmCellsCollection->create();
     newCell.setEnergy(cell.second);
     newCell.setCellID(cell.first);
   }

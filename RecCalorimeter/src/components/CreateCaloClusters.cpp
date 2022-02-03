@@ -239,14 +239,14 @@ StatusCode CreateCaloClusters::execute() {
 	totClusterEnergy += cluster.getEnergy();
 	
 	// Building new calibrated cluster
-	edm4hep::Cluster newCluster;
+	edm4hep::MutableCluster newCluster;
 	double posX = 0.;
 	double posY = 0.;
 	double posZ = 0.;
 	double energy = 0.;
 	// Add cells to cluster
 	for (uint it = 0; it < cluster.hits_size(); it++){
-	  edm4hep::CalorimeterHit newCell;
+	  auto newCell = edmClusterCells->create();
 	  
 	  auto cellId = cluster.getHits(it).getCellID();
 	  auto cellEnergy = cluster.getHits(it).getEnergy();

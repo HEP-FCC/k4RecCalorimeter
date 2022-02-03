@@ -104,7 +104,7 @@ StatusCode CreateCaloCells::execute() {
   edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
   for (const auto& cell : m_cellsMap) {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {
-      edm4hep::CalorimeterHit newCell = edm4hep::CalorimeterHit();
+      auto newCell = edmCellsCollection->create();
       newCell.setEnergy(cell.second);
       uint64_t cellid = cell.first;
       newCell.setCellID(cellid);
@@ -117,7 +117,6 @@ StatusCode CreateCaloCells::execute() {
         edm4hep::Vector3f position = edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
         newCell.setPosition(position);
       }
-      edmCellsCollection->push_back(newCell);
     }
   }
 

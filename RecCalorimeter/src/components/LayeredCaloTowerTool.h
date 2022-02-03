@@ -14,6 +14,7 @@ class IGeoSvc;
 namespace edm4hep {
 class CalorimeterHitCollection;
 class Cluster;
+class MutableCluster;
 }
 
 namespace dd4hep {
@@ -125,7 +126,7 @@ public:
    *   @param[out] aEdmCluster Cluster where cells are attached to
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
-                           edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
+                           edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
   std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;
 
 private:

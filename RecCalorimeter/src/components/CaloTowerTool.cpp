@@ -6,6 +6,7 @@
 // datamodel
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
+#include "edm4hep/MutableCluster.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
@@ -434,7 +435,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType
   return std::make_pair(segmentation, SegmentationType::kWrong);
 }
 
-void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin, edm4hep::Cluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
+void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin, edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
   int etaId = idEta(eta);
   int phiId = idPhi(phi);
   int num1 = 0;
