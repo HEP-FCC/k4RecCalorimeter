@@ -43,9 +43,6 @@ public:
   double getNoiseOffsetPerCell(uint64_t aCellID);
 
 private:
-  /// Handle for tool to get positions in ECal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
-
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
                                     "Add pileup contribution to the electronics noise? (only if read from file)"};
@@ -72,6 +69,9 @@ private:
 
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
+
+  /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
+  Gaudi::Property<float> m_scaleFactor{this, "scaleFactor", 1, "Factor to apply to the noise values"};
 
   /// Histograms with pileup constants (index in array - radial layer)
   std::vector<TH1F> m_histoPileupConst;
