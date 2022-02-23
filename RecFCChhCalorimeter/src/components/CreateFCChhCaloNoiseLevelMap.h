@@ -39,8 +39,10 @@ private:
 
   /// Handle for the cells noise tool in ECal
   ToolHandle<INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+  Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 5};
   /// Handle for the cells noise tool in HCal
   ToolHandle<INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+  Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
 
   /// Names of the detector readout for volumes with eta-phi segmentation
   Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNamesPhiEta", {"ECalBarrelPhiEta"}};

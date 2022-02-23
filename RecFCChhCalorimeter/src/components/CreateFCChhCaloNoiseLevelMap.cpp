@@ -75,7 +75,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
       auto numCells = det::utils::numberOfCells(volumeId, *segmentation);
       extrema[1] = std::make_pair(0, numCells[0] - 1);
       if(m_fieldNamesSegmented[iSys] == "system" &&
-	      m_fieldValuesSegmented[iSys] == 8){
+	      m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId){
 	uint cellsEta = ceil(( 2*m_activeVolumesEta[ilayer] - segmentation->gridSizeEta() ) / 2 / segmentation->gridSizeEta()) * 2 + 1; //ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta());
 	uint minEtaID = int(floor(( - m_activeVolumesEta[ilayer] + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
 	numCells[1]=cellsEta;
@@ -91,10 +91,10 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
 	  uint64_t id = cellId;
 	  double noise = 0.;
 	  double noiseOffset = 0.;
-	  if (m_fieldValuesSegmented[iSys] == 8){
+	  if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId){
 	    noise = m_hcalBarrelNoiseTool->getNoiseConstantPerCell(id);
 	    noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
-	  } else if (m_fieldValuesSegmented[iSys] == 5){
+	  } else if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId){
 	    noise = m_ecalBarrelNoiseTool->getNoiseConstantPerCell(id);
             noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
 	  }

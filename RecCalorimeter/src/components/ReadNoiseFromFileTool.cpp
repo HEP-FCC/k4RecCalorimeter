@@ -19,7 +19,6 @@ DECLARE_COMPONENT(ReadNoiseFromFileTool)
 ReadNoiseFromFileTool::ReadNoiseFromFileTool(const std::string& type, const std::string& name, const IInterface* parent)
     : GaudiTool(type, name, parent) {
   declareInterface<INoiseConstTool>(this);
-  declareProperty("positionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
 }
 
 StatusCode ReadNoiseFromFileTool::initialize() {
@@ -30,6 +29,11 @@ StatusCode ReadNoiseFromFileTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+  if (m_segmentation == nullptr) {
+    error() << "There is no phi-eta segmentation!!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   // open and check file, read the histograms with noise constants
   if (ReadNoiseFromFileTool::initNoiseFromFile().isFailure()) {
@@ -37,12 +41,6 @@ StatusCode ReadNoiseFromFileTool::initialize() {
     return StatusCode::FAILURE;
   }
 
-  // Check if cell position  tool available
-  if (!m_cellPositionsTool.retrieve()) {
-    error() << "Unable to retrieve cell positions tool!!!" << endmsg;
-    return StatusCode::FAILURE;
-  }
-   
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
 
@@ -134,11 +132,10 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   double elecNoise = 0.;
   double pileupNoise = 0.;
 
-  // Get cell coordinates: eta and radial layer from cell positions tool
-  auto position =  m_cellPositionsTool->xyzPosition(aCellId);
-
-  double cellEta = position.Eta();
+  // Get cell coordinates: eta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
+  double cellEta = m_segmentation->eta(cID);
+
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -173,7 +170,7 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2));
+  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2)) * m_scaleFactor;
 
   if (totalNoise < 1e-6) {
     warning() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
@@ -190,11 +187,9 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
     double elecNoise = 0.;
     double pileupNoise = 0.;
 
-  // Get cell coordinates: eta and radial layer from cell positions tool
-  auto position =  m_cellPositionsTool->xyzPosition(aCellId);
-
-  double cellEta = position.Eta();
+  // Get cell coordinates: eta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
+  double cellEta = m_segmentation->eta(cID);
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -229,7 +224,7 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2));
+  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2)) * m_scaleFactor;
 
   if (totalNoise < 1e-6) {
     warning() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
