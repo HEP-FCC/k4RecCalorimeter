@@ -217,7 +217,7 @@ double NoiseCaloCellsFromFileTool::getNoiseConstantPerCell(int64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2));
+  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2)) * m_scaleFactor;
 
   if (totalNoise < 1e-3) {
     debug() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
