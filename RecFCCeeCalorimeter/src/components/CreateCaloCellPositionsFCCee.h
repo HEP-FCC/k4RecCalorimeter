@@ -62,6 +62,8 @@ private:
   DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Output collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
+  PodioDataSvc* m_podioDataSvc;
+  ServiceHandle<IDataProviderSvc> m_eventDataSvc;
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H */

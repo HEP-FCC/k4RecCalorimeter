@@ -15,7 +15,7 @@
 DECLARE_COMPONENT(CreateCaloCells)
 
 CreateCaloCells::CreateCaloCells(const std::string& name, ISvcLocator* svcLoc) :
-GaudiAlgorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
+GaudiAlgorithm(name, svcLoc), m_geoSvc("GeoSvc", name), m_eventDataSvc("EventDataSvc", "CreateCaloCells") {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
 
@@ -63,6 +63,13 @@ StatusCode CreateCaloCells::initialize() {
   if (m_addPosition){
     m_volman = m_geoSvc->lcdd()->volumeManager();
   }
+  StatusCode sc_dataSvc = m_eventDataSvc.retrieve();
+  m_podioDataSvc = dynamic_cast<PodioDataSvc*>(m_eventDataSvc.get());
+  if (sc_dataSvc == StatusCode::FAILURE) {
+    error() << "Error retrieving Event Data Service" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
   return StatusCode::SUCCESS;
 }
 
@@ -122,6 +129,10 @@ StatusCode CreateCaloCells::execute() {
 
   // push the CaloHitCollection to event store
   m_cells.put(edmCellsCollection);
+  // Ship the metadata to the new collection
+  auto& coll_md = m_podioDataSvc->getProvider().getCollectionMetaData(m_cells.get()->getID());
+  coll_md.setValue("CellIDEncodingString", m_hits.getCollMetadataCellID(hits->getID()));
+
   debug() << "Output Cell collection size: " << edmCellsCollection->size() << endmsg;
 
   return StatusCode::SUCCESS;
