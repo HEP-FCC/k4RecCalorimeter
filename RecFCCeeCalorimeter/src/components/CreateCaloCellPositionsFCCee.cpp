@@ -13,7 +13,7 @@
 DECLARE_COMPONENT(CreateCaloCellPositionsFCCee)
 
 CreateCaloCellPositionsFCCee::CreateCaloCellPositionsFCCee(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc) {
+    : GaudiAlgorithm(name, svcLoc), m_eventDataSvc("EventDataSvc", "CreateCaloCellPositionsFCCee") {
   declareProperty("hits", m_hits, "Hit collection (input)");
   declareProperty("positionsECalBarrelTool", m_cellPositionsECalBarrelTool,
                   "Handle for tool to retrieve cell positions in ECal Barrel");
@@ -31,6 +31,12 @@ CreateCaloCellPositionsFCCee::CreateCaloCellPositionsFCCee(const std::string& na
 StatusCode CreateCaloCellPositionsFCCee::initialize() {
   StatusCode sc = GaudiAlgorithm::initialize();
   if (sc.isFailure()) return sc;
+  StatusCode sc_dataSvc = m_eventDataSvc.retrieve();
+  m_podioDataSvc = dynamic_cast<PodioDataSvc*>(m_eventDataSvc.get());
+  if (sc_dataSvc == StatusCode::FAILURE) {
+    error() << "Error retrieving Event Data Service" << endmsg;
+    return sc_dataSvc;
+  }
   return StatusCode::SUCCESS;
 }
 
@@ -76,6 +82,8 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
     debug() << "Position of cell (mm) : \t" << posCell.x() / dd4hep::mm << "\t" << posCell.y() / dd4hep::mm << "\t"
             << posCell.z() / dd4hep::mm << endmsg;
   }
+  auto& coll_md = m_podioDataSvc->getProvider().getCollectionMetaData(m_positionedHits.get()->getID());
+  coll_md.setValue("CellIDEncodingString", m_hits.getCollMetadataCellID(hits->getID()));
 
   debug() << "Output positions collection size: " << edmPositionedHitCollection->size() << endmsg;
   return StatusCode::SUCCESS;

@@ -105,6 +105,8 @@ private:
   /// Use only volume ID? If false, using PhiEtaSegmentation
   bool m_useVolumeIdOnly;
 
+  PodioDataSvc* m_podioDataSvc;
+  ServiceHandle<IDataProviderSvc> m_eventDataSvc;
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
