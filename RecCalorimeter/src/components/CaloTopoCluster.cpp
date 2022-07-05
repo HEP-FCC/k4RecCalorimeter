@@ -80,7 +80,7 @@ StatusCode CaloTopoCluster::initialize() {
 
 StatusCode CaloTopoCluster::execute() {
   
-  std::map<uint64_t, double> allCells;
+  std::unordered_map<uint64_t, double> allCells;
   std::vector<std::pair<uint64_t, double>> firstSeeds;
   
   // get input cell map from input tool
@@ -209,7 +209,7 @@ StatusCode CaloTopoCluster::execute() {
   return StatusCode::SUCCESS;
 }
 
-void CaloTopoCluster::findingSeeds(const std::map<uint64_t, double>& aCells,
+void CaloTopoCluster::findingSeeds(const std::unordered_map<uint64_t, double>& aCells,
                                    int aNumSigma,
                                    std::vector<std::pair<uint64_t, double>>& aSeeds) {
   for (const auto& cell : aCells) {
@@ -230,7 +230,7 @@ StatusCode CaloTopoCluster::buildingProtoCluster(
     int aNumSigma,
     int aLastNumSigma,
     std::vector<std::pair<uint64_t, double>>& aSeeds,
-    const std::map<uint64_t, double>& aCells,
+    const std::unordered_map<uint64_t, double>& aCells,
     std::map<uint, std::vector< std::pair<uint64_t, int>>>& aPreClusterCollection) {
   // Map of cellIDs to clusterIds
   std::map<uint64_t, uint> clusterOfCell;
@@ -294,7 +294,7 @@ std::vector<std::pair<uint64_t, uint> >
 CaloTopoCluster::searchForNeighbours(const uint64_t aCellId,
                                      uint& aClusterID,
                                      int aNumSigma,
-                                     const std::map<uint64_t, double>& aCells,
+                                     const std::unordered_map<uint64_t, double>& aCells,
                                      std::map<uint64_t, uint>& aClusterOfCell,
                                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
 				     bool aAllowClusterMerge) {
@@ -381,7 +381,7 @@ CaloTopoCluster::searchForNeighbours(const uint64_t aCellId,
       }
     }
   }
-  return std::move(addedNeighbourIds);
+  return addedNeighbourIds;
 }
 
 StatusCode CaloTopoCluster::finalize() { return GaudiAlgorithm::finalize(); }

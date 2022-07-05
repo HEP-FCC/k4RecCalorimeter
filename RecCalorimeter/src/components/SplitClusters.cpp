@@ -351,7 +351,7 @@ StatusCode SplitClusters::execute() {
 
       // fill clusters into edm format
       for (auto i : preClusterCollection) {
-	edm4hep::MutableCluster cluster;
+	edm4hep::MutableCluster local_cluster;
 	double posX = 0.;
 	double posY = 0.;
 	double posZ = 0.;
@@ -393,18 +393,18 @@ StatusCode SplitClusters::execute() {
 	  posY += posCell.Y() * newCell.getEnergy();
 	  posZ += posCell.Z() * newCell.getEnergy();
 	  
-	  cluster.addToHits(newCell);
+	  local_cluster.addToHits(newCell);
 	  auto check = allCells.erase(cID);
 	  if (check!=1)
 	    error() << "Cell id is not deleted from map. " << endmsg;
 	}
-	cluster.setEnergy(energy);
+	local_cluster.setEnergy(energy);
   auto clusterPosition = edm4hep::Vector3f(posX/energy, posY/energy, posZ/energy);
-	cluster.setPosition(clusterPosition);
-	cluster.setType(2);
-	debug() << "Cluster energy:     " << cluster.getEnergy() << endmsg;
+	local_cluster.setPosition(clusterPosition);
+	local_cluster.setType(2);
+	debug() << "Cluster energy:     " << local_cluster.getEnergy() << endmsg;
 	totEnergyAfter += energy;
-	edmClusters->push_back(cluster);
+	edmClusters->push_back(local_cluster);
       }
       if(cellsType.size()>0)
 	info() << "Not all cluster cells have been assigned. " << cellsType.size() << endmsg;
@@ -526,7 +526,7 @@ SplitClusters::searchForNeighbours(const uint64_t aCellId,
       }
     }
   }
-  return std::move(addedNeighbourIds);
+  return addedNeighbourIds;
 }
 
 StatusCode SplitClusters::finalize() { 

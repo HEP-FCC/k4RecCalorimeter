@@ -74,7 +74,7 @@ public:
    *   @param[out] aTowers Calorimeter towers.
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells=true) final;
   /**  Get the radius (in mm) for the position calculation.
    *   Reconstructed cluster has eta and phi position, without the radial
    * coordinate. The cluster in EDM contains
