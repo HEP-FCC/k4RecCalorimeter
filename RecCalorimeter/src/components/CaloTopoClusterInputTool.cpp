@@ -111,9 +111,9 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
   }
   totalNumberOfCells += hcalFwdCells->size();
   
-  if (totalNumberOfCells != aCells.size()){
-    error() << "Map size != total number of cells! " << endmsg;
-    return StatusCode::FAILURE;
-  }
+  //if (totalNumberOfCells != aCells.size()){
+  //error() << "Map size != total number of cells! " << endmsg;
+  //return StatusCode::FAILURE;
+  //}
   return StatusCode::SUCCESS;
 }
