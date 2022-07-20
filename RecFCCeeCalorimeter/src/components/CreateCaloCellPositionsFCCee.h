@@ -42,20 +42,49 @@ public:
   StatusCode finalize();
 
 private:
+  /// ECal Barrel System ID
+  Gaudi::Property<size_t> m_systemIdECalBarrel {
+      this, "systemIdECalBarrel", 4, "System ID of ECal Barrel"
+  };
+  /// HCal Barrel System ID
+  Gaudi::Property<size_t> m_systemIdHCalBarrel {
+      this, "systemIdHCalBarrel", 10, "System ID of HCal Barrel"
+  };
+  /// HCal Extended Barrel System ID
+  Gaudi::Property<size_t> m_systemIdHCalExtBarrel {
+      this, "systemIdHCalExtBarrel", 9, "System ID of HCal Extended Barrel"
+  };
+  /// EMEC System ID
+  Gaudi::Property<size_t> m_systemIdEMEC {
+      this, "systemIdEMEC", 6, "System ID of EMEC"
+  };
+  /// HEC System ID
+  Gaudi::Property<size_t> m_systemIdHEC {
+      this, "systemIdHEC", 7, "System ID of HEC"
+  };
+  /// EMFwd System ID
+  Gaudi::Property<size_t> m_systemIdEMFwd {
+      this, "systemIdEMFwd", 999, "System ID of EMFwd"
+  };
+  /// HFwd System ID
+  Gaudi::Property<size_t> m_systemIdHFwd {
+      this, "systemIdHFwd", 999, "System ID of HFwd"
+  };
+
   /// Handle for tool to get positions in ECal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool/CellPositionsTool"};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool/CellPositionsTool"};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool/CellPositionsTool"};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool/CellPositionsTool"};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsHECTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsHECTool{"CellPositionsCaloDiscsTool/CellPositionsTool"};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool{"CellPositionsCaloDiscsTool/CellPositionsTool"};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool;
+  ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool/CellPositionsTool"};
   /// Decoder for system ID
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:4");
   /// Input collection
