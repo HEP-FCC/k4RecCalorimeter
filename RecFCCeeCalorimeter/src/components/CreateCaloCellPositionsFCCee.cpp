@@ -58,6 +58,14 @@ StatusCode CreateCaloCellPositionsFCCee::initialize() {
     error() << "CellPositionsTool for HEC is missing!" << endmsg;
     return StatusCode::FAILURE;
   }
+  if (!m_cellPositionsEMFwdTool) {
+    error() << "CellPositionsTool for EMFwd is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsHFwdTool) {
+    error() << "CellPositionsTool for HFwd is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   return StatusCode::SUCCESS;
 }
