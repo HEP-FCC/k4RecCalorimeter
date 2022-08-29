@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+
+def main():
+    import ROOT
+    import math
+
+    ROOT.gROOT.SetBatch(True)
+
+    infile = ROOT.TFile.Open('output_fullCalo_SimAndDigi.root')
+    tree = infile.Get('events')
+
+    canvas = ROOT.TCanvas()
+    hist_eta_phi = ROOT.TH2D('hist_eta_phi',
+                             'Flux, mu, 1e3 evt., 100 GeV;#eta;#phi;N',
+                             50, -1., 1., 88, -math.pi, math.pi)
+    hist_r = ROOT.TH1D('hist_r', 'Flux, mu, 1e3 evt., 100 GeV;r [mm];N_{hits}',
+                       100, 0., 0.)
+
+    for i, event in enumerate(tree):
+        print('event ' + str(i))
+        for hit in event.FluxBarrelPositionedHits:
+            r = math.sqrt(math.pow(hit.position.x, 2) +
+                          math.pow(hit.position.y, 2))
+            eta = math.asinh(hit.position.z / r)
+            phi = math.acos(hit.position.x / r)
+            if (hit.position.y < 0):
+                phi *= -1
+
+            hist_eta_phi.Fill(eta, phi, hit.energy*1000)
+            hist_r.Fill(r)
+
+    hist_eta_phi.Draw('COLZ')
+    canvas.Print('flux_eta_phi.pdf')
+    hist_eta_phi.Draw('')
+    canvas.Print('flux_r.pdf')
+
+if __name__ == '__main__':
+    main()
