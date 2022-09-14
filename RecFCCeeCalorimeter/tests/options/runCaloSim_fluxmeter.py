@@ -1,8 +1,7 @@
 import os
-from Gaudi.Configuration import *
-from GaudiKernel import SystemOfUnits as units
-from GaudiKernel import PhysicalConstants as constants
-from GaudiKernel.SystemOfUnits import MeV, GeV, tesla
+from Gaudi.Configuration import INFO
+from GaudiKernel.PhysicalConstants import pi
+from GaudiKernel.SystemOfUnits import GeV, tesla
 
 from Configurables import ApplicationMgr
 ApplicationMgr().EvtSel = 'NONE'
@@ -18,27 +17,27 @@ ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import MomentumRangeParticleGun
 guntool = MomentumRangeParticleGun()
-guntool.ThetaMin = 45 * constants.pi / 180.
-guntool.ThetaMax = 135 * constants.pi / 180.
+guntool.ThetaMin = 45 * pi / 180.
+guntool.ThetaMax = 135 * pi / 180.
 guntool.PhiMin = 0.
-guntool.PhiMax = 2. * constants.pi
-guntool.MomentumMin = 100. *units.GeV
-guntool.MomentumMax = 100. *units.GeV
-guntool.PdgCodes = [13] # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
+guntool.PhiMax = 2. * pi
+guntool.MomentumMin = 100. * GeV
+guntool.MomentumMax = 100. * GeV
+guntool.PdgCodes = [13]  # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
 
 from Configurables import GenAlg
 gen = GenAlg()
-gen.SignalProvider=guntool
+gen.SignalProvider = guntool
 gen.hepmc.Path = "hepmc"
 ApplicationMgr().TopAlg += [gen]
 
 from Configurables import HepMCToEDMConverter
-## reads an HepMC::GenEvent from the data service and writes a collection of EDM Particles
+# Reads an HepMC::GenEvent from the data service and writes a collection of
+# EDM Particles
 hepmc_converter = HepMCToEDMConverter("Converter")
-hepmc_converter.hepmc.Path="hepmc"
-hepmc_converter.GenParticles.Path="GenParticles"
+hepmc_converter.hepmc.Path = "hepmc"
+hepmc_converter.GenParticles.Path = "GenParticles"
 ApplicationMgr().TopAlg += [hepmc_converter]
-
 
 
 ################## Simulation setup
@@ -47,16 +46,14 @@ from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc")
 # if FCC_DETECTORS is empty, this should use relative path to working directory
 path_to_detector = os.environ.get("FCCDETECTORS", "")
-detectors_to_use=[
-                    'Detector/DetFCCeeIDEA-LAr/compact/FCCee_DectMaster.xml',
-                  ]
+detectors_to_use = [
+    'Detector/DetFCCeeIDEA-LAr/compact/FCCee_DectMaster.xml',
+]
 # prefix all xmls with path_to_detector
-geoservice.detectors = [os.path.join(path_to_detector, _det) for _det in detectors_to_use]
+geoservice.detectors = [os.path.join(path_to_detector, _det) for _det
+                        in detectors_to_use]
 geoservice.OutputLevel = INFO
 ApplicationMgr().ExtSvc += [geoservice]
-
-# Geant4 service
-# Configures the Geant simulation: geometry, physics list and user actions
 
 
 # Geant4 service
@@ -64,11 +61,13 @@ ApplicationMgr().ExtSvc += [geoservice]
 from Configurables import SimG4Svc
 # giving the names of tools will initialize the tools of that type
 geantservice = SimG4Svc("SimG4Svc")
-geantservice.detector =     "SimG4DD4hepDetector"
-geantservice.physicslist =  "SimG4FtfpBert"
-geantservice.actions =      "SimG4FullSimActions"
-# Fixed seed to have reproducible results, change it for each job if you split one production into several jobs
-# Mind that if you leave Gaudi handle random seed and some job start within the same second (very likely) you will have duplicates
+geantservice.detector = "SimG4DD4hepDetector"
+geantservice.physicslist = "SimG4FtfpBert"
+geantservice.actions = "SimG4FullSimActions"
+# Fixed seed to have reproducible results, change it for each job if you split
+# one production into several jobs
+# Mind that if you leave Gaudi handle random seed and some job start within the
+# same second (very likely) you will have duplicates
 geantservice.randomNumbersFromGaudi = False
 geantservice.seedValue = 4242
 # Range cut
@@ -76,17 +75,17 @@ geantservice.g4PreInitCommands += ["/run/setCut 0.1 mm"]
 ApplicationMgr().ExtSvc += [geantservice]
 
 
-
 # Magnetic field
 from Configurables import SimG4ConstantMagneticFieldTool
 field = SimG4ConstantMagneticFieldTool("SimG4ConstantMagneticFieldTool")
-field.FieldComponentZ = -2 * units.tesla
+field.FieldComponentZ = -2 * tesla
 field.FieldOn = True
-field.IntegratorStepper="ClassicalRK4"
+field.IntegratorStepper = "ClassicalRK4"
 
 # Geant4 algorithm
-# Translates EDM to G4Event, passes the event to G4, writes out outputs via tools
-# and a tool that saves the calorimeter hits
+# Translates EDM to G4Event, passes the event to G4, writes out outputs via
+# tools and a tool that saves the calorimeter hits
+
 
 # Detector readouts
 # ECAL
@@ -127,7 +126,8 @@ geantsim = SimG4Alg("SimG4Alg")
 geantsim.eventProvider = particle_converter
 ApplicationMgr().TopAlg += [geantsim]
 
-# Uncomment the following if history from Geant4 decays is needed (e.g. to get the photons from pi0)
+# Uncomment the following if history from Geant4 decays is needed (e.g. to get
+# the photons from pi0)
 #from Configurables import SimG4FullSimActions, SimG4SaveParticleHistory
 #actions = SimG4FullSimActions()
 #actions.enableHistory = True
@@ -142,7 +142,20 @@ ApplicationMgr().TopAlg += [geantsim]
 from Configurables import CalibrateInLayersTool
 
 calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel")
-calibEcalBarrel.samplingFraction = [0.36571381189697705] * 1 + [0.09779064189677973] * 1 + [0.12564152224404024] * 1 + [0.14350599973146283] * 1 + [0.1557126972314961] * 1 + [0.16444759076233928] * 1 + [0.17097165096847836] * 1 + [0.17684775359805122] * 1 + [0.18181154293837265] * 1 + [0.18544247938196395] * 1 + [0.18922747431624687] * 1 + [0.21187001375505543] * 1
+calibEcalBarrel.samplingFraction = [
+    0.36571381189697705 * 1,
+    0.09779064189677973 * 1,
+    0.12564152224404024 * 1,
+    0.14350599973146283 * 1,
+    0.1557126972314961 * 1,
+    0.16444759076233928 * 1,
+    0.17097165096847836 * 1,
+    0.17684775359805122 * 1,
+    0.18181154293837265 * 1,
+    0.18544247938196395 * 1,
+    0.18922747431624687 * 1,
+    0.21187001375505543 * 1
+]
 calibEcalBarrel.readoutName = "ECalBarrelEta"
 calibEcalBarrel.layerFieldName = "layer"
 
@@ -151,8 +164,10 @@ calibHcells = CalibrateCaloHitsTool("CalibrateHCal")
 calibHcells.invSamplingFraction = "41.66"
 
 # Create cells in ECal barrel
-# 1. step - merge hits into cells with Eta and module segmentation (phi module is a 'physical' cell i.e. lead + LAr + PCB + LAr +lead)
-# 2. step - rewrite the cellId using the Eta-Phi segmentation (merging several modules into one phi readout cell)
+# 1. step - merge hits into cells with Eta and module segmentation (phi module
+#           is a 'physical' cell i.e. lead + LAr + PCB + LAr + lead)
+# 2. step - rewrite the cellId using the Eta-Phi segmentation (merging several
+#           modules into one phi readout cell)
 from Configurables import CreateCaloCells
 createEcalBarrelCellsStep1 = CreateCaloCells("CreateECalBarrelCellsStep1")
 createEcalBarrelCellsStep1.doCellCalibration = True
@@ -221,7 +236,7 @@ ApplicationMgr().TopAlg += [createemptycells]
 from Configurables import CaloTowerTool
 towers = CaloTowerTool("towers")
 towers.deltaEtaTower = 0.01
-towers.deltaPhiTower = 2 * constants.pi / 768.
+towers.deltaPhiTower = 2 * pi / 768.
 towers.ecalBarrelReadoutName = ecalBarrelReadoutNamePhiEta
 towers.ecalEndcapReadoutName = ""
 towers.ecalFwdReadoutName = ""
@@ -238,20 +253,21 @@ towers.hcalEndcapCells.Path = "emptyCaloCells"
 towers.hcalFwdCells.Path = "emptyCaloCells"
 
 
-
+# Clustering
 from Configurables import CreateCaloClustersSlidingWindow
 createClusters = CreateCaloClustersSlidingWindow("CreateClusters")
 # Cluster variables
 createClusters.towerTool = towers
-createClusters.nEtaWindow =      9
-createClusters.nPhiWindow =     17
-createClusters.nEtaPosition =    5
-createClusters.nPhiPosition =   11
-createClusters.nEtaDuplicates =  7
+createClusters.nEtaWindow = 9
+createClusters.nPhiWindow = 17
+createClusters.nEtaPosition = 5
+createClusters.nPhiPosition = 11
+createClusters.nEtaDuplicates = 7
 createClusters.nPhiDuplicates = 13
-createClusters.nEtaFinal =       9
-createClusters.nPhiFinal =      17
-# Minimal energy to create a cluster in GeV (FCC-ee detectors have to reconstruct low energy particles)
+createClusters.nEtaFinal = 9
+createClusters.nPhiFinal = 17
+# Minimal energy to create a cluster in GeV (FCC-ee detectors have to
+# reconstruct low energy particles)
 createClusters.energyThreshold = 0.1
 createClusters.attachCells = True
 createClusters.clusters.Path = "CaloClusters"
@@ -273,20 +289,40 @@ correctCaloClusters.numLayers = [12]
 correctCaloClusters.firstLayerIDs = [0]
 correctCaloClusters.lastLayerIDs = [11]
 correctCaloClusters.readoutNames = [ecalBarrelReadoutNamePhiEta]
-correctCaloClusters.upstreamParameters = [[0.09959407679400918, -10.509139028589276, -141.62311185316685, 2.8931723031040435, -397.6783011336018, -317.53288225142427]]
+correctCaloClusters.upstreamParameters = [[0.09959407679400918,
+                                           -10.509139028589276,
+                                           -141.62311185316685,
+                                           2.8931723031040435,
+                                           -397.6783011336018,
+                                           -317.53288225142427]]
 correctCaloClusters.upstreamFormulas = [['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])']]
-correctCaloClusters.downstreamParameters = [[0.002296666086130359, 0.004644766599619741, 1.4031343062273582, -1.8105436592714355, -0.02976924247722723, 12.875501324136625]]
-correctCaloClusters.downstreamFormulas = [['[0]+[1]*x', '[0]+[1]/sqrt(x)', '[0]+[1]/x']]
+correctCaloClusters.downstreamParameters = [[0.002296666086130359,
+                                             0.004644766599619741,
+                                             1.4031343062273582,
+                                             -1.8105436592714355,
+                                             -0.02976924247722723,
+                                             12.875501324136625]]
+correctCaloClusters.downstreamFormulas = [['[0]+[1]*x',
+                                           '[0]+[1]/sqrt(x)',
+                                           '[0]+[1]/x']]
 correctCaloClusters.OutputLevel = INFO
 ApplicationMgr().TopAlg += [correctCaloClusters]
 
 ################ Output
 from Configurables import PodioOutput
 out = PodioOutput("out")
-# out.outputCommands = ["keep *", "drop ECalBarrelHits", "drop HCal*", "drop ECalBarrelCellsStep*", "drop ECalBarrelPositionedHits", "drop emptyCaloCells", "drop CaloClusterCells"]
+# out.outputCommands = [
+#     "keep *",
+#     "drop ECalBarrelHits",
+#     "drop HCal*",
+#     "drop ECalBarrelCellsStep*",
+#     "drop ECalBarrelPositionedHits",
+#     "drop emptyCaloCells",
+#     "drop CaloClusterCells"
+# ]
 out.outputCommands = ["keep *"]
 import uuid
-out.filename = "output_fullCalo_SimAndDigi.root"
+out.filename = "output_fullCalo_SimAndDigi_" + uuid.uuid4().hex[:12] + ".root"
 ApplicationMgr().TopAlg += [out]
 
 #CPU information
@@ -308,4 +344,3 @@ from Configurables import EventCounter
 event_counter = EventCounter('event_counter')
 event_counter.Frequency = 1
 ApplicationMgr().TopAlg += [event_counter]
-
