@@ -1,5 +1,5 @@
 import os
-from Gaudi.Configuration import INFO
+from Gaudi.Configuration import INFO, DEBUG
 from GaudiKernel.PhysicalConstants import pi
 from GaudiKernel.SystemOfUnits import GeV, tesla
 
@@ -17,18 +17,23 @@ ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import MomentumRangeParticleGun
 guntool = MomentumRangeParticleGun()
-guntool.ThetaMin = 45 * pi / 180.
-guntool.ThetaMax = 135 * pi / 180.
+# guntool.ThetaMin = 45 * pi / 180.
+# guntool.ThetaMax = 135 * pi / 180.
+guntool.ThetaMin = 85 * pi / 180.
+guntool.ThetaMax = 95 * pi / 180.
+# guntool.ThetaMin = 0.
+# guntool.ThetaMax = pi
 guntool.PhiMin = 0.
 guntool.PhiMax = 2. * pi
-guntool.MomentumMin = 100. * GeV
-guntool.MomentumMax = 100. * GeV
-guntool.PdgCodes = [13]  # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
+guntool.MomentumMin = 10. * GeV
+guntool.MomentumMax = 10. * GeV
+guntool.PdgCodes = [2212]  # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
 
 from Configurables import GenAlg
 gen = GenAlg()
 gen.SignalProvider = guntool
 gen.hepmc.Path = "hepmc"
+gen.OutputLevel = DEBUG
 ApplicationMgr().TopAlg += [gen]
 
 from Configurables import HepMCToEDMConverter
@@ -111,9 +116,9 @@ SimG4Alg("SimG4Alg").outputs += [saveHCalTool]
 
 
 from Configurables import SimG4SaveCalHits
-saveFluxTool = SimG4SaveCalHits("saveFluxBarrelHits")
-saveFluxTool.readoutNames = ["FluxBarrelPhiEta"]
-saveFluxTool.CaloHits.Path = "FluxBarrelPositionedHits"
+saveFluxTool = SimG4SaveCalHits("saveFluxHits")
+saveFluxTool.readoutNames = ["FluxPhiTheta"]
+saveFluxTool.CaloHits.Path = "FluxPositionedHits"
 SimG4Alg("SimG4Alg").outputs += [saveFluxTool]
 
 # next, create the G4 algorithm, giving the list of names of tools ("XX/YY")
@@ -254,59 +259,59 @@ towers.hcalFwdCells.Path = "emptyCaloCells"
 
 
 # Clustering
-from Configurables import CreateCaloClustersSlidingWindow
-createClusters = CreateCaloClustersSlidingWindow("CreateClusters")
+# from Configurables import CreateCaloClustersSlidingWindow
+# createClusters = CreateCaloClustersSlidingWindow("CreateClusters")
 # Cluster variables
-createClusters.towerTool = towers
-createClusters.nEtaWindow = 9
-createClusters.nPhiWindow = 17
-createClusters.nEtaPosition = 5
-createClusters.nPhiPosition = 11
-createClusters.nEtaDuplicates = 7
-createClusters.nPhiDuplicates = 13
-createClusters.nEtaFinal = 9
-createClusters.nPhiFinal = 17
+# createClusters.towerTool = towers
+# createClusters.nEtaWindow = 9
+# createClusters.nPhiWindow = 17
+# createClusters.nEtaPosition = 5
+# createClusters.nPhiPosition = 11
+# createClusters.nEtaDuplicates = 7
+# createClusters.nPhiDuplicates = 13
+# createClusters.nEtaFinal = 9
+# createClusters.nPhiFinal = 17
 # Minimal energy to create a cluster in GeV (FCC-ee detectors have to
 # reconstruct low energy particles)
-createClusters.energyThreshold = 0.1
-createClusters.attachCells = True
-createClusters.clusters.Path = "CaloClusters"
-createClusters.clusterCells.Path = "CaloClusterCells"
-ApplicationMgr().TopAlg += [createClusters]
+# createClusters.energyThreshold = 0.1
+# createClusters.attachCells = True
+# createClusters.clusters.Path = "CaloClusters"
+# createClusters.clusterCells.Path = "CaloClusterCells"
+# ApplicationMgr().TopAlg += [createClusters]
 
 # Add position to the cells attached to the cluster
-createEcalBarrelPositionedCaloClusterCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCaloClusterCells")
-createEcalBarrelPositionedCaloClusterCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
-createEcalBarrelPositionedCaloClusterCells.hits.Path = "CaloClusterCells"
-createEcalBarrelPositionedCaloClusterCells.positionedHits.Path = "PositionedCaloClusterCells"
+# createEcalBarrelPositionedCaloClusterCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCaloClusterCells")
+# createEcalBarrelPositionedCaloClusterCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
+# createEcalBarrelPositionedCaloClusterCells.hits.Path = "CaloClusterCells"
+# createEcalBarrelPositionedCaloClusterCells.positionedHits.Path = "PositionedCaloClusterCells"
 
 # Dead material correction
-from Configurables import CorrectCaloClusters
-correctCaloClusters = CorrectCaloClusters("correctCaloClusters")
-correctCaloClusters.inClusters = createClusters.clusters.Path
-correctCaloClusters.outClusters = "Corrected"+createClusters.clusters.Path
-correctCaloClusters.numLayers = [12]
-correctCaloClusters.firstLayerIDs = [0]
-correctCaloClusters.lastLayerIDs = [11]
-correctCaloClusters.readoutNames = [ecalBarrelReadoutNamePhiEta]
-correctCaloClusters.upstreamParameters = [[0.09959407679400918,
-                                           -10.509139028589276,
-                                           -141.62311185316685,
-                                           2.8931723031040435,
-                                           -397.6783011336018,
-                                           -317.53288225142427]]
-correctCaloClusters.upstreamFormulas = [['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])']]
-correctCaloClusters.downstreamParameters = [[0.002296666086130359,
-                                             0.004644766599619741,
-                                             1.4031343062273582,
-                                             -1.8105436592714355,
-                                             -0.02976924247722723,
-                                             12.875501324136625]]
-correctCaloClusters.downstreamFormulas = [['[0]+[1]*x',
-                                           '[0]+[1]/sqrt(x)',
-                                           '[0]+[1]/x']]
-correctCaloClusters.OutputLevel = INFO
-ApplicationMgr().TopAlg += [correctCaloClusters]
+# from Configurables import CorrectCaloClusters
+# correctCaloClusters = CorrectCaloClusters("correctCaloClusters")
+# correctCaloClusters.inClusters = createClusters.clusters.Path
+# correctCaloClusters.outClusters = "Corrected"+createClusters.clusters.Path
+# correctCaloClusters.numLayers = [12]
+# correctCaloClusters.firstLayerIDs = [0]
+# correctCaloClusters.lastLayerIDs = [11]
+# correctCaloClusters.readoutNames = [ecalBarrelReadoutNamePhiEta]
+# correctCaloClusters.upstreamParameters = [[0.09959407679400918,
+#                                            -10.509139028589276,
+#                                            -141.62311185316685,
+#                                            2.8931723031040435,
+#                                            -397.6783011336018,
+#                                            -317.53288225142427]]
+# correctCaloClusters.upstreamFormulas = [['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])']]
+# correctCaloClusters.downstreamParameters = [[0.002296666086130359,
+#                                              0.004644766599619741,
+#                                              1.4031343062273582,
+#                                              -1.8105436592714355,
+#                                              -0.02976924247722723,
+#                                              12.875501324136625]]
+# correctCaloClusters.downstreamFormulas = [['[0]+[1]*x',
+#                                            '[0]+[1]/sqrt(x)',
+#                                            '[0]+[1]/x']]
+# correctCaloClusters.OutputLevel = INFO
+# ApplicationMgr().TopAlg += [correctCaloClusters]
 
 ################ Output
 from Configurables import PodioOutput
@@ -322,7 +327,8 @@ out = PodioOutput("out")
 # ]
 out.outputCommands = ["keep *"]
 import uuid
-out.filename = "output_fullCalo_SimAndDigi_" + uuid.uuid4().hex[:12] + ".root"
+# out.filename = "output_fullCalo_SimAndDigi_" + uuid.uuid4().hex[:12] + ".root"
+out.filename = "output_fullCalo_SimAndDigi.root"
 ApplicationMgr().TopAlg += [out]
 
 #CPU information
@@ -342,5 +348,5 @@ out.AuditExecute = True
 
 from Configurables import EventCounter
 event_counter = EventCounter('event_counter')
-event_counter.Frequency = 1
+event_counter.Frequency = 50
 ApplicationMgr().TopAlg += [event_counter]
