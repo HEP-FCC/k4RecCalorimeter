@@ -19,15 +19,15 @@ from Configurables import MomentumRangeParticleGun
 guntool = MomentumRangeParticleGun()
 # guntool.ThetaMin = 45 * pi / 180.
 # guntool.ThetaMax = 135 * pi / 180.
-guntool.ThetaMin = 85 * pi / 180.
-guntool.ThetaMax = 95 * pi / 180.
-# guntool.ThetaMin = 0.
-# guntool.ThetaMax = pi
+# guntool.ThetaMin = 85 * pi / 180.
+# guntool.ThetaMax = 95 * pi / 180.
+guntool.ThetaMin = 0.
+guntool.ThetaMax = pi
 guntool.PhiMin = 0.
 guntool.PhiMax = 2. * pi
 guntool.MomentumMin = 10. * GeV
 guntool.MomentumMax = 10. * GeV
-guntool.PdgCodes = [2212]  # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
+guntool.PdgCodes = [2112]  # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
 
 from Configurables import GenAlg
 gen = GenAlg()
