@@ -13,39 +13,13 @@ ApplicationMgr().ExtSvc += ['RndmGenSvc']
 from Configurables import FCCDataSvc
 ## Data service
 podioevent = FCCDataSvc("EventDataSvc")
+podioevent.input = "p8_ee_Zqq_ecm91.root"
+from Configurables import PodioInput
+podioinput = PodioInput("PodioReader",
+                        collections=["GenParticles"])
 ApplicationMgr().ExtSvc += [podioevent]
+ApplicationMgr().TopAlg += [podioinput]
 
-from Configurables import MomentumRangeParticleGun
-guntool = MomentumRangeParticleGun()
-# guntool.ThetaMin = 45 * pi / 180.
-# guntool.ThetaMax = 135 * pi / 180.
-# guntool.ThetaMin = 85 * pi / 180.
-# guntool.ThetaMax = 95 * pi / 180.
-guntool.ThetaMin = 0.
-guntool.ThetaMax = pi
-guntool.PhiMin = 0.
-guntool.PhiMax = 2. * pi
-guntool.MomentumMin = 2. * GeV
-guntool.MomentumMax = 2. * GeV
-guntool.PdgCodes = [2112]  # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
-
-from Configurables import GenAlg
-gen = GenAlg()
-gen.SignalProvider = guntool
-gen.hepmc.Path = "hepmc"
-# gen.OutputLevel = DEBUG
-ApplicationMgr().TopAlg += [gen]
-
-from Configurables import HepMCToEDMConverter
-# Reads an HepMC::GenEvent from the data service and writes a collection of
-# EDM Particles
-hepmc_converter = HepMCToEDMConverter("Converter")
-hepmc_converter.hepmc.Path = "hepmc"
-hepmc_converter.GenParticles.Path = "GenParticles"
-ApplicationMgr().TopAlg += [hepmc_converter]
-
-
-################## Simulation setup
 # Detector geometry
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc")
@@ -95,10 +69,9 @@ field.IntegratorStepper = "ClassicalRK4"
 
 # Detector readouts
 from Configurables import SimG4Alg
-from Configurables import SimG4SaveCalHits
-saveFluxTool = SimG4SaveCalHits("saveFluxHits")
+from Configurables import SimG4SaveFluxHits
+saveFluxTool = SimG4SaveFluxHits("saveFluxHits")
 saveFluxTool.readoutNames = ["FluxPhiTheta"]
-saveFluxTool.CaloHits.Path = "FluxPositionedHits"
 SimG4Alg("SimG4Alg").outputs += [saveFluxTool]
 
 # next, create the G4 algorithm, giving the list of names of tools ("XX/YY")
@@ -125,8 +98,6 @@ from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-gen.AuditExecute = True
-hepmc_converter.AuditExecute = True
 geantsim.AuditExecute = True
 out.AuditExecute = True
 
