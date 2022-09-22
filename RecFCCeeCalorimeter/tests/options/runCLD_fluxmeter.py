@@ -13,7 +13,7 @@ ApplicationMgr().ExtSvc += ['RndmGenSvc']
 from Configurables import FCCDataSvc
 ## Data service
 podioevent = FCCDataSvc("EventDataSvc")
-podioevent.input = "p8_ee_Zqq_ecm91.root"
+# podioevent.input = "/opt/data/gen/pythia8/p8_ee_Zqq_ecm91_1000_1.root"
 from Configurables import PodioInput
 podioinput = PodioInput("PodioReader",
                         collections=["GenParticles"])
@@ -49,7 +49,7 @@ geantservice.actions = "SimG4FullSimActions"
 # Mind that if you leave Gaudi handle random seed and some job start within the
 # same second (very likely) you will have duplicates
 geantservice.randomNumbersFromGaudi = False
-geantservice.seedValue = 42424
+# geantservice.seedValue = 42424
 # Range cut
 geantservice.g4PreInitCommands += ["/run/setCut 0.1 mm"]
 ApplicationMgr().ExtSvc += [geantservice]

@@ -7,8 +7,36 @@ import ROOT
 ROOT.gROOT.SetBatch(True)
 
 
-def main():
+class Detector:
+    def __init__(self, radius, z):
+        self.radius = radius
+        self.r = radius
+        self.z = z
+        self.n = 200
+        self.n_r = self.n
+        self.n_z = self.n * 2
+        self.n_phi = self.n
+        self.dr = self.r / self.n_r
+        self.dz = 2 * self.z / self.n_z
+        self.dphi = 2 * math.pi / self.n_phi
+        self.ds = self.r * self.dphi
+        self.seg_area = self.ds * self.dz / 100  #  cm
 
+        print('Fluxmeter:')
+        print('  - radius:   ', self.r, 'mm')
+        print('  - z:        ', self.z, 'mm')
+        print('  - n:        ', self.n)
+        print('  - n_r:      ', self.n_r)
+        print('  - n_z:      ', self.n_z)
+        print('  - n_phi:    ', self.n_phi)
+        print('  - dr:       ', self.dr, 'mm')
+        print('  - dz:       ', self.dz, 'mm')
+        print('  - dphi:     ', self.dphi)
+        print('  - ds:       ', self.ds, 'mm')
+        print('  - seg. area:', self.seg_area, 'cm')
+
+
+def main():
     parser = argparse.ArgumentParser(description='Yay, let\'s plot flux!')
 
     parser.add_argument('-i', '--input-file',
@@ -18,23 +46,45 @@ def main():
 
     args = parser.parse_args()
 
+    cld_solenoid_outer_radius = 4272  # mm
+    # world_side = 6100  # mm
+    world_side = 33000  # mm
+    fluxmeter_radius = cld_solenoid_outer_radius + 5  # mm
+    fluxmeter_z = world_side - 5  # mm
+    det = Detector(fluxmeter_radius, fluxmeter_z)
+
     infile = ROOT.TFile.Open(args.input_file)
     tree = infile.Get('events')
 
     canvas = ROOT.TCanvas()
+    hist_hits_z = ROOT.TH1D('hit_z',
+                            'Number of particles;z [mm];N',
+                            det.n_z, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_charged = ROOT.TH1D('hit_z_charged',
+                                    'Number of charged particles;z [mm];N',
+                                    det.n_z, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_neutrons = ROOT.TH1D('hit_z_neutrons',
+                                     'Number of neutrons;z [mm];N',
+                                     det.n_z, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_photons = ROOT.TH1D('hit_z_photons',
+                                     'Number of photons;z [mm];N',
+                                     det.n_z, -1.1*det.z, 1.1*det.z)
     hist_hits_z_r = ROOT.TH2D('hit_z_r',
                               'Number of particles;z [mm];r [mm];N',
-                              200, -6.5e3, 6.5e3, 200, 0., 7e3)
+                              det.n, -1.1*det.z, 1.1*det.z,
+                              det.n, 0., 1.1*det.r)
     hist_hits_x_y = ROOT.TH2D('hit_x_y',
                               'Number of particles;x [mm];y [mm];N',
-                              200, -7e3, 7e3, 200, -7e3, 7e3)
+                              200, -(1.1*det.r), 1.1*det.r,
+                              200, -(1.1*det.r), 1.1*det.r)
     hist_hits_x_y_pos = ROOT.TH2D('hit_x_y_pos',
                                   'Number of particles;x [mm];y [mm];N',
-                                  200, -7e3, 7e3, 200, -7e3, 7e3)
+                                  200, -(1.1*det.r), 1.1*det.r,
+                                  200, -(1.1*det.r), 1.1*det.r)
     hist_hits_z_phi = ROOT.TH2D('hit_z_phi',
                                 'Number of particles;z [mm];#phi;N',
-                                200, -6.5e3, 6.5e3,
-                                200, -(math.pi + 0.1), math.pi + 0.1)
+                                200, -(1.1*det.z), 1.1*det.z,
+                                200, -(1.1*math.pi), 1.1*math.pi)
     hist_hits_r = ROOT.TH1D('hit_r',
                             'Number of particles;r [mm];N',
                             200, 0., 0.)
@@ -56,6 +106,9 @@ def main():
     hist_hits_time = ROOT.TH1D('hits_time',
                                'Hit time;Time [ns];N',
                                200, 0, 0)
+    hist_particle_charge = ROOT.TH1D('particle_charge',
+                                     'particle charge;Charge;N',
+                                     200, 0, 0)
 
     hist_energy_pdgid = ROOT.TH2D(
         'energy_pdgid',
@@ -96,10 +149,22 @@ def main():
                                'Other particles PDG ID;PDG ID;N',
                                200, 0., 0.)
 
+    hist_fluence_z_phi = ROOT.TH2D(
+        'fluence_z_phi',
+        'Particle fluence;z [mm];#phi;Particle fluence [cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_fluence_x_y = ROOT.TH2D(
+        'fluence_x_y',
+        'Particle fluence;x [mm];y [mm];Particle fluence [cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+
     for i, event in enumerate(tree):
         if i % 100 == 0:
             print('event:', i)
-        for position in event.HitPosition:
+        for position, charge, pdgid, energy in zip(event.HitPosition,
+                                                   event.ParticleCharge,
+                                                   event.ParticlePDGID,
+                                                   event.ParticleEnergy):
             x = position[0]
             y = position[1]
             z = position[2]
@@ -110,11 +175,18 @@ def main():
 
             hist_hits_z_r.Fill(z, r)
             hist_hits_x_y.Fill(x, y)
-            if z > 0 and r < 5800:
+            if z > 0 and r < 0.99*det.r:
                 hist_hits_x_y_pos.Fill(x, y)
-            if abs(z) < 5300:
-                hist_hits_z_phi.Fill(z, phi)
             hist_hits_r.Fill(r)
+
+            if abs(z) < (det.z - det.dz):
+                hist_hits_z_phi.Fill(z, phi)
+                hist_hits_z.Fill(z)
+                if abs(charge) > 0:
+                    hist_hits_z_charged.Fill(z)
+                hist_fluence_z_phi.Fill(z, phi)
+            if abs(r) < (det.r - det.dr):
+                hist_fluence_x_y.Fill(x, y)
 
         for cellid in event.HitCellID:
             hist_cellid.Fill(cellid)
@@ -133,9 +205,6 @@ def main():
             hist_energy.Fill(energy)
 
         for energy, pdgid in zip(event.ParticleEnergy, event.ParticlePDGID):
-            # print('Energy: ', energy)
-            # print('PDG ID: ', pdgid)
-
             energy /= 1000.
 
             hist_energy_pdgid.Fill(energy, pdgid)
@@ -167,6 +236,9 @@ def main():
         for time in event.HitTime:
             hist_hits_time.Fill(time)
 
+        for charge in event.ParticleCharge:
+            hist_particle_charge.Fill(charge)
+
         # for hit in event.FluxPositionedHits:
         #     r = math.sqrt(math.pow(hit.position.x, 2) +
         #                   math.pow(hit.position.y, 2))
@@ -184,65 +256,80 @@ def main():
 #             hist_z_phi.Fill(hit.position.z, phi)
 #             hist_r.Fill(r)
 
+    hist_fluence_z_phi.Scale(1./det.seg_area);
+
     ROOT.gStyle.SetOptStat(111111)
 
     hist_hits_x_y.Draw('COLZ')
-    canvas.Print('hits_x_y.pdf')
+    canvas.Print('hits_x_y.png')
     hist_hits_x_y_pos.Draw('COLZ')
-    canvas.Print('hits_pos_x_y.pdf')
+    canvas.Print('hits_pos_x_y.png')
     hist_hits_z_r.Draw('COLZ')
-    canvas.Print('hits_z_r.pdf')
+    canvas.Print('hits_z_r.png')
+    hist_hits_z.Draw('')
+    canvas.Print('hits_z.png')
     hist_hits_z_phi.Draw('COLZ')
-    canvas.Print('hits_z_phi.pdf')
+    canvas.Print('hits_z_phi.png')
     hist_hits_r.Draw('')
-    canvas.Print('hits_r.pdf')
+    canvas.Print('hits_r.png')
     hist_cellid.Draw('')
-    canvas.Print('hits_cellid.pdf')
+    canvas.Print('hits_cellid.png')
     hist_trackid.Draw('')
-    canvas.Print('hits_trackid.pdf')
+    canvas.Print('hits_trackid.png')
     canvas.SetLogy(1)
     hist_pdgid.Draw('')
-    canvas.Print('hits_pdgid.pdf')
+    canvas.Print('hits_pdgid.png')
     canvas.SetLogy(0)
     hist_flux.Draw('')
-    canvas.Print('particle_flux.pdf')
+    canvas.Print('particle_flux.png')
     canvas.SetLogy(1)
     hist_energy.Draw('')
-    canvas.Print('particle_energy.pdf')
+    canvas.Print('particle_energy.png')
     canvas.SetLogy(0)
     hist_hits_time.Draw('')
-    canvas.Print('hits_time.pdf')
+    canvas.Print('hits_time.png')
+    hist_particle_charge.Draw('')
+    canvas.Print('particle_charge.png')
 
     # Energy vs PDG ID
 
     canvas.SetLogy(1)
 
     hist_energy_neutrinos.Draw('')
-    canvas.Print('particle_energy_neutrinos.pdf')
+    canvas.Print('particle_energy_neutrinos.png')
     hist_energy_photons.Draw('')
-    canvas.Print('particle_energy_photons.pdf')
+    canvas.Print('particle_energy_photons.png')
     hist_energy_neutrons.Draw('')
-    canvas.Print('particle_energy_neutrons.pdf')
+    canvas.Print('particle_energy_neutrons.png')
     hist_energy_protons.Draw('')
-    canvas.Print('particle_energy_protons.pdf')
+    canvas.Print('particle_energy_protons.png')
     hist_energy_electrons.Draw('')
-    canvas.Print('particle_energy_electrons.pdf')
+    canvas.Print('particle_energy_electrons.png')
     hist_energy_muons.Draw('')
-    canvas.Print('particle_energy_muons.pdf')
+    canvas.Print('particle_energy_muons.png')
     hist_energy_pions.Draw('')
-    canvas.Print('particle_energy_pions.pdf')
+    canvas.Print('particle_energy_pions.png')
     hist_energy_kaons.Draw('')
-    canvas.Print('particle_energy_kaons.pdf')
+    canvas.Print('particle_energy_kaons.png')
     hist_energy_deuterons.Draw('')
-    canvas.Print('particle_energy_deuterons.pdf')
+    canvas.Print('particle_energy_deuterons.png')
     hist_energy_other.Draw('')
-    canvas.Print('particle_energy_other.pdf')
+    canvas.Print('particle_energy_other.png')
     hist_pdg_other.Draw('')
-    canvas.Print('particle_pdg_other.pdf')
+    canvas.Print('particle_pdg_other.png')
 
     canvas.SetLogy(0)
     hist_energy_pdgid.Draw('COLZ')
-    canvas.Print('particle_energy_pdgid.pdf')
+    canvas.Print('particle_energy_pdgid.png')
+
+    # Flux
+    ROOT.gStyle.SetOptStat(0)
+    ROOT.gPad.SetRightMargin(0.13);
+    hist_fluence_z_phi.Draw('COLZ')
+    canvas.Print('fluence_z_phi.png')
+    hist_fluence_x_y.Draw('COLZ')
+    canvas.Print('fluence_x_y.png')
+
 
 if __name__ == '__main__':
     main()
