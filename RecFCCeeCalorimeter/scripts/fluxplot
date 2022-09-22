@@ -21,6 +21,7 @@ class Detector:
         self.dphi = 2 * math.pi / self.n_phi
         self.ds = self.r * self.dphi
         self.seg_area = self.ds * self.dz / 100  #  cm
+        self.endcap_seg_area = self.dr * self.dr / 100  #  cm
 
         print('Fluxmeter:')
         print('  - radius:   ', self.r, 'mm')
@@ -34,6 +35,7 @@ class Detector:
         print('  - dphi:     ', self.dphi)
         print('  - ds:       ', self.ds, 'mm')
         print('  - seg. area:', self.seg_area, 'cm')
+        print('  - seg. area:', self.endcap_seg_area, 'cm')
 
 
 def main():
@@ -59,16 +61,71 @@ def main():
     canvas = ROOT.TCanvas()
     hist_hits_z = ROOT.TH1D('hit_z',
                             'Number of particles;z [mm];N',
-                            det.n_z, -1.1*det.z, 1.1*det.z)
+                            100, -1.1*det.z, 1.1*det.z)
     hist_hits_z_charged = ROOT.TH1D('hit_z_charged',
                                     'Number of charged particles;z [mm];N',
-                                    det.n_z, -1.1*det.z, 1.1*det.z)
+                                    100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_no_neutrinos = ROOT.TH1D(
+        'hit_z_no_neutrinos',
+        'Number of particles (no neutrinos);z [mm];N',
+        100, -1.1*det.z, 1.1*det.z)
     hist_hits_z_neutrons = ROOT.TH1D('hit_z_neutrons',
                                      'Number of neutrons;z [mm];N',
-                                     det.n_z, -1.1*det.z, 1.1*det.z)
+                                     100, -1.1*det.z, 1.1*det.z)
     hist_hits_z_photons = ROOT.TH1D('hit_z_photons',
                                      'Number of photons;z [mm];N',
-                                     det.n_z, -1.1*det.z, 1.1*det.z)
+                                     100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_electrons = ROOT.TH1D('hit_z_electrons',
+                                      'Number of electrons;z [mm];N',
+                                      100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_energy = ROOT.TH1D(
+        'hit_z_energy',
+        '#Sigma Kin. Energy of all particles;z [mm];#Sigma E_{k} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_energy_charged = ROOT.TH1D(
+        'hit_z_energy_charged',
+        '#Sigma Kin. Energy of charged particles;z [mm];#Sigma E_{k} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_energy_no_neutrinos = ROOT.TH1D(
+        'hit_z_energy_no_neutrinos',
+        '#Sigma Kin. Energy of particles (no neutrinos);z [mm];#Sigma E_{k} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_energy_neutrons = ROOT.TH1D(
+        'hit_z_energy_neutrons',
+        '#Sigma Kin. Energy of neutrons;z [mm];#Sigma E_{k} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_energy_photons = ROOT.TH1D(
+        'hit_z_energy_photons',
+        '#Sigma Kin. Energy of photons;z [mm];#Sigma E_{k} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_energy_electrons = ROOT.TH1D(
+        'hit_z_energy_electrons',
+        '#Sigma Kin. Energy of electrons;z [mm];#Sigma E_{k} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_total_energy = ROOT.TH1D(
+        'hit_z_total_energy',
+        '#Sigma Total Energy of all particles;z [mm];#Sigma E_{tot} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_total_energy_charged = ROOT.TH1D(
+        'hit_z_total_energy_charged',
+        '#Sigma Total Energy of charged particles;z [mm];#Sigma E_{tot} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_total_energy_no_neutrinos = ROOT.TH1D(
+        'hit_z_total_energy_no_neutrinos',
+        '#Sigma Total Energy of particles (no neutrinos);z [mm];#Sigma E_{tot} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_total_energy_neutrons = ROOT.TH1D(
+        'hit_z_total_energy_neutrons',
+        '#Sigma Total Energy of neutrons;z [mm];#Sigma E_{tot} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_total_energy_photons = ROOT.TH1D(
+        'hit_z_total_energy_photons',
+        '#Sigma Total Energy of photons;z [mm];#Sigma E_{tot} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
+    hist_hits_z_total_energy_electrons = ROOT.TH1D(
+        'hit_z_total_energy_electrons',
+        '#Sigma Total Energy of electrons;z [mm];#Sigma E_{tot} [GeV]',
+        100, -1.1*det.z, 1.1*det.z)
     hist_hits_z_r = ROOT.TH2D('hit_z_r',
                               'Number of particles;z [mm];r [mm];N',
                               det.n, -1.1*det.z, 1.1*det.z,
@@ -112,38 +169,73 @@ def main():
 
     hist_energy_pdgid = ROOT.TH2D(
         'energy_pdgid',
-        'Particle energy vs. PDG ID;E [GeV];PDG ID;N',
+        'Particle Kin. energy vs. PDG ID;E [GeV];PDG ID;N',
         200, 0., 0., 200, 0., 0.)
 
     hist_energy_neutrinos = ROOT.TH1D('energy_neutrinos',
-                                      'Neutrino energy;E [GeV];N',
+                                      'Neutrino Kin. energy;E [GeV];N',
                                       200, 0., 0.)
     hist_energy_photons = ROOT.TH1D('energy_photons',
-                                    'Photon energy;E [GeV];N',
+                                    'Photon Kin. energy;E [GeV];N',
                                     200, 0., 0.)
     hist_energy_neutrons = ROOT.TH1D('energy_neutrons',
-                                     'Neutrons energy;E [GeV];N',
+                                     'Neutrons Kin. energy;E [GeV];N',
                                      200, 0., 0.)
     hist_energy_protons = ROOT.TH1D('energy_protons',
-                                    'Proton energy;E [GeV];N',
+                                    'Proton Kin. energy;E [GeV];N',
                                     200, 0., 0.)
     hist_energy_electrons = ROOT.TH1D('energy_electrons',
-                                      'Electron energy;E [GeV];N',
+                                      'Electron Kin. energy;E [GeV];N',
                                       200, 0., 0.)
     hist_energy_muons = ROOT.TH1D('energy_muons',
-                                  'Muon energy;E [GeV];N',
+                                  'Muon Kin. energy;E [GeV];N',
                                   200, 0., 0.)
     hist_energy_pions = ROOT.TH1D('energy_pions',
-                                  'Pion energy;E [GeV];N',
+                                  'Pion Kin. energy;E [GeV];N',
                                   200, 0., 0.)
     hist_energy_kaons = ROOT.TH1D('energy_kaons',
-                                  'Kaon energy;E [GeV];N',
+                                  'Kaon Kin. energy;E [GeV];N',
                                   200, 0., 0.)
     hist_energy_deuterons = ROOT.TH1D('energy_deuterons',
-                                      'Deuteron energy;E [GeV];N',
+                                      'Deuteron Kin. energy;E [GeV];N',
                                       200, 0., 0.)
     hist_energy_other = ROOT.TH1D('energy_other',
-                                  'Other particles energy;E [GeV];N',
+                                  'Other particles Kin. energy;E [GeV];N',
+                                  200, 0., 0.)
+    hist_total_energy_pdgid = ROOT.TH2D(
+        'total_energy_pdgid',
+        'Particle Total energy vs. PDG ID;E [GeV];PDG ID;N',
+        200, 0., 0., 200, 0., 0.)
+
+    hist_total_energy_neutrinos = ROOT.TH1D('total_energy_neutrinos',
+                                      'Neutrino Total energy;E [GeV];N',
+                                      200, 0., 0.)
+    hist_total_energy_photons = ROOT.TH1D('total_energy_photons',
+                                    'Photon Total energy;E [GeV];N',
+                                    200, 0., 0.)
+    hist_total_energy_neutrons = ROOT.TH1D('total_energy_neutrons',
+                                     'Neutrons Total energy;E [GeV];N',
+                                     200, 0., 0.)
+    hist_total_energy_protons = ROOT.TH1D('total_energy_protons',
+                                    'Proton Total energy;E [GeV];N',
+                                    200, 0., 0.)
+    hist_total_energy_electrons = ROOT.TH1D('total_energy_electrons',
+                                      'Electron Total energy;E [GeV];N',
+                                      200, 0., 0.)
+    hist_total_energy_muons = ROOT.TH1D('total_energy_muons',
+                                  'Muon Total energy;E [GeV];N',
+                                  200, 0., 0.)
+    hist_total_energy_pions = ROOT.TH1D('total_energy_pions',
+                                  'Pion Total energy;E [GeV];N',
+                                  200, 0., 0.)
+    hist_total_energy_kaons = ROOT.TH1D('total_energy_kaons',
+                                  'Kaon Total energy;E [GeV];N',
+                                  200, 0., 0.)
+    hist_total_energy_deuterons = ROOT.TH1D('total_energy_deuterons',
+                                      'Deuteron Total energy;E [GeV];N',
+                                      200, 0., 0.)
+    hist_total_energy_other = ROOT.TH1D('total_energy_other',
+                                  'Other particles Total energy;E [GeV];N',
                                   200, 0., 0.)
     hist_pdg_other = ROOT.TH1D('pdgid_other',
                                'Other particles PDG ID;PDG ID;N',
@@ -157,14 +249,55 @@ def main():
         'fluence_x_y',
         'Particle fluence;x [mm];y [mm];Particle fluence [cm^{-2}]',
         det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_fluence_z_phi_charged = ROOT.TH2D(
+        'fluence_z_phi_charged',
+        'Charged particle fluence;z [mm];#phi;Particle fluence [cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_fluence_x_y_charged = ROOT.TH2D(
+        'fluence_x_y_charged',
+        'Charged particle fluence;x [mm];y [mm];Particle fluence [cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_fluence_z_phi_no_neutrinos = ROOT.TH2D(
+        'fluence_z_phi_no_neutrinos',
+        'Particle fluence (no neutrinos);z [mm];#phi;Particle fluence [cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_fluence_x_y_no_neutrinos = ROOT.TH2D(
+        'fluence_x_y_no_neutrinos',
+        'Particle fluence (no neutrinos);x [mm];y [mm];Particle fluence [cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_energy_fluence_z_phi = ROOT.TH2D(
+        'energy_fluence_z_phi',
+        'Energy fluence;z [mm];#phi;Energy fluence [GeV cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_energy_fluence_x_y = ROOT.TH2D(
+        'energy_fluence_x_y',
+        'Energy fluence;x [mm];y [mm];Energy fluence [GeV cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_energy_fluence_z_phi_charged = ROOT.TH2D(
+        'energy_fluence_z_phi_charged',
+        'Charged particle energy fluence;z [mm];#phi;Energy fluence [GeV cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_energy_fluence_x_y_charged = ROOT.TH2D(
+        'energy_fluence_x_y_charged',
+        'Charged particle energy fluence;x [mm];y [mm];Energy fluence [GeV cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_energy_fluence_z_phi_no_neutrinos = ROOT.TH2D(
+        'energy_fluence_z_phi_no_neutrinos',
+        'Energy fluence (no neutrinos);z [mm];#phi;Energy fluence [GeV cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_energy_fluence_x_y_no_neutrinos = ROOT.TH2D(
+        'energy_fluence_x_y_no_neutrinos',
+        'Energy fluence (no neutrinos);x [mm];y [mm];Energy fluence [GeV cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
 
     for i, event in enumerate(tree):
         if i % 100 == 0:
             print('event:', i)
-        for position, charge, pdgid, energy in zip(event.HitPosition,
-                                                   event.ParticleCharge,
-                                                   event.ParticlePDGID,
-                                                   event.ParticleEnergy):
+        for position, charge, pdgid, energy, total_energy in zip(event.HitPosition,
+                                                                 event.ParticleCharge,
+                                                                 event.ParticlePDGID,
+                                                                 event.ParticleEnergy,
+                                                                 event.ParticleTotalEnergy):
             x = position[0]
             y = position[1]
             z = position[2]
@@ -175,18 +308,50 @@ def main():
 
             hist_hits_z_r.Fill(z, r)
             hist_hits_x_y.Fill(x, y)
-            if z > 0 and r < 0.99*det.r:
+            if z > 0 and r < (det.r - det.dr):
                 hist_hits_x_y_pos.Fill(x, y)
             hist_hits_r.Fill(r)
 
             if abs(z) < (det.z - det.dz):
                 hist_hits_z_phi.Fill(z, phi)
                 hist_hits_z.Fill(z)
+                hist_hits_z_energy.Fill(z, energy)
+                hist_hits_z_total_energy.Fill(z, total_energy)
+                hist_fluence_z_phi.Fill(z, phi)
+                hist_energy_fluence_z_phi.Fill(z, phi, energy)
                 if abs(charge) > 0:
                     hist_hits_z_charged.Fill(z)
-                hist_fluence_z_phi.Fill(z, phi)
+                    hist_hits_z_energy_charged.Fill(z, energy)
+                    hist_hits_z_total_energy_charged.Fill(z, total_energy)
+                    hist_fluence_z_phi_charged.Fill(z, phi)
+                    hist_energy_fluence_z_phi_charged.Fill(z, phi, energy)
+                if abs(pdgid) != 12 and abs(pdgid) != 14 and abs(pdgid) != 16:
+                    hist_hits_z_no_neutrinos.Fill(z)
+                    hist_hits_z_energy_no_neutrinos.Fill(z, energy)
+                    hist_hits_z_total_energy_no_neutrinos.Fill(z, total_energy)
+                    hist_fluence_z_phi_no_neutrinos.Fill(z, phi)
+                    hist_energy_fluence_z_phi_no_neutrinos.Fill(z, phi, energy)
+                if abs(pdgid) == 2112:
+                    hist_hits_z_neutrons.Fill(z)
+                    hist_hits_z_energy_neutrons.Fill(z, energy)
+                    hist_hits_z_total_energy_neutrons.Fill(z, total_energy)
+                if abs(pdgid) == 22:
+                    hist_hits_z_photons.Fill(z)
+                    hist_hits_z_energy_photons.Fill(z, energy)
+                    hist_hits_z_total_energy_photons.Fill(z, total_energy)
+                if abs(pdgid) == 11:
+                    hist_hits_z_electrons.Fill(z)
+                    hist_hits_z_energy_electrons.Fill(z, energy)
+                    hist_hits_z_total_energy_electrons.Fill(z, total_energy)
             if abs(r) < (det.r - det.dr):
                 hist_fluence_x_y.Fill(x, y)
+                hist_energy_fluence_x_y.Fill(x, y, energy)
+                if abs(charge) > 0:
+                    hist_fluence_x_y_charged.Fill(x, y)
+                    hist_energy_fluence_x_y_charged.Fill(x, y, energy)
+                if abs(pdgid) != 12 and abs(pdgid) != 14 and abs(pdgid) != 16:
+                    hist_fluence_x_y_no_neutrinos.Fill(x, y)
+                    hist_energy_fluence_x_y_no_neutrinos.Fill(x, y, energy)
 
         for cellid in event.HitCellID:
             hist_cellid.Fill(cellid)
@@ -201,34 +366,44 @@ def main():
             hist_flux.Fill(flux)
 
         for energy in event.ParticleEnergy:
-            energy /= 1000.
             hist_energy.Fill(energy)
 
-        for energy, pdgid in zip(event.ParticleEnergy, event.ParticlePDGID):
-            energy /= 1000.
-
+        for energy, total_energy, pdgid in zip(event.ParticleEnergy,
+                                               event.ParticleTotalEnergy,
+                                               event.ParticlePDGID):
             hist_energy_pdgid.Fill(energy, pdgid)
+            hist_total_energy_pdgid.Fill(energy, pdgid)
 
             if abs(pdgid) == 12 or abs(pdgid) == 14 or abs(pdgid) == 16:
                 hist_energy_neutrinos.Fill(energy)
+                hist_total_energy_neutrinos.Fill(energy)
             elif abs(pdgid) == 22:
                 hist_energy_photons.Fill(energy)
+                hist_total_energy_photons.Fill(energy)
             elif abs(pdgid) == 11:
                 hist_energy_electrons.Fill(energy)
+                hist_total_energy_electrons.Fill(energy)
             elif abs(pdgid) == 13:
                 hist_energy_muons.Fill(energy)
+                hist_total_energy_muons.Fill(energy)
             elif abs(pdgid) == 2212:
                 hist_energy_protons.Fill(energy)
+                hist_total_energy_protons.Fill(energy)
             elif abs(pdgid) == 2112:
                 hist_energy_neutrons.Fill(energy)
+                hist_total_energy_neutrons.Fill(energy)
             elif abs(pdgid) == 211:
                 hist_energy_pions.Fill(energy)
-            elif abs(pdgid) == 130 or abs(pdgid) == 321:
+                hist_total_energy_pions.Fill(energy)
+            elif abs(pdgid) == 130 or abs(pdgid) == 321 or abs(pdgid) == 310:
                 hist_energy_kaons.Fill(energy)
+                hist_total_energy_kaons.Fill(energy)
             elif abs(pdgid) == 1000010020:
                 hist_energy_deuterons.Fill(energy)
+                hist_total_energy_deuterons.Fill(energy)
             else:
                 hist_energy_other.Fill(energy)
+                hist_total_energy_other.Fill(energy)
                 hist_pdg_other.Fill(pdgid)
                 print('PDG ID: ', pdgid)
                 print('Energy: ', energy)
@@ -257,6 +432,20 @@ def main():
 #             hist_r.Fill(r)
 
     hist_fluence_z_phi.Scale(1./det.seg_area);
+    hist_fluence_z_phi_charged.Scale(1./det.seg_area);
+    hist_fluence_z_phi_no_neutrinos.Scale(1./det.seg_area);
+
+    hist_fluence_x_y.Scale(1./det.endcap_seg_area);
+    hist_fluence_x_y_charged.Scale(1./det.endcap_seg_area);
+    hist_fluence_x_y_no_neutrinos.Scale(1./det.endcap_seg_area);
+
+    hist_energy_fluence_z_phi.Scale(1./det.seg_area);
+    hist_energy_fluence_z_phi_charged.Scale(1./det.seg_area);
+    hist_energy_fluence_z_phi_no_neutrinos.Scale(1./det.seg_area);
+
+    hist_energy_fluence_x_y.Scale(1./det.endcap_seg_area);
+    hist_energy_fluence_x_y_charged.Scale(1./det.endcap_seg_area);
+    hist_energy_fluence_x_y_no_neutrinos.Scale(1./det.endcap_seg_area);
 
     ROOT.gStyle.SetOptStat(111111)
 
@@ -268,6 +457,40 @@ def main():
     canvas.Print('hits_z_r.png')
     hist_hits_z.Draw('')
     canvas.Print('hits_z.png')
+    hist_hits_z_charged.Draw('')
+    canvas.Print('hits_z_charged.png')
+    hist_hits_z_no_neutrinos.Draw('')
+    canvas.Print('hits_z_no_neutrinos.png')
+    hist_hits_z_neutrons.Draw('')
+    canvas.Print('hits_z_neutrons.png')
+    hist_hits_z_photons.Draw('')
+    canvas.Print('hits_z_photons.png')
+    hist_hits_z_electrons.Draw('')
+    canvas.Print('hits_z_electrons.png')
+    hist_hits_z_energy.Draw('L')
+    canvas.Print('hits_z_energy.png')
+    hist_hits_z_energy_charged.Draw('L')
+    canvas.Print('hits_z_energy_charged.png')
+    hist_hits_z_energy_no_neutrinos.Draw('L')
+    canvas.Print('hits_z_energy_no_neutrinos.png')
+    hist_hits_z_energy_neutrons.Draw('L')
+    canvas.Print('hits_z_energy_neutrons.png')
+    hist_hits_z_energy_photons.Draw('L')
+    canvas.Print('hits_z_energy_photons.png')
+    hist_hits_z_energy_electrons.Draw('L')
+    canvas.Print('hits_z_energy_electrons.png')
+    hist_hits_z_total_energy.Draw('L')
+    canvas.Print('hits_z_total_energy.png')
+    hist_hits_z_total_energy_charged.Draw('L')
+    canvas.Print('hits_z_total_energy_charged.png')
+    hist_hits_z_total_energy_no_neutrinos.Draw('L')
+    canvas.Print('hits_z_total_energy_no_neutrinos.png')
+    hist_hits_z_total_energy_neutrons.Draw('L')
+    canvas.Print('hits_z_total_energy_neutrons.png')
+    hist_hits_z_total_energy_photons.Draw('L')
+    canvas.Print('hits_z_total_energy_photons.png')
+    hist_hits_z_total_energy_electrons.Draw('L')
+    canvas.Print('hits_z_total_energy_electrons.png')
     hist_hits_z_phi.Draw('COLZ')
     canvas.Print('hits_z_phi.png')
     hist_hits_r.Draw('')
@@ -318,18 +541,59 @@ def main():
     hist_pdg_other.Draw('')
     canvas.Print('particle_pdg_other.png')
 
+    hist_total_energy_neutrinos.Draw('')
+    canvas.Print('particle_total_energy_neutrinos.png')
+    hist_total_energy_photons.Draw('')
+    canvas.Print('particle_total_energy_photons.png')
+    hist_total_energy_neutrons.Draw('')
+    canvas.Print('particle_total_energy_neutrons.png')
+    hist_total_energy_protons.Draw('')
+    canvas.Print('particle_total_energy_protons.png')
+    hist_total_energy_electrons.Draw('')
+    canvas.Print('particle_total_energy_electrons.png')
+    hist_total_energy_muons.Draw('')
+    canvas.Print('particle_total_energy_muons.png')
+    hist_total_energy_pions.Draw('')
+    canvas.Print('particle_total_energy_pions.png')
+    hist_total_energy_kaons.Draw('')
+    canvas.Print('particle_total_energy_kaons.png')
+    hist_total_energy_deuterons.Draw('')
+    canvas.Print('particle_total_energy_deuterons.png')
+    hist_total_energy_other.Draw('')
+    canvas.Print('particle_total_energy_other.png')
+
     canvas.SetLogy(0)
     hist_energy_pdgid.Draw('COLZ')
     canvas.Print('particle_energy_pdgid.png')
 
-    # Flux
+    # Fluence
     ROOT.gStyle.SetOptStat(0)
     ROOT.gPad.SetRightMargin(0.13);
     hist_fluence_z_phi.Draw('COLZ')
     canvas.Print('fluence_z_phi.png')
     hist_fluence_x_y.Draw('COLZ')
     canvas.Print('fluence_x_y.png')
+    hist_fluence_z_phi_charged.Draw('COLZ')
+    canvas.Print('fluence_z_phi_charged.png')
+    hist_fluence_x_y_charged.Draw('COLZ')
+    canvas.Print('fluence_x_y_charged.png')
+    hist_fluence_z_phi_no_neutrinos.Draw('COLZ')
+    canvas.Print('fluence_z_phi_no_neutrinos.png')
+    hist_fluence_x_y_no_neutrinos.Draw('COLZ')
+    canvas.Print('fluence_x_y_no_neutrinos.png')
 
+    hist_energy_fluence_z_phi.Draw('COLZ')
+    canvas.Print('energy_fluence_z_phi.png')
+    hist_energy_fluence_x_y.Draw('COLZ')
+    canvas.Print('energy_fluence_x_y.png')
+    hist_energy_fluence_z_phi_charged.Draw('COLZ')
+    canvas.Print('energy_fluence_z_phi_charged.png')
+    hist_energy_fluence_x_y_charged.Draw('COLZ')
+    canvas.Print('energy_fluence_x_y_charged.png')
+    hist_energy_fluence_z_phi_no_neutrinos.Draw('COLZ')
+    canvas.Print('energy_fluence_z_phi_no_neutrinos.png')
+    hist_energy_fluence_x_y_no_neutrinos.Draw('COLZ')
+    canvas.Print('energy_fluence_x_y_no_neutrinos.png')
 
 if __name__ == '__main__':
     main()
