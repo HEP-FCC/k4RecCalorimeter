@@ -265,6 +265,15 @@ def main():
         'fluence_x_y_no_neutrinos',
         'Particle fluence (no neutrinos);x [mm];y [mm];Particle fluence [cm^{-2}]',
         det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_fluence_z_phi_neutrons = ROOT.TH2D(
+        'fluence_z_phi_neutrons',
+        'Neutron fluence;z [mm];#phi;Particle fluence [cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_fluence_x_y_neutrons = ROOT.TH2D(
+        'fluence_x_y_neutrons',
+        'Neutron fluence;x [mm];y [mm];Particle fluence [cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+
     hist_energy_fluence_z_phi = ROOT.TH2D(
         'energy_fluence_z_phi',
         'Energy fluence;z [mm];#phi;Energy fluence [GeV cm^{-2}]',
@@ -288,6 +297,14 @@ def main():
     hist_energy_fluence_x_y_no_neutrinos = ROOT.TH2D(
         'energy_fluence_x_y_no_neutrinos',
         'Energy fluence (no neutrinos);x [mm];y [mm];Energy fluence [GeV cm^{-2}]',
+        det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
+    hist_energy_fluence_z_phi_neutrons = ROOT.TH2D(
+        'energy_fluence_z_phi_neutrons',
+        'Energy fluence (neutrons);z [mm];#phi;Energy fluence [GeV cm^{-2}]',
+        det.n_z, -det.z, det.z, det.n_phi, -math.pi, math.pi)
+    hist_energy_fluence_x_y_neutrons = ROOT.TH2D(
+        'energy_fluence_x_y_neutrons',
+        'Energy fluence (neutrons);x [mm];y [mm];Energy fluence [GeV cm^{-2}]',
         det.n_r, -det.r, det.r, det.n_r, -det.r, det.r)
 
     for i, event in enumerate(tree):
@@ -335,6 +352,8 @@ def main():
                     hist_hits_z_neutrons.Fill(z)
                     hist_hits_z_energy_neutrons.Fill(z, energy)
                     hist_hits_z_total_energy_neutrons.Fill(z, total_energy)
+                    hist_fluence_z_phi_neutrons.Fill(z, phi)
+                    hist_energy_fluence_z_phi_neutrons.Fill(z, phi, energy)
                 if abs(pdgid) == 22:
                     hist_hits_z_photons.Fill(z)
                     hist_hits_z_energy_photons.Fill(z, energy)
@@ -352,6 +371,9 @@ def main():
                 if abs(pdgid) != 12 and abs(pdgid) != 14 and abs(pdgid) != 16:
                     hist_fluence_x_y_no_neutrinos.Fill(x, y)
                     hist_energy_fluence_x_y_no_neutrinos.Fill(x, y, energy)
+                if abs(pdgid) == 2112:
+                    hist_fluence_x_y_neutrons.Fill(x, y)
+                    hist_energy_fluence_x_y_neutrons.Fill(x, y, energy)
 
         for cellid in event.HitCellID:
             hist_cellid.Fill(cellid)
@@ -434,166 +456,178 @@ def main():
     hist_fluence_z_phi.Scale(1./det.seg_area);
     hist_fluence_z_phi_charged.Scale(1./det.seg_area);
     hist_fluence_z_phi_no_neutrinos.Scale(1./det.seg_area);
+    hist_fluence_z_phi_neutrons.Scale(1./det.seg_area);
 
     hist_fluence_x_y.Scale(1./det.endcap_seg_area);
     hist_fluence_x_y_charged.Scale(1./det.endcap_seg_area);
     hist_fluence_x_y_no_neutrinos.Scale(1./det.endcap_seg_area);
+    hist_fluence_x_y_neutrons.Scale(1./det.endcap_seg_area);
 
     hist_energy_fluence_z_phi.Scale(1./det.seg_area);
     hist_energy_fluence_z_phi_charged.Scale(1./det.seg_area);
     hist_energy_fluence_z_phi_no_neutrinos.Scale(1./det.seg_area);
+    hist_energy_fluence_z_phi_neutrons.Scale(1./det.seg_area);
 
     hist_energy_fluence_x_y.Scale(1./det.endcap_seg_area);
     hist_energy_fluence_x_y_charged.Scale(1./det.endcap_seg_area);
     hist_energy_fluence_x_y_no_neutrinos.Scale(1./det.endcap_seg_area);
+    hist_energy_fluence_x_y_neutrons.Scale(1./det.endcap_seg_area);
 
     ROOT.gStyle.SetOptStat(111111)
 
     hist_hits_x_y.Draw('COLZ')
-    canvas.Print('hits_x_y.png')
+    canvas.Print('hits_x_y.pdf')
     hist_hits_x_y_pos.Draw('COLZ')
-    canvas.Print('hits_pos_x_y.png')
+    canvas.Print('hits_pos_x_y.pdf')
     hist_hits_z_r.Draw('COLZ')
-    canvas.Print('hits_z_r.png')
+    canvas.Print('hits_z_r.pdf')
     hist_hits_z.Draw('')
-    canvas.Print('hits_z.png')
+    canvas.Print('hits_z.pdf')
     hist_hits_z_charged.Draw('')
-    canvas.Print('hits_z_charged.png')
+    canvas.Print('hits_z_charged.pdf')
     hist_hits_z_no_neutrinos.Draw('')
-    canvas.Print('hits_z_no_neutrinos.png')
+    canvas.Print('hits_z_no_neutrinos.pdf')
     hist_hits_z_neutrons.Draw('')
-    canvas.Print('hits_z_neutrons.png')
+    canvas.Print('hits_z_neutrons.pdf')
     hist_hits_z_photons.Draw('')
-    canvas.Print('hits_z_photons.png')
+    canvas.Print('hits_z_photons.pdf')
     hist_hits_z_electrons.Draw('')
-    canvas.Print('hits_z_electrons.png')
+    canvas.Print('hits_z_electrons.pdf')
     hist_hits_z_energy.Draw('L')
-    canvas.Print('hits_z_energy.png')
+    canvas.Print('hits_z_energy.pdf')
     hist_hits_z_energy_charged.Draw('L')
-    canvas.Print('hits_z_energy_charged.png')
+    canvas.Print('hits_z_energy_charged.pdf')
     hist_hits_z_energy_no_neutrinos.Draw('L')
-    canvas.Print('hits_z_energy_no_neutrinos.png')
+    canvas.Print('hits_z_energy_no_neutrinos.pdf')
     hist_hits_z_energy_neutrons.Draw('L')
-    canvas.Print('hits_z_energy_neutrons.png')
+    canvas.Print('hits_z_energy_neutrons.pdf')
     hist_hits_z_energy_photons.Draw('L')
-    canvas.Print('hits_z_energy_photons.png')
+    canvas.Print('hits_z_energy_photons.pdf')
     hist_hits_z_energy_electrons.Draw('L')
-    canvas.Print('hits_z_energy_electrons.png')
+    canvas.Print('hits_z_energy_electrons.pdf')
     hist_hits_z_total_energy.Draw('L')
-    canvas.Print('hits_z_total_energy.png')
+    canvas.Print('hits_z_total_energy.pdf')
     hist_hits_z_total_energy_charged.Draw('L')
-    canvas.Print('hits_z_total_energy_charged.png')
+    canvas.Print('hits_z_total_energy_charged.pdf')
     hist_hits_z_total_energy_no_neutrinos.Draw('L')
-    canvas.Print('hits_z_total_energy_no_neutrinos.png')
+    canvas.Print('hits_z_total_energy_no_neutrinos.pdf')
     hist_hits_z_total_energy_neutrons.Draw('L')
-    canvas.Print('hits_z_total_energy_neutrons.png')
+    canvas.Print('hits_z_total_energy_neutrons.pdf')
     hist_hits_z_total_energy_photons.Draw('L')
-    canvas.Print('hits_z_total_energy_photons.png')
+    canvas.Print('hits_z_total_energy_photons.pdf')
     hist_hits_z_total_energy_electrons.Draw('L')
-    canvas.Print('hits_z_total_energy_electrons.png')
+    canvas.Print('hits_z_total_energy_electrons.pdf')
     hist_hits_z_phi.Draw('COLZ')
-    canvas.Print('hits_z_phi.png')
+    canvas.Print('hits_z_phi.pdf')
     hist_hits_r.Draw('')
-    canvas.Print('hits_r.png')
+    canvas.Print('hits_r.pdf')
     hist_cellid.Draw('')
-    canvas.Print('hits_cellid.png')
+    canvas.Print('hits_cellid.pdf')
     hist_trackid.Draw('')
-    canvas.Print('hits_trackid.png')
+    canvas.Print('hits_trackid.pdf')
     canvas.SetLogy(1)
     hist_pdgid.Draw('')
-    canvas.Print('hits_pdgid.png')
+    canvas.Print('hits_pdgid.pdf')
     canvas.SetLogy(0)
     hist_flux.Draw('')
-    canvas.Print('particle_flux.png')
+    canvas.Print('particle_flux.pdf')
     canvas.SetLogy(1)
     hist_energy.Draw('')
-    canvas.Print('particle_energy.png')
+    canvas.Print('particle_energy.pdf')
     canvas.SetLogy(0)
     hist_hits_time.Draw('')
-    canvas.Print('hits_time.png')
+    canvas.Print('hits_time.pdf')
     hist_particle_charge.Draw('')
-    canvas.Print('particle_charge.png')
+    canvas.Print('particle_charge.pdf')
 
     # Energy vs PDG ID
 
     canvas.SetLogy(1)
 
     hist_energy_neutrinos.Draw('')
-    canvas.Print('particle_energy_neutrinos.png')
+    canvas.Print('particle_energy_neutrinos.pdf')
     hist_energy_photons.Draw('')
-    canvas.Print('particle_energy_photons.png')
+    canvas.Print('particle_energy_photons.pdf')
     hist_energy_neutrons.Draw('')
-    canvas.Print('particle_energy_neutrons.png')
+    canvas.Print('particle_energy_neutrons.pdf')
     hist_energy_protons.Draw('')
-    canvas.Print('particle_energy_protons.png')
+    canvas.Print('particle_energy_protons.pdf')
     hist_energy_electrons.Draw('')
-    canvas.Print('particle_energy_electrons.png')
+    canvas.Print('particle_energy_electrons.pdf')
     hist_energy_muons.Draw('')
-    canvas.Print('particle_energy_muons.png')
+    canvas.Print('particle_energy_muons.pdf')
     hist_energy_pions.Draw('')
-    canvas.Print('particle_energy_pions.png')
+    canvas.Print('particle_energy_pions.pdf')
     hist_energy_kaons.Draw('')
-    canvas.Print('particle_energy_kaons.png')
+    canvas.Print('particle_energy_kaons.pdf')
     hist_energy_deuterons.Draw('')
-    canvas.Print('particle_energy_deuterons.png')
+    canvas.Print('particle_energy_deuterons.pdf')
     hist_energy_other.Draw('')
-    canvas.Print('particle_energy_other.png')
+    canvas.Print('particle_energy_other.pdf')
     hist_pdg_other.Draw('')
-    canvas.Print('particle_pdg_other.png')
+    canvas.Print('particle_pdg_other.pdf')
 
     hist_total_energy_neutrinos.Draw('')
-    canvas.Print('particle_total_energy_neutrinos.png')
+    canvas.Print('particle_total_energy_neutrinos.pdf')
     hist_total_energy_photons.Draw('')
-    canvas.Print('particle_total_energy_photons.png')
+    canvas.Print('particle_total_energy_photons.pdf')
     hist_total_energy_neutrons.Draw('')
-    canvas.Print('particle_total_energy_neutrons.png')
+    canvas.Print('particle_total_energy_neutrons.pdf')
     hist_total_energy_protons.Draw('')
-    canvas.Print('particle_total_energy_protons.png')
+    canvas.Print('particle_total_energy_protons.pdf')
     hist_total_energy_electrons.Draw('')
-    canvas.Print('particle_total_energy_electrons.png')
+    canvas.Print('particle_total_energy_electrons.pdf')
     hist_total_energy_muons.Draw('')
-    canvas.Print('particle_total_energy_muons.png')
+    canvas.Print('particle_total_energy_muons.pdf')
     hist_total_energy_pions.Draw('')
-    canvas.Print('particle_total_energy_pions.png')
+    canvas.Print('particle_total_energy_pions.pdf')
     hist_total_energy_kaons.Draw('')
-    canvas.Print('particle_total_energy_kaons.png')
+    canvas.Print('particle_total_energy_kaons.pdf')
     hist_total_energy_deuterons.Draw('')
-    canvas.Print('particle_total_energy_deuterons.png')
+    canvas.Print('particle_total_energy_deuterons.pdf')
     hist_total_energy_other.Draw('')
-    canvas.Print('particle_total_energy_other.png')
+    canvas.Print('particle_total_energy_other.pdf')
 
     canvas.SetLogy(0)
     hist_energy_pdgid.Draw('COLZ')
-    canvas.Print('particle_energy_pdgid.png')
+    canvas.Print('particle_energy_pdgid.pdf')
 
     # Fluence
     ROOT.gStyle.SetOptStat(0)
     ROOT.gPad.SetRightMargin(0.13);
     hist_fluence_z_phi.Draw('COLZ')
-    canvas.Print('fluence_z_phi.png')
+    canvas.Print('fluence_z_phi.pdf')
     hist_fluence_x_y.Draw('COLZ')
-    canvas.Print('fluence_x_y.png')
+    canvas.Print('fluence_x_y.pdf')
     hist_fluence_z_phi_charged.Draw('COLZ')
-    canvas.Print('fluence_z_phi_charged.png')
+    canvas.Print('fluence_z_phi_charged.pdf')
     hist_fluence_x_y_charged.Draw('COLZ')
-    canvas.Print('fluence_x_y_charged.png')
+    canvas.Print('fluence_x_y_charged.pdf')
     hist_fluence_z_phi_no_neutrinos.Draw('COLZ')
-    canvas.Print('fluence_z_phi_no_neutrinos.png')
+    canvas.Print('fluence_z_phi_no_neutrinos.pdf')
     hist_fluence_x_y_no_neutrinos.Draw('COLZ')
-    canvas.Print('fluence_x_y_no_neutrinos.png')
+    canvas.Print('fluence_x_y_no_neutrinos.pdf')
+    hist_fluence_z_phi_neutrons.Draw('COLZ')
+    canvas.Print('fluence_z_phi_neutrons.pdf')
+    hist_fluence_x_y_neutrons.Draw('COLZ')
+    canvas.Print('fluence_x_y_neutrons.pdf')
 
     hist_energy_fluence_z_phi.Draw('COLZ')
-    canvas.Print('energy_fluence_z_phi.png')
+    canvas.Print('energy_fluence_z_phi.pdf')
     hist_energy_fluence_x_y.Draw('COLZ')
-    canvas.Print('energy_fluence_x_y.png')
+    canvas.Print('energy_fluence_x_y.pdf')
     hist_energy_fluence_z_phi_charged.Draw('COLZ')
-    canvas.Print('energy_fluence_z_phi_charged.png')
+    canvas.Print('energy_fluence_z_phi_charged.pdf')
     hist_energy_fluence_x_y_charged.Draw('COLZ')
-    canvas.Print('energy_fluence_x_y_charged.png')
+    canvas.Print('energy_fluence_x_y_charged.pdf')
     hist_energy_fluence_z_phi_no_neutrinos.Draw('COLZ')
-    canvas.Print('energy_fluence_z_phi_no_neutrinos.png')
+    canvas.Print('energy_fluence_z_phi_no_neutrinos.pdf')
     hist_energy_fluence_x_y_no_neutrinos.Draw('COLZ')
-    canvas.Print('energy_fluence_x_y_no_neutrinos.png')
+    canvas.Print('energy_fluence_x_y_no_neutrinos.pdf')
+    hist_energy_fluence_z_phi_neutrons.Draw('COLZ')
+    canvas.Print('energy_fluence_z_phi_neutrons.pdf')
+    hist_energy_fluence_x_y_neutrons.Draw('COLZ')
+    canvas.Print('energy_fluence_x_y_neutrons.pdf')
 
 if __name__ == '__main__':
     main()
