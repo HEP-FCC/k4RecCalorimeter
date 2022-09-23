@@ -38,6 +38,14 @@ class Detector:
         print('  - seg. area:', self.endcap_seg_area, 'cm')
 
 
+class Particle:
+    def __init__(self):
+        self.id_electron = 11
+        self.id_muon = 13
+        self.id_lambda = 3122
+
+
+
 def main():
     parser = argparse.ArgumentParser(description='Yay, let\'s plot flux!')
 
@@ -54,6 +62,8 @@ def main():
     fluxmeter_radius = cld_solenoid_outer_radius + 5  # mm
     fluxmeter_z = world_side - 5  # mm
     det = Detector(fluxmeter_radius, fluxmeter_z)
+
+    part = Particle()
 
     infile = ROOT.TFile.Open(args.input_file)
     tree = infile.Get('events')
@@ -199,6 +209,9 @@ def main():
     hist_energy_deuterons = ROOT.TH1D('energy_deuterons',
                                       'Deuteron Kin. energy;E [GeV];N',
                                       200, 0., 0.)
+    hist_energy_lambdas = ROOT.TH1D('energy_lambdas',
+                                    '#Lambda Kin. energy;E [GeV];N',
+                                    200, 0., 0.)
     hist_energy_other = ROOT.TH1D('energy_other',
                                   'Other particles Kin. energy;E [GeV];N',
                                   200, 0., 0.)
@@ -234,6 +247,9 @@ def main():
     hist_total_energy_deuterons = ROOT.TH1D('total_energy_deuterons',
                                       'Deuteron Total energy;E [GeV];N',
                                       200, 0., 0.)
+    hist_total_energy_lambdas = ROOT.TH1D('total_energy_lambdas',
+                                          '#Lambda Total energy;E [GeV];N',
+                                          200, 0., 0.)
     hist_total_energy_other = ROOT.TH1D('total_energy_other',
                                   'Other particles Total energy;E [GeV];N',
                                   200, 0., 0.)
@@ -423,6 +439,9 @@ def main():
             elif abs(pdgid) == 1000010020:
                 hist_energy_deuterons.Fill(energy)
                 hist_total_energy_deuterons.Fill(energy)
+            elif abs(pdgid) == part.id_lambda:
+                hist_energy_lambdas.Fill(energy)
+                hist_total_energy_lambdas.Fill(energy)
             else:
                 hist_energy_other.Fill(energy)
                 hist_total_energy_other.Fill(energy)
@@ -494,6 +513,7 @@ def main():
     hist_hits_z_electrons.Draw('')
     canvas.Print('hits_z_electrons.pdf')
     hist_hits_z_energy.Draw('L')
+    canvas.SetLogy(1)
     canvas.Print('hits_z_energy.pdf')
     hist_hits_z_energy_charged.Draw('L')
     canvas.Print('hits_z_energy_charged.pdf')
@@ -517,6 +537,7 @@ def main():
     canvas.Print('hits_z_total_energy_photons.pdf')
     hist_hits_z_total_energy_electrons.Draw('L')
     canvas.Print('hits_z_total_energy_electrons.pdf')
+    canvas.SetLogy(0)
     hist_hits_z_phi.Draw('COLZ')
     canvas.Print('hits_z_phi.pdf')
     hist_hits_r.Draw('')
@@ -562,6 +583,8 @@ def main():
     canvas.Print('particle_energy_kaons.pdf')
     hist_energy_deuterons.Draw('')
     canvas.Print('particle_energy_deuterons.pdf')
+    hist_energy_lambdas.Draw('')
+    canvas.Print('particle_energy_lambdas.pdf')
     hist_energy_other.Draw('')
     canvas.Print('particle_energy_other.pdf')
     hist_pdg_other.Draw('')
@@ -585,6 +608,8 @@ def main():
     canvas.Print('particle_total_energy_kaons.pdf')
     hist_total_energy_deuterons.Draw('')
     canvas.Print('particle_total_energy_deuterons.pdf')
+    hist_total_energy_lambdas.Draw('')
+    canvas.Print('particle_total_energy_lambdas.pdf')
     hist_total_energy_other.Draw('')
     canvas.Print('particle_total_energy_other.pdf')
 
