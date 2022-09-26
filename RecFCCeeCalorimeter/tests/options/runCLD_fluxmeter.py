@@ -13,7 +13,7 @@ ApplicationMgr().ExtSvc += ['RndmGenSvc']
 from Configurables import FCCDataSvc
 ## Data service
 podioevent = FCCDataSvc("EventDataSvc")
-# podioevent.input = "/opt/data/gen/pythia8/p8_ee_Zqq_ecm91_1000_1.root"
+podioevent.input = "/opt/data/gen/pythia8/p8_ee_Zmumu_ecm91_1000_1.root"
 from Configurables import PodioInput
 podioinput = PodioInput("PodioReader",
                         collections=["GenParticles"])
@@ -66,6 +66,13 @@ field.IntegratorStepper = "ClassicalRK4"
 # Translates EDM to G4Event, passes the event to G4, writes out outputs via
 # tools and a tool that saves the calorimeter hits
 
+from Configurables import SimG4CrossingAngleBoost
+xAngleBoost = SimG4CrossingAngleBoost('xAngleBoost')
+xAngleBoost.InParticles = 'GenParticles'
+xAngleBoost.OutParticles = 'BoostedParticles'
+xAngleBoost.CrossingAngle = 0.015  # rad
+xAngleBoost.OutputLevel = INFO
+ApplicationMgr().TopAlg += [xAngleBoost]
 
 # Detector readouts
 from Configurables import SimG4Alg
@@ -77,7 +84,8 @@ SimG4Alg("SimG4Alg").outputs += [saveFluxTool]
 # next, create the G4 algorithm, giving the list of names of tools ("XX/YY")
 from Configurables import SimG4PrimariesFromEdmTool
 particle_converter = SimG4PrimariesFromEdmTool("EdmConverter")
-particle_converter.GenParticles.Path = "GenParticles"
+# particle_converter.GenParticles.Path = "GenParticles"
+particle_converter.GenParticles.Path = "BoostedParticles"
 
 from Configurables import SimG4Alg
 geantsim = SimG4Alg("SimG4Alg")
@@ -89,7 +97,7 @@ from Configurables import PodioOutput
 out = PodioOutput("out")
 out.outputCommands = ["keep *"]
 import uuid
-out.filename = "output_fullCalo_SimAndDigi_" + uuid.uuid4().hex[:12] + ".root"
+out.filename = "output_fluxmeter_" + uuid.uuid4().hex[:12] + ".root"
 # out.filename = "output_fullCalo_SimAndDigi.root"
 ApplicationMgr().TopAlg += [out]
 
