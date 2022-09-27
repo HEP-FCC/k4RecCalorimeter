@@ -81,6 +81,9 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
     }
   }
 
+  m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  m_index_activeField = m_decoder->index(m_activeFieldName);
+
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
   StatusCode sc = GaudiTool::initialize();
@@ -173,34 +176,18 @@ double NoiseCaloCellsFromFileTool::getNoiseConstantPerCell(int64_t aCellId) {
   double elecNoise = 0.;
   double pileupNoise = 0.;
 
-  // Take readout, bitfield from GeoSvc
-  auto decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
-  dd4hep::DDSegmentation::CellID cID = aCellId;
- 
   double cellEta;
   if (m_useSeg)
     cellEta = m_segmentationPhiEta->eta(aCellId);
   else
-    cellEta = m_cellPositionsTool->xyzPosition(cID).Eta();
-  unsigned cellLayer = decoder->get(cID, m_activeFieldName);
+    cellEta = m_cellPositionsTool->xyzPosition(aCellId).Eta();
+  unsigned cellLayer = m_decoder->get(aCellId, m_index_activeField);
 
   // All histograms have same binning, all bins with same size
   // Using the histogram in the first layer to get the bin size
   unsigned index = 0;
   if (m_histoElecNoiseConst.size() != 0) {
-    int Nbins = m_histoElecNoiseConst.at(index).GetNbinsX();
-    double deltaEtaBin =
-        (m_histoElecNoiseConst.at(index).GetBinLowEdge(Nbins) + m_histoElecNoiseConst.at(index).GetBinWidth(Nbins) -
-         m_histoElecNoiseConst.at(index).GetBinLowEdge(1)) /
-        Nbins;
-    double etaFirtsBin = m_histoElecNoiseConst.at(index).GetBinLowEdge(1);
-    // find the eta bin for the cell
-    int ibin = floor((fabs(cellEta) - etaFirtsBin) / deltaEtaBin) + 1;
-    if (ibin > Nbins) {
-      debug() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
-              << endmsg;
-      ibin = Nbins;
-    }
+    int ibin = m_histoElecNoiseConst.at(index).FindFixBin(fabs(cellEta));
     // Check that there are not more layers than the constants are provided for
     if (cellLayer < m_histoElecNoiseConst.size()) {
       elecNoise = m_histoElecNoiseConst.at(cellLayer).GetBinContent(ibin);
@@ -217,9 +204,15 @@ double NoiseCaloCellsFromFileTool::getNoiseConstantPerCell(int64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2)) * m_scaleFactor;
+  double totalNoise = 0;
+  if (m_addPileup) {
+    totalNoise = sqrt(elecNoise*elecNoise + pileupNoise*pileupNoise) * m_scaleFactor;
+  }
+  else { // avoid useless math operations if no pileup
+    totalNoise = elecNoise * m_scaleFactor;
+  }
 
-  if (totalNoise < 1e-3) {
+  if (totalNoise < 1e-6) {
     debug() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
   }
 

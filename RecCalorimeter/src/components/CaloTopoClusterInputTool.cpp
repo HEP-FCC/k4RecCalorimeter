@@ -41,8 +41,10 @@ StatusCode CaloTopoClusterInputTool::initialize() {
 
 StatusCode CaloTopoClusterInputTool::finalize() { return GaudiTool::finalize(); }
 
-StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCells) {
-  aCells.clear();
+StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, double>& aCells) {
+  for (auto& iCell : aCells) {
+    iCell.second = 0;
+  }
   uint totalNumberOfCells = 0;
 
   // 1. ECAL barrel
@@ -51,7 +53,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input Ecal barrel cell collection size: " << ecalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *ecalBarrelCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += ecalBarrelCells->size();
   
@@ -60,7 +62,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input Ecal endcap cell collection size: " << ecalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *ecalEndcapCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += ecalEndcapCells->size();
     
@@ -69,7 +71,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input Ecal forward cell collection size: " << ecalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *ecalFwdCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += ecalFwdCells->size();
   
@@ -78,7 +80,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input hadronic barrel cell collection size: " << hcalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *hcalBarrelCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalBarrelCells->size();
   
@@ -87,7 +89,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input hadronic extended barrel cell collection size: " << hcalExtBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *hcalExtBarrelCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalExtBarrelCells->size();
   
@@ -96,7 +98,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input Hcal endcap cell collection size: " << hcalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *hcalEndcapCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalEndcapCells->size();
   
@@ -105,13 +107,13 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::map<uint64_t, double>& aCell
   debug() << "Input Hcal forward cell collection size: " << hcalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *hcalFwdCells) {
-    aCells.emplace(iCell.getCellID(), iCell.getEnergy());
+    aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalFwdCells->size();
   
-  if (totalNumberOfCells != aCells.size()){
-    error() << "Map size != total number of cells! " << endmsg;
-    return StatusCode::FAILURE;
-  }
+  //if (totalNumberOfCells != aCells.size()){
+  //error() << "Map size != total number of cells! " << endmsg;
+  //return StatusCode::FAILURE;
+  //}
   return StatusCode::SUCCESS;
 }

@@ -67,9 +67,10 @@ public:
   /**  Build calorimeter towers.
    *   Tower is defined by a segment in eta and phi, with the energy from all layers (no r segmentation).
    *   @param[out] aTowers Calorimeter towers.
+   *   @param[in] fillTowersCells Whether to fill maps of cells into towers, for later use in attachCells
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells=true) final;
 
   /**  Get the radius for the position calculation.
    *   @return Radius
@@ -124,7 +125,8 @@ private:
    *   @param[in] aSegmentation Segmentation of the calorimeter
    */
   void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
-                       dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType);
+                       dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType,
+                       bool fillTowersCells);
   /**  Check if the readout name exists. If so, it returns the eta-phi segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
    */

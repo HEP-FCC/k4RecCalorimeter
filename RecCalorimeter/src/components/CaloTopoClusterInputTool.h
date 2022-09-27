@@ -51,7 +51,7 @@ public:
    * Fills the given map with all cellIDs pointing to the cells energy.
    *  @return status code
    */
-  virtual StatusCode cellIDMap(std::map<uint64_t, double>& aCells) final;
+  virtual StatusCode cellIDMap(std::unordered_map<uint64_t, double>& aCells) final;
 
 private:
   /// Handle for electromagnetic barrel cells (input collection)
@@ -90,8 +90,6 @@ private:
   /// Name of the hcal forward calorimeter readout
   Gaudi::Property<std::string> m_hcalFwdReadoutName{this, "hcalFwdReadoutName", "", 
                                                     "name of the hcal fwd readout"};
-  /// Map to be filled
-  std::map<uint64_t, double> m_inputMap; 
 };
 
 #endif /* RECCALORIMETER_CALOTOPOCLUSTERINPUTTOOL_H */

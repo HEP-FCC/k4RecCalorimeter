@@ -46,7 +46,7 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
   auto edmClusters = m_clusters.createAndPut();
   auto edmClusterCells = m_clusterCells.createAndPut();
   // Check if the tower building succeeded
-  if (m_towerTool->buildTowers(m_towers) == 0) {
+  if (m_towerTool->buildTowers(m_towers, m_attachCells) == 0) {
     debug() << "Empty cell collection." << endmsg;
     return StatusCode::SUCCESS;
   }
