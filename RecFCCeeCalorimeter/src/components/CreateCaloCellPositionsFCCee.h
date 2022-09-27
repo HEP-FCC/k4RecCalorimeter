@@ -12,6 +12,8 @@
 #include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 
+#include <unordered_map>
+
 class IGeoSvc;
 
 /** @class CreateCaloCellPositions Reconstruction/RecCalorimeter/src/components/CreateCaloCellPositions.h
@@ -93,6 +95,9 @@ private:
   DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
   PodioDataSvc* m_podioDataSvc;
   ServiceHandle<IDataProviderSvc> m_eventDataSvc;
+
+  int m_system_id = m_decoder->index("system");
+  std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H */

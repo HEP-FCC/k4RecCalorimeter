@@ -94,6 +94,10 @@ private:
   dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentationPhiEta;
   /// Multi segmentation
   dd4hep::DDSegmentation::MultiSegmentation* m_segmentationMulti;
+
+  /// Decoder for ECal layers
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+  int m_index_activeField;
 };
 
 #endif /* RECCALORIMETER_NOISECALOCELLSFROMFILETOOL_H */

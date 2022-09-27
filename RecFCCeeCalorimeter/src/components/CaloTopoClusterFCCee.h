@@ -13,6 +13,9 @@
 #include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/ITopoClusterInputTool.h"
 
+#include <unordered_map>
+#include <map>
+
 class IGeoSvc;
 
 // datamodel
@@ -53,7 +56,7 @@ public:
    *   @param[in] aNumSigma, the signal to noise ratio that the cell has to exceed to become seed.
    *   @param[in] aSeeds, the vector of seed cell ids anf their energy to build proto-clusters.
    */
-  virtual void findingSeeds(const std::map<uint64_t, double>& aCells, int aNumSigma,
+  virtual void findingSeeds(const std::unordered_map<uint64_t, double>& aCells, int aNumSigma,
                             std::vector<std::pair<uint64_t, double>>& aSeeds);
 
   /** Building proto-clusters from the found seeds.
@@ -68,7 +71,7 @@ public:
   StatusCode buildingProtoCluster(int aNumSigma,
                                     int aLastNumSigma,
                                     std::vector<std::pair<uint64_t, double>>& aSeeds,
-                                    const std::map<uint64_t, double>& aCells,
+                                    const std::unordered_map<uint64_t, double>& aCells,
                                     std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection);
 
   /** Search for neighbours and add them to preClusterCollection
@@ -83,7 +86,7 @@ public:
    *   return vector of pairs with cellID and energy of found neighbours.
    */
   std::vector<std::pair<uint64_t, uint>>
-  searchForNeighbours(const uint64_t aCellId, uint& aClusterID, int aNumSigma, const std::map<uint64_t, double>& aCells,
+  searchForNeighbours(const uint64_t aCellId, uint& aClusterID, int aNumSigma, const std::unordered_map<uint64_t, double>& aCells,
                       std::map<uint64_t, uint>& aClusterOfCell,
                       std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
 		      bool aAllowClusterMerge);
@@ -130,8 +133,25 @@ private:
   Gaudi::Property<int> m_neighbourSigma{this, "neighbourSigma", 2, "number of sigma in noise threshold"};
   /// Last neighbour threshold in sigma
   Gaudi::Property<int> m_lastNeighbourSigma{this, "lastNeighbourSigma", 0, "number of sigma in noise threshold"};
+  /// Name of the electromagnetic calorimeter readout
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta"};
+
   /// General decoder to encode the calorimeter sub-system to determine which positions tool to use
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:4");
+  int m_index_system = m_decoder->index("system");
+
+  /// Decoder for ECal layers
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder_ecal;
+  int m_index_layer_ecal;
+
+  std::unordered_map<uint64_t, double> m_allCells;
+
+  // minimum noise and offset per barrel ECal layer
+  // this serves as a very small cache for fast lookups and avoid looking into the huge map for most of the cells.
+  std::vector<double> m_min_offset;
+  std::vector<double> m_min_noise;
+
+  void createCache(const std::unordered_map<uint64_t, double>& aCells);
 
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */

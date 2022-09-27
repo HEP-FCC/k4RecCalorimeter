@@ -76,46 +76,56 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
   debug() << "Input hit collection size: " << hits->size() << endmsg;
   // Initialize output collection
   auto edmPositionedHitCollection = m_positionedHits.createAndPut();
+  //edmPositionedHitCollection->reserve(hits->size()); // edm4hep uses std::deque ???
 
   for (const auto& hit : *hits) {
     auto positionedHit = hit.clone();
     dd4hep::DDSegmentation::CellID cellId = positionedHit.getCellID();
-    // identify calo system
-    auto systemId = m_decoder->get(cellId, "system");
-    dd4hep::Position posCell;
 
-    if (systemId == m_systemIdECalBarrel) {  // ECAL BARREL system id
-      posCell = m_cellPositionsECalBarrelTool->xyzPosition(cellId);
-    } else if (systemId == m_systemIdHCalBarrel) {  // HCAL BARREL system id
-      posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cellId);
-    } else if (systemId == m_systemIdHCalExtBarrel) {  // HCAL EXT BARREL
-      posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cellId);
-    } else if (systemId == m_systemIdEMEC) {  // EMEC system id
-      posCell = m_cellPositionsEMECTool->xyzPosition(cellId);
-    } else if (systemId == m_systemIdHEC) {  // HEC system id
-      posCell = m_cellPositionsHECTool->xyzPosition(cellId);
-    } else if (systemId == m_systemIdEMFwd) {  // EMFWD system id
-      posCell = m_cellPositionsEMFwdTool->xyzPosition(cellId);
-    } else if (systemId == m_systemIdHFwd) {  // HFWD system id
-      posCell = m_cellPositionsHFwdTool->xyzPosition(cellId);
-    } else {
-      error() << "Unknown system ID!" << endmsg;
-      return StatusCode::FAILURE;
+    auto cached_pos = m_positions_cache.find(cellId);
+    if(cached_pos == m_positions_cache.end()) {
+      // identify calo system
+      auto systemId = m_decoder->get(cellId, m_system_id);
+      dd4hep::Position posCell;
+
+      if (systemId == m_systemIdECalBarrel) {  // ECAL BARREL system id
+        posCell = m_cellPositionsECalBarrelTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdHCalBarrel) {  // HCAL BARREL system id
+        posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdHCalExtBarrel) {  // HCAL EXT BARREL
+        posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdEMEC) {  // EMEC system id
+        posCell = m_cellPositionsEMECTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdHEC) {  // HEC system id
+        posCell = m_cellPositionsHECTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdEMFwd) {  // EMFWD system id
+        posCell = m_cellPositionsEMFwdTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdHFwd) {  // HFWD system id
+        posCell = m_cellPositionsHFwdTool->xyzPosition(cellId);
+      } else {
+        error() << "Unknown system ID!" << endmsg;
+        return StatusCode::FAILURE;
+      }
+
+      edm4hep::Vector3f edmPos;
+      edmPos.x = posCell.x() / dd4hep::mm;
+      edmPos.y = posCell.y() / dd4hep::mm;
+      edmPos.z = posCell.z() / dd4hep::mm;
+
+      m_positions_cache[cellId] = edmPos;
+      positionedHit.setPosition(edmPos);
+    }
+    else {
+      positionedHit.setPosition(cached_pos->second);
     }
 
-    auto edmPos = edm4hep::Vector3f();
-    edmPos.x = posCell.x() / dd4hep::mm;
-    edmPos.y = posCell.y() / dd4hep::mm;
-    edmPos.z = posCell.z() / dd4hep::mm;
-
-    positionedHit.setPosition(edmPos);
-    edmPositionedHitCollection->push_back(positionedHit);
-
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
-    debug() << "Position of cell (mm) : \t" << posCell.x() / dd4hep::mm << "\t" << posCell.y() / dd4hep::mm << "\t"
-            << posCell.z() / dd4hep::mm << endmsg;
+    //debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    //debug() << "Position of cell (mm) : \t" << edmPos.x << "\t" << edmPos.y << "\t" << edmPos.z << endmsg;
+
+    edmPositionedHitCollection->push_back(positionedHit);
   }
+
   auto& coll_md = m_podioDataSvc->getProvider().getCollectionMetaData(m_positionedHits.get()->getID());
   coll_md.setValue("CellIDEncodingString", m_hits.getCollMetadataCellID(hits->getID()));
 
