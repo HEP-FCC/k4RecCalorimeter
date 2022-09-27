@@ -37,6 +37,36 @@ StatusCode CreateCaloCellPositionsFCCee::initialize() {
     error() << "Error retrieving Event Data Service" << endmsg;
     return sc_dataSvc;
   }
+
+  if (!m_cellPositionsECalBarrelTool) {
+    error() << "CellPositionsTool for ECal Barrel is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsHCalBarrelTool) {
+    error() << "CellPositionsTool for HCal Barrel is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsHCalExtBarrelTool) {
+    error() << "CellPositionsTool for HCal Ext Barrel is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsEMECTool) {
+    error() << "CellPositionsTool for EMEC is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsHECTool) {
+    error() << "CellPositionsTool for HEC is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsEMFwdTool) {
+    error() << "CellPositionsTool for EMFwd is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (!m_cellPositionsHFwdTool) {
+    error() << "CellPositionsTool for HFwd is missing!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
   return StatusCode::SUCCESS;
 }
 
@@ -58,20 +88,24 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
       auto systemId = m_decoder->get(cellId, m_system_id);
       dd4hep::Position posCell;
 
-      if (systemId == 4)  // ECAL BARREL system id
+      if (systemId == m_systemIdECalBarrel) {  // ECAL BARREL system id
         posCell = m_cellPositionsECalBarrelTool->xyzPosition(cellId);
-      else if (systemId == 10)  // HCAL BARREL system id
+      } else if (systemId == m_systemIdHCalBarrel) {  // HCAL BARREL system id
         posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cellId);
-      else if (systemId == 9)  // HCAL EXT BARREL system id
-          posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cellId);
-      else if (systemId == 6)  // EMEC system id
+      } else if (systemId == m_systemIdHCalExtBarrel) {  // HCAL EXT BARREL
+        posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cellId);
+      } else if (systemId == m_systemIdEMEC) {  // EMEC system id
         posCell = m_cellPositionsEMECTool->xyzPosition(cellId);
-      else if (systemId == 7)  // HEC system id
+      } else if (systemId == m_systemIdHEC) {  // HEC system id
         posCell = m_cellPositionsHECTool->xyzPosition(cellId);
-      else if (systemId == 10)  // EMFWD system id
+      } else if (systemId == m_systemIdEMFwd) {  // EMFWD system id
         posCell = m_cellPositionsEMFwdTool->xyzPosition(cellId);
-      else if (systemId == 11)  // HFWD system id
+      } else if (systemId == m_systemIdHFwd) {  // HFWD system id
         posCell = m_cellPositionsHFwdTool->xyzPosition(cellId);
+      } else {
+        error() << "Unknown system ID!" << endmsg;
+        return StatusCode::FAILURE;
+      }
 
       edm4hep::Vector3f edmPos;
       edmPos.x = posCell.x() / dd4hep::mm;

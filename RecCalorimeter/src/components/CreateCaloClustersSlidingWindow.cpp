@@ -288,8 +288,10 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
       auto edmCluster = edmClusters->create();
       edmCluster.setPosition(edm4hep::Vector3f(radius * cos(clu.phi), radius * sin(clu.phi), radius * sinh(clu.eta)));
       edmCluster.setEnergy(clusterEnergy);
-      if (m_attachCells)
+      if (m_attachCells) {
+        debug() << "Attaching cells to the clusters." << endmsg;
         m_towerTool->attachCells(clu.eta, clu.phi, halfEtaFin, halfPhiFin, edmCluster, edmClusterCells, m_ellipseFinalCluster);
+      }
       debug() << "Cluster eta: " << clu.eta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
               << " y: " << edmCluster.getPosition().y << " z: " << edmCluster.getPosition().z
               << " energy: " << edmCluster.getEnergy() << " contains: " << edmCluster.hits_size() << " cells" << endmsg;
