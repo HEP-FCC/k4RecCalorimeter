@@ -343,7 +343,7 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
       }
     }
     else{ // loop over eta cells to match in eta
-      for (int iEta = 0; iEta < extremaHCalFirstLayerEta.second + 1; iEta++) {
+      for (int iEta = extremaHCalFirstLayerEta.first; iEta < extremaHCalFirstLayerEta.second + 1; iEta++) {
 	double lowEta = hCalEtaOffset + iEta * hCalEtaSize;
 	double highEta = hCalEtaOffset + (iEta + 1) * hCalEtaSize;
 	debug() << "HCal eta range  : " << lowEta << " -  " << highEta << endmsg;
