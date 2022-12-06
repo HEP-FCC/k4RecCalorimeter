@@ -222,9 +222,9 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
   for (auto it1 = m_preClusters.begin(); it1 != m_preClusters.end(); it1++) {
     // loop over all clusters with energy lower than it1 (sorting), erase if too close
     for (auto it2 = it1 + 1; it2 != m_preClusters.end();) {
-      if ((abs(m_towerTool->idEta((*it1).eta) - m_towerTool->idEta((*it2).eta)) < m_nEtaDuplicates) &&
-          ((abs(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi)) < m_nPhiDuplicates) ||
-           (abs(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi)) > m_nPhiTower - m_nPhiDuplicates))) {
+      if ((abs(int(m_towerTool->idEta((*it1).eta) - m_towerTool->idEta((*it2).eta))) < m_nEtaDuplicates) &&
+          ((abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) < m_nPhiDuplicates) ||
+           (abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) > m_nPhiTower - m_nPhiDuplicates))) {
         m_preClusters.erase(it2);
       } else {
         it2++;
