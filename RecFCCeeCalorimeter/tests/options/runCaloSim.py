@@ -92,6 +92,7 @@ field.IntegratorStepper="ClassicalRK4"
 # ECAL
 ecalBarrelReadoutName = "ECalBarrelEta"
 ecalBarrelReadoutNamePhiEta = "ECalBarrelPhiEta"
+ecalEndcapReadoutName = "ECalEndcapPhiEta"
 # HCAL
 hcalReadoutName = "HCalBarrelReadout"
 extHcalReadoutName = "HCalExtBarrelReadout"
@@ -103,8 +104,11 @@ saveECalBarrelTool.readoutNames = ["ECalBarrelEta"]
 saveECalBarrelTool.CaloHits.Path = "ECalBarrelPositionedHits"
 SimG4Alg("SimG4Alg").outputs += [saveECalBarrelTool]
 
+saveECalEndcapTool = SimG4SaveCalHits("saveECalEndcapHits")
+saveECalEndcapTool.readoutNames = ["ECalEndcapPhiEta"]
+saveECalEndcapTool.CaloHits.Path = "ECalEndcapPositionedHits"
+SimG4Alg("SimG4Alg").outputs += [saveECalEndcapTool]
 
-from Configurables import SimG4SaveCalHits
 saveHCalTool = SimG4SaveCalHits("saveHCalBarrelHits")
 saveHCalTool.readoutNames = ["HCalBarrelReadout"]
 saveHCalTool.CaloHits.Path = "HCalBarrelPositionedHits"
@@ -135,13 +139,15 @@ ApplicationMgr().TopAlg += [geantsim]
 from Configurables import CalibrateInLayersTool
 
 calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel")
-calibEcalBarrel.samplingFraction = [0.36571381189697705] * 1 + [0.09779064189677973] * 1 + [0.12564152224404024] * 1 + [0.14350599973146283] * 1 + [0.1557126972314961] * 1 + [0.16444759076233928] * 1 + [0.17097165096847836] * 1 + [0.17684775359805122] * 1 + [0.18181154293837265] * 1 + [0.18544247938196395] * 1 + [0.18922747431624687] * 1 + [0.21187001375505543] * 1
+calibEcalBarrel.samplingFraction =   [0.3632447480841956] * 1 + [0.13187261040190248] * 1 + [0.14349714292943705] * 1 + [0.150266118277841] * 1 + [0.15502683375826457] * 1 + [0.15954408786354762] * 1 + [0.16375302347299436] * 1 + [0.16840384714588075] * 1 + [0.17219540619311383] * 1 + [0.1755068643940401] * 1 + [0.17816980262822366] * 1 + [0.18131266048670405] * 1
 calibEcalBarrel.readoutName = "ECalBarrelEta"
 calibEcalBarrel.layerFieldName = "layer"
 
 from Configurables import CalibrateCaloHitsTool
 calibHcells = CalibrateCaloHitsTool("CalibrateHCal")
 calibHcells.invSamplingFraction = "41.66"
+calibEcalEndcap = CalibrateCaloHitsTool("CalibrateECalEndcap")
+calibEcalEndcap.invSamplingFraction="4.27"
 
 # Create cells in ECal barrel
 # 1. step - merge hits into cells with Eta and module segmentation (phi module is a 'physical' cell i.e. lead + LAr + PCB + LAr +lead)
@@ -205,6 +211,16 @@ createHcalBarrelCells.hits = "HCalBarrelPositionedHits"
 createHcalBarrelCells.cells = "HCalBarrelCells"
 ApplicationMgr().TopAlg += [createHcalBarrelCells]
 
+# Create cells in ECal Endcaps
+createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells")
+createEcalEndcapCells.doCellCalibration=True
+createEcalEndcapCells.calibTool=calibEcalEndcap
+createEcalEndcapCells.addCellNoise=False
+createEcalEndcapCells.filterCellNoise=False
+createEcalEndcapCells.hits.Path="ECalEndcapPositionedHits"
+createEcalEndcapCells.cells.Path="ECalEndcapCells"
+ApplicationMgr().TopAlg += [createEcalEndcapCells]
+
 #Empty cells for parts of calorimeter not implemented yet
 from Configurables import CreateEmptyCaloCellsCollection
 createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
@@ -266,9 +282,10 @@ correctCaloClusters.numLayers = [12]
 correctCaloClusters.firstLayerIDs = [0]
 correctCaloClusters.lastLayerIDs = [11]
 correctCaloClusters.readoutNames = [ecalBarrelReadoutNamePhiEta]
-correctCaloClusters.upstreamParameters = [[0.09959407679400918, -10.509139028589276, -141.62311185316685, 2.8931723031040435, -397.6783011336018, -317.53288225142427]]
+
+correctCaloClusters.upstreamParameters = [[0.033955208567442975, -3.818122686176795, -146.59497297249345, 0.563447903447204, -3.7906629536351906, -8.569962044554627]]
 correctCaloClusters.upstreamFormulas = [['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])']]
-correctCaloClusters.downstreamParameters = [[0.002296666086130359, 0.004644766599619741, 1.4031343062273582, -1.8105436592714355, -0.02976924247722723, 12.875501324136625]]
+correctCaloClusters.downstreamParameters =  [[-0.00357017357914002, 0.006624434345822984, 1.0065650241358008, -1.285181650875406, -0.0707783194915608, 12.907319280196257]]
 correctCaloClusters.downstreamFormulas = [['[0]+[1]*x', '[0]+[1]/sqrt(x)', '[0]+[1]/x']]
 correctCaloClusters.OutputLevel = INFO
 ApplicationMgr().TopAlg += [correctCaloClusters]
@@ -276,7 +293,7 @@ ApplicationMgr().TopAlg += [correctCaloClusters]
 ################ Output
 from Configurables import PodioOutput
 out = PodioOutput("out")
-out.outputCommands = ["keep *", "drop ECalBarrelHits", "drop HCal*", "drop ECalBarrelCellsStep*", "drop ECalBarrelPositionedHits", "drop emptyCaloCells", "drop CaloClusterCells"]
+out.outputCommands = ["keep *", "drop ECalBarrelHits", "drop HCal*", "drop ECalBarrelCellsStep*", "drop ECalBarrelPositionedHits", "drop ECalEndcapPositionedHits", "drop emptyCaloCells", "drop CaloClusterCells"]
 import uuid
 out.filename = "output_fullCalo_SimAndDigi.root"
 ApplicationMgr().TopAlg += [out]
