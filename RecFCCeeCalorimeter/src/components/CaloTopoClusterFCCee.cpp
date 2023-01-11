@@ -155,7 +155,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
       dd4hep::Position posCell;
       if (systemId == 4)  // ECAL BARREL system id
         posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
-      else if (systemId == 10){  // HCAL BARREL system id
+      else if (systemId == 8){  // HCAL BARREL system id
         if (m_noSegmentationHCalUsed)
 	      posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cID);
 	    else
