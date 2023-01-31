@@ -50,7 +50,7 @@ private:
   };
   /// HCal Barrel System ID
   Gaudi::Property<size_t> m_systemIdHCalBarrel {
-      this, "systemIdHCalBarrel", 10, "System ID of HCal Barrel"
+      this, "systemIdHCalBarrel", 8, "System ID of HCal Barrel"
   };
   /// HCal Extended Barrel System ID
   Gaudi::Property<size_t> m_systemIdHCalExtBarrel {
