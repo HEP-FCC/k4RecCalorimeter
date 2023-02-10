@@ -48,7 +48,9 @@ StatusCode CaloTowerTool::initialize() {
     error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_decoder = m_geoSvc->lcdd()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
+  if (m_useHalfTower) {
+   m_decoder = m_geoSvc->lcdd()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
+  }
   info() << "Retrieving Ecal endcap segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_ecalEndcapReadoutName);
   m_ecalEndcapSegmentation = tmpPair.first;
