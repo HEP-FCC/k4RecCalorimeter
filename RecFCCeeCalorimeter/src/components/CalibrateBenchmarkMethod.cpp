@@ -185,7 +185,7 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   m_totalEnergyBoth->Fill(energyInBoth);
   
 
-  // Fill vectors that will be later used for the enrgy fitting - length of the vector = number of events
+  // Fill vectors that will be later used for the energy fitting - length of the vector = number of events
   vecEgenerated.push_back(m_energy);
   vecEinECaltotal.push_back(energyInECal); 
   vecEinHCaltotal.push_back(energyInHCal); 
