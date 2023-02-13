@@ -28,7 +28,6 @@ std::vector<double> vecEinHCal_total;
 std::vector<double> vecEinHCal_firstLayer;
 std::vector<double> vecEinECal_lastLayer;
 
-
 DECLARE_COMPONENT(CalibrateBenchmarkMethod)
 
 
@@ -118,24 +117,24 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   double energyInLastECalLayer = 0; 
   double energyInBoth = 0.;
 
-  std::vector<double> energyInECalLayer(m_numLayersECal, 0.); 
-  std::vector<double> energyInHCalLayer(m_numLayersHCal, 0.); 
+  std::vector<double> energyInECalLayer(m_numLayersECal, 0.);
+  std::vector<double> energyInHCalLayer(m_numLayersHCal, 0.);
 
   int ecal_index;
   int hcal_index;
 
   // identify ECal and HCal readout position in the input parameters when running the calibration
   for (uint j=0; j<m_readoutNames.size(); j++){
-    if (m_SystemID[j]==4){
+    if (m_SystemID[j]==m_ECalSystemID){
       ecal_index = j; 
       }
-    else if (m_SystemID[j]==8){
+    else if (m_SystemID[j]==m_HCalSystemID){
       hcal_index = j; 
       }
     else continue;
   }
 
-
+  // decoders for ECal and HCal
   auto decoder_ECal = m_geoSvc->lcdd()->readout(m_readoutNames[ecal_index]).idSpec().decoder();
   auto decoder_HCal = m_geoSvc->lcdd()->readout(m_readoutNames[hcal_index]).idSpec().decoder();
 
@@ -148,15 +147,14 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   verbose() << "Input hadronic barrel cell collection size: " << hcalBarrelCells->size() << endmsg;
 
 
-  // Loop over a collection of ECal cells and get energy
+  // Loop over a collection of ECal cells and get energy in each ECal layer
   for (const auto& iCell : *ecalBarrelCells) {
     dd4hep::DDSegmentation::CellID cellID = iCell.getCellID(); 
-
     size_t layerIDecal = decoder_ECal->get(cellID, "layer");
     energyInECalLayer.at(layerIDecal) += iCell.getEnergy();
   } 
 
-  // Loop over a collection of HCal cells and get energy
+  // Loop over a collection of HCal cells and get energy in each HCal layer
   for (const auto& iCell : *hcalBarrelCells) {
     dd4hep::DDSegmentation::CellID cellID = iCell.getCellID(); 
     size_t layerIDhcal = decoder_HCal->get(cellID, "layer");
@@ -167,6 +165,8 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   for (size_t i = 0; i < energyInECalLayer.size(); ++i) {
     energyInECal += energyInECalLayer.at(i);
   }
+
+  // Energy deposited in the last ECal layer
   energyInLastECalLayer = energyInECalLayer.at(m_numLayersECal-1);
 
 
@@ -174,9 +174,11 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   for (size_t i = 0; i < energyInHCalLayer.size(); ++i) {
     energyInHCal += energyInHCalLayer.at(i);
   }
+
+  // Energy deposited in the first HCal layer
   energyInFirstHCalLayer = energyInHCalLayer.at(m_firstLayerHCal);
 
-  // Energy deposited in ECal and HCal
+  // Total energy deposited in ECal and HCal
   energyInBoth = energyInECal+energyInHCal;
 
   // Fill histograms with ECal and HCal energy
@@ -192,7 +194,7 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   vecEinHCal_firstLayer.push_back(energyInFirstHCalLayer);
   vecEinECal_lastLayer.push_back(energyInLastECalLayer);
 
-  // Printouts
+  // Printouts for checks
   verbose() << "********************************************************************" << endmsg;
   verbose() << "Energy in ECAL and HCAL: " << energyInECal << " GeV" << endmsg;
   verbose() << "Energy in ECAL: " << energyInECal << " GeV" << endmsg;

@@ -37,12 +37,12 @@ class ITHistSvc;
 
 /** @class CalibrateBenchmarkMethod CalibrateBenchmarkMethod.h
  *
- *  Sums energy deposited in every calorimeter layer separately, sums also energy deposited in the dead material of the
- *  calorimeter (cryostat).
- *
- *  In order to calculate upstream or downstream energy correction one needs to mark cryostat as sensitive in the
- *  detector XML files. Additionally, for the downstream correction, the thickness of the back cryostat needs to be
- *  enlarged to be unrealistically large (at least one meter) to capture all energy deposited behind the calorimeter.
+ * Benchmark calibration should be used for the combined simulation of ECal and HCal when using charged pions. 
+ * As an input it expect ECal to be calibrated to EM scale and HCal to be calibrated to HAD scale. 
+ * The aim of the benchmark calibration is to bring ECal to HAD scale and also to take into account
+ * the energy loss between the ECal and HCal (e.g. in cryostat) - for this, the energy from the last ECal layer and the first HCal layer is used. 
+ * The output parameters from the fit are stored in a histogram h_parameters and these parameters are supposed to be used by CorrectClustersBenchmarkMethod 
+ * to apply the benchmark method output to clusters and correct output cluster energy.
  *
  *  Based on work done by Anna Zaborowska, Jana Faltova and Juraj Smiesko
  *
@@ -75,10 +75,12 @@ private:
   /// Handle for hadronic barrel cells (input collection)
   DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
 
-  // Histogram of total deposited energy in the calorimeters
+  // Histogram of total deposited energy in the calorimeters 
   TH1F* m_totalEnergyECal;
   TH1F* m_totalEnergyHCal;
   TH1F* m_totalEnergyBoth;
+
+  // Histogram with the output parameters from the fit
   TH1F* h_parameter; 
 
   // Maximum energy for the x-axis range
@@ -92,7 +94,7 @@ private:
   Gaudi::Property<size_t> m_numLayersHCal{this, "numLayersHCal", 13, "Number of HCal layers"};
 
 
-  /// Id of the first HCal layer
+  /// ID of the first HCal layer
   Gaudi::Property<uint> m_firstLayerHCal{this, "firstLayerHCal", 0, "ID of first HCal layer"};
 
   /// Names of the detector readouts, corresponding to system IDs
