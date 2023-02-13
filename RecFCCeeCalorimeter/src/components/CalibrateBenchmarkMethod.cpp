@@ -14,19 +14,17 @@
 #include "GaudiKernel/ITHistSvc.h"
 
 #include "TH1F.h"
-#include "TVector3.h"
 #include "TMath.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "Math/Functor.h"
-#include "TRandom2.h"
-#include "TError.h"
 
+/// vectors containing the energy deposits to be used for minimization
 std::vector<double> vecEgenerated;
-std::vector<double> vecEinECal_total;
-std::vector<double> vecEinHCal_total;
-std::vector<double> vecEinHCal_firstLayer;
-std::vector<double> vecEinECal_lastLayer;
+std::vector<double> vecEinECaltotal;
+std::vector<double> vecEinHCaltotal;
+std::vector<double> vecEinHCalfirstLayer;
+std::vector<double> vecEinECallastLayer;
 
 DECLARE_COMPONENT(CalibrateBenchmarkMethod)
 
@@ -35,10 +33,10 @@ CalibrateBenchmarkMethod::CalibrateBenchmarkMethod(const std::string& aName, ISv
     : GaudiAlgorithm(aName, aSvcLoc), 
     m_geoSvc("GeoSvc", aName), 
     m_histSvc("THistSvc", aName),
-    h_parameter(nullptr),
     m_totalEnergyECal(nullptr),
     m_totalEnergyHCal(nullptr),
-    m_totalEnergyBoth(nullptr)
+    m_totalEnergyBoth(nullptr),
+    m_parameters(nullptr)
     {
       declareProperty("ecalBarrelCells", m_ecalBarrelCells, "");
       declareProperty("hcalBarrelCells", m_hcalBarrelCells, "");
@@ -92,46 +90,51 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
     return StatusCode::FAILURE;
   }
 
-  h_parameter = new TH1F("h_parameter","", 4, 0,4);
-  if (m_histSvc->regHist("/rec/h_parameter", h_parameter).isFailure()) {
+  m_parameters = new TH1F("parameters","", 4, 0,4);
+  if (m_histSvc->regHist("/rec/parameters", m_parameters).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
 
   // clear vectors that will be later used for fitting
   vecEgenerated.clear();
-  vecEinECal_total.clear();
-  vecEinHCal_total.clear();
-  vecEinHCal_firstLayer.clear();
-  vecEinECal_lastLayer.clear();
+  vecEinECaltotal.clear();
+  vecEinHCaltotal.clear();
+  vecEinHCalfirstLayer.clear();
+  vecEinECallastLayer.clear();
+
+
+  m_energyInECalLayer.resize(m_numLayersECal);
+  m_energyInHCalLayer.resize(m_numLayersHCal);
 
   return StatusCode::SUCCESS;
 }
 
 
 StatusCode CalibrateBenchmarkMethod::execute() {
-
-  double energyInHCal = 0.;
-  double energyInECal = 0.;
   double energyInFirstHCalLayer = 0; 
   double energyInLastECalLayer = 0; 
   double energyInBoth = 0.;
 
-  std::vector<double> energyInECalLayer(m_numLayersECal, 0.);
-  std::vector<double> energyInHCalLayer(m_numLayersHCal, 0.);
-
   int ecal_index;
   int hcal_index;
+
+  for (double& eneEcal : m_energyInECalLayer){
+    eneEcal = 0.;
+  }
+
+  for (double& eneHcal : m_energyInHCalLayer){
+    eneHcal = 0.;
+  }
 
   // identify ECal and HCal readout position in the input parameters when running the calibration
   for (uint j=0; j<m_readoutNames.size(); j++){
     if (m_SystemID[j]==m_ECalSystemID){
       ecal_index = j; 
-      }
+    }
     else if (m_SystemID[j]==m_HCalSystemID){
       hcal_index = j; 
-      }
-    else continue;
+    }
   }
 
   // decoders for ECal and HCal
@@ -151,32 +154,27 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   for (const auto& iCell : *ecalBarrelCells) {
     dd4hep::DDSegmentation::CellID cellID = iCell.getCellID(); 
     size_t layerIDecal = decoder_ECal->get(cellID, "layer");
-    energyInECalLayer.at(layerIDecal) += iCell.getEnergy();
+    m_energyInECalLayer.at(layerIDecal) += iCell.getEnergy();
   } 
 
   // Loop over a collection of HCal cells and get energy in each HCal layer
   for (const auto& iCell : *hcalBarrelCells) {
     dd4hep::DDSegmentation::CellID cellID = iCell.getCellID(); 
     size_t layerIDhcal = decoder_HCal->get(cellID, "layer");
-    energyInHCalLayer.at(layerIDhcal) += iCell.getEnergy();
+    m_energyInHCalLayer.at(layerIDhcal) += iCell.getEnergy();
   }
 
   // Energy deposited in the whole ECal
-  for (size_t i = 0; i < energyInECalLayer.size(); ++i) {
-    energyInECal += energyInECalLayer.at(i);
-  }
+  const double energyInECal = std::accumulate(m_energyInECalLayer.begin(), m_energyInECalLayer.end(), 0);
 
   // Energy deposited in the last ECal layer
-  energyInLastECalLayer = energyInECalLayer.at(m_numLayersECal-1);
-
+  energyInLastECalLayer = m_energyInECalLayer.at(m_numLayersECal-1);
 
   // Energy deposited in the whole HCal
-  for (size_t i = 0; i < energyInHCalLayer.size(); ++i) {
-    energyInHCal += energyInHCalLayer.at(i);
-  }
+  const double energyInHCal = std::accumulate(m_energyInHCalLayer.begin(), m_energyInHCalLayer.end(), 0);
 
   // Energy deposited in the first HCal layer
-  energyInFirstHCalLayer = energyInHCalLayer.at(m_firstLayerHCal);
+  energyInFirstHCalLayer = m_energyInHCalLayer.at(m_firstLayerHCal);
 
   // Total energy deposited in ECal and HCal
   energyInBoth = energyInECal+energyInHCal;
@@ -189,10 +187,10 @@ StatusCode CalibrateBenchmarkMethod::execute() {
 
   // Fill vectors that will be later used for the enrgy fitting - length of the vector = number of events
   vecEgenerated.push_back(m_energy);
-  vecEinECal_total.push_back(energyInECal); 
-  vecEinHCal_total.push_back(energyInHCal); 
-  vecEinHCal_firstLayer.push_back(energyInFirstHCalLayer);
-  vecEinECal_lastLayer.push_back(energyInLastECalLayer);
+  vecEinECaltotal.push_back(energyInECal); 
+  vecEinHCaltotal.push_back(energyInHCal); 
+  vecEinHCalfirstLayer.push_back(energyInFirstHCalLayer);
+  vecEinECallastLayer.push_back(energyInLastECalLayer);
 
   // Printouts for checks
   verbose() << "********************************************************************" << endmsg;
@@ -211,12 +209,12 @@ Double_t chiSquareFitBarrel(const Double_t *par) {
   Double_t fitvalue = 0.;
   // loop over all events, vector of a size of #evts is filled with the energies 
   // ECal calibrated to EM scale, HCal calibrated to HAD scale
-  for(uint i=0; i<vecEinECal_total.size(); i++){
+  for(uint i=0; i<vecEinECaltotal.size(); i++){
     double E_generated = vecEgenerated.at(i);
-    double E_ECal_total = vecEinECal_total.at(i);
-    double E_ECal_lastLayer = vecEinECal_lastLayer.at(i);
-    double E_HCal_total = vecEinHCal_total.at(i);
-    double E_HCal_firstLayer = vecEinHCal_firstLayer.at(i);
+    double E_ECal_total = vecEinECaltotal.at(i);
+    double E_ECal_lastLayer = vecEinECallastLayer.at(i);
+    double E_HCal_total = vecEinHCaltotal.at(i);
+    double E_HCal_firstLayer = vecEinHCalfirstLayer.at(i);
     
     Double_t E0 = E_ECal_total*par[0] + E_HCal_total*par[1] + par[2]*sqrt(abs(E_ECal_lastLayer*par[0]*E_HCal_firstLayer*par[1])) + par[3]*pow(E_ECal_total*par[0],2);
     
@@ -229,7 +227,7 @@ Double_t chiSquareFitBarrel(const Double_t *par) {
 StatusCode CalibrateBenchmarkMethod::finalize() {
   // the actual minimisation is running here 
   std::cout << "Running minimisation for " << vecEgenerated.size() << " #events! \n";
-  if (vecEgenerated.size() != vecEinECal_total.size()){
+  if (vecEgenerated.size() != vecEinECaltotal.size()){
     std::cout << "Something's wrong!!" << std::endl; 
   } 
   ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
@@ -243,8 +241,8 @@ StatusCode CalibrateBenchmarkMethod::finalize() {
   // create funciton wrapper for minimizer
   int n_param = 4;
   ROOT::Math::Functor f(&chiSquareFitBarrel,n_param); 
-  Double_t steps[n_param] = {0.001, 0.001, 0.001, 0.001};
-  double variable[n_param] = {1., 1., .5, .01};
+  static const std::vector<double> steps = {0.001, 0.001, 0.001, 0.001};
+  static const std::vector<double>  variable = {1., 1., .5, .01};
   min->SetFunction(f);
     
   // Variables to be minimized 
@@ -265,15 +263,15 @@ StatusCode CalibrateBenchmarkMethod::finalize() {
   std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "," << xs[2] <<  "," << xs[3] << "): "  << min->MinValue()  << std::endl;
   std::cout << "Minimum: #delta f(" << ys[0] << "," << ys[1] << "," << ys[2] << "," << ys[3] <<std::endl;
 
-  h_parameter->SetBinContent(1, xs[0]);
-  h_parameter->SetBinContent(2, xs[1]);
-  h_parameter->SetBinContent(3, xs[2]);
-  h_parameter->SetBinContent(4, xs[3]);
+  m_parameters->SetBinContent(1, xs[0]);
+  m_parameters->SetBinContent(2, xs[1]);
+  m_parameters->SetBinContent(3, xs[2]);
+  m_parameters->SetBinContent(4, xs[3]);
 
-  h_parameter->SetBinError(1, ys[0]);
-  h_parameter->SetBinError(2, ys[1]);
-  h_parameter->SetBinError(3, ys[2]);
-  h_parameter->SetBinError(4, ys[3]);
+  m_parameters->SetBinError(1, ys[0]);
+  m_parameters->SetBinError(2, ys[1]);
+  m_parameters->SetBinError(3, ys[2]);
+  m_parameters->SetBinError(4, ys[3]);
 
   return GaudiAlgorithm::finalize();
 }
