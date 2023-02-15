@@ -265,7 +265,6 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers, bool f
     CellsIntoTowers(aTowers, hcalFwdCells, m_hcalFwdSegmentation, m_hcalFwdSegmentationType, fillTowersCells);
     totalNumberOfCells += hcalFwdCells->size();
   }
-
   return totalNumberOfCells;
 }
 
@@ -445,11 +444,16 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
   int phiId = idPhi(phi);
   int num1 = 0;
   int num2 = 0;
+  std::vector<dd4hep::DDSegmentation::CellID> seen_cellIDs;
   if (aEllipse) {
     for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
         if (pow( (etaId - iEta) / (halfEtaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
           for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
+            if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
+                continue;
+            }
+            seen_cellIDs.push_back(cell.getCellID());
             auto cellclone = cell.clone();
             aEdmClusterCells->push_back(cellclone);
             aEdmCluster.addToHits(cellclone);
@@ -462,7 +466,10 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
     for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
         for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-
+          if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
+            continue;
+          }
+          seen_cellIDs.push_back(cell.getCellID());
           auto cellclone = cell.clone();
           aEdmClusterCells->push_back(cellclone);
           aEdmCluster.addToHits(cellclone);
