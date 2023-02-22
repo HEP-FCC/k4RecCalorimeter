@@ -32,6 +32,7 @@ class ITHistSvc;
  * the energy loss between the ECal and HCal (e.g. in cryostat) - for this, the energy from the last ECal layer and the first HCal layer is used. 
  * The output parameters from the fit are stored in a histogram m_parameters and these parameters are supposed to be used by CorrectClustersBenchmarkMethod 
  * to apply the benchmark method output to clusters and correct output cluster energy.
+ * To obtain the actual parameters run RecCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
  *
  *  Based on work done by Anna Zaborowska, Jana Faltova and Juraj Smiesko
  *
@@ -61,6 +62,8 @@ private:
 
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
+
+  double chiSquareFitBarrel(const Double_t *par) const;
 
   /// Handle for electromagnetic barrel cells (input collection)
   DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
@@ -95,6 +98,13 @@ private:
   Gaudi::Property<std::vector<uint>> m_SystemID {this, "systemID", {4,8},"systemId"};
   Gaudi::Property<uint> m_ECalSystemID{this, "ECalSystemID", 4, "ID of ECal system"};
   Gaudi::Property<uint> m_HCalSystemID{this, "HCalSystemID", 8, "ID of the HCal system"};
+
+  /// vectors containing the energy deposits to be used for minimization
+  std::vector<double> m_vecEgenerated;
+  std::vector<double> m_vecEinECaltotal;
+  std::vector<double> m_vecEinHCaltotal;
+  std::vector<double> m_vecEinHCalfirstLayer;
+  std::vector<double> m_vecEinECallastLayer;
 
 };
 #endif /* RECCALORIMETER_CALIBRATEBENCHMARKMETHOD_H */

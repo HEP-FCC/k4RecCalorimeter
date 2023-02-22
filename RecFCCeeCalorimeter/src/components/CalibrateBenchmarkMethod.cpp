@@ -19,13 +19,6 @@
 #include "Math/Factory.h"
 #include "Math/Functor.h"
 
-/// vectors containing the energy deposits to be used for minimization
-std::vector<double> vecEgenerated;
-std::vector<double> vecEinECaltotal;
-std::vector<double> vecEinHCaltotal;
-std::vector<double> vecEinHCalfirstLayer;
-std::vector<double> vecEinECallastLayer;
-
 DECLARE_COMPONENT(CalibrateBenchmarkMethod)
 
 
@@ -53,6 +46,11 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service! "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
+    return StatusCode::FAILURE;
+  }
+  // Check histogram service
+    if (!m_histSvc) {
+    error() << "Unable to locate Histogram Service" << endmsg;
     return StatusCode::FAILURE;
   }
 
@@ -97,12 +95,11 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
   }
 
   // clear vectors that will be later used for fitting
-  vecEgenerated.clear();
-  vecEinECaltotal.clear();
-  vecEinHCaltotal.clear();
-  vecEinHCalfirstLayer.clear();
-  vecEinECallastLayer.clear();
-
+  m_vecEgenerated.clear();
+  m_vecEinECaltotal.clear();
+  m_vecEinHCaltotal.clear();
+  m_vecEinHCalfirstLayer.clear();
+  m_vecEinECallastLayer.clear();
 
   m_energyInECalLayer.resize(m_numLayersECal);
   m_energyInHCalLayer.resize(m_numLayersHCal);
@@ -186,11 +183,11 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   
 
   // Fill vectors that will be later used for the energy fitting - length of the vector = number of events
-  vecEgenerated.push_back(m_energy);
-  vecEinECaltotal.push_back(energyInECal); 
-  vecEinHCaltotal.push_back(energyInHCal); 
-  vecEinHCalfirstLayer.push_back(energyInFirstHCalLayer);
-  vecEinECallastLayer.push_back(energyInLastECalLayer);
+  m_vecEgenerated.push_back(m_energy);
+  m_vecEinECaltotal.push_back(energyInECal); 
+  m_vecEinHCaltotal.push_back(energyInHCal); 
+  m_vecEinHCalfirstLayer.push_back(energyInFirstHCalLayer);
+  m_vecEinECallastLayer.push_back(energyInLastECalLayer);
 
   // Printouts for checks
   verbose() << "********************************************************************" << endmsg;
@@ -205,16 +202,16 @@ StatusCode CalibrateBenchmarkMethod::execute() {
 
 
 // minimisation function for the benchmark method
-Double_t chiSquareFitBarrel(const Double_t *par) {
-  Double_t fitvalue = 0.;
+double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t *par) const {
+  double fitvalue = 0.;
   // loop over all events, vector of a size of #evts is filled with the energies 
   // ECal calibrated to EM scale, HCal calibrated to HAD scale
-  for(uint i=0; i<vecEinECaltotal.size(); i++){
-    double E_generated = vecEgenerated.at(i);
-    double E_ECal_total = vecEinECaltotal.at(i);
-    double E_ECal_lastLayer = vecEinECallastLayer.at(i);
-    double E_HCal_total = vecEinHCaltotal.at(i);
-    double E_HCal_firstLayer = vecEinHCalfirstLayer.at(i);
+  for(uint i=0; i<m_vecEinECaltotal.size(); i++){
+    double E_generated = m_vecEgenerated.at(i);
+    double E_ECal_total = m_vecEinECaltotal.at(i);
+    double E_ECal_lastLayer = m_vecEinECallastLayer.at(i);
+    double E_HCal_total = m_vecEinHCaltotal.at(i);
+    double E_HCal_firstLayer = m_vecEinHCalfirstLayer.at(i);
     
     Double_t E0 = E_ECal_total*par[0] + E_HCal_total*par[1] + par[2]*sqrt(abs(E_ECal_lastLayer*par[0]*E_HCal_firstLayer*par[1])) + par[3]*pow(E_ECal_total*par[0],2);
     
@@ -226,8 +223,8 @@ Double_t chiSquareFitBarrel(const Double_t *par) {
 
 StatusCode CalibrateBenchmarkMethod::finalize() {
   // the actual minimisation is running here 
-  std::cout << "Running minimisation for " << vecEgenerated.size() << " #events! \n";
-  if (vecEgenerated.size() != vecEinECaltotal.size()){
+  std::cout << "Running minimisation for " << m_vecEgenerated.size() << " #events! \n";
+  if (m_vecEgenerated.size() != m_vecEinECaltotal.size()){
     std::cout << "Something's wrong!!" << std::endl; 
   } 
   ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
@@ -240,7 +237,8 @@ StatusCode CalibrateBenchmarkMethod::finalize() {
     
   // create funciton wrapper for minimizer
   int n_param = 4;
-  ROOT::Math::Functor f(&chiSquareFitBarrel,n_param); 
+  ROOT::Math::Functor f(this, &CalibrateBenchmarkMethod::chiSquareFitBarrel,n_param);
+
   static const std::vector<double> steps = {0.001, 0.001, 0.001, 0.001};
   static const std::vector<double>  variable = {1., 1., .5, .01};
   min->SetFunction(f);
