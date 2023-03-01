@@ -446,8 +446,8 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
   int num2 = 0;
   std::vector<dd4hep::DDSegmentation::CellID> seen_cellIDs;
   if (aEllipse) {
-    for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
-      for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
+    for (int iEta = etaId - halfEtaFin; iEta <= int(etaId + halfEtaFin); iEta++) {
+      for (int iPhi = phiId - halfPhiFin; iPhi <= int(phiId + halfPhiFin); iPhi++) {
         if (pow( (etaId - iEta) / (halfEtaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
           for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
             if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
@@ -463,8 +463,8 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
       }
     }
   } else {
-    for (int iEta = etaId - halfEtaFin; iEta <= etaId + halfEtaFin; iEta++) {
-      for (int iPhi = phiId - halfPhiFin; iPhi <= phiId + halfPhiFin; iPhi++) {
+    for (int iEta = etaId - halfEtaFin; iEta <= int(etaId + halfEtaFin); iEta++) {
+      for (int iPhi = phiId - halfPhiFin; iPhi <= int(phiId + halfPhiFin); iPhi++) {
         for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
           if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
             continue;
