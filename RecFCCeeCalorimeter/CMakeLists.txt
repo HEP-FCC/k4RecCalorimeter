@@ -41,7 +41,7 @@ add_test(NAME FCCeeLAr_slidingWindowClustering
 set_tests_properties(FCCeeLAr_slidingWindowClustering PROPERTIES DEPENDS "FCCeeLAr_simulateForReco")
 
 add_test(NAME FCCeeLAr_benchmarkCalibration
-         COMMAND k4run RecCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_benchmarkCalibration)
