@@ -329,13 +329,14 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
   }
   bool pass = true;
   for (const auto& cell : *aCells) {
+    pass = true;
     // if multisegmentation is used - first find out which segmentation to use
     if( aType == SegmentationType::kMulti) {
       segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&multisegmentation->subsegmentation(cell.getCellID()));
     }
     if (m_useHalfTower) {
         uint layerId = m_decoder->get(cell.getCellID(), "layer");
-        if ( layerId > 3 ) {
+        if ( layerId > m_max_layer ) {
           pass = false;
         }
     }
