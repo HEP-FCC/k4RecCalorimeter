@@ -87,9 +87,10 @@ StatusCode CorrectCaloClusters::initialize() {
     return StatusCode::FAILURE;
   }
 
-  // Prepare upstream and downstream correction functions
+  // Prepare upstream, downstream and benchmark method correction functions
   initializeCorrFunctions(m_upstreamFunctions, m_upstreamFormulas, m_upstreamParams, "upstream");
   initializeCorrFunctions(m_downstreamFunctions, m_downstreamFormulas, m_downstreamParams, "downstream");
+  initializeBenchmarkCorrFunctions(m_benchmarkFunctions, m_benchmarkFormulas, m_benchmarkParams, "benchmark");
 
   info() << "Initialized following upstream correction functions:" << endmsg;
   for (size_t i = 0; i < m_upstreamFunctions.size(); ++i) {
@@ -102,6 +103,7 @@ StatusCode CorrectCaloClusters::initialize() {
     }
   }
 
+
   info() << "Initialized following downstream correction functions:" << endmsg;
   for (size_t i = 0; i < m_downstreamFunctions.size(); ++i) {
     for (size_t j = 0; j < m_downstreamFunctions[i].size(); ++j) {
@@ -113,6 +115,14 @@ StatusCode CorrectCaloClusters::initialize() {
     }
   }
 
+  info() << "Initialized following benchmark correction functions:" << endmsg;
+  for (size_t j = 0; j < m_benchmarkFunctions.size(); ++j) {
+    auto func = m_benchmarkFunctions.at(j);
+    info() << "  " << func->GetName() << ": " << func->GetExpFormula() << endmsg;
+    for (int k = 0; k < func->GetNpar(); ++k) {
+      info() << "    " << func->GetParName(k) << ": " << func->GetParameter(k) << endmsg;
+    }
+  }
   return StatusCode::SUCCESS;
 }
 
@@ -135,7 +145,7 @@ StatusCode CorrectCaloClusters::execute() {
   }
 
   // Apply upstream correction
-  {
+  if (m_upstreamCorr){
     StatusCode sc = applyUpstreamCorr(inClusters, outClusters);
     if (sc.isFailure()) {
       return sc;
@@ -143,8 +153,16 @@ StatusCode CorrectCaloClusters::execute() {
   }
 
   // Apply downstream correction
-  {
+  if (m_downstreamCorr){
     StatusCode sc = applyDownstreamCorr(inClusters, outClusters);
+    if (sc.isFailure()) {
+      return sc;
+    }
+  }
+
+  // Apply benchmark correction
+  if (m_benchmarkCorr){
+    StatusCode sc = applyBenchmarkCorr(inClusters, outClusters);
     if (sc.isFailure()) {
       return sc;
     }
@@ -232,6 +250,35 @@ StatusCode CorrectCaloClusters::initializeCorrFunctions(std::vector<std::vector<
   return StatusCode::SUCCESS;
 }
 
+StatusCode CorrectCaloClusters::initializeBenchmarkCorrFunctions(std::vector<TF1*>& functions,
+                                                                 std::vector<std::string> formulas,
+                                                                 std::vector<double> parameters,
+                                                                 const std::string& funcNameStem) {
+  for (size_t j = 0; j < formulas.size(); ++j) {
+    std::string funcName = "func_";
+    funcName += funcNameStem + "_";
+    funcName += std::to_string(j);
+    TF1* func = new TF1(funcName.c_str(), formulas.at(j).c_str(), 0., 500.);
+    functions.emplace_back(func);
+  }
+
+  {
+    size_t j = 0;
+    for (auto& func: functions) {
+      for (int k = 0; k < func->GetNpar(); ++k) {
+        if (j >= parameters.size()) {
+          error() << "Correction parameter vector is not long enough!" << endmsg;
+          return StatusCode::FAILURE;
+        }
+        func->SetParameter(k, parameters.at(j));
+        std::string parName(1, 'a' + (char) j);
+        func->SetParName(k, parName.c_str());
+        j += 1;
+      }
+    }
+  }
+  return StatusCode::SUCCESS;
+}
 
 StatusCode CorrectCaloClusters::applyUpstreamCorr(const edm4hep::ClusterCollection* inClusters,
                                                   edm4hep::ClusterCollection* outClusters) {
@@ -306,6 +353,91 @@ StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollec
   return StatusCode::SUCCESS;
 }
 
+StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollection* inClusters,
+                                                    edm4hep::ClusterCollection* outClusters) {
+
+  int ecal_index = -99; 
+  int hcal_index = -99;
+
+  // identify ECal and HCal readout position in the input parameters when running the calibration
+  for (size_t i=0; i<m_readoutNames.size(); i++){
+    if (m_systemIDs[i]==m_ECalSystemID){
+      ecal_index = i; 
+    }
+    else if (m_systemIDs[i]==m_HCalSystemID){
+      hcal_index = i; 
+    }
+  }
+
+  for (size_t j = 0; j < inClusters->size(); ++j) {
+    double energyInLastECalLayer = getEnergyInLayer(inClusters->at(j),
+                                                  m_readoutNames[ecal_index],
+                                                  m_systemIDs[ecal_index],
+                                                  m_lastLayerIDs[ecal_index]);
+
+    double energyInFirstHCalLayer = getEnergyInLayer(inClusters->at(j),
+                                                  m_readoutNames[hcal_index],
+                                                  m_systemIDs[hcal_index],
+                                                  m_firstLayerIDs[hcal_index]);
+
+    double energyInECal = 0; 
+    double energyInHCal = 0;
+
+    for (size_t i_layer = 0; i_layer < m_numLayers[ecal_index]; ++i_layer) {
+      energyInECal += getEnergyInLayer(inClusters->at(j),
+                                         m_readoutNames[ecal_index],
+                                         m_systemIDs[ecal_index],
+                                         i_layer);
+    }
+
+    for (size_t i_layer = 0; i_layer < m_numLayers[hcal_index]; ++i_layer) {
+      energyInHCal += getEnergyInLayer(inClusters->at(j),
+                                         m_readoutNames[hcal_index],
+                                         m_systemIDs[hcal_index],
+                                         i_layer);
+    }
+
+    double benchmarkEnergy = 0.;
+    double total_energy_benchmark_approx = 0.;
+    double inClusterEnergy = inClusters->at(j).getEnergy(); 
+
+    // calculate approximate benchmark energy using non energy dependent benchmark parameters
+    total_energy_benchmark_approx = energyInECal*m_benchmarkParamsApprox[0] + energyInHCal*m_benchmarkParamsApprox[1] + m_benchmarkParamsApprox[2]*sqrt(abs(energyInLastECalLayer*m_benchmarkParamsApprox[0]*energyInFirstHCalLayer*m_benchmarkParamsApprox[1])) + m_benchmarkParamsApprox[3]*pow(energyInECal*m_benchmarkParamsApprox[0],2);
+
+    // number of benchmark parameters is 3; 
+    double benchmarkParam[3];
+
+    // obtain energy dependent benchmark parameters 
+    for (size_t k = 0; k < m_benchmarkFunctions.size(); ++k) {
+        auto func = m_benchmarkFunctions.at(k);
+        benchmarkParam[k] = func->Eval(total_energy_benchmark_approx);
+      }
+
+    // get final energy using the benchmark method
+    benchmarkEnergy = energyInECal*benchmarkParam[0] + energyInHCal + benchmarkParam[1]*sqrt(abs(energyInLastECalLayer*benchmarkParam[0]*energyInFirstHCalLayer)) + benchmarkParam[2]*pow(energyInECal*benchmarkParam[0],2);
+
+    // only apply benchmark calibration when we have energy deposits in both ECal and HCal
+    if(energyInHCal<0.1*inClusterEnergy || energyInECal<0.1*inClusterEnergy)
+    {
+      outClusters->at(j).setEnergy(energyInECal*benchmarkParam[0]+energyInHCal);
+    }
+    else{
+      outClusters->at(j).setEnergy(benchmarkEnergy);
+    }
+    
+    // sanity check - may happen for very low energetic clusters (ene less 0.5 GeV)
+    if (outClusters->at(j).getEnergy()<0.){
+      outClusters->at(j).setEnergy(energyInECal*benchmarkParam[0]+energyInHCal);
+    }
+    
+    verbose() << "********************************************************************" << endmsg;
+    verbose() << "Cluster energy: " << inClusterEnergy << endmsg;
+    verbose() << "energyInECal+HCal from hits: " << energyInECal+energyInHCal << endmsg;
+    verbose() << "Corrected cluster energy: " << outClusters->at(j).getEnergy() << endmsg;
+  }
+  return StatusCode::SUCCESS;
+}
+
 
 double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
                                              const std::string& readoutName,
@@ -316,10 +448,10 @@ double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
   double energy = 0;
   for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); ++cell) {
     dd4hep::DDSegmentation::CellID cellID = cell->getCellID();
-    if (decoder->get(cellID, "system") != systemID) {
+    if (uint(decoder->get(cellID, "system")) != systemID) {
       continue;
     }
-    if (decoder->get(cellID, "layer") != layerID) {
+    if (uint(decoder->get(cellID, "layer")) != layerID) {
       continue;
     }
 

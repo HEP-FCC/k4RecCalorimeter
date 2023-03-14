@@ -44,10 +44,13 @@ namespace dd4hep {
  *  * Downstream energy correction corrects for the energy lost due to punch trough. This energy is deposited in the
  *    instrumentation behind the active volume of the calorimeter. It is parametrized in one (cluster energy) or two
  *    variables (cluster energy, cluster angle)
+ *  * Benchmark method energy correction to be used for ECal+HCal simulation when shooting hadrons. 
+ *    This correction brings ECal to HAD scale (HCal is expected to be at HAD scale at the input level) and also corrects 
+ *    for the amount of energy lost between ECal and HCal, for the non-compensation of the ECal 
  *
  *  Based on similar corrections by Jana Faltova and Anna Zaborowska.
  *
- *  @author Juraj Smiesko
+ *  @author Juraj Smiesko, M. Mlynari added benchmark method
  */
 
 class CorrectCaloClusters : public GaudiAlgorithm {
@@ -63,6 +66,7 @@ public:
 
 private:
   /**
+   * 
    * Initialize output calorimeter cluster collection.
    *
    * @param[in] inClusters  Pointer to the input cluster collection.
@@ -80,6 +84,16 @@ private:
                                      std::vector<std::vector<std::string>> formulas,
                                      std::vector<std::vector<double>> parameters,
                                      const std::string& funcNameStem = "upDown");
+
+  /**
+   * Initialize vectors of benchmark correction functions.
+   *
+   * @return                  Status code.
+   */
+  StatusCode initializeBenchmarkCorrFunctions(std::vector<TF1*>& functions,
+                                              std::vector<std::string> formulas,
+                                              std::vector<double> parameters,
+                                              const std::string& funcNameStem = "benchmark");
 
   /**
    * Apply upstream correction to the output clusters.
@@ -101,6 +115,17 @@ private:
    * @return                  Status code.
    */
   StatusCode applyDownstreamCorr(const edm4hep::ClusterCollection* inClusters,
+                                 edm4hep::ClusterCollection* outClusters);
+
+  /**
+   * Apply benchmark correction to the output clusters.
+   *
+   * @param[in]  inClusters   Pointer to the input cluster collection.
+   * @param[out] outClusters  Pointer to the output cluster collection.
+   *
+   * @return                  Status code.
+   */
+  StatusCode applyBenchmarkCorr(const edm4hep::ClusterCollection* inClusters,
                                  edm4hep::ClusterCollection* outClusters);
 
   /**
@@ -142,26 +167,30 @@ private:
   std::vector<std::vector<TF1*>> m_upstreamFunctions;
   /// Pointers to downstream correction functions
   std::vector<std::vector<TF1*>> m_downstreamFunctions;
+  /// Pointers to benchmark method correction functions
+  std::vector<TF1*> m_benchmarkFunctions;
 
   /// IDs of the detectors
   Gaudi::Property<std::vector<size_t>> m_systemIDs {
-      this, "systemIDs", {4}, "IDs of systems"
+      this, "systemIDs", {4,8}, "IDs of systems"
   };
+  Gaudi::Property<uint> m_ECalSystemID{this, "ECalSystemID", 4, "ID of ECal system"};
+  Gaudi::Property<uint> m_HCalSystemID{this, "HCalSystemID", 8, "ID of the HCal system"};
   /// Names of the detector readouts, corresponding to system IDs
   Gaudi::Property<std::vector<std::string>> m_readoutNames {
-      this, "readoutNames", {"ECalBarrelPhiEta"},
+      this, "readoutNames", {"ECalBarrelPhiEta","HCalBarrelReadout"},
       "Names of the detector readout, corresponding to systemID"
   };
   /// Numbers of layers of the detectors
   Gaudi::Property<std::vector<size_t>> m_numLayers {
-      this, "numLayers", {12}, "Numbers of layers of the systems"};
+      this, "numLayers", {12,13}, "Numbers of layers of the systems"};
   /// IDs of the first layers of the detectors
   Gaudi::Property<std::vector<size_t>> m_firstLayerIDs {
-      this, "firstLayerIDs", {0}, "IDs of first layers in the systems"
+      this, "firstLayerIDs", {0,0}, "IDs of first layers in the systems"
   };
   /// IDs of the last layers of the detectors
   Gaudi::Property<std::vector<size_t>> m_lastLayerIDs {
-      this, "lastLayerIDs", {7}, "IDs of last layers in the systems"
+      this, "lastLayerIDs", {11,12}, "IDs of last layers in the systems"
   };
 
   /// Upstream correction parameters (a, b, c, ...)
@@ -177,6 +206,24 @@ private:
   /// Downstream correction formulas in ROOT notation
   Gaudi::Property<std::vector<std::vector<std::string>>> m_downstreamFormulas {
       this, "downstreamFormulas", {}, "Downstream formulas (in ROOT notation)"};
+
+  /// Benchmark method correction parameters (a, b, c, ...)
+  Gaudi::Property<std::vector<double>> m_benchmarkParams {
+      this, "benchmarkParameters", {}, "Benchmark parameters"};
+  /// Downstream correction formulas in ROOT notation
+  Gaudi::Property<std::vector<std::string>> m_benchmarkFormulas {
+      this, "benchmarkFormulas", {}, "Benchmark formulas (in ROOT notation)"};
+
+  /// benchmarkParamsApprox are used for the first estimate of the energy, below parameters for 100 GeV pion
+  Gaudi::Property<std::vector<double>> m_benchmarkParamsApprox {
+      this, "benchmarkParamsApprox", {1.2909, 1, 0.91, -0.0019}, "Approximate benchmark parameters"};
+
+  /// Flag if upstream correction should be applied
+  Gaudi::Property<bool> m_upstreamCorr{this, "upstreamCorr", true};
+  /// Flag if downstream correction should be applied
+  Gaudi::Property<bool> m_downstreamCorr{this, "downstreamCorr", true};
+  /// Flag if benchmark correction should be applied
+  Gaudi::Property<bool> m_benchmarkCorr{this, "benchmarkCorr", true};
 };
 
 #endif /* RECCALORIMETER_CORRECTCALOCLUSTERS_H */
