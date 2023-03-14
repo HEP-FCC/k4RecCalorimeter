@@ -50,7 +50,7 @@ namespace dd4hep {
  *
  *  Based on similar corrections by Jana Faltova and Anna Zaborowska.
  *
- *  @author Juraj Smiesko, M. Mlynari added benchmark method
+ *  @author Juraj Smiesko, March 2023: M. Mlynarikova added benchmark method
  */
 
 class CorrectCaloClusters : public GaudiAlgorithm {
