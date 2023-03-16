@@ -31,7 +31,7 @@ StatusCode CreateCaloCells::initialize() {
   info() << "CreateCaloCells initialized" << endmsg;
   info() << "do calibration : " << m_doCellCalibration << endmsg;
   info() << "add cell noise      : " << m_addCellNoise << endmsg;
-  info() << "remove noise cells below threshold : " << m_filterCellNoise << endmsg;
+  info() << "remove cells below threshold : " << m_filterCellNoise << endmsg;
   info() << "add position information to the cell : " << m_addPosition << endmsg;
 
   // Initialization of tools
@@ -43,7 +43,7 @@ StatusCode CreateCaloCells::initialize() {
     }
   }
   // Cell noise tool
-  if (m_addCellNoise) {
+  if (m_addCellNoise || m_filterCellNoise) {
     if (!m_noiseTool.retrieve()) {
       error() << "Unable to retrieve the calo cells noise tool!!!" << endmsg;
       return StatusCode::FAILURE;
@@ -102,12 +102,14 @@ StatusCode CreateCaloCells::execute() {
   // 3. Add noise to all cells
   if (m_addCellNoise) {
     m_noiseTool->addRandomCellNoise(m_cellsMap);
-    if (m_filterCellNoise) {
-      m_noiseTool->filterCellNoise(m_cellsMap);
-    }
   }
 
-  // 4. Copy information to CaloHitCollection
+  // 4. Filter cells
+  if (m_filterCellNoise) {
+    m_noiseTool->filterCellNoise(m_cellsMap);
+  }
+
+  // 5. Copy information to CaloHitCollection
   edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
   for (const auto& cell : m_cellsMap) {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {
