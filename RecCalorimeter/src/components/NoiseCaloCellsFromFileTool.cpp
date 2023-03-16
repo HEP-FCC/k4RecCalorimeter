@@ -102,7 +102,7 @@ void NoiseCaloCellsFromFileTool::filterCellNoise(std::unordered_map<uint64_t, do
   // Erase a cell if it has energy bellow a threshold from the vector
   auto it = aCells.begin();
   while ((it = std::find_if(it, aCells.end(), [this](std::pair<const uint64_t, double>& p) {
-            return bool(p.second < m_filterThreshold * getNoiseConstantPerCell(p.first));
+            return m_useAbsInFilter ? bool(std::abs(p.second) < m_filterThreshold * getNoiseConstantPerCell(p.first)) : bool(p.second < m_filterThreshold * getNoiseConstantPerCell(p.first));
           })) != aCells.end()) {
     aCells.erase(it++);
   }
