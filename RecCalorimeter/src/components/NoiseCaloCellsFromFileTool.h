@@ -75,7 +75,11 @@ private:
                                                     "Name of electronics noise histogram"};
   /// Energy threshold (cells with Ecell < filterThreshold*m_cellNoise removed)
   Gaudi::Property<double> m_filterThreshold{
-      this, "filterNoiseThreshold", 3, " Energy threshold (cells with Ecell < filterThreshold*m_cellNoise removed)"};
+      this, "filterNoiseThreshold", 3, "Energy threshold (cells with Ecell < filterThreshold*m_cellNoise removed)"};
+  /// Change the cell filter condition to remove only cells with abs(Ecell) < filterThreshold*m_cellNoise removed)
+  /// This avoids to keep only 'one side'  of the noise fluctuations and prevents biasing cluster energy towards higher energies
+  Gaudi::Property<bool> m_useAbsInFilter{
+      this, "useAbsInFilter", false, "Cell filtering condition becomes: drop cell if abs(Ecell) < filterThreshold*m_cellNoise"};
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
   /// Histograms with pileup constants (index in array - radial layer)
