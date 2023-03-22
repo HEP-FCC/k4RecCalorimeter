@@ -166,14 +166,12 @@ edm4hep::ClusterCollection* CorrectCaloClusters::initializeOutputClusters(
   edm4hep::ClusterCollection* outClusters = m_outClusters.createAndPut();
 
   for (auto const& inCluster: *inClusters) {
-    auto outCluster = outClusters->create();
-
-    outCluster.setPosition(inCluster.getPosition());
+    auto outCluster = inCluster.clone();
     verbose() << "Cluster position:" << endmsg;
     verbose() << "    x: " << outCluster.position().x << endmsg;
     verbose() << "    y: " << outCluster.position().y << endmsg;
     verbose() << "    z: " << outCluster.position().z << endmsg;
-    outCluster.setEnergy(inCluster.getEnergy());
+    outClusters->push_back(outCluster);
   }
 
   return outClusters;
