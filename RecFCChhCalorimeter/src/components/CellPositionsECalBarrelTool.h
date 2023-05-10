@@ -9,6 +9,8 @@
 #include "DetCommon/DetUtils.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "DetSegmentation/FCCSWGridPhiTheta.h"
+#include "DetSegmentation/FCCSWGridPhiThetaMerged.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
@@ -55,8 +57,10 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta"};
-  /// Eta-phi segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  /// Eta-phi (or theta-phi) segmentation
+  dd4hep::DDSegmentation::Segmentation* m_segmentation;
+  /// segmentation type: -1 unknown, 0 eta-phi, 1 theta-phi
+  int m_segmentationType;
   /// Cellid decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Volume manager

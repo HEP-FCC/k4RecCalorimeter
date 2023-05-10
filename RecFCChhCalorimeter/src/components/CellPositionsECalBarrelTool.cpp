@@ -19,13 +19,39 @@ StatusCode CellPositionsECalBarrelTool::initialize() {
     error() << "Unable to locate Geometry service." << endmsg;
     return StatusCode::FAILURE;
   }
-  // get PhiEta segmentation
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-      m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+
+  // get segmentation
+  auto segmentation = m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation();
+  m_segmentationType = -1;
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(segmentation);
   if (m_segmentation == nullptr) {
-    error() << "There is no phi-eta segmentation!!!!" << endmsg;
-    return StatusCode::FAILURE;
+    warning() << "There is no phi-eta segmentation, trying phi-theta" << endmsg;
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta*>(segmentation);
+    if (m_segmentation == nullptr) {
+      warning() << "There is no phi-theta segmentation, trying phi-theta merged" << endmsg;
+      m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiThetaMerged*>(segmentation);
+      if (m_segmentation == nullptr) {
+	error() << "There is no phi-theta merged segmentation!!!!" << endmsg;
+	return StatusCode::FAILURE;
+      }
+      else {
+	m_segmentationType = 1;
+	info() << "Found phi-theta merged segmentation" << endmsg;
+	// debug
+	for (unsigned int iLayer=0; iLayer<12; iLayer++) {
+	  dd4hep::DDSegmentation::FCCSWGridPhiThetaMerged* seg = reinterpret_cast<dd4hep::DDSegmentation::FCCSWGridPhiThetaMerged*>(m_segmentation);
+	  info() << "Layer : " << iLayer << " theta merge : " << seg->mergedThetaCells(iLayer) << " phi merge : " << seg->mergedPhiCells(iLayer) << endmsg;
+	}
+      }
+    }
+    else {
+      m_segmentationType = 1;
+    }
   }
+  else {
+    m_segmentationType = 0;
+  }
+
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
   m_volman = m_geoSvc->lcdd()->volumeManager();
@@ -70,7 +96,11 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
   double radius;
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
   m_decoder->set(volumeId, "phi", 0);
-  m_decoder->set(volumeId, "eta", 0);
+  if (m_segmentationType==0)
+    m_decoder->set(volumeId, "eta", 0);
+  else if
+    (m_segmentationType==1)
+    m_decoder->set(volumeId, "theta", 0);
   auto detelement = m_volman.lookupDetElement(volumeId);
   const auto& transformMatrix = detelement.nominal().worldTransformation();
   double outGlobal[3];
@@ -78,10 +108,14 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
   transformMatrix.LocalToMaster(inLocal, outGlobal);
   //debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
   //        << outGlobal[2] / dd4hep::mm << endmsg;
-  // radius calculated from segmenation + z postion of volumes
+  // radius calculated from segmentation + z position of volumes
   auto inSeg = m_segmentation->position(aCellId);
   radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
   dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
+
+  debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
+	  << outSeg.z() / dd4hep::mm << "\n"
+	  << endmsg;
 
   return outSeg;
 }
