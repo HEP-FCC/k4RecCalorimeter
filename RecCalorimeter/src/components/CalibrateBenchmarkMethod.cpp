@@ -109,6 +109,8 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
 
 
 StatusCode CalibrateBenchmarkMethod::execute() {
+  double energyInHCal = 0.;
+  double energyInECal = 0.;
   double energyInFirstHCalLayer = 0; 
   double energyInLastECalLayer = 0; 
   double energyInBoth = 0.;
@@ -162,14 +164,17 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   }
 
   // Energy deposited in the whole ECal
-  const double energyInECal = std::accumulate(m_energyInECalLayer.begin(), m_energyInECalLayer.end(), 0);
+  for (size_t i = 0; i < m_energyInECalLayer.size(); ++i) {
+    energyInECal += m_energyInECalLayer.at(i);
+  }
 
   // Energy deposited in the last ECal layer
   energyInLastECalLayer = m_energyInECalLayer.at(m_numLayersECal-1);
 
   // Energy deposited in the whole HCal
-  const double energyInHCal = std::accumulate(m_energyInHCalLayer.begin(), m_energyInHCalLayer.end(), 0);
-
+  for (size_t i = 0; i < m_energyInHCalLayer.size(); ++i) {
+    energyInHCal += m_energyInHCalLayer.at(i);
+  }
   // Energy deposited in the first HCal layer
   energyInFirstHCalLayer = m_energyInHCalLayer.at(m_firstLayerHCal);
 
