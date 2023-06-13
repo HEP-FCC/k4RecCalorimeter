@@ -8,9 +8,11 @@
 // FCCSW
 #include "DetCommon/DetUtils.h"
 #include "k4Interface/IGeoSvc.h"
+#include "DetSegmentation/GridTheta.h"
 #include "DetSegmentation/FCCSWGridPhiEta.h"
 #include "DetSegmentation/FCCSWGridPhiTheta.h"
-#include "DetSegmentation/FCCSWGridPhiThetaMerged.h"
+//#include "DetSegmentation/FCCSWGridPhiThetaMerged.h"
+#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
@@ -59,7 +61,7 @@ private:
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta"};
   /// Eta-phi (or theta-phi) segmentation
   dd4hep::DDSegmentation::Segmentation* m_segmentation;
-  /// segmentation type: -1 unknown, 0 eta-phi, 1 theta-phi
+  /// segmentation type: -1 unknown, 0 eta-phi, 1 theta-phi, 2 theta-module merged
   int m_segmentationType;
   /// Cellid decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
