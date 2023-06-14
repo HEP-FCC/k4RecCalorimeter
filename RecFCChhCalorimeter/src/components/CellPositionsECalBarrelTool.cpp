@@ -40,48 +40,23 @@ StatusCode CellPositionsECalBarrelTool::initialize() {
       info() << "Found phi-theta segmentation" << endmsg;
       m_segmentationType = 1;
     }
-    /*
     else {
-      warning() << "There is no phi-theta segmentation, trying phi-theta merged" << endmsg;
-      m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiThetaMerged*>(segmentation);
-      if (m_segmentation != nullptr) {
-	m_segmentationType = 2;
-	info() << "Found merged phi-theta segmentation" << endmsg;
-	// debug, to remove..
-	for (unsigned int iLayer=0; iLayer<12; iLayer++) {
-	  dd4hep::DDSegmentation::FCCSWGridPhiThetaMerged* seg = reinterpret_cast<dd4hep::DDSegmentation::FCCSWGridPhiThetaMerged*>(m_segmentation);
-	  info() << "Layer : " << iLayer << " theta merge : " << seg->mergedThetaCells(iLayer) << " phi merge : " << seg->mergedPhiCells(iLayer) << endmsg;
-	}
-      }
-    */
-    else {
-      //warning() << "There is no merged phi-theta segmentation, trying merged module-theta merged" << endmsg;
       warning() << "There is no phi-theta segmentation, trying merged module-theta merged" << endmsg;
       m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(segmentation);
       if (m_segmentation != nullptr) {
 	m_segmentationType = 2;
 	info() << "Found merged module-theta segmentation" << endmsg;
-	// debug, to remove..
 	for (unsigned int iLayer=0; iLayer<12; iLayer++) {
 	  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* seg = reinterpret_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_segmentation);
 	  info() << "Layer : " << iLayer << " theta merge : " << seg->mergedThetaCells(iLayer) << " module merge : " << seg->mergedModules(iLayer) << endmsg;
 	}
       }
       else {
-	warning() << "There is no merged module-theta segmentation, trying grid theta" << endmsg;
-	m_segmentation = dynamic_cast<dd4hep::DDSegmentation::GridTheta*>(segmentation);
-	if (m_segmentation != nullptr) {
-	  info() << "Found grid theta segmentation" << endmsg;
-	  m_segmentationType = 4;
-	}
-	else {
-	  error() << "There is no grid theta segmentation!!!!" << endmsg;
-	  return StatusCode::FAILURE;
-	}
+	error() << "There is no module-theta segmentation!!!!" << endmsg;
+	return StatusCode::FAILURE;
       }
     }
   }
-  //}
     
 
   // Take readout bitfield decoder from GeoSvc
@@ -105,7 +80,9 @@ void CellPositionsECalBarrelTool::getPositions(const edm4hep::CalorimeterHitColl
                                                edm4hep::CalorimeterHitCollection& outputColl) {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
-  // Loop through cell collection
+
+  // Loop through input cell collection, call xyzPosition method for each cell
+  // and assign position to cloned hit to be saved in outputColl
   for (const auto& cell : aCells) {
     auto outSeg = CellPositionsECalBarrelTool::xyzPosition(cell.getCellID());
     auto edmPos = edm4hep::Vector3f();
@@ -130,19 +107,19 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
 
   dd4hep::Position outSeg;
   double radius;
-  /*
-  if (m_segmentationType==3) {
-    auto inSeg = reinterpret_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_segmentation)->position(aCellId, m_volman);
-    outSeg = dd4hep::Position(inSeg.x(), inSeg.y(), inSeg.z());
-  }
-  */
+
   if (m_segmentationType==2) {
+
+    // for module-theta merged segmentation, the local position returned
+    // by the segmentation class is theta of group of merged cells 
+    // and relative phi wrt first module in group of merged modules
+    // in a vector3 scaled such that R_xy=1
+
     // find position of volume corresponding to first of group of merged cells
     debug() << "cellID: " << aCellId << endmsg;
     dd4hep::DDSegmentation::CellID volumeId = aCellId;
     m_decoder->set(volumeId, "theta", 0);
     debug() << "volumeID: " << volumeId << endmsg;
-
     auto detelement = m_volman.lookupDetElement(volumeId);
     const auto& transformMatrix = detelement.nominal().worldTransformation();
     double outGlobal[3];
@@ -152,12 +129,14 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
 	    << outGlobal[0] / dd4hep::mm << "\t" 
 	    << outGlobal[1] / dd4hep::mm << "\t"
             << outGlobal[2] / dd4hep::mm << endmsg;
+
+    // get R, phi of volume
     radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
     double phi = std::atan2(outGlobal[1], outGlobal[0]);
     debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
+
     // now get offset in theta and in phi from cell ID (due to theta grid + merging in theta/modules)
     // the local position is normalised to r_xy=1 so theta is atan(1/z)
-    //auto inSeg = m_segmentation->position(aCellId);
     dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
     debug() << "Local position of cell (mm) : \t" 
 	    << inSeg.x() / dd4hep::mm << "\t" 
@@ -177,20 +156,28 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
 				radius * std::cos(dtheta)/std::sin(dtheta));
   }
   else {
+    // for grid eta-phi and theta-phi segmentations, the local position returned
+    // by the segmentation class is actually the global position but
+    // scaled such that R_xy = 1
+    // so first need to find the proper value of R and then to rescale the
+    // vector
+
     // find radius of volume at phi bin=0, eta/theta bin=0
     dd4hep::DDSegmentation::CellID volumeId = aCellId;
     m_decoder->set(volumeId, "phi", 0);
     if (m_segmentationType==0)
       m_decoder->set(volumeId, "eta", 0);
-    else if (m_segmentationType==1 || m_segmentationType==2)
+    else if (m_segmentationType==1)
       m_decoder->set(volumeId, "theta", 0);
     auto detelement = m_volman.lookupDetElement(volumeId);
     const auto& transformMatrix = detelement.nominal().worldTransformation();
     double outGlobal[3];
     double inLocal[] = {0, 0, 0};
     transformMatrix.LocalToMaster(inLocal, outGlobal);
-    //debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-    //        << outGlobal[2] / dd4hep::mm << endmsg;
+    debug() << "Position of volume (mm) : \t" 
+	    << outGlobal[0] / dd4hep::mm << "\t" 
+	    << outGlobal[1] / dd4hep::mm << "\t"
+	    << outGlobal[2] / dd4hep::mm << endmsg;
     radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
 
     // get position of cell from segmentation class (for a radius of 1)
