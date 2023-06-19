@@ -14,3 +14,4 @@ source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
 * DD4hep
 * FCCDetectors
 * FCC-EDM (will be replaced by EDM4HEP)
+
