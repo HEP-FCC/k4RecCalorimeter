@@ -77,10 +77,10 @@ private:
   /// Handle for calo hits (input collection)
   DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
   /// Handle for the cellID encoding string of the input collection
-  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncodingString", Gaudi::DataHandle::Reader, this};
+  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncodingString", Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
   DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
-  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, "CellIDEncodingString", Gaudi::DataHandle::Writer, this};
+  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, "CellIDEncodingString", Gaudi::DataHandle::Writer};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes
