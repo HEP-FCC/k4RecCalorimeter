@@ -46,9 +46,15 @@ StatusCode CellPositionsECalBarrelTool::initialize() {
       if (m_segmentation != nullptr) {
 	m_segmentationType = 2;
 	info() << "Found merged module-theta segmentation" << endmsg;
-	for (unsigned int iLayer=0; iLayer<12; iLayer++) {
-	  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* seg = reinterpret_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_segmentation);
+	dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* seg = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_segmentation);
+	for (int iLayer=0; iLayer<12; iLayer++) {
 	  info() << "Layer : " << iLayer << " theta merge : " << seg->mergedThetaCells(iLayer) << " module merge : " << seg->mergedModules(iLayer) << endmsg;
+	  if (seg->mergedThetaCells(iLayer)<1) {
+	    error() << "Number of cells merged along theta should be >= 1!!!!" << endmsg;
+	  }
+	  if (seg->mergedModules(iLayer)<1) {
+	    error() << "Number of modules merged should be >= 1!!!!" << endmsg;
+	  }
 	}
       }
       else {
@@ -143,9 +149,13 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
 	    << inSeg.y() / dd4hep::mm << "\t"
             << inSeg.z() / dd4hep::mm << endmsg;
     double dphi = std::atan2(inSeg.y(), inSeg.x());
+    debug() << "Local phi of cell : \t"  << dphi << endmsg;
     phi += dphi;
+    outSeg = dd4hep::Position(radius * std::cos(phi),
+			      radius * std::sin(phi),
+			      radius * inSeg.z());
+    /*
     double dtheta = (inSeg.z() == 0.) ? M_PI_2 : std::atan(1./inSeg.z());
-    debug() << "Local theta, phi of cell : \t" << dtheta << " , " << dphi << endmsg;
     if (inSeg.z() == 0.)
       outSeg = dd4hep::Position(radius * std::cos(phi), 
 				radius * std::sin(phi), 
@@ -154,6 +164,7 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
       outSeg = dd4hep::Position(radius * std::cos(phi), 
 				radius * std::sin(phi), 
 				radius * std::cos(dtheta)/std::sin(dtheta));
+    */
   }
   else {
     // for grid eta-phi and theta-phi segmentations, the local position returned
