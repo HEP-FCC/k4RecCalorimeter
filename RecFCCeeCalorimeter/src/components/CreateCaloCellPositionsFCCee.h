@@ -3,6 +3,7 @@
 
 // FCCSW
 #include "k4FWCore/DataHandle.h"
+#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
 // Gaudi
@@ -91,10 +92,10 @@ private:
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:4");
   /// Input collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
+  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncodingString", Gaudi::DataHandle::Reader};
   /// Output collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
-  PodioDataSvc* m_podioDataSvc;
-  ServiceHandle<IDataProviderSvc> m_eventDataSvc;
+  MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, "CellIDEncodingString", Gaudi::DataHandle::Reader};
 
   int m_system_id = m_decoder->index("system");
   std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
