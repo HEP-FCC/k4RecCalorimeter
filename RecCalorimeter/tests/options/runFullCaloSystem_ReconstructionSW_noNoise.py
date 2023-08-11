@@ -21,9 +21,9 @@ hcalFwdReadoutName = "HFwdPhiEta"
 num_events = 3
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
+from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
 
-podioevent = FCCDataSvc("EventDataSvc", input="output_fullCalo_SimAndDigi_e50GeV_"+str(num_events)+"events.root")
+podioevent = k4DataSvc("EventDataSvc", input="output_fullCalo_SimAndDigi_e50GeV_"+str(num_events)+"events.root")
 # reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput
 podioinput = PodioInput("PodioReader", 

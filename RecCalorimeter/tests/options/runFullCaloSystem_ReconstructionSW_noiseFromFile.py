@@ -28,15 +28,15 @@ hcalEndcapReadoutName = "HECPhiEtaReco"
 hcalFwdReadoutName = "HFwdPhiEta"
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
+from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
 
 num_events = 3
 ApplicationMgr().EvtSel = 'NONE'
 ApplicationMgr().EvtMax = num_events
 ApplicationMgr().OutputLevel = DEBUG
 
-from Configurables import FCCDataSvc
-podioevent = FCCDataSvc("EventDataSvc")
+from Configurables import k4DataSvc
+podioevent = k4DataSvc("EventDataSvc")
 # produced with Reconstruction/RecCalorimeter/tests/options/runFullCaloSystem_SimAndDigitisation.py
 podioevent.input="http://fccsw.web.cern.ch/fccsw/testsamples/output_fullCalo_SimAndDigi_e50GeV_3events.root"
 ApplicationMgr().ExtSvc += [podioevent]

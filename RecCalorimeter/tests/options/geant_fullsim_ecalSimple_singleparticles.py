@@ -6,8 +6,8 @@ num_events = 1
 from Gaudi.Configuration import *
 
 # Data service
-from Configurables import FCCDataSvc
-podioevent = FCCDataSvc("EventDataSvc")
+from Configurables import k4DataSvc
+podioevent = k4DataSvc("EventDataSvc")
 
 # DD4hep geometry service
 from Configurables import GeoSvc

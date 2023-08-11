@@ -20,8 +20,8 @@ magneticField = False
 
 from Gaudi.Configuration import *
 
-from Configurables import FCCDataSvc
-podioevent  = FCCDataSvc("EventDataSvc")
+from Configurables import k4DataSvc
+podioevent  = k4DataSvc("EventDataSvc")
 
 ################## Particle gun setup
 _pi = 3.14159
