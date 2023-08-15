@@ -29,7 +29,7 @@ detectors = [
 ]
 # prefix all xmls with path_to_detectors
 for det in detectors:
-    geoservice.detectors = [os.path.join(path_to_detectors, det)]
+    geoservice.detectors += [os.path.join(path_to_detectors, det)]
 geoservice.OutputLevel = WARNING
 
 
