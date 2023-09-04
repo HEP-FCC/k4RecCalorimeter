@@ -24,7 +24,8 @@ DETECTORPATH = os.environ.get("FCCDETECTORS", "")
 DETECTORS = [
     'Detector/DetFCCeeIDEA-LAr/compact/FCCee_DectMaster.xml',
 ]
-GEOSERVICE.detectors = [os.path.join(DETECTORPATH, d) for d in DETECTORS]
+for det in DETECTORS:
+    GEOSERVICE.detectors += [os.path.join(DETECTORPATH, det)]
 GEOSERVICE.OutputLevel = INFO
 ApplicationMgr().ExtSvc += [GEOSERVICE]
 

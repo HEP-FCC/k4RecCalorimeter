@@ -3,6 +3,7 @@
 
 // FCCSW
 #include "k4FWCore/DataHandle.h"
+#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseCaloCellsTool.h"
@@ -75,8 +76,11 @@ private:
 
   /// Handle for calo hits (input collection)
   DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  /// Handle for the cellID encoding string of the input collection
+  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncodingString", Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
   DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
+  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, "CellIDEncodingString", Gaudi::DataHandle::Writer};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes
@@ -105,8 +109,6 @@ private:
   /// Use only volume ID? If false, using PhiEtaSegmentation
   bool m_useVolumeIdOnly;
 
-  PodioDataSvc* m_podioDataSvc;
-  ServiceHandle<IDataProviderSvc> m_eventDataSvc;
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
