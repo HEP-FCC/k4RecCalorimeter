@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_CELLPOSITIONSECALBARRELTOOL_H
-#define RECCALORIMETER_CELLPOSITIONSECALBARRELTOOL_H
+#ifndef RECCALORIMETER_CELLPOSITIONSECALBARRELMODULETHETASEGTOOL_H
+#define RECCALORIMETER_CELLPOSITIONSECALBARRELMODULETHETASEGTOOL_H
 
 // GAUDI
 #include "GaudiAlg/GaudiTool.h"
@@ -8,7 +8,7 @@
 // FCCSW
 #include "DetCommon/DetUtils.h"
 #include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
@@ -25,20 +25,20 @@ class Segmentation;
 }
 }
 
-/** @class CellPositionsECalBarrelTool Reconstruction/RecFCChhCalorimeter/src/components/CellPositionsECalBarrelTool.h
- * CellPositionsECalBarrelTool.h
+/** @class CellPositionsECalBarrelModuleThetaSegTool Reconstruction/RecFCCeeCalorimeter/src/components/CellPositionsECalBarrelModuleThetaSegTool.h
+ * CellPositionsECalBarrelModuleThetaSegTool.h
  *
  *  Tool to determine each Calorimeter cell position.
  *
- *   For the FCChh Barrel ECAL, determined from the placed volumes and the FCCSW eta-phi segmentation.   
+ *   For the FCCee Barrel ECAL, determined from the placed volumes and the FCCSW theta-module segmentation.   
  * 
- *  @author Coralie Neubueser
+ *  @author Giovanni Marchiori
  */
 
-class CellPositionsECalBarrelTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsECalBarrelModuleThetaSegTool : public GaudiTool, virtual public ICellPositionsTool {
 public:
-  CellPositionsECalBarrelTool(const std::string& type, const std::string& name, const IInterface* parent);
-  ~CellPositionsECalBarrelTool() = default;
+  CellPositionsECalBarrelModuleThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
+  ~CellPositionsECalBarrelModuleThetaSegTool() = default;
 
   virtual StatusCode initialize() final;
 
@@ -54,12 +54,12 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Name of the electromagnetic calorimeter readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta"};
-  /// Eta-phi segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
+  /// Merged module-theta segmentation
+  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* m_segmentation;
   /// Cellid decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Volume manager
   dd4hep::VolumeManager m_volman;
 };
-#endif /* RECCALORIMETER_CELLPOSITIONSECALBARRELTOOL_H */
+#endif /* RECCALORIMETER_CELLPOSITIONSECALBARRELMODULETHETASEGTOOL_H */
