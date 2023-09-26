@@ -32,20 +32,20 @@ StatusCode LayeredCaloTowerTool::initialize() {
     return StatusCode::FAILURE;
   }
   // check if readouts exist
-  if (m_geoSvc->lcdd()->readouts().find(m_readoutName) == m_geoSvc->lcdd()->readouts().end()) {
+  if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
     error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
     return StatusCode::FAILURE;
   }
   // retrieve PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-      m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation." << endmsg;
     return StatusCode::FAILURE;
   }
   // Take readout bitfield decoder from GeoSvc
   m_decoder =
-    std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder>(m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder());
+    std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder>(m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder());
   // check if decoder contains "layer"
   std::vector<std::string> fields;
   for (uint itField = 0; itField < m_decoder->size(); itField++) {

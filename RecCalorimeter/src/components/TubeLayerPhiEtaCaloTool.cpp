@@ -26,7 +26,7 @@ StatusCode TubeLayerPhiEtaCaloTool::initialize() {
   if (m_readoutName != "") {
     // Check if readouts exist
     info() << "Readout: " << m_readoutName << endmsg;
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutName) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
@@ -52,10 +52,10 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
   const dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation = nullptr;
   const dd4hep::DDSegmentation::MultiSegmentation* segmentationMulti = nullptr;
   segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-      m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (segmentation == nullptr) {
     segmentationMulti = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-      m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (segmentationMulti == nullptr) {
       error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined." << endmsg;
       return StatusCode::FAILURE;
@@ -81,7 +81,7 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
            << segmentation->offsetPhi() << endmsg;
   }
   // Take readout bitfield decoder from GeoSvc
-  auto decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  auto decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   if (m_fieldNames.size() != m_fieldValues.size()) {
     error() << "Volume readout field descriptors (names and values) have different size." << endmsg;
     return StatusCode::FAILURE;

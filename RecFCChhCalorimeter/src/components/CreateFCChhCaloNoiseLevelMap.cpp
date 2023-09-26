@@ -39,14 +39,14 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutNamesSegmented[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesSegmented[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
     // get PhiEta segmentation
     dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-        m_geoSvc->lcdd()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
       error() << "There is no phi-eta segmentation!!!!" << endmsg;
       return StatusCode::FAILURE;
@@ -57,7 +57,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
     info() << "GridPhiEta: offset in eta " << segmentation->offsetEta() << " , offset in phi "
            << segmentation->offsetPhi() << endmsg;
 
-    auto decoder = m_geoSvc->lcdd()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
+    auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     // Loop over all cells in the calorimeter and retrieve existing cellIDs
     // Loop over active layers
     std::vector<std::pair<int, int>> extrema;
@@ -116,11 +116,11 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
     }
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesNested[iSys] << endmsg;
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutNamesNested[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesNested[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesNested[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
-    auto decoder = m_geoSvc->lcdd()->readout(m_readoutNamesNested[iSys]).idSpec().decoder();
+    auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesNested[iSys]).idSpec().decoder();
     // Get VolumeID
     dd4hep::DDSegmentation::CellID volumeId = 0;
     decoder->set(volumeId, m_fieldNameNested, m_fieldValuesNested[iSys]);

@@ -135,8 +135,8 @@ StatusCode CreateCaloClusters::initialize() {
     return StatusCode::FAILURE;
   }
 
-  m_decoderECal = m_geoSvc->lcdd()->readout(m_readoutECal).idSpec().decoder();  
-  m_decoderHCal = m_geoSvc->lcdd()->readout(m_readoutHCal).idSpec().decoder();  
+  m_decoderECal = m_geoSvc->getDetector()->readout(m_readoutECal).idSpec().decoder();  
+  m_decoderHCal = m_geoSvc->getDetector()->readout(m_readoutHCal).idSpec().decoder();  
  
   info() << "CreateCaloClusters initialized" << endmsg;
   

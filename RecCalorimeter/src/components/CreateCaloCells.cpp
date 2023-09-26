@@ -61,7 +61,7 @@ StatusCode CreateCaloCells::initialize() {
     }
   }
   if (m_addPosition){
-    m_volman = m_geoSvc->lcdd()->volumeManager();
+    m_volman = m_geoSvc->getDetector()->volumeManager();
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection

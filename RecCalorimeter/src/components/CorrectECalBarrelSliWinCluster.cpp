@@ -139,20 +139,20 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   }
   for (uint iSys = 0; iSys < m_systemId.size(); iSys++) {
     // check if readouts exist
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutName[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
     // retrieve PhiEta segmentation
     m_segmentationPhiEta[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-        m_geoSvc->lcdd()->readout(m_readoutName[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     m_segmentationMulti[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->lcdd()->readout(m_readoutName[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     if (m_segmentationPhiEta[m_systemId[iSys]] == nullptr && m_segmentationMulti[m_systemId[iSys]] == nullptr) {
       error() << "There is no phi-eta or multi- segmentation." << endmsg;
       return StatusCode::FAILURE;
     }
-    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->lcdd()->readout(m_readoutName[iSys]).idSpec().decoder()));
+    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->getDetector()->readout(m_readoutName[iSys]).idSpec().decoder()));
   }
   // Initialize random service
   if (service("RndmGenSvc", m_randSvc).isFailure()) {

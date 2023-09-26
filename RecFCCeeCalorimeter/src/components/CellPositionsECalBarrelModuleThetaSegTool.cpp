@@ -23,7 +23,7 @@ StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
   }
 
   // get segmentation
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no module-theta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
@@ -43,8 +43,8 @@ StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
     
 
   // Take readout bitfield decoder from GeoSvc
-  m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
-  m_volman = m_geoSvc->lcdd()->volumeManager();
+  m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+  m_volman = m_geoSvc->getDetector()->volumeManager();
 
   // check if decoder contains "layer"
   std::vector<std::string> fields;

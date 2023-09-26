@@ -77,7 +77,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     }
   }
 
-  m_decoder_ecal = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_index_layer_ecal = m_decoder_ecal->index("layer");
 
   return StatusCode::SUCCESS;
