@@ -22,6 +22,7 @@
 #include "TLorentzVector.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
+#include <GaudiKernel/MsgStream.h>
 
 DECLARE_COMPONENT(CorrectECalBarrelSliWinCluster)
 
@@ -40,8 +41,10 @@ CorrectECalBarrelSliWinCluster::CorrectECalBarrelSliWinCluster(const std::string
 }
 
 StatusCode CorrectECalBarrelSliWinCluster::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
-  if (sc.isFailure()) return sc;
+  {
+    StatusCode sc = GaudiAlgorithm::initialize();
+    if (sc.isFailure()) return sc;
+  }
 
   int energyStart = 0;
   int energyEnd = 0;
@@ -159,7 +162,12 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
     error() << "Couldn't get RndmGenSvc!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+  {
+    StatusCode sc = m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+    if (sc.isFailure()) {
+      error() << "Unable to initialize gaussian random number generator!" << endmsg;
+    }
+  }
 
   // open and check file, read the histograms with noise constants
   if (initNoiseFromFile().isFailure()) {
