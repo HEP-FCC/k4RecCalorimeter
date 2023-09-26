@@ -55,14 +55,14 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutNamesSegmented[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesSegmented[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
     // get PhiEta segmentation
     dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-        m_geoSvc->lcdd()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
       error() << "There is no phi-eta segmentation!!!!" << endmsg;
       return StatusCode::FAILURE;
@@ -73,7 +73,7 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
     info() << "GridPhiEta: offset in eta " << segmentation->offsetEta() << " , offset in phi "
            << segmentation->offsetPhi() << endmsg;
 
-    auto decoder = m_geoSvc->lcdd()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
+    auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     // will be used for volume connecting
     if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == 5) {
       decoderECalBarrel = decoder;
@@ -166,11 +166,11 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
     }
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesNested[iSys] << endmsg;
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutNamesNested[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesNested[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesNested[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
-    auto decoder = m_geoSvc->lcdd()->readout(m_readoutNamesNested[iSys]).idSpec().decoder();
+    auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesNested[iSys]).idSpec().decoder();
     // will be used for volume connecting
     if (m_fieldNameNested == "system" && m_fieldValuesNested[iSys] == 8) {
       decoderHCalBarrel = decoder;

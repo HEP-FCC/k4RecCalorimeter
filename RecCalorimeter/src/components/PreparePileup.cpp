@@ -37,19 +37,19 @@ StatusCode PreparePileup::initialize() {
     return StatusCode::FAILURE;
   }
   // check if readouts exist
-  if (m_geoSvc->lcdd()->readouts().find(m_readoutName) == m_geoSvc->lcdd()->readouts().end()) {
+  if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
     error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
     return StatusCode::FAILURE;
   }
   // retrieve PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-      m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation." << endmsg;
     return StatusCode::FAILURE;
   }
   // Take readout bitfield decoder from GeoSvc
-  m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   // Histogram service
   m_histSvc = service("THistSvc");
   if (!m_histSvc) {

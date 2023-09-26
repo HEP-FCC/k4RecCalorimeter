@@ -23,7 +23,7 @@ StatusCode NestedVolumesCaloTool::initialize() {
   }
   // Check if readouts exist
   info() << "Readout: " << m_readoutName << endmsg;
-  if (m_geoSvc->lcdd()->readouts().find(m_readoutName) == m_geoSvc->lcdd()->readouts().end()) {
+  if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
     error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
     return StatusCode::FAILURE;
   }
@@ -34,7 +34,7 @@ StatusCode NestedVolumesCaloTool::finalize() { return GaudiTool::finalize(); }
 
 StatusCode NestedVolumesCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
   // Take readout bitfield decoder from GeoSvc
-  auto decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  auto decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   if (m_fieldNames.size() != m_fieldValues.size()) {
     error() << "Volume readout field descriptors (names and values) have different size." << endmsg;
     return StatusCode::FAILURE;

@@ -46,7 +46,7 @@ StatusCode CorrectCaloClusters::initialize() {
   {
     bool readoutMissing = false;
     for (size_t i = 0; i < m_readoutNames.size(); ++i) {
-      auto readouts = m_geoSvc->lcdd()->readouts();
+      auto readouts = m_geoSvc->getDetector()->readouts();
       if (readouts.find(m_readoutNames.value().at(i)) == readouts.end()) {
         readoutMissing = true;
       }
@@ -309,7 +309,7 @@ double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
                                              const std::string& readoutName,
                                              size_t systemID,
                                              size_t layerID) {
-  dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->lcdd()->readout(readoutName).idSpec().decoder();
+  dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
   double energy = 0;
   for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); ++cell) {

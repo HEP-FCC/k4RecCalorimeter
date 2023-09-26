@@ -61,7 +61,7 @@ StatusCode CreateCaloCellsNoise::initialize() {
     }
   }
   if (m_addPosition){
-    m_volman = m_geoSvc->lcdd()->volumeManager();
+    m_volman = m_geoSvc->getDetector()->volumeManager();
   }
   return StatusCode::SUCCESS;
 }

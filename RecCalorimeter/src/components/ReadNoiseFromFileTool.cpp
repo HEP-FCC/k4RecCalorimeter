@@ -29,7 +29,7 @@ StatusCode ReadNoiseFromFileTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
@@ -42,7 +42,7 @@ StatusCode ReadNoiseFromFileTool::initialize() {
   }
 
   // Take readout bitfield decoder from GeoSvc
-  m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
 
   StatusCode sc = GaudiTool::initialize();
   if (sc.isFailure()) return sc;
