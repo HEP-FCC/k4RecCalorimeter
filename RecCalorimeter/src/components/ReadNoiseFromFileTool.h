@@ -21,7 +21,7 @@ class TH1F;
 /** @class ReadNoiseFromFileTool
  *
  *  Tool to read the stored noise constant per cell in the calorimeters
- *  Access noise constants from TH1F histogram (noise vs. |eta|)
+ *  Access noise constants from TH1F histogram (noise vs. |eta| or theta)
  *
  *  @author Jana Faltova, Coralie Neubueser
  *  @date   2018-01

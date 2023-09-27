@@ -33,9 +33,11 @@ StatusCode ReadNoiseFromFileTool::initialize() {
 
   // Check if cell position tool available if m_useSeg==false; if tool not
   // available, try using segmentation instead
-  if (!m_cellPositionsTool.retrieve() and !m_useSeg) {
-    info() << "Unable to retrieve cell positions tool, try eta-phi segmentation." << endmsg;
-    m_useSeg = true;
+  if (!m_useSeg){
+    if (!m_cellPositionsTool.retrieve()) {
+      info() << "Unable to retrieve cell positions tool, try eta-phi segmentation." << endmsg;
+      m_useSeg = true;
+    }
   }
 
   // Get PhiEta segmentation
@@ -151,13 +153,13 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   double elecNoise = 0.;
   double pileupNoise = 0.;
 
-  // Get cell coordinates: eta and radial layer
+  // Get cell coordinates: eta/theta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
-  double cellEta;
+  double cellEta, cellTheta;
   if (m_useSeg)
     cellEta = m_segmentation->eta(aCellId);
   else
-    cellEta = m_cellPositionsTool->xyzPosition(aCellId).Eta();
+    cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -174,11 +176,22 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
     // find the eta bin for the cell
     int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
     */
-    int ibin = m_histoElecNoiseConst.at(index).FindBin(fabs(cellEta));
-    if (ibin > Nbins) {
-      error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
-              << endmsg;
-      ibin = Nbins;
+    int ibin;
+    if (m_useSeg) {
+      ibin = m_histoElecNoiseConst.at(index).FindBin(fabs(cellEta));
+      if (ibin > Nbins) {
+	error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
+		<< endmsg;
+	ibin = Nbins;
+      }
+    }
+    else {
+      ibin = m_histoElecNoiseConst.at(index).FindBin(cellTheta);
+      if (ibin > Nbins) {
+	error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins
+		<< endmsg;
+	ibin = Nbins;
+      }
     }
     // Check that there are not more layers than the constants are provided for
     if (cellLayer < m_histoElecNoiseConst.size()) {
@@ -215,11 +228,11 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
   // Get cell coordinates: eta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
-  double cellEta;
+  double cellEta, cellTheta;
   if (m_useSeg)
     cellEta = m_segmentation->eta(aCellId);
   else
-    cellEta = m_cellPositionsTool->xyzPosition(aCellId).Eta();
+    cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -236,12 +249,24 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
         Nbins;
       int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
     */
-    int ibin = m_histoElecNoiseOffset.at(index).FindBin(fabs(cellEta));
-    if (ibin > Nbins) {
-      error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
-              << endmsg;
-      ibin = Nbins;
+    int ibin;
+    if (m_useSeg) {
+      ibin = m_histoElecNoiseOffset.at(index).FindBin(fabs(cellEta));
+      if (ibin > Nbins) {
+	error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
+		<< endmsg;
+	ibin = Nbins;
+      }
     }
+    else {
+      ibin = m_histoElecNoiseOffset.at(index).FindBin(cellTheta);
+      if (ibin > Nbins) {
+	error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins
+		<< endmsg;
+	ibin = Nbins;
+      }
+    }
+
     // Check that there are not more layers than the constants are provided for
     if (cellLayer < m_histoElecNoiseOffset.size()) {
       elecNoise = m_histoElecNoiseOffset.at(cellLayer).GetBinContent(ibin);
