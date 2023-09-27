@@ -12,6 +12,7 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       DD4hep::DDCore
                       EDM4HEP::edm4hep
                       FCCDetectors::DetSegmentation
+                      FCCDetectors::DetCommon
                       DD4hep::DDG4
                       ROOT::Core
                       ROOT::Hist

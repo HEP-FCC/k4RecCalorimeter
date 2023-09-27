@@ -7,10 +7,11 @@
 
 // FCCSW
 #include "k4FWCore/DataHandle.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+
+#include "DetSegmentation/FCCSWGridPhiEta.h"
 
 class IGeoSvc;
 
@@ -43,15 +44,18 @@ public:
   double getNoiseOffsetPerCell(uint64_t aCellID);
 
 private:
+  /// Handle for tool to get cell positions
+  ToolHandle<ICellPositionsTool> m_cellPositionsTool;
+  /// use segmentation (eta-phi only so far!) in case no cell position tool is defined
+  Gaudi::Property<bool> m_useSeg{this, "useSegmentation", true, "Specify if segmentation is used to determine cell position."};
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
                                     "Add pileup contribution to the electronics noise? (only if read from file)"};
   /// Noise offset, if false, mean is set to 0
   Gaudi::Property<bool> m_setNoiseOffset{this, "setNoiseOffset", true, "Set a noise offset per cell"};
-
   /// Name of the file with noise constants
   Gaudi::Property<std::string> m_noiseFileName{this, "noiseFileName", "", "Name of the file with noise constants"};
-  /// Name of the detector readout
+  /// Name of the detector readout (needed to get the decoder to extract e.g. layer information)
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalHitsPhiEta", "Name of the detector readout"};
   /// Name of active layers for sampling calorimeter
   Gaudi::Property<std::string> m_activeFieldName{this, "activeFieldName", "active_layer",
@@ -66,28 +70,23 @@ private:
                                                     "Name of electronics noise offset histogram"};
   /// Name of pileup offset histogram
   Gaudi::Property<std::string> m_pileupOffsetHistoName{this, "pileupOffsetHistoName", "h_pileup_layer", "Name of pileup offset histogram"};
-
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
-
   /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
   Gaudi::Property<float> m_scaleFactor{this, "scaleFactor", 1, "Factor to apply to the noise values"};
-
   /// Histograms with pileup constants (index in array - radial layer)
   std::vector<TH1F> m_histoPileupConst;
   /// Histograms with electronics noise constants (index in array - radial layer)
   std::vector<TH1F> m_histoElecNoiseConst;
-
   /// Histograms with pileup offset (index in array - radial layer)
   std::vector<TH1F> m_histoPileupOffset;
   /// Histograms with electronics noise offset (index in array - radial layer)
   std::vector<TH1F> m_histoElecNoiseOffset;
-
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// PhiEta segmentation
   dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
-  // Decoder
+  // Decoder for ECal layers
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 
 };

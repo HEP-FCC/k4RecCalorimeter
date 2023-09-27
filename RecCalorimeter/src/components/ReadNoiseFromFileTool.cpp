@@ -19,6 +19,7 @@ DECLARE_COMPONENT(ReadNoiseFromFileTool)
 ReadNoiseFromFileTool::ReadNoiseFromFileTool(const std::string& type, const std::string& name, const IInterface* parent)
     : GaudiTool(type, name, parent) {
   declareInterface<INoiseConstTool>(this);
+  declareProperty("cellPositionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
 }
 
 StatusCode ReadNoiseFromFileTool::initialize() {
@@ -29,10 +30,24 @@ StatusCode ReadNoiseFromFileTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
-  if (m_segmentation == nullptr) {
-    error() << "There is no phi-eta segmentation!!!!" << endmsg;
-    return StatusCode::FAILURE;
+
+  // Check if cell position tool available if m_useSeg==false; if tool not
+  // available, try using segmentation instead
+  if (!m_cellPositionsTool.retrieve() and !m_useSeg) {
+    info() << "Unable to retrieve cell positions tool, try eta-phi segmentation." << endmsg;
+    m_useSeg = true;
+  }
+
+  // Get PhiEta segmentation
+  if (m_useSeg) {
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+    if (m_segmentation == nullptr) {
+      error() << "There is no phi-eta segmentation." << endmsg;
+      return StatusCode::FAILURE;
+    }
+    else
+      info() << "Found phi-eta segmentation." << endmsg;
   }
 
   // open and check file, read the histograms with noise constants
@@ -43,6 +58,10 @@ StatusCode ReadNoiseFromFileTool::initialize() {
 
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+  if (m_decoder == nullptr) {
+    error() << "Cannot create decore for readout " << m_readoutName << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   StatusCode sc = GaudiTool::initialize();
   if (sc.isFailure()) return sc;
@@ -134,8 +153,11 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
 
   // Get cell coordinates: eta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
-  double cellEta = m_segmentation->eta(cID);
-
+  double cellEta;
+  if (m_useSeg)
+    cellEta = m_segmentation->eta(aCellId);
+  else
+    cellEta = m_cellPositionsTool->xyzPosition(aCellId).Eta();
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -143,12 +165,16 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   unsigned index = 0;
   if (m_histoElecNoiseConst.size() != 0) {
     int Nbins = m_histoElecNoiseConst.at(index).GetNbinsX();
+    // GM: basically the same as FindBin ...
+    /*
     double deltaEtaBin =
         (m_histoElecNoiseConst.at(index).GetBinLowEdge(Nbins) + m_histoElecNoiseConst.at(index).GetBinWidth(Nbins) -
          m_histoElecNoiseConst.at(index).GetBinLowEdge(1)) /
         Nbins;
     // find the eta bin for the cell
     int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
+    */
+    int ibin = m_histoElecNoiseConst.at(index).FindBin(fabs(cellEta));
     if (ibin > Nbins) {
       error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
               << endmsg;
@@ -189,7 +215,11 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
   // Get cell coordinates: eta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
-  double cellEta = m_segmentation->eta(cID);
+  double cellEta;
+  if (m_useSeg)
+    cellEta = m_segmentation->eta(aCellId);
+  else
+    cellEta = m_cellPositionsTool->xyzPosition(aCellId).Eta();
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -197,12 +227,16 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
   unsigned index = 0;
   if (m_histoElecNoiseOffset.size() != 0) {
     int Nbins = m_histoElecNoiseOffset.at(index).GetNbinsX();
-    double deltaEtaBin =
+    // find the eta bin for the cell
+    // GM: basically the same as FindBin ...
+    /*
+      double deltaEtaBin =
         (m_histoElecNoiseOffset.at(index).GetBinLowEdge(Nbins) + m_histoElecNoiseOffset.at(index).GetBinWidth(Nbins) -
          m_histoElecNoiseOffset.at(index).GetBinLowEdge(1)) /
         Nbins;
-    // find the eta bin for the cell
-    int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
+      int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
+    */
+    int ibin = m_histoElecNoiseOffset.at(index).FindBin(fabs(cellEta));
     if (ibin > Nbins) {
       error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
               << endmsg;
