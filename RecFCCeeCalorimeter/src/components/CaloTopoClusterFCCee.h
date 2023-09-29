@@ -31,8 +31,7 @@ class Segmentation;
 }
 }
 
-/** @class CaloTopoClusterFCCeeAlgorithm Reconstruction/RecFCCeeCalorimeter/src/components/CaloTopoClusterFCCee.h
- * CombinedCaloTopoCluster.h
+/** @class CaloTopoClusterFCCee k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CaloTopoClusterFCCee.h
  *
  *  Algorithm building the topological clusters for the energy reconstruction, following ATLAS note
  *  ATL-LARG-PUB-2008-002.

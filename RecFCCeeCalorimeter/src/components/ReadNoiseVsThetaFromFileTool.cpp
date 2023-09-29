@@ -1,4 +1,4 @@
-#include "ReadNoiseFromFileTool.h"
+#include "ReadNoiseVsThetaFromFileTool.h"
 
 // FCCSW
 #include "DetCommon/DetUtils.h"
@@ -12,16 +12,16 @@
 // Root
 #include "TFile.h"
 #include "TH1F.h"
-#include "TMath.h"
 
-DECLARE_COMPONENT(ReadNoiseFromFileTool)
+DECLARE_COMPONENT(ReadNoiseVsThetaFromFileTool)
 
-ReadNoiseFromFileTool::ReadNoiseFromFileTool(const std::string& type, const std::string& name, const IInterface* parent)
+ReadNoiseVsThetaFromFileTool::ReadNoiseVsThetaFromFileTool(const std::string& type, const std::string& name, const IInterface* parent)
     : GaudiTool(type, name, parent) {
   declareInterface<INoiseConstTool>(this);
+  declareProperty("cellPositionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
 }
 
-StatusCode ReadNoiseFromFileTool::initialize() {
+StatusCode ReadNoiseVsThetaFromFileTool::initialize() {
   // Get GeoSvc
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -29,20 +29,40 @@ StatusCode ReadNoiseFromFileTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
-  if (m_segmentation == nullptr) {
-    error() << "There is no phi-eta segmentation!!!!" << endmsg;
-    return StatusCode::FAILURE;
+
+  // Check if cell position tool available if m_useSeg==false; if tool not
+  // available, try using segmentation instead
+  if (!m_useSeg){
+    if (!m_cellPositionsTool.retrieve()) {
+      error() << "Unable to retrieve cell positions tool, and useSegmentation is false." << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
+
+  // Get segmentation
+  if (m_useSeg) {
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+    if (m_segmentation == nullptr) {
+      error() << "There is no module-theta segmentation." << endmsg;
+      return StatusCode::FAILURE;
+    }
+    else
+      info() << "Found module-theta segmentation." << endmsg;
   }
 
   // open and check file, read the histograms with noise constants
-  if (ReadNoiseFromFileTool::initNoiseFromFile().isFailure()) {
+  if (ReadNoiseVsThetaFromFileTool::initNoiseFromFile().isFailure()) {
     error() << "Couldn't open file with noise constants!!!" << endmsg;
     return StatusCode::FAILURE;
   }
 
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+  if (m_decoder == nullptr) {
+    error() << "Cannot create decore for readout " << m_readoutName << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   StatusCode sc = GaudiTool::initialize();
   if (sc.isFailure()) return sc;
@@ -50,12 +70,12 @@ StatusCode ReadNoiseFromFileTool::initialize() {
   return sc;
 }
 
-StatusCode ReadNoiseFromFileTool::finalize() {
+StatusCode ReadNoiseVsThetaFromFileTool::finalize() {
   StatusCode sc = GaudiTool::finalize();
   return sc;
 }
 
-StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
+StatusCode ReadNoiseVsThetaFromFileTool::initNoiseFromFile() {
   // check if file exists
   if (m_noiseFileName.empty()) {
     error() << "Name of the file with noise values not set" << endmsg;
@@ -127,14 +147,23 @@ StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
+double ReadNoiseVsThetaFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
 
   double elecNoise = 0.;
   double pileupNoise = 0.;
 
-  // Get cell coordinates: eta and radial layer
+  // Get cell coordinates: eta/theta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
-  double cellEta = m_segmentation->eta(cID);
+  double cellTheta;
+  // checked that for baseline theta-module merged segmentation
+  // the two approaches give identical theta.
+  // however, code based on positioning tool is more general
+  // since it can be run for any segmentation class without the need
+  // to change the interface of this tool..
+  if (m_useSeg)
+    cellTheta = m_segmentation->theta(aCellId);
+  else
+    cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
 
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
@@ -143,15 +172,10 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   unsigned index = 0;
   if (m_histoElecNoiseConst.size() != 0) {
     int Nbins = m_histoElecNoiseConst.at(index).GetNbinsX();
-    double deltaEtaBin =
-        (m_histoElecNoiseConst.at(index).GetBinLowEdge(Nbins) + m_histoElecNoiseConst.at(index).GetBinWidth(Nbins) -
-         m_histoElecNoiseConst.at(index).GetBinLowEdge(1)) /
-        Nbins;
-    // find the eta bin for the cell
-    int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
+    int ibin = m_histoElecNoiseConst.at(index).FindBin(cellTheta);
     if (ibin > Nbins) {
-      error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
-              << endmsg;
+      error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins
+	      << endmsg;
       ibin = Nbins;
     }
     // Check that there are not more layers than the constants are provided for
@@ -173,13 +197,13 @@ double ReadNoiseFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2)) * m_scaleFactor;
 
   if (totalNoise < 1e-6) {
-    warning() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
+    warning() << "Zero noise: cell theta " << cellTheta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
   }
 
   return totalNoise;
 }
 
-double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
+double ReadNoiseVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
   if (!m_setNoiseOffset)
     return 0.;
@@ -189,7 +213,11 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
   // Get cell coordinates: eta and radial layer
   dd4hep::DDSegmentation::CellID cID = aCellId;
-  double cellEta = m_segmentation->eta(cID);
+  double cellTheta;
+  if (m_useSeg)
+    cellTheta = m_segmentation->theta(aCellId);
+  else
+    cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
   unsigned cellLayer = m_decoder->get(cID, m_activeFieldName);
 
   // All histograms have same binning, all bins with same size
@@ -197,17 +225,13 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
   unsigned index = 0;
   if (m_histoElecNoiseOffset.size() != 0) {
     int Nbins = m_histoElecNoiseOffset.at(index).GetNbinsX();
-    double deltaEtaBin =
-        (m_histoElecNoiseOffset.at(index).GetBinLowEdge(Nbins) + m_histoElecNoiseOffset.at(index).GetBinWidth(Nbins) -
-         m_histoElecNoiseOffset.at(index).GetBinLowEdge(1)) /
-        Nbins;
-    // find the eta bin for the cell
-    int ibin = floor(fabs(cellEta) / deltaEtaBin) + 1;
+    int ibin = m_histoElecNoiseOffset.at(index).FindBin(cellTheta);
     if (ibin > Nbins) {
-      error() << "eta outside range of the histograms! Cell eta: " << cellEta << " Nbins in histogram: " << Nbins
-              << endmsg;
+      error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins
+	      << endmsg;
       ibin = Nbins;
     }
+
     // Check that there are not more layers than the constants are provided for
     if (cellLayer < m_histoElecNoiseOffset.size()) {
       elecNoise = m_histoElecNoiseOffset.at(cellLayer).GetBinContent(ibin);
@@ -227,7 +251,7 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
   double totalNoise = sqrt(pow(elecNoise, 2) + pow(pileupNoise, 2)) * m_scaleFactor;
 
   if (totalNoise < 1e-6) {
-    warning() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
+    warning() << "Zero noise: cell theta " << cellTheta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
   }
 
   return totalNoise;
