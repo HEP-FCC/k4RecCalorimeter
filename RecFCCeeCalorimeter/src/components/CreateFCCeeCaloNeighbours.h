@@ -61,7 +61,7 @@ private:
   // Radii of layers in the segmented volume
   Gaudi::Property<std::vector<double>> m_activeVolumesTheta{this, "activeVolumesTheta"};
   /// Whether to create the geant4 geometry or not
-  Gaudi::Property<bool> m_includeDiagonalCells{this, "UseDiagonalCells", false, "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
+  Gaudi::Property<bool> m_includeDiagonalCells{this, "includeDiagonalCells", false, "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
   
   /// Names of the detector readout for volumes with nested volume structure and no segmentation
   Gaudi::Property<std::vector<std::string>> m_readoutNamesNested{this, "readoutNamesVolumes"};
