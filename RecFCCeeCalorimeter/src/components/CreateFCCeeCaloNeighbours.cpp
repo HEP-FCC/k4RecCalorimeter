@@ -105,7 +105,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
       (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
       (*decoder)["theta"].set(volumeId, 0);
       (*decoder)["module"].set(volumeId, 0);
-      //(*decoder)["phi"].set(volumeId, 0);
       // Get number of segmentation cells within the active volume
       // numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
       auto numCells = det::utils::numberOfCells(volumeId, *segmentation);
@@ -156,8 +155,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 													  "module", "theta"},
 													 extrema,
 													 id,
-													 {false, true, false},
-													 false)));
+													 m_includeDiagonalCells
+													 )));
         }
       }
     }

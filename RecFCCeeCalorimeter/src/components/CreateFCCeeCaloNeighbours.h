@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_CREATEFCCEECALONEIGHBOURS_H
-#define RECCALORIMETER_CREATEFCCEECALONEIGHBOURS_H
+#ifndef RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H
+#define RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H
 
 // Gaudi
 #include "GaudiKernel/Service.h"
@@ -26,7 +26,7 @@ class IGeoSvc;
  *  The volumes for which the neighbour map is created can be either segmented in theta-module (e.g. ECal inclined),
  *  or can contain nested volumes (e.g. HCal barrel).
  *
- *  @author Anna Zaborowska
+ *  @author Giovanni Marchiori
  */
 
 class CreateFCCeeCaloNeighbours : public extends1<Service, ICaloCreateMap> {
@@ -60,7 +60,9 @@ private:
   Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {12}};
   // Radii of layers in the segmented volume
   Gaudi::Property<std::vector<double>> m_activeVolumesTheta{this, "activeVolumesTheta"};
-
+  /// Whether to create the geant4 geometry or not
+  Gaudi::Property<bool> m_includeDiagonalCells{this, "UseDiagonalCells", false, "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
+  
   /// Names of the detector readout for volumes with nested volume structure and no segmentation
   Gaudi::Property<std::vector<std::string>> m_readoutNamesNested{this, "readoutNamesVolumes"};
   /// Name of the field describing the nested volume
@@ -90,4 +92,4 @@ private:
   Gaudi::Property<double> m_hCalPhiOffset{this, "hCalPhiOffset"};
 };
 
-#endif /* RECALORIMETER_CREATEFCCHHCALONEIGHBOURS_H */
+#endif /* RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H */
