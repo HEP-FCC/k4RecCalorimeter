@@ -32,8 +32,15 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
     return StatusCode::FAILURE;
   }
 
-  //m_ecalBarrelNoiseTool.retrieve();
-  //m_hcalBarrelNoiseTool.retrieve();
+  if (!m_ecalBarrelNoiseTool.retrieve()) {
+    error() << "Unable to retrieve the ECAL noise tool!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  if (!m_hcalBarrelNoiseTool.retrieve()) {
+    error() << "Unable to retrieve the HCAL noise tool!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
   
   std::unordered_map<uint64_t, std::pair<double,double>> map;
 
