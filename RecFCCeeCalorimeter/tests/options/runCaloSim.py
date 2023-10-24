@@ -11,9 +11,9 @@ ApplicationMgr().OutputLevel = INFO
 ApplicationMgr().StopOnSignal = True
 ApplicationMgr().ExtSvc += ['RndmGenSvc']
 
-from Configurables import FCCDataSvc
+from Configurables import k4DataSvc
 ## Data service
-podioevent = FCCDataSvc("EventDataSvc")
+podioevent = k4DataSvc("EventDataSvc")
 ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import MomentumRangeParticleGun

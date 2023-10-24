@@ -1,9 +1,9 @@
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
+from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
 
 # v01 production - min. bias events
-podioevent = FCCDataSvc("EventDataSvc", input="http://fccsw.web.cern.ch/fccsw/testsamples/caloCells_minBiasEvent.root")
+podioevent = k4DataSvc("EventDataSvc", input="http://fccsw.web.cern.ch/fccsw/testsamples/caloCells_minBiasEvent.root")
 
 # reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput

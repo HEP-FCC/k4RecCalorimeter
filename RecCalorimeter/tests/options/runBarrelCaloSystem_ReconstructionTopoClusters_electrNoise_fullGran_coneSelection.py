@@ -27,8 +27,8 @@ hcalFieldNames = ["system"]
 hcalFieldValues = [8]
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr,FCCDataSvc,PodioOutput
-podioevent = FCCDataSvc("EventDataSvc", input = "output_fullCalo_SimAndDigi_e50GeV_" +str(num_events) + "events.root")
+from Configurables import ApplicationMgr,k4DataSvc,PodioOutput
+podioevent = k4DataSvc("EventDataSvc", input = "output_fullCalo_SimAndDigi_e50GeV_" +str(num_events) + "events.root")
 
 #reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput 
