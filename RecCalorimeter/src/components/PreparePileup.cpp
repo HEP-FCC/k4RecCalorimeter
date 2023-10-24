@@ -176,8 +176,8 @@ StatusCode PreparePileup::execute() {
     m_energyVsAbsEta[layerId]->Fill(fabs(cellEta), cellEnergy);
     // add energy of this cell to any optimised cluster where it is included
     if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0) ) {
-      uint etaId = m_decoder->get(cID, "eta");
-      uint phiId = m_decoder->get(cID, "phi");
+      int etaId = m_decoder->get(cID, "eta");
+      int phiId = m_decoder->get(cID, "phi");
       for (int iEta = etaId - m_halfEtaFin[layerId]; iEta <  etaId + m_halfEtaFin[layerId] + 1; iEta++) {
         for (int iPhi = phiId - m_halfPhiFin[layerId]; iPhi <  phiId + m_halfPhiFin[layerId] + 1; iPhi++) {
           if (iEta > 0 && iEta < m_nEtaTower ) {
@@ -210,7 +210,7 @@ StatusCode PreparePileup::execute() {
             << endmsg;
     // calculate the sum of first m_nEtaWindow bins in eta, for each phi tower
     std::vector<float> sumOverEta(m_nPhiTower, 0);
-    for (int iEta = 0; iEta < m_etaSizes[iCluster]; iEta++) {
+    for (size_t iEta = 0; iEta < m_etaSizes[iCluster]; iEta++) {
       std::transform(sumOverEta.begin(), sumOverEta.end(), m_towers[iEta].begin(), sumOverEta.begin(),
                      std::plus<float>());
     }

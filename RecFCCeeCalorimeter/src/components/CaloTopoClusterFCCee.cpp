@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <unordered_map>
 #include <unordered_set>
@@ -104,7 +105,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
  
   // Create output collections
   auto edmClusters = m_clusterCollection.createAndPut();
-  edm4hep::CalorimeterHitCollection* edmClusterCells = new edm4hep::CalorimeterHitCollection();
+  std::unique_ptr<edm4hep::CalorimeterHitCollection> edmClusterCells(new edm4hep::CalorimeterHitCollection());
 
   // Finds seeds
   CaloTopoClusterFCCee::findingSeeds(m_allCells, m_seedSigma, firstSeeds);
@@ -117,10 +118,10 @@ StatusCode CaloTopoClusterFCCee::execute() {
             });
 
   std::map<uint, std::vector<std::pair<uint64_t, int>>> preClusterCollection;
-  StatusCode sc_buildProtoClusters =  CaloTopoClusterFCCee::buildingProtoCluster(m_neighbourSigma,
-										 m_lastNeighbourSigma,
-										 firstSeeds, m_allCells,
-										 preClusterCollection);
+  StatusCode sc_buildProtoClusters = CaloTopoClusterFCCee::buildingProtoCluster(m_neighbourSigma,
+                                                                                m_lastNeighbourSigma,
+                                                                                firstSeeds, m_allCells,
+                                                                                preClusterCollection);
   if (sc_buildProtoClusters.isFailure()) {
     error() << "Unable to build the protoclusters!" << endmsg;
     return StatusCode::FAILURE;
@@ -220,7 +221,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
 
   }
 
-  m_clusterCellsCollection.put(edmClusterCells);
+  m_clusterCellsCollection.put(std::move(edmClusterCells));
   debug() << "Number of clusters with cells in E and HCal:        " << clusterWithMixedCells << endmsg;
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
   debug() << "Leftover cells :                                    " << m_allCells.size() << endmsg;
