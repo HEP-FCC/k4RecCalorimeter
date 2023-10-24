@@ -31,22 +31,22 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
   std::unordered_map<uint64_t, std::vector<uint64_t>> map;
  
   // will be used for volume connecting
-  int eCalLastLayer;
+  //int eCalLastLayer;
   std::pair<int, int> extremaECalLastLayerModule;
   std::pair<int, int> extremaECalLastLayerTheta;
-  double eCalThetaOffset = 0;
-  double eCalThetaSize = 0;
+  //double eCalThetaOffset = 0;
+  //double eCalThetaSize = 0;
   //double eCalPhiOffset = 0;
-  double eCalModuleSize = 0;
-  double hCalThetaOffset = 0;
-  double hCalThetaSize = 0;
-  double hCalPhiOffset = 0;
-  dd4hep::DDSegmentation::BitFieldCoder* decoderECalBarrel = nullptr;
+  //double eCalModuleSize = 0;
+  //double hCalThetaOffset = 0;
+  //double hCalThetaSize = 0;
+  //double hCalPhiOffset = 0;
+  //dd4hep::DDSegmentation::BitFieldCoder* decoderECalBarrel = nullptr;
   // will be used for volume connecting
   std::pair<int, int> extremaHCalFirstLayerPhi;
   std::pair<int, int> extremaHCalFirstLayerTheta;
   std::pair<int, int> extremaHCalFirstLayerZ;
-  dd4hep::DDSegmentation::BitFieldCoder* decoderHCalBarrel = nullptr;
+  //dd4hep::DDSegmentation::BitFieldCoder* decoderHCalBarrel = nullptr;
 
   ////////////////////////////////////
   /// SEGMENTED THETA-MODULE VOLUMES  ///
@@ -75,17 +75,17 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
     // retrieve decoders and other info needed for volume (ECal-HCal) connection
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == 5) {
-      decoderECalBarrel = decoder;
-      eCalThetaSize = segmentation->gridSizeTheta();
-      eCalModuleSize = 2 * M_PI / segmentation->nModules();
+      //decoderECalBarrel = decoder;
+      //eCalThetaSize = segmentation->gridSizeTheta();
+      //eCalModuleSize = 2 * M_PI / segmentation->nModules();
       //eCalModuleSize = 2 * M_PI / segmentation->phiBins();
-      eCalThetaOffset = segmentation->offsetTheta();
+      //eCalThetaOffset = segmentation->offsetTheta();
       //eCalPhiOffset = segmentation->offsetPhi();
     }
     if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == 8) {
-      decoderHCalBarrel = decoder;
-      hCalThetaSize = segmentation->gridSizeTheta();
-      hCalThetaOffset = segmentation->offsetTheta();
+      //decoderHCalBarrel = decoder;
+      //hCalThetaSize = segmentation->gridSizeTheta();
+      //hCalThetaOffset = segmentation->offsetTheta();
       //hCalPhiOffset = segmentation->offsetPhi();
     }
 
@@ -117,7 +117,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
       // should 5 be systemValuesModuleTheta instead?
       if (ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1) && m_fieldNamesSegmented[iSys] == "system" &&
           m_fieldValuesSegmented[iSys] == 5) {
-        eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
+        //eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
         extremaECalLastLayerModule = std::make_pair(0, numCells[0] - 1);
         extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
       }
@@ -194,7 +194,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesNested[iSys]).idSpec().decoder();
     // will be used for volume connecting
     if (m_fieldNameNested == "system" && m_fieldValuesNested[iSys] == 8) {
-      decoderHCalBarrel = decoder;
+      //decoderHCalBarrel = decoder;
     }
     //hCalPhiOffset = m_hCalPhiOffset;
     // Get VolumeID

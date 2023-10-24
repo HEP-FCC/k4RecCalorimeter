@@ -113,8 +113,8 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   double energyInLastECalLayer = 0; 
   double energyInBoth = 0.;
 
-  int ecal_index;
-  int hcal_index;
+  int ecal_index = -1;
+  int hcal_index = -1;
 
   for (double& eneEcal : m_energyInECalLayer){
     eneEcal = 0.;
