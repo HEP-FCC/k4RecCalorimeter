@@ -100,6 +100,8 @@ extHcalReadoutName = "HCalExtBarrelReadout"
 
 from Configurables import SimG4Alg
 from Configurables import SimG4SaveCalHits
+SimG4Alg("SimG4Alg").outputs = []
+
 saveECalBarrelTool = SimG4SaveCalHits("saveECalBarrelHits")
 saveECalBarrelTool.readoutNames = ["ECalBarrelEta"]
 saveECalBarrelTool.CaloHits.Path = "ECalBarrelPositionedHits"
