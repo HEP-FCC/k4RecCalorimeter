@@ -197,7 +197,7 @@ cellPositionEcalBarrelTool.readoutName = "ECalBarrelPhiEta"
 
 from Configurables import CreateCaloCellPositionsFCCee
 createEcalBarrelPositionedCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCells")
-createEcalBarrelPositionedCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
+createEcalBarrelPositionedCells.positionsTool = cellPositionEcalBarrelTool
 createEcalBarrelPositionedCells.hits.Path = "ECalBarrelCells"
 createEcalBarrelPositionedCells.positionedHits.Path = "ECalBarrelPositionedCells"
 ApplicationMgr().TopAlg += [createEcalBarrelPositionedCells]
@@ -272,7 +272,7 @@ ApplicationMgr().TopAlg += [createClusters]
 
 # Add position to the cells attached to the cluster
 createEcalBarrelPositionedCaloClusterCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCaloClusterCells")
-createEcalBarrelPositionedCaloClusterCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
+createEcalBarrelPositionedCaloClusterCells.positionsTool = cellPositionEcalBarrelTool
 createEcalBarrelPositionedCaloClusterCells.hits.Path = "CaloClusterCells"
 createEcalBarrelPositionedCaloClusterCells.positionedHits.Path = "PositionedCaloClusterCells"
 
