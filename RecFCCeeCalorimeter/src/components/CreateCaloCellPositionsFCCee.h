@@ -49,12 +49,12 @@ private:
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{};
   /// Input collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
-  /// Input collection metadata handle
-  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncodingString", Gaudi::DataHandle::Reader};
+  /// Input collection metadata handle. The name MUST be "CellIDEncoding"
+  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncoding", Gaudi::DataHandle::Reader};
   /// Output collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
-  /// Output collection metadata handle
-  MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, "CellIDEncodingString", Gaudi::DataHandle::Writer};
+  /// Output collection metadata handle. The name MUST be "CellIDEncoding"
+  MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, "CellIDEncoding", Gaudi::DataHandle::Writer};
 
   // Cache
   std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
