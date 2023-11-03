@@ -22,7 +22,7 @@ namespace edm4hep {
 
 namespace dd4hep {
 namespace DDSegmentation {
-class FCCSWGridPhiEta;
+class FCCSWGridPhiEta_k4geo;
 class MultiSegmentation;
 class BitFieldCoder;
 }
@@ -186,7 +186,7 @@ private:
   Gaudi::Property<std::vector<std::string>> m_readoutName{
       this, "readoutName", {"ECalBarrelPhiEta"}, "Names of the detector readout, corresponding to systemId"};
   /// map of system Id to segmentation, created based on m_readoutName and m_systemId
-  std::map<uint, dd4hep::DDSegmentation::FCCSWGridPhiEta*> m_segmentationPhiEta;
+  std::map<uint, dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*> m_segmentationPhiEta;
   std::map<uint, dd4hep::DDSegmentation::MultiSegmentation*> m_segmentationMulti;
   /// map of system Id to decoder, created based on m_readoutName and m_systemId
   std::map<uint, dd4hep::DDSegmentation::BitFieldCoder*> m_decoder;

@@ -6,9 +6,9 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
@@ -53,7 +53,7 @@ private:
   /// Gaudi::Property<std::vector<double>> m_radii{this, "radii", {291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 413.55, 428.55, 453.55}};
   /// segmentation for FCCee cell dimensions: 4x50mm, 6x100mm, 3x200mm
   Gaudi::Property<std::vector<double>> m_radii{this, "radii", {283.55, 288.55, 293.55, 298.55, 306.05, 316.05, 326.05, 336.05, 346.05, 356.05, 371.05, 391.05, 411.05}};
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   dd4hep::VolumeManager m_volman;
 };

@@ -27,7 +27,8 @@ find_package(Gaudi)
 find_package(k4FWCore) # implicit: Gaudi
 find_package(EDM4HEP) # implicit: Podio
 find_package(DD4hep)
-find_package(FCCDetectors)
+find_package(k4geo)
+#find_package(FCCDetectors)
 #---------------------------------------------------------------
 
 

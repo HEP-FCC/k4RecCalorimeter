@@ -1,8 +1,8 @@
 #include "CaloTopoClusterFCCee.h"
 #include "../../../RecCalorimeter/src/components/NoiseCaloCellsFromFileTool.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// k4
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 // datamodel

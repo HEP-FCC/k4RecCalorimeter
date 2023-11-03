@@ -1,7 +1,7 @@
 #include "NoiseCaloCellsFromFileTool.h"
 
 // FCCSW
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
@@ -50,7 +50,7 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
   if (!m_cellPositionsTool.retrieve() and !m_useSeg) {
     info() << "Unable to retrieve cell positions tool, try eta-phi segmentation." << endmsg;
     // Get PhiEta segmentation
-    m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+    m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
 									    m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (m_segmentationPhiEta == nullptr) {
       error() << "There is no phi-eta segmentation." << endmsg;
@@ -60,7 +60,7 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
       info() << "Found phi-eta segmentation." << endmsg;
   }    
   // Get PhiEta segmentation
-  m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+  m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
     m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentationPhiEta == nullptr) {
     m_segmentationMulti = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
@@ -70,9 +70,9 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
       return StatusCode::FAILURE;
     } else {
       // check if multisegmentation contains only phi-eta sub-segmentations
-      const dd4hep::DDSegmentation::FCCSWGridPhiEta* subsegmentation = nullptr;
+      const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* subsegmentation = nullptr;
       for (const auto& subSegm: m_segmentationMulti->subSegmentations()) {
-        subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(subSegm.segmentation);
+        subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
         if (subsegmentation == nullptr) {
           error() << "At least one of the sub-segmentations in MultiSegmentation named " << m_readoutName << " is not a phi-eta grid." << endmsg;
           return StatusCode::FAILURE;
@@ -168,9 +168,9 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
 }
 
 double NoiseCaloCellsFromFileTool::getNoiseConstantPerCell(int64_t aCellId) {
-  const dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation = m_segmentationPhiEta;
+  const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = m_segmentationPhiEta;
   if (segmentation == nullptr) {
-    segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti->subsegmentation(aCellId));
+    segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti->subsegmentation(aCellId));
   }
 
   double elecNoise = 0.;

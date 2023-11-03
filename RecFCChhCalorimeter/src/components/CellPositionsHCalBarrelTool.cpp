@@ -19,7 +19,7 @@ StatusCode CellPositionsHCalBarrelTool::initialize() {
     return StatusCode::FAILURE;
   }
   // get PhiEta segmentation
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;

@@ -1,7 +1,7 @@
 #include "ConstNoiseTool.h"
 
 // FCCSW
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep

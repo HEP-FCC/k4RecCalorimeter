@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// FCCSW
+// k4
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICaloReadCellNoiseMap.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"

@@ -6,7 +6,7 @@
 class IRndmGenSvc;
 
 // FCCSW
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4Interface/INoiseConstTool.h"
 class IGeoSvc;
 

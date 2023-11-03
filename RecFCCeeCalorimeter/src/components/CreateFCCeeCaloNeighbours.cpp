@@ -1,7 +1,7 @@
 #include "CreateFCCeeCaloNeighbours.h"
 
 #include "DD4hep/Detector.h"
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 #include "TFile.h"
@@ -61,8 +61,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
     }
     
     // get Theta-Module Merged segmentation
-    dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* segmentation;
-    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(
+    dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation;
+    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
         m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
       error() << "There is no Theta-Module Merged segmentation!!!!" << endmsg;

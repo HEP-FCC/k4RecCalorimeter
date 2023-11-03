@@ -29,7 +29,7 @@ namespace edm4hep {
 // DD4HEP
 namespace dd4hep {
   namespace DDSegmentation {
-    class FCCSWGridPhiEta;
+    class FCCSWGridPhiEta_k4geo;
     class MultiSegmentation;
     class BitFieldCoder;
   }

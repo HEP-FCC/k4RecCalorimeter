@@ -1,7 +1,7 @@
 #include "CreateFCChhCaloNoiseLevelMap.h"
 
 #include "DD4hep/Detector.h"
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 #include "TFile.h"
@@ -44,8 +44,8 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
       return StatusCode::FAILURE;
     }
     // get PhiEta segmentation
-    dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation;
-    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+    dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation;
+    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
         m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
       error() << "There is no phi-eta segmentation!!!!" << endmsg;

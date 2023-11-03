@@ -5,13 +5,10 @@
 #include "GaudiAlg/GaudiTool.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// FCCSW
-//#include "k4FWCore/DataHandle.h"
-//#include "k4Interface/ICalorimeterTool.h"
+// k4
 #include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
-
-#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
+#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 
 class IGeoSvc;
 
@@ -90,7 +87,7 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Theta-Module segmentation
-  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* m_segmentation;
   // Decoder for ECal layers
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 

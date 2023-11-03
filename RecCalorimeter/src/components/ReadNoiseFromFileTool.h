@@ -7,7 +7,7 @@
 
 // FCCSW
 #include "k4FWCore/DataHandle.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
@@ -86,7 +86,7 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// PhiEta segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   // Decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 

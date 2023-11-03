@@ -5,11 +5,11 @@
 #include "GaudiKernel/Service.h"
 #include "k4Interface/ICaloCreateMap.h"
 
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "DetSegmentation/FCCSWGridPhiTheta.h"
-#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+#include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
+#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 

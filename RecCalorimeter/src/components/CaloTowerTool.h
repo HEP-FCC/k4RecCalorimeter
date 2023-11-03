@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiTool.h"
 
 // FCCSW
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerTool.h"
 

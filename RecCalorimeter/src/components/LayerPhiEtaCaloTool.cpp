@@ -2,7 +2,7 @@
 
 // segm
 #include "DD4hep/Detector.h"
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 DECLARE_COMPONENT(LayerPhiEtaCaloTool)
@@ -48,16 +48,16 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
   info() << "Number of active layers " << numLayers << endmsg;
   
   // get PhiEta segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation;
-  segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation;
+  segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  info() << "FCCSWGridPhiEta: size in eta " << segmentation->gridSizeEta() << " , bins in phi " << segmentation->phiBins()
+  info() << "FCCSWGridPhiEta_k4geo: size in eta " << segmentation->gridSizeEta() << " , bins in phi " << segmentation->phiBins()
          << endmsg;
-  info() << "FCCSWGridPhiEta: offset in eta " << segmentation->offsetEta() << " , offset in phi "
+  info() << "FCCSWGridPhiEta_k4geo: offset in eta " << segmentation->offsetEta() << " , offset in phi "
          << segmentation->offsetPhi() << endmsg;
 
   // Take readout bitfield decoder from GeoSvc
