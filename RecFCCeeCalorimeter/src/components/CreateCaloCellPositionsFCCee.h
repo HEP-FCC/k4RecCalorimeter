@@ -12,6 +12,7 @@
 
 #include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/Constants.h"
 
 #include <unordered_map>
 
@@ -50,11 +51,11 @@ private:
   /// Input collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Input collection metadata handle
-  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, "CellIDEncodingString", Gaudi::DataHandle::Reader};
+  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::CellIDEncoding, Gaudi::DataHandle::Reader};
   /// Output collection
   DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
   /// Output collection metadata handle
-  MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, "CellIDEncodingString", Gaudi::DataHandle::Writer};
+  MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, edm4hep::CellIDEncoding, Gaudi::DataHandle::Writer};
 
   // Cache
   std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
