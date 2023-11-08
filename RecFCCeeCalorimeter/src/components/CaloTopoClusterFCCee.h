@@ -9,10 +9,13 @@
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICaloReadCellNoiseMap.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
-#include "k4Interface/ICalorimeterTool.h"
+// #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/ITopoClusterInputTool.h"
 
+#include <cstdint>
+#include <sys/types.h>
+#include <vector>
 #include <unordered_map>
 #include <map>
 
@@ -50,28 +53,25 @@ public:
 
   StatusCode initialize();
 
-  /**  Find cells with a signal to noise ratio > nSigma.
-   *   @param[in] aCells, parse the map of all cells.
-   *   @param[in] aNumSigma, the signal to noise ratio that the cell has to exceed to become seed.
-   *   @param[in] aSeeds, the vector of seed cell ids anf their energy to build proto-clusters.
+  /**  Find cells with a signal to noise ratio > seedSigma.
+   *   @param[in] allCells, collection of all cells.
+   *   return collection of seed cells.
    */
-  virtual void findingSeeds(const std::unordered_map<uint64_t, double>& aCells, int aNumSigma,
-                            std::vector<std::pair<uint64_t, double>>& aSeeds);
+  edm4hep::CalorimeterHitCollection findSeeds(
+      const edm4hep::CalorimeterHitCollection* allCells);
 
   /** Building proto-clusters from the found seeds.
    * First the function initialises a cluster in the preClusterCollection for the seed cells,
    * then it calls the CaloTopoClusterFCCee::searchForNeighbours function to retrieve the vector of next cellIDs to add and loop over to find neighbours.
    * The iteration of search for neighbours is continued until no more neihgbours are found. Then a last round of adding neighbouring cells to the cluster is run where the parameter lastNeighbourSigma is applied.
-   *   @param[in] aNumSigma, signal to noise ratio the neighbouring cell has to pass to be added to cluster.
    *   @param[in] aSeeds, vector of seeding cells.
    *   @param[in] aCells, map of all cells.
    *   @param[in] aPreClusterCollection, map that is filled with clusterID pointing to the associated cells, in a pair of cellID and cellType.
    */
-  StatusCode buildingProtoCluster(int aNumSigma,
-                                    int aLastNumSigma,
-                                    std::vector<std::pair<uint64_t, double>>& aSeeds,
-                                    const std::unordered_map<uint64_t, double>& aCells,
-                                    std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection);
+  StatusCode buildProtoClusters(
+      const edm4hep::CalorimeterHitCollection& seedCells,
+      const edm4hep::CalorimeterHitCollection* allCells,
+      std::map<uint32_t, edm4hep::CalorimeterHitCollection>& protoClusters);
 
   /** Search for neighbours and add them to preClusterCollection
    * The 
@@ -84,11 +84,15 @@ public:
    *   @param[in] aAllowClusterMerge, bool to allow for clusters to be merged, set to false in case of last iteration in CaloTopoClusterFCCee::buildingProtoCluster.
    *   return vector of pairs with cellID and energy of found neighbours.
    */
-  std::vector<std::pair<uint64_t, uint>>
-  searchForNeighbours(const uint64_t aCellId, uint& aClusterID, int aNumSigma, const std::unordered_map<uint64_t, double>& aCells,
-                      std::map<uint64_t, uint>& aClusterOfCell,
-                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
-		      bool aAllowClusterMerge);
+  std::vector<std::pair<uint64_t, uint32_t>>
+  searchForNeighbours(
+      const uint64_t aCellId,
+      uint32_t& aClusterID,
+      const int aNumSigma,
+      std::map<uint64_t, const edm4hep::CalorimeterHit>& aCellsMap,
+      std::map<uint64_t, uint32_t>& aClusterOfCell,
+      std::map<uint32_t, edm4hep::CalorimeterHitCollection>& protoClusters,
+      const bool aAllowClusterMerge);
 
   StatusCode execute();
 
@@ -101,28 +105,15 @@ private:
   DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
-  /// Handle for the input tool
-  ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
+
+  /// Handle for electromagnetic barrel cells (input collection)
+  DataHandle<edm4hep::CalorimeterHitCollection> m_inCells{
+      "cells", Gaudi::DataHandle::Reader, this};
+
   /// Handle for the cells noise tool
   ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
-  /// Handle for neighbours tool
+  /// Handle for neighbors tool
   ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
-  /// Handle for tool to get positions in ECal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
-  /// Handle for tool to get positions in HCal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
-  /// Handle for tool to get positions in HCal Barrel 
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
-  /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
-  ///// Handle for tool to get positions in Calo Discs
-  //ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
-  ///// Handle for tool to get positions in Calo Discs
-  //ToolHandle<ICellPositionsTool> m_cellPositionsHECTool{"CellPositionsCaloDiscsTool", this};
-  ///// Handle for tool to get positions in Calo Discs
-  //ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool{"CellPositionsCaloDiscsTool", this};
-  ///// Handle for tool to get positions in Calo Discs
-  //ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool", this};
 
   /// no segmentation used in HCal
   Gaudi::Property<bool> m_noSegmentationHCalUsed{this, "noSegmentationHCal", true, "HCal Barrel readout without DD4hep theta-module segmentation used."};
@@ -143,14 +134,14 @@ private:
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder_ecal;
   int m_index_layer_ecal;
 
-  std::unordered_map<uint64_t, double> m_allCells;
+  // Map of all calorimeter cells, key: cellID
+  std::map<uint64_t, const edm4hep::CalorimeterHit> m_allCellsMap;
 
   // minimum noise and offset per barrel ECal layer
   // this serves as a very small cache for fast lookups and avoid looking into the huge map for most of the cells.
   std::vector<double> m_min_offset;
   std::vector<double> m_min_noise;
 
-  void createCache(const std::unordered_map<uint64_t, double>& aCells);
-
+  void createCache(const edm4hep::CalorimeterHitCollection* aCells);
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */
