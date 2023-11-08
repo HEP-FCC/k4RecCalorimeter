@@ -14,6 +14,8 @@ CreateCaloClustersSlidingWindow::CreateCaloClustersSlidingWindow(const std::stri
   declareProperty("clusters", m_clusters, "Handle for calo clusters (output collection)");
   declareProperty("clusterCells", m_clusterCells, "Handle for calo cluster cells (output collection)");
   declareProperty("towerTool", m_towerTool, "Handle for the tower building tool");
+  declareProperty("positionsECalBarrelTool", m_cellPositionsECalBarrelTool,
+                  "Handle for tool to retrieve cell positions in ECal Barrel");
 }
 
 StatusCode CreateCaloClustersSlidingWindow::initialize() {
@@ -24,24 +26,25 @@ StatusCode CreateCaloClustersSlidingWindow::initialize() {
     error() << "Unable to retrieve the tower building tool." << endmsg;
     return StatusCode::FAILURE;
   }
+
   // Get number of calorimeter towers
   auto towerMapSize = m_towerTool->towersNumber();
-  m_nEtaTower = towerMapSize.eta;
+  m_nThetaTower = towerMapSize.theta;
   m_nPhiTower = towerMapSize.phi;
-  debug() << "Number of calorimeter towers (eta x phi) : " << m_nEtaTower << " x " << m_nPhiTower << endmsg;
-  // make sure that the number of towers in eta is larger than the seeding sliding window
-  if (m_nEtaTower < m_nEtaWindow) {
-    debug() << "Window size in eta too small!!! Window " << m_nEtaWindow << " # of eta towers " << m_nEtaTower
+  debug() << "Number of calorimeter towers (theta x phi) : " << m_nThetaTower << " x " << m_nPhiTower << endmsg;
+  // make sure that the number of towers in theta is larger than the seeding sliding window
+  if (m_nThetaTower < m_nThetaWindow) {
+    debug() << "Window size in theta too small!!! Window " << m_nThetaWindow << " # of theta towers " << m_nThetaTower
             << endmsg;
-    m_nEtaTower = m_nEtaWindow;
+    m_nThetaTower = m_nThetaWindow;
   }
   info() << "CreateCaloClustersSlidingWindow initialized" << endmsg;
   return StatusCode::SUCCESS;
 }
 
 StatusCode CreateCaloClustersSlidingWindow::execute() {
-  // 1. Create calorimeter towers (calorimeter grid in eta phi, all layers merged)
-  m_towers.assign(m_nEtaTower, std::vector<float>(m_nPhiTower, 0));
+  // 1. Create calorimeter towers (calorimeter grid in theta phi, all layers merged)
+  m_towers.assign(m_nThetaTower, std::vector<float>(m_nPhiTower, 0));
   // Create an output collection
   auto edmClusters = m_clusters.createAndPut();
   auto edmClusterCells = m_clusterCells.createAndPut();
@@ -50,43 +53,48 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
     debug() << "Empty cell collection." << endmsg;
     return StatusCode::SUCCESS;
   }
+
   // 2. Find local maxima with sliding window, build preclusters, calculate their barycentre position
-  // calculate the sum of first m_nEtaWindow bins in eta, for each phi tower
-  std::vector<float> sumOverEta(m_nPhiTower, 0);
-  for (int iEta = 0; iEta < m_nEtaWindow; iEta++) {
-    std::transform(sumOverEta.begin(), sumOverEta.end(), m_towers[iEta].begin(), sumOverEta.begin(),
+  // calculate the sum of first m_nThetaWindow bins in theta, for each phi tower
+  std::vector<float> sumOverTheta(m_nPhiTower, 0);
+  for (int iTheta = 0; iTheta < m_nThetaWindow; iTheta++) {
+    std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta].begin(), sumOverTheta.begin(),
                    std::plus<float>());
   }
 
-  // preclusters with phi, eta weighted position and transverse energy
+  // preclusters with phi, theta weighted position and transverse energy
   m_preClusters.clear();
-  int halfEtaPos = floor(m_nEtaPosition / 2.);
+  int halfThetaPos = floor(m_nThetaPosition / 2.);
   int halfPhiPos = floor(m_nPhiPosition / 2.);
-  float posEta = 0;
-  float posPhi = 0;
+  float posX = 0;
+  float posY = 0;
+  float posZ = 0;
   float sumEnergyPos = 0;
+  dd4hep::Position posCell;
+  std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> cellsInTowersMap = m_towerTool->cellsInTowers();
 
   // final cluster window
-  int halfEtaFin = floor(m_nEtaFinal / 2.);
+  int halfThetaFin = floor(m_nThetaFinal / 2.);
   int halfPhiFin = floor(m_nPhiFinal / 2.);
   double sumEnergyFin = 0.;
-  int idEtaFin = 0;
+  int idThetaFin = 0;
   int idPhiFin = 0;
 
-  // loop over all Eta slices starting at the half of the first window
-  int halfEtaWin = floor(m_nEtaWindow / 2.);
+  // loop over all Theta slices starting at the half of the first window
+  int halfThetaWin = floor(m_nThetaWindow / 2.);
   int halfPhiWin = floor(m_nPhiWindow / 2.);
   float sumWindow = 0;
-  float sumPhiSlicePrevEtaWin = 0;
-  float sumPhiSliceNextEtaWin = 0;
+  float sumPhiSlicePrevThetaWin = 0;
+  float sumPhiSliceNextThetaWin = 0;
   float sumFirstPhiSlice = 0;
   float sumLastPhiSlice = 0;
   bool toRemove = false;
-  // one slice in eta = window, now only sum over window elements in phi
-  for (int iEta = halfEtaWin; iEta < m_nEtaTower - halfEtaWin; iEta++) {
+
+  // one slice in theta = window, now only sum over window elements in phi
+  for (int iTheta = halfThetaWin; iTheta < m_nThetaTower - halfThetaWin; iTheta++) {
     // sum the first window in phi
     for (int iPhiWindow = -halfPhiWin; iPhiWindow <= halfPhiWin; iPhiWindow++) {
-      sumWindow += sumOverEta[phiNeighbour(iPhiWindow)];
+      sumWindow += sumOverTheta[phiNeighbour(iPhiWindow)];
     }
     // loop over all the phi slices
     for (int iPhi = 0; iPhi < m_nPhiTower; iPhi++) {
@@ -94,91 +102,103 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
       if (sumWindow > m_energyThreshold) {
         // test local maximum in phi
         // check closest neighbour on the right
-        if (sumOverEta[phiNeighbour(iPhi - halfPhiWin)] < sumOverEta[phiNeighbour(iPhi + halfPhiWin + 1)]) {
+        if (sumOverTheta[phiNeighbour(iPhi - halfPhiWin)] < sumOverTheta[phiNeighbour(iPhi + halfPhiWin + 1)]) {
           toRemove = true;
         }
         // check closest neighbour on the left
-        if (sumOverEta[phiNeighbour(iPhi + halfPhiWin)] < sumOverEta[phiNeighbour(iPhi - halfPhiWin - 1)]) {
+        if (sumOverTheta[phiNeighbour(iPhi + halfPhiWin)] < sumOverTheta[phiNeighbour(iPhi - halfPhiWin - 1)]) {
           toRemove = true;
         }
-        // test local maximum in eta
+        // test local maximum in theta
         // check closest neighbour on the right (if it is not the first window)
-        if (iEta > halfEtaWin) {
+        if (iTheta > halfThetaWin) {
           for (int iPhiWindowLocalCheck = iPhi - halfPhiWin; iPhiWindowLocalCheck <= iPhi + halfPhiWin;
                iPhiWindowLocalCheck++) {
-            sumPhiSlicePrevEtaWin += m_towers[iEta - halfEtaWin - 1][phiNeighbour(iPhiWindowLocalCheck)];
-            sumLastPhiSlice += m_towers[iEta + halfEtaWin][phiNeighbour(iPhiWindowLocalCheck)];
+            sumPhiSlicePrevThetaWin += m_towers[iTheta - halfThetaWin - 1][phiNeighbour(iPhiWindowLocalCheck)];
+            sumLastPhiSlice += m_towers[iTheta + halfThetaWin][phiNeighbour(iPhiWindowLocalCheck)];
           }
-          if (sumPhiSlicePrevEtaWin > sumLastPhiSlice) {
+          if (sumPhiSlicePrevThetaWin > sumLastPhiSlice) {
             toRemove = true;
           }
         }
         // check closest neighbour on the left (if it is not the last window)
-        if (iEta < m_nEtaTower - halfEtaWin - 1) {
+        if (iTheta < m_nThetaTower - halfThetaWin - 1) {
           for (int iPhiWindowLocalCheck = iPhi - halfPhiWin; iPhiWindowLocalCheck <= iPhi + halfPhiWin;
                iPhiWindowLocalCheck++) {
-            sumPhiSliceNextEtaWin += m_towers[iEta + halfEtaWin + 1][phiNeighbour(iPhiWindowLocalCheck)];
-            sumFirstPhiSlice += m_towers[iEta - halfEtaWin][phiNeighbour(iPhiWindowLocalCheck)];
+            sumPhiSliceNextThetaWin += m_towers[iTheta + halfThetaWin + 1][phiNeighbour(iPhiWindowLocalCheck)];
+            sumFirstPhiSlice += m_towers[iTheta - halfThetaWin][phiNeighbour(iPhiWindowLocalCheck)];
           }
-          if (sumPhiSliceNextEtaWin > sumFirstPhiSlice) {
+          if (sumPhiSliceNextThetaWin > sumFirstPhiSlice) {
             toRemove = true;
           }
         }
         sumFirstPhiSlice = 0;
         sumLastPhiSlice = 0;
-        sumPhiSlicePrevEtaWin = 0;
-        sumPhiSliceNextEtaWin = 0;
+        sumPhiSlicePrevThetaWin = 0;
+        sumPhiSliceNextThetaWin = 0;
         // Build precluster
         if (!toRemove) {
           // Calculate barycentre position (usually smaller window used to reduce noise influence)
-          posEta = 0;
-          posPhi = 0;
+          posX = 0;
+          posY = 0;
+          posZ = 0;
           sumEnergyPos = 0;
-          // weighted mean for position in eta and phi
-          for (int ipEta = iEta - halfEtaPos; ipEta <= iEta + halfEtaPos; ipEta++) {
+          // weighted mean for position in theta and phi
+          for (int ipTheta = iTheta - halfThetaPos; ipTheta <= iTheta + halfThetaPos; ipTheta++) {
             for (int ipPhi = iPhi - halfPhiPos; ipPhi <= iPhi + halfPhiPos; ipPhi++) {
-              posEta += m_towerTool->eta(ipEta) * m_towers[ipEta][phiNeighbour(ipPhi)];
-              posPhi += m_towerTool->phi(ipPhi) * m_towers[ipEta][phiNeighbour(ipPhi)];
-              sumEnergyPos += m_towers[ipEta][phiNeighbour(ipPhi)];
+              for (auto cell : cellsInTowersMap[std::make_pair(ipTheta, phiNeighbour(ipPhi))]) {
+                posCell = m_cellPositionsECalBarrelTool->xyzPosition(cell.getCellID());
+                posX += posCell.X() * cell.getEnergy();
+                posY += posCell.Y() * cell.getEnergy();
+                posZ += posCell.Z() * cell.getEnergy();
+                sumEnergyPos += cell.getEnergy();
+              }
             }
           }
           // If too small energy in the position window, calculate the position in the whole sliding window
-          // Assigns correct position for cases with maximum energy deposits close to the border in eta
+          // Assigns correct position for cases with maximum energy deposits close to the border in theta
           if (sumEnergyPos > m_energyThresholdFraction * m_energyThreshold) {
-            posEta /= sumEnergyPos;
-            posPhi /= sumEnergyPos;
+            posX /= sumEnergyPos;
+            posY /= sumEnergyPos;
+            posZ /= sumEnergyPos;
           } else {
-            posEta = 0;
-            posPhi = 0;
+            posX = 0;
+            posY = 0;
+            posZ = 0;
             sumEnergyPos = 0;
-            for (int ipEta = iEta - halfEtaWin; ipEta <= iEta + halfEtaWin; ipEta++) {
+            for (int ipTheta = iTheta - halfThetaWin; ipTheta <= iTheta + halfThetaWin; ipTheta++) {
               for (int ipPhi = iPhi - halfPhiWin; ipPhi <= iPhi + halfPhiWin; ipPhi++) {
-                posEta += m_towerTool->eta(ipEta) * m_towers[ipEta][phiNeighbour(ipPhi)];
-                posPhi += m_towerTool->phi(ipPhi) * m_towers[ipEta][phiNeighbour(ipPhi)];
-                sumEnergyPos += m_towers[ipEta][phiNeighbour(ipPhi)];
+                for (auto cell : cellsInTowersMap[std::make_pair(ipTheta, phiNeighbour(ipPhi))]) {
+                  posCell = m_cellPositionsECalBarrelTool->xyzPosition(cell.getCellID());
+                  posX += posCell.X() * cell.getEnergy();
+                  posY += posCell.Y() * cell.getEnergy();
+                  posZ += posCell.Z() * cell.getEnergy();
+                  sumEnergyPos += cell.getEnergy();
+                }
               }
             }
-            posEta /= sumEnergyPos;
-            posPhi /= sumEnergyPos;
+            posX /= sumEnergyPos;
+            posY /= sumEnergyPos;
+            posZ /= sumEnergyPos;
           }
-          if (fabs(posPhi) > M_PI) {
-            posPhi += -2 * M_PI * posPhi / fabs(posPhi);
-          }
+          //if (fabs(posPhi) > M_PI) {
+          //  posPhi += -2 * M_PI * posPhi / fabs(posPhi);
+          //}
           // Calculate final cluster energy
           sumEnergyFin = 0;
           // Final cluster position
-          idEtaFin = m_towerTool->idEta(posEta);
-          idPhiFin = m_towerTool->idPhi(posPhi);
+          idThetaFin = m_towerTool->idTheta(atan2(sqrt(posX * posX + posY * posY), posZ));
+          idPhiFin = m_towerTool->idPhi(atan2(posY, posX));
           // Recalculating the energy within the final cluster size
-          for (int ipEta = idEtaFin - halfEtaFin; ipEta <= idEtaFin + halfEtaFin; ipEta++) {
+          for (int ipTheta = idThetaFin - halfThetaFin; ipTheta <= idThetaFin + halfThetaFin; ipTheta++) {
             for (int ipPhi = idPhiFin - halfPhiFin; ipPhi <= idPhiFin + halfPhiFin; ipPhi++) {
-              if (ipEta >= 0 && ipEta < m_nEtaTower) {  // check if we are not outside of map in eta
+              if (ipTheta >= 0 && ipTheta < m_nThetaTower) {  // check if we are not outside of map in theta
                 if (m_ellipseFinalCluster) {
-                  if (pow( (ipEta - idEtaFin) / (m_nEtaFinal / 2.), 2) + pow( (ipPhi - idPhiFin) / (m_nPhiFinal / 2.), 2) < 1) {
-                    sumEnergyFin += m_towers[ipEta][phiNeighbour(ipPhi)];
+                  if (pow( (ipTheta - idThetaFin) / (m_nThetaFinal / 2.), 2) + pow( (ipPhi - idPhiFin) / (m_nPhiFinal / 2.), 2) < 1) {
+                    sumEnergyFin += m_towers[ipTheta][phiNeighbour(ipPhi)];
                   }
                 } else {
-                  sumEnergyFin += m_towers[ipEta][phiNeighbour(ipPhi)];
+                  sumEnergyFin += m_towers[ipTheta][phiNeighbour(ipPhi)];
                 }
               }
             }
@@ -186,8 +206,11 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
           // check if changing the barycentre did not decrease energy below threshold
           if (sumEnergyFin > m_energyThreshold) {
             cluster newPreCluster;
-            newPreCluster.eta = posEta;
-            newPreCluster.phi = posPhi;
+            newPreCluster.X = posX;
+            newPreCluster.Y = posY;
+            newPreCluster.Z = posZ;
+            newPreCluster.theta = atan2(sqrt(posX * posX + posY * posY), posZ);
+            newPreCluster.phi = atan2(posY, posX);
             newPreCluster.transEnergy = sumEnergyFin;
             m_preClusters.push_back(newPreCluster);
           }
@@ -196,18 +219,18 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
       toRemove = false;
       // finish processing that window in phi, shift window to the next phi tower
       // substract first phi tower in current window
-      sumWindow -= sumOverEta[phiNeighbour(iPhi - halfPhiWin)];
+      sumWindow -= sumOverTheta[phiNeighbour(iPhi - halfPhiWin)];
       // add next phi tower to the window
-      sumWindow += sumOverEta[phiNeighbour(iPhi + halfPhiWin + 1)];
+      sumWindow += sumOverTheta[phiNeighbour(iPhi + halfPhiWin + 1)];
     }
     sumWindow = 0;
-    // finish processing that slice, shift window to next eta tower
-    if (iEta < m_nEtaTower - halfEtaWin - 1) {
-      // substract first eta slice in current window
-      std::transform(sumOverEta.begin(), sumOverEta.end(), m_towers[iEta - halfEtaWin].begin(), sumOverEta.begin(),
+    // finish processing that slice, shift window to next theta tower
+    if (iTheta < m_nThetaTower - halfThetaWin - 1) {
+      // substract first theta slice in current window
+      std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta - halfThetaWin].begin(), sumOverTheta.begin(),
                      std::minus<float>());
-      // add next eta slice to the window
-      std::transform(sumOverEta.begin(), sumOverEta.end(), m_towers[iEta + halfEtaWin + 1].begin(), sumOverEta.begin(),
+      // add next theta slice to the window
+      std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta + halfThetaWin + 1].begin(), sumOverTheta.begin(),
                      std::plus<float>());
     }
   }
@@ -222,7 +245,7 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
   for (auto it1 = m_preClusters.begin(); it1 != m_preClusters.end(); it1++) {
     // loop over all clusters with energy lower than it1 (sorting), erase if too close
     for (auto it2 = it1 + 1; it2 != m_preClusters.end();) {
-      if ((abs(int(m_towerTool->idEta((*it1).eta) - m_towerTool->idEta((*it2).eta))) < m_nEtaDuplicates) &&
+      if ((abs(int(m_towerTool->idTheta((*it1).theta) - m_towerTool->idTheta((*it2).theta))) < m_nThetaDuplicates) &&
           ((abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) < m_nPhiDuplicates) ||
            (abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) > m_nPhiTower - m_nPhiDuplicates))) {
         m_preClusters.erase(it2);
@@ -235,35 +258,37 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
 
   // 6. Create final clusters
   // currently only role of r is to calculate x,y,z position
-  double radius = m_towerTool->radiusForPosition();
+  //double radius = m_towerTool->radiusForPosition();
+  //debug() << "radiusForPosition() is : " << radius << endmsg;
+
   for (const auto clu : m_preClusters) {
-    float clusterEnergy = clu.transEnergy * cosh(clu.eta);
+    float clusterEnergy = clu.transEnergy / sin(clu.theta);
     // apply energy sharing correction (if flag set to true)
     if (m_energySharingCorrection) {
-      int idEtaCl = m_towerTool->idEta(clu.eta);
+      int idThetaCl = m_towerTool->idTheta(clu.theta);
       int idPhiCl = m_towerTool->idPhi(clu.phi);
-      // sum of energies in other clusters in each eta-phi tower of our current cluster (idEtaCl, idPhiCl)
+      // sum of energies in other clusters in each theta-phi tower of our current cluster (idThetaCl, idPhiCl)
       std::vector<std::vector<float>> sumEnergySharing;
-      sumEnergySharing.assign(m_nEtaFinal, std::vector<float>(m_nPhiFinal, 0));
+      sumEnergySharing.assign(m_nThetaFinal, std::vector<float>(m_nPhiFinal, 0));
       // loop over all clusters and check if they have any tower in common with our current cluster
       for (const auto cluSharing : m_preClusters) {
-        int idEtaClShare = m_towerTool->idEta(cluSharing.eta);
+        int idThetaClShare = m_towerTool->idTheta(cluSharing.theta);
         int idPhiClShare = m_towerTool->idPhi(cluSharing.phi);
-        if (idEtaCl != idEtaClShare && idPhiCl != idPhiClShare) {
+        if (idThetaCl != idThetaClShare && idPhiCl != idPhiClShare) {
           // check for overlap between clusters
-          if (abs(idEtaClShare - idEtaCl) < m_nEtaFinal &&
+          if (abs(idThetaClShare - idThetaCl) < m_nThetaFinal &&
               ((abs(idPhiClShare - idPhiCl) < m_nPhiFinal) ||
                (abs(idPhiClShare - idPhiCl) > m_nPhiTower - m_nPhiFinal))) {
             // add energy in shared towers to sumEnergySharing[][]
-            for (int iEta = std::max(idEtaCl, idEtaClShare) - halfEtaFin;
-                 iEta <= std::min(idEtaCl, idEtaClShare) + halfEtaFin;
-                 iEta++) {
+            for (int iTheta = std::max(idThetaCl, idThetaClShare) - halfThetaFin;
+                 iTheta <= std::min(idThetaCl, idThetaClShare) + halfThetaFin;
+                 iTheta++) {
               for (int iPhi = std::max(idPhiCl, idPhiClShare) - halfPhiFin;
-                   iEta <= std::min(idPhiCl, idPhiClShare) + halfPhiFin;
+                   iTheta <= std::min(idPhiCl, idPhiClShare) + halfPhiFin;
                    iPhi++) {
-                if (iEta >= 0 && iEta < m_nEtaTower) {  // check if we are not outside of map in eta
-                  sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] +=
-                      m_towers[iEta][phiNeighbour(iPhi)] * cosh(m_towerTool->eta(iEta));
+                if (iTheta >= 0 && iTheta < m_nThetaTower) {  // check if we are not outside of map in theta
+                  sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] +=
+                      m_towers[iTheta][phiNeighbour(iPhi)] / sin(m_towerTool->theta(iTheta));
                 }
               }
             }
@@ -271,28 +296,30 @@ StatusCode CreateCaloClustersSlidingWindow::execute() {
         }
       }
       // apply the actual correction: substract the weighted energy contributions in other clusters
-      for (int iEta = idEtaCl - halfEtaFin; iEta <= idEtaCl + halfEtaFin; iEta++) {
+      for (int iTheta = idThetaCl - halfThetaFin; iTheta <= idThetaCl + halfThetaFin; iTheta++) {
         for (int iPhi = idPhiCl - halfPhiFin; iPhi <= idPhiCl + halfPhiFin; iPhi++) {
-          if(iEta - idEtaCl + halfEtaFin >= 0)
-            if (sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] != 0) {
-              float sumButOne = sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)];
-            float towerEnergy = m_towers[iEta][phiNeighbour(iPhi)] * cosh(m_towerTool->eta(iEta));
+          if(iTheta - idThetaCl + halfThetaFin >= 0)
+            if (sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] != 0) {
+              float sumButOne = sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)];
+            float towerEnergy = m_towers[iTheta][phiNeighbour(iPhi)] / sin(m_towerTool->theta(iTheta));
             clusterEnergy -= towerEnergy * sumButOne / (sumButOne + towerEnergy);
           }
         }
       }
     }
+
     // save the clusters in our EDM
     // check ET thereshold once more (ET could change with the energy sharing correction)
-    if (clusterEnergy / cosh(clu.eta) > m_energyThreshold) {
+    if (clusterEnergy * sin(clu.theta) > m_energyThreshold) {
       auto edmCluster = edmClusters->create();
-      edmCluster.setPosition(edm4hep::Vector3f(radius * cos(clu.phi), radius * sin(clu.phi), radius * sinh(clu.eta)));
+      edmCluster.setPosition(edm4hep::Vector3f(clu.X / dd4hep::mm, clu.Y / dd4hep::mm, clu.Z / dd4hep::mm));
+      //edmCluster.setPosition(edm4hep::Vector3f(radius * cos(clu.phi), radius * sin(clu.phi), radius * cos(clu.theta)/sin(clu.theta)));
       edmCluster.setEnergy(clusterEnergy);
       if (m_attachCells) {
         debug() << "Attaching cells to the clusters." << endmsg;
-        m_towerTool->attachCells(clu.eta, clu.phi, halfEtaFin, halfPhiFin, edmCluster, edmClusterCells, m_ellipseFinalCluster);
+        m_towerTool->attachCells(clu.theta, clu.phi, halfThetaFin, halfPhiFin, edmCluster, edmClusterCells, m_ellipseFinalCluster);
       }
-      debug() << "Cluster eta: " << clu.eta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
+      debug() << "Cluster theta: " << clu.theta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
               << " y: " << edmCluster.getPosition().y << " z: " << edmCluster.getPosition().z
               << " energy: " << edmCluster.getEnergy() << " contains: " << edmCluster.hits_size() << " cells" << endmsg;
     }
