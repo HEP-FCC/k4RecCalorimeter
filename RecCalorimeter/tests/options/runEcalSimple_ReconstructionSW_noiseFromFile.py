@@ -1,8 +1,8 @@
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
+from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
 
-podioevent = FCCDataSvc("EventDataSvc", input="output_ecalSim_e50GeV_1events.root")
+podioevent = k4DataSvc("EventDataSvc", input="output_ecalSim_e50GeV_1events.root")
 
 # reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput

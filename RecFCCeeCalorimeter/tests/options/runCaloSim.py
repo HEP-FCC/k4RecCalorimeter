@@ -11,9 +11,9 @@ ApplicationMgr().OutputLevel = INFO
 ApplicationMgr().StopOnSignal = True
 ApplicationMgr().ExtSvc += ['RndmGenSvc']
 
-from Configurables import FCCDataSvc
+from Configurables import k4DataSvc
 ## Data service
-podioevent = FCCDataSvc("EventDataSvc")
+podioevent = k4DataSvc("EventDataSvc")
 ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import MomentumRangeParticleGun
@@ -100,6 +100,8 @@ extHcalReadoutName = "HCalExtBarrelReadout"
 
 from Configurables import SimG4Alg
 from Configurables import SimG4SaveCalHits
+SimG4Alg("SimG4Alg").outputs = []
+
 saveECalBarrelTool = SimG4SaveCalHits("saveECalBarrelHits")
 saveECalBarrelTool.readoutNames = ["ECalBarrelEta"]
 saveECalBarrelTool.CaloHits.Path = "ECalBarrelPositionedHits"
@@ -195,7 +197,7 @@ cellPositionEcalBarrelTool.readoutName = "ECalBarrelPhiEta"
 
 from Configurables import CreateCaloCellPositionsFCCee
 createEcalBarrelPositionedCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCells")
-createEcalBarrelPositionedCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
+createEcalBarrelPositionedCells.positionsTool = cellPositionEcalBarrelTool
 createEcalBarrelPositionedCells.hits.Path = "ECalBarrelCells"
 createEcalBarrelPositionedCells.positionedHits.Path = "ECalBarrelPositionedCells"
 ApplicationMgr().TopAlg += [createEcalBarrelPositionedCells]
@@ -270,7 +272,7 @@ ApplicationMgr().TopAlg += [createClusters]
 
 # Add position to the cells attached to the cluster
 createEcalBarrelPositionedCaloClusterCells = CreateCaloCellPositionsFCCee("ECalBarrelPositionedCaloClusterCells")
-createEcalBarrelPositionedCaloClusterCells.positionsECalBarrelTool = cellPositionEcalBarrelTool
+createEcalBarrelPositionedCaloClusterCells.positionsTool = cellPositionEcalBarrelTool
 createEcalBarrelPositionedCaloClusterCells.hits.Path = "CaloClusterCells"
 createEcalBarrelPositionedCaloClusterCells.positionedHits.Path = "PositionedCaloClusterCells"
 

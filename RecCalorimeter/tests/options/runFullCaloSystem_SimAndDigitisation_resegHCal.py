@@ -10,9 +10,9 @@ particleType="pi-"
 
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
+from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
 
-podioevent   = FCCDataSvc("EventDataSvc")
+podioevent   = k4DataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors=[  'file:Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',

@@ -22,6 +22,7 @@
 #include "TLorentzVector.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
+#include <GaudiKernel/MsgStream.h>
 
 DECLARE_COMPONENT(CorrectECalBarrelSliWinCluster)
 
@@ -40,8 +41,10 @@ CorrectECalBarrelSliWinCluster::CorrectECalBarrelSliWinCluster(const std::string
 }
 
 StatusCode CorrectECalBarrelSliWinCluster::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
-  if (sc.isFailure()) return sc;
+  {
+    StatusCode sc = GaudiAlgorithm::initialize();
+    if (sc.isFailure()) return sc;
+  }
 
   int energyStart = 0;
   int energyEnd = 0;
@@ -139,27 +142,32 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   }
   for (uint iSys = 0; iSys < m_systemId.size(); iSys++) {
     // check if readouts exist
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutName[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
     // retrieve PhiEta segmentation
     m_segmentationPhiEta[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-        m_geoSvc->lcdd()->readout(m_readoutName[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     m_segmentationMulti[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->lcdd()->readout(m_readoutName[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     if (m_segmentationPhiEta[m_systemId[iSys]] == nullptr && m_segmentationMulti[m_systemId[iSys]] == nullptr) {
       error() << "There is no phi-eta or multi- segmentation." << endmsg;
       return StatusCode::FAILURE;
     }
-    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->lcdd()->readout(m_readoutName[iSys]).idSpec().decoder()));
+    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->getDetector()->readout(m_readoutName[iSys]).idSpec().decoder()));
   }
   // Initialize random service
   if (service("RndmGenSvc", m_randSvc).isFailure()) {
     error() << "Couldn't get RndmGenSvc!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+  {
+    StatusCode sc = m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+    if (sc.isFailure()) {
+      error() << "Unable to initialize gaussian random number generator!" << endmsg;
+    }
+  }
 
   // open and check file, read the histograms with noise constants
   if (initNoiseFromFile().isFailure()) {

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <unordered_map>
 #include <unordered_set>
@@ -77,7 +78,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     }
   }
 
-  m_decoder_ecal = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_index_layer_ecal = m_decoder_ecal->index("layer");
 
   return StatusCode::SUCCESS;
@@ -104,7 +105,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
  
   // Create output collections
   auto edmClusters = m_clusterCollection.createAndPut();
-  edm4hep::CalorimeterHitCollection* edmClusterCells = new edm4hep::CalorimeterHitCollection();
+  std::unique_ptr<edm4hep::CalorimeterHitCollection> edmClusterCells(new edm4hep::CalorimeterHitCollection());
 
   // Finds seeds
   CaloTopoClusterFCCee::findingSeeds(m_allCells, m_seedSigma, firstSeeds);
@@ -117,8 +118,15 @@ StatusCode CaloTopoClusterFCCee::execute() {
             });
 
   std::map<uint, std::vector<std::pair<uint64_t, int>>> preClusterCollection;
-  CaloTopoClusterFCCee::buildingProtoCluster(m_neighbourSigma, m_lastNeighbourSigma, firstSeeds, m_allCells,
-                                        preClusterCollection);
+  StatusCode sc_buildProtoClusters = CaloTopoClusterFCCee::buildingProtoCluster(m_neighbourSigma,
+                                                                                m_lastNeighbourSigma,
+                                                                                firstSeeds, m_allCells,
+                                                                                preClusterCollection);
+  if (sc_buildProtoClusters.isFailure()) {
+    error() << "Unable to build the protoclusters!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
   // Build Clusters in edm
   debug() << "Building " << preClusterCollection.size() << " cluster." << endmsg;
   double checkTotEnergy = 0.;
@@ -132,10 +140,10 @@ StatusCode CaloTopoClusterFCCee::execute() {
     double energy = 0.;
     double deltaR = 0.;
     std::vector<double> posPhi (i.second.size());
-    std::vector<double> posEta (i.second.size());
+    std::vector<double> posTheta (i.second.size());
     std::vector<double> vecEnergy (i.second.size());
     double sumPhi = 0.;
-    double sumEta = 0.;
+    double sumTheta = 0.;
     std::map<int,int> system;
 
     for (auto pair : i.second) {
@@ -178,10 +186,10 @@ StatusCode CaloTopoClusterFCCee::execute() {
       posY += posCell.Y() * newCell.getEnergy();
       posZ += posCell.Z() * newCell.getEnergy();
       posPhi.push_back(posCell.Phi());
-      posEta.push_back(posCell.Eta());
+      posTheta.push_back(posCell.Theta());
       vecEnergy.push_back(newCell.getEnergy());
       sumPhi += posCell.Phi() * newCell.getEnergy();
-      sumEta += posCell.Eta() * newCell.getEnergy();
+      sumTheta += posCell.Theta() * newCell.getEnergy();
       
       cluster.addToHits(newCell);
       auto er = m_allCells.erase(cID);
@@ -193,10 +201,10 @@ StatusCode CaloTopoClusterFCCee::execute() {
     cluster.setPosition(edm4hep::Vector3f(posX / energy, posY / energy, posZ / energy));
     // store deltaR of cluster in time for the moment..
     sumPhi = sumPhi / energy;
-    sumEta = sumEta / energy;
+    sumTheta = sumTheta / energy;
     int counter = 0;
-    for (auto entryEta : posEta){
-      deltaR += sqrt(pow(entryEta-sumEta,2) + pow(posEta[counter]-sumPhi,2)) * vecEnergy[counter];
+    for (auto entryTheta : posTheta){
+      deltaR += sqrt(pow(entryTheta-sumTheta,2) + pow(posPhi[counter]-sumPhi,2)) * vecEnergy[counter];
       counter++;
     }
     cluster.addToShapeParameters(deltaR / energy);
@@ -208,12 +216,12 @@ StatusCode CaloTopoClusterFCCee::execute() {
       clusterWithMixedCells++;
 
     posPhi.clear();
-    posEta.clear();
+    posTheta.clear();
     vecEnergy.clear();
 
   }
 
-  m_clusterCellsCollection.put(edmClusterCells);
+  m_clusterCellsCollection.put(std::move(edmClusterCells));
   debug() << "Number of clusters with cells in E and HCal:        " << clusterWithMixedCells << endmsg;
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
   debug() << "Leftover cells :                                    " << m_allCells.size() << endmsg;
@@ -225,12 +233,19 @@ void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, doubl
                                    std::vector<std::pair<uint64_t, double>>& aSeeds) {
   for (const auto& cell : aCells) {
     // retrieve the noise const and offset assigned to cell
-    //
     // first try to use the cache
     int system = m_decoder->get(cell.first, m_index_system);
     if (system == 4) { //ECal barrel
       int layer = m_decoder_ecal->get(cell.first, m_index_layer_ecal);
+
       double min_threshold = m_min_offset[layer] + m_min_noise[layer] * aNumSigma;
+
+      debug() << "m_min_offset[layer]   = " << m_min_offset[layer] << endmsg;
+      debug() << "m_min_noise[layer]   = " << m_min_noise[layer] << endmsg;
+      debug() << "aNumSigma   = " << aNumSigma << endmsg;
+      debug() << "min_threshold   = " << min_threshold << endmsg;
+      debug() << "abs(cell.second)   = " << abs(cell.second) << endmsg;
+
       if (abs(cell.second) < min_threshold) {
         // if we are below the minimum threshold for the full layer, no need to retrieve the exact value
         continue;
@@ -240,9 +255,10 @@ void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, doubl
     // we are above the minimum threshold of the layer. Let's see if we are above the threshold for this cell.
     double threshold = m_noiseTool->noiseOffset(cell.first) + ( m_noiseTool->noiseRMS(cell.first) * aNumSigma);
     if (msgLevel() <= MSG::VERBOSE){
-      verbose() << "noise offset    = " << m_noiseTool->noiseOffset(cell.first) << "GeV " << endmsg;
-      verbose() << "noise rms       = " << m_noiseTool->noiseRMS(cell.first) << "GeV " << endmsg;
-      verbose() << "seed threshold  = " << threshold << "GeV " << endmsg;
+      debug() << "noise offset    = " << m_noiseTool->noiseOffset(cell.first) << "GeV " << endmsg;
+      debug() << "noise rms       = " << m_noiseTool->noiseRMS(cell.first) << "GeV " << endmsg;
+      debug() << "seed threshold  = " << threshold << "GeV " << endmsg;
+      debug() << "======================================" << endmsg;
     }
     if (abs(cell.second) > threshold) {
       aSeeds.emplace_back(cell.first, cell.second);

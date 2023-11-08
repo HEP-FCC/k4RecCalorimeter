@@ -115,8 +115,8 @@ private:
    */
   double getEnergyInLayer(edm4hep::Cluster cluster,
                           const std::string& readoutName,
-                          size_t systemID,
-                          size_t layerID);
+                          int systemID,
+                          int layerID);
 
   /**
    * Get the theta angle of the specified cluster.
@@ -144,7 +144,7 @@ private:
   std::vector<std::vector<TF1*>> m_downstreamFunctions;
 
   /// IDs of the detectors
-  Gaudi::Property<std::vector<size_t>> m_systemIDs {
+  Gaudi::Property<std::vector<int>> m_systemIDs {
       this, "systemIDs", {4}, "IDs of systems"
   };
   /// Names of the detector readouts, corresponding to system IDs
@@ -156,11 +156,11 @@ private:
   Gaudi::Property<std::vector<size_t>> m_numLayers {
       this, "numLayers", {12}, "Numbers of layers of the systems"};
   /// IDs of the first layers of the detectors
-  Gaudi::Property<std::vector<size_t>> m_firstLayerIDs {
+  Gaudi::Property<std::vector<int>> m_firstLayerIDs {
       this, "firstLayerIDs", {0}, "IDs of first layers in the systems"
   };
   /// IDs of the last layers of the detectors
-  Gaudi::Property<std::vector<size_t>> m_lastLayerIDs {
+  Gaudi::Property<std::vector<int>> m_lastLayerIDs {
       this, "lastLayerIDs", {7}, "IDs of last layers in the systems"
   };
 

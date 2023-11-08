@@ -37,16 +37,18 @@ CorrectCaloClusters::CorrectCaloClusters(const std::string& name,
 }
 
 StatusCode CorrectCaloClusters::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
-  if (sc.isFailure()) {
-    return sc;
+  {
+    StatusCode sc = GaudiAlgorithm::initialize();
+    if (sc.isFailure()) {
+      return sc;
+    }
   }
 
   // Check if readouts exist
   {
     bool readoutMissing = false;
     for (size_t i = 0; i < m_readoutNames.size(); ++i) {
-      auto readouts = m_geoSvc->lcdd()->readouts();
+      auto readouts = m_geoSvc->getDetector()->readouts();
       if (readouts.find(m_readoutNames.value().at(i)) == readouts.end()) {
         readoutMissing = true;
       }
@@ -88,8 +90,20 @@ StatusCode CorrectCaloClusters::initialize() {
   }
 
   // Prepare upstream and downstream correction functions
-  initializeCorrFunctions(m_upstreamFunctions, m_upstreamFormulas, m_upstreamParams, "upstream");
-  initializeCorrFunctions(m_downstreamFunctions, m_downstreamFormulas, m_downstreamParams, "downstream");
+  {
+    StatusCode sc = initializeCorrFunctions(m_upstreamFunctions, m_upstreamFormulas, m_upstreamParams, "upstream");
+    if (sc.isFailure()) {
+      error() << "Initialization of upstream correction functions not successful!" << endmsg;
+      return sc;
+    }
+  }
+  {
+    StatusCode sc = initializeCorrFunctions(m_downstreamFunctions, m_downstreamFormulas, m_downstreamParams, "downstream");
+    if (sc.isFailure()) {
+      error() << "Initialization of downstream correction functions not successful!" << endmsg;
+      return sc;
+    }
+  }
 
   info() << "Initialized following upstream correction functions:" << endmsg;
   for (size_t i = 0; i < m_upstreamFunctions.size(); ++i) {
@@ -307,9 +321,9 @@ StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollec
 
 double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
                                              const std::string& readoutName,
-                                             size_t systemID,
-                                             size_t layerID) {
-  dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->lcdd()->readout(readoutName).idSpec().decoder();
+                                             int systemID,
+                                             int layerID) {
+  dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
   double energy = 0;
   for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); ++cell) {

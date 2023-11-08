@@ -31,8 +31,7 @@ class Segmentation;
 }
 }
 
-/** @class CaloTopoClusterFCCeeAlgorithm Reconstruction/RecFCCeeCalorimeter/src/components/CaloTopoClusterFCCee.h
- * CombinedCaloTopoCluster.h
+/** @class CaloTopoClusterFCCee k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CaloTopoClusterFCCee.h
  *
  *  Algorithm building the topological clusters for the energy reconstruction, following ATLAS note
  *  ATL-LARG-PUB-2008-002.
@@ -126,7 +125,7 @@ private:
   //ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool", this};
 
   /// no segmentation used in HCal
-  Gaudi::Property<bool> m_noSegmentationHCalUsed{this, "noSegmentationHCal", true, "HCal Barrel readout without DD4hep eta-phi segmentation used."};
+  Gaudi::Property<bool> m_noSegmentationHCalUsed{this, "noSegmentationHCal", true, "HCal Barrel readout without DD4hep theta-module segmentation used."};
   /// Seed threshold in sigma
   Gaudi::Property<int> m_seedSigma{this, "seedSigma", 4, "number of sigma in noise threshold"};
   /// Neighbour threshold in sigma
@@ -134,7 +133,7 @@ private:
   /// Last neighbour threshold in sigma
   Gaudi::Property<int> m_lastNeighbourSigma{this, "lastNeighbourSigma", 0, "number of sigma in noise threshold"};
   /// Name of the electromagnetic calorimeter readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta"};
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
 
   /// General decoder to encode the calorimeter sub-system to determine which positions tool to use
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:4");

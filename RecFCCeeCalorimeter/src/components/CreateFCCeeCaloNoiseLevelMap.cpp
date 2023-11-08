@@ -1,24 +1,25 @@
-#include "CreateFCChhCaloNoiseLevelMap.h"
+#include "CreateFCCeeCaloNoiseLevelMap.h"
 
 #include "DD4hep/Detector.h"
 #include "DetCommon/DetUtils.h"
 #include "k4Interface/IGeoSvc.h"
+#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
 
 #include "TFile.h"
 #include "TTree.h"
 
-DECLARE_COMPONENT(CreateFCChhCaloNoiseLevelMap)
+DECLARE_COMPONENT(CreateFCCeeCaloNoiseLevelMap)
 
-CreateFCChhCaloNoiseLevelMap::CreateFCChhCaloNoiseLevelMap(const std::string& aName, ISvcLocator* aSL)
+CreateFCCeeCaloNoiseLevelMap::CreateFCCeeCaloNoiseLevelMap(const std::string& aName, ISvcLocator* aSL)
     : base_class(aName, aSL) {
   declareProperty("ECalBarrelNoiseTool", m_ecalBarrelNoiseTool, "Handle for the cells noise tool of Barrel ECal");
   declareProperty("HCalBarrelNoiseTool", m_hcalBarrelNoiseTool, "Handle for the cells noise tool of Barrel HCal");
   declareProperty( "outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCChhCaloNoiseLevelMap::~CreateFCChhCaloNoiseLevelMap() {}
+CreateFCCeeCaloNoiseLevelMap::~CreateFCCeeCaloNoiseLevelMap() {}
 
-StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
+StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
     error() << "Unable to initialize Service()" << endmsg;
@@ -30,11 +31,22 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
+
+  if (!m_ecalBarrelNoiseTool.retrieve()) {
+    error() << "Unable to retrieve the ECAL noise tool!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  if (!m_hcalBarrelNoiseTool.retrieve()) {
+    error() << "Unable to retrieve the HCAL noise tool!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  
   std::unordered_map<uint64_t, std::pair<double,double>> map;
 
-  //////////////////////////////////
-  /// SEGMENTED ETA-PHI VOLUMES  ///
-  //////////////////////////////////
+  ///////////////////////////////////////
+  /// SEGMENTED MODULE-THETA VOLUMES  ///
+  ///////////////////////////////////////
   
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readouts exist
@@ -43,19 +55,18 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
       error() << "Readout <<" << m_readoutNamesSegmented[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
-    // get PhiEta segmentation
-    dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation;
-    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+    // get segmentation
+    dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* segmentation;
+    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(
         m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
-      error() << "There is no phi-eta segmentation!!!!" << endmsg;
+      error() << "There is no Module-Theta segmentation!!!!" << endmsg;
       return StatusCode::FAILURE;
     }
 
-    info() << "GridPhiEta: size in eta " << segmentation->gridSizeEta() << " , bins in phi " << segmentation->phiBins()
+    info() << "FCCSWGridModuleThetaMerged: size in Theta " << segmentation->gridSizeTheta() << " , bins in Module " << segmentation->nModules()
            << endmsg;
-    info() << "GridPhiEta: offset in eta " << segmentation->offsetEta() << " , offset in phi "
-           << segmentation->offsetPhi() << endmsg;
+    info() << "FCCSWGridModuleThetaMerged: offset in Theta " << segmentation->offsetTheta() << endmsg;
 
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     // Loop over all cells in the calorimeter and retrieve existing cellIDs
@@ -69,25 +80,30 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
       // Get VolumeID
       (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
       (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
-      (*decoder)["eta"].set(volumeId, 0);
-      (*decoder)["phi"].set(volumeId, 0);
-      // Get number of segmentation cells within the active volume
+      (*decoder)["theta"].set(volumeId, 0);
+      (*decoder)["module"].set(volumeId, 0);
+      // Get number of segmentation cells within the active volume, for given layer      
       auto numCells = det::utils::numberOfCells(volumeId, *segmentation);
-      extrema[1] = std::make_pair(0, numCells[0] - 1);
+      // Range of module ID
+      extrema[1] = std::make_pair(0, (numCells[0] - 1)*segmentation->mergedModules(ilayer));
+      // Range and min of theta ID
+      // for HCAL use alternative calculation
       if(m_fieldNamesSegmented[iSys] == "system" &&
 	      m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId){
-	uint cellsEta = ceil(( 2*m_activeVolumesEta[ilayer] - segmentation->gridSizeEta() ) / 2 / segmentation->gridSizeEta()) * 2 + 1; //ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta());
-	uint minEtaID = int(floor(( - m_activeVolumesEta[ilayer] + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
-	numCells[1]=cellsEta;
-	numCells[2]=minEtaID;
+	uint cellsTheta = ceil(( 2*m_activeVolumesTheta[ilayer] - segmentation->gridSizeTheta() ) / 2 / segmentation->gridSizeTheta()) * 2 + 1; //ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeTheta());
+	uint minThetaID = int(floor(( - m_activeVolumesTheta[ilayer] + 0.5 * segmentation->gridSizeTheta() - segmentation->offsetTheta()) / segmentation->gridSizeTheta()));
+	numCells[1]=cellsTheta;
+	numCells[2]=minThetaID;
       }
-      debug() << "Number of segmentation cells in (phi,eta): " << numCells << endmsg;
-      // Loop over segmenation cells
-      for (unsigned int iphi = 0; iphi < numCells[0]; iphi++) {
-        for (unsigned int ieta = 0; ieta < numCells[1]; ieta++) {
+      extrema[2] = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1)*segmentation->mergedThetaCells(ilayer));
+      debug() << "Layer: " << ilayer << endmsg;
+      debug() << "Number of segmentation cells in (module, theta): " << numCells << endmsg;
+      // Loop over segmentation cells
+      for (unsigned int imodule = 0; imodule < numCells[0]; imodule++) {
+        for (unsigned int itheta = 0; itheta < numCells[1]; itheta++) {
 	  dd4hep::DDSegmentation::CellID cellId = volumeId;
-	  decoder->set(cellId, "phi", iphi);
-	  decoder->set(cellId, "eta", ieta + numCells[2]);  // start from the minimum existing eta cell in this layer
+	  decoder->set(cellId, "module", imodule*segmentation->mergedModules(ilayer));
+	  decoder->set(cellId, "theta", numCells[2] + itheta*segmentation->mergedThetaCells(ilayer));  // start from the minimum existing theta cell in this layer
 	  uint64_t id = cellId;
 	  double noise = 0.;
 	  double noiseOffset = 0.;
@@ -102,7 +118,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
         }
       }
     }
-  }
+  } // end of SEGMENTED MODULE-THETA VOLUMES 
 
   //////////////////////////////////
   ///      NESTED VOLUMES        ///
@@ -196,7 +212,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
         }
       }
     }
-  }
+  } // end of NESTED VOLUMES
 
   std::unique_ptr<TFile> file(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
   file->cd();
@@ -219,4 +235,4 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateFCChhCaloNoiseLevelMap::finalize() { return Service::finalize(); }
+StatusCode CreateFCCeeCaloNoiseLevelMap::finalize() { return Service::finalize(); }

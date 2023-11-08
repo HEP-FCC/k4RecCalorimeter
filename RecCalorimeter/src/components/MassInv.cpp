@@ -43,8 +43,10 @@ MassInv::MassInv(const std::string& name, ISvcLocator* svcLoc)
 }
 
 StatusCode MassInv::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
-  if (sc.isFailure()) return sc;
+  {
+    StatusCode sc = GaudiAlgorithm::initialize();
+    if (sc.isFailure()) return sc;
+  }
 
   int energyStart = 0;
   int energyEnd = 0;
@@ -301,27 +303,32 @@ StatusCode MassInv::initialize() {
   }
   for (uint iSys = 0; iSys < m_systemId.size(); iSys++) {
     // check if readouts exist
-    if (m_geoSvc->lcdd()->readouts().find(m_readoutName[iSys]) == m_geoSvc->lcdd()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
     // retrieve PhiEta segmentation
     m_segmentationPhiEta[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-        m_geoSvc->lcdd()->readout(m_readoutName[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     m_segmentationMulti[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->lcdd()->readout(m_readoutName[iSys]).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     if (m_segmentationPhiEta[m_systemId[iSys]] == nullptr && m_segmentationMulti[m_systemId[iSys]] == nullptr) {
       error() << "There is no phi-eta or multi- segmentation." << endmsg;
       return StatusCode::FAILURE;
     }
-    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->lcdd()->readout(m_readoutName[iSys]).idSpec().decoder()));
+    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->getDetector()->readout(m_readoutName[iSys]).idSpec().decoder()));
   }
   // Initialize random service
   if (service("RndmGenSvc", m_randSvc).isFailure()) {
     error() << "Couldn't get RndmGenSvc!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+  {
+    StatusCode sc = m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+    if (sc.isFailure()) {
+      error() << "Failed to initialize Gaussian random number generator!" << endmsg;
+    }
+  }
 
   // open and check file, read the histograms with noise constants
   if (initNoiseFromFile().isFailure()) {
@@ -385,14 +392,12 @@ StatusCode MassInv::execute() {
   double phiVertex = 0;
   double etaVertex = 0;
   double thetaVertex = 0;
-  double zVertex = 0;
   const auto particle = m_particle.get();
   if (particle->size() == 1) {
     for(const auto& part : *particle) {
       momentum = TVector3(part.getMomentum().x, part.getMomentum().y, part.getMomentum().z);
       etaVertex = momentum.Eta();
       phiVertex = momentum.Phi();
-      zVertex =  part.getVertex().z;
       thetaVertex = 2 * atan( exp( - etaVertex ) );
     verbose() << " vertex eta " << etaVertex << "   phi = " << phiVertex << " theta = " << thetaVertex << endmsg;
    }
@@ -612,8 +617,8 @@ StatusCode MassInv::execute() {
   }
   debug() << "Number of ALL candidates: " << inClusters->size() << endmsg;
 
-  for (const auto candidate1: clustersMassInv) {
-    for (const auto candidate2: clustersMassInv) {
+  for (const auto& candidate1: clustersMassInv) {
+    for (const auto& candidate2: clustersMassInv) {
       if ( candidate1 != candidate2) {
         m_hMassInv->Fill((candidate1 + candidate2).Mag() * m_massInvCorrection);
         m_hDiPT->Fill((candidate1 + candidate2).Pt());
@@ -655,8 +660,8 @@ StatusCode MassInv::execute() {
         uint photonIdPhi = m_towerTool->idPhi(photonCandidate->Phi());
         // LOOK AROUND
         double sumWindow = 0;
-        for (int iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
-          for (int iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
+        for (size_t iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
+          for (size_t iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
             sumWindow += m_towers[iEtaWindow][phiNeighbour(iPhiWindow, m_nPhiTower)];
           }
         }
@@ -671,8 +676,8 @@ StatusCode MassInv::execute() {
         uint photonIdPhi = m_towerTool->idPhi(photonCandidate->Phi());
         // LOOK AROUND
         double sumWindow = 0;
-        for (int iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
-          for (int iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
+        for (size_t iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
+          for (size_t iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
             sumWindow += m_towers[iEtaWindow][phiNeighbour(iPhiWindow, m_nPhiTower)];
           }
         }
@@ -687,8 +692,8 @@ StatusCode MassInv::execute() {
         uint photonIdPhi = m_towerTool->idPhi(photonCandidate->Phi());
         // LOOK AROUND
         double sumWindow = 0;
-        for (int iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
-          for (int iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
+        for (size_t iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
+          for (size_t iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
             sumWindow += m_towers[iEtaWindow][phiNeighbour(iPhiWindow, m_nPhiTower)];
           }
         }
@@ -703,8 +708,8 @@ StatusCode MassInv::execute() {
         uint photonIdPhi = m_towerTool->idPhi(photonCandidate->Phi());
         // LOOK AROUND
         double sumWindow = 0;
-        for (int iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
-          for (int iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
+        for (size_t iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
+          for (size_t iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
             sumWindow += m_towers[iEtaWindow][phiNeighbour(iPhiWindow, m_nPhiTower)];
           }
         }
@@ -719,8 +724,8 @@ StatusCode MassInv::execute() {
         uint photonIdPhi = m_towerTool->idPhi(photonCandidate->Phi());
         // LOOK AROUND
         double sumWindow = 0;
-        for (int iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
-          for (int iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
+        for (size_t iEtaWindow = photonIdEta - halfEtaWin; iEtaWindow <= photonIdEta + halfEtaWin; iEtaWindow++) {
+          for (size_t iPhiWindow = photonIdPhi - halfPhiWin; iPhiWindow <= photonIdPhi + halfPhiWin; iPhiWindow++) {
             sumWindow += m_towers[iEtaWindow][phiNeighbour(iPhiWindow, m_nPhiTower)];
           }
         }

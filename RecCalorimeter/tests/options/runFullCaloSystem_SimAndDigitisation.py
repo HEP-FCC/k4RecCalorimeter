@@ -11,8 +11,8 @@ particleType="e-"
 from Gaudi.Configuration import *
 
 
-from Configurables import FCCDataSvc
-podioevent   = FCCDataSvc("EventDataSvc")
+from Configurables import k4DataSvc
+podioevent   = k4DataSvc("EventDataSvc")
 
 
 ############################################### Particle Gun setup

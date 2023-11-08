@@ -15,8 +15,10 @@
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
 
+#include <GaudiKernel/StatusCode.h>
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <unordered_map>
 #include <vector>
@@ -93,7 +95,7 @@ StatusCode CaloTopoCluster::execute() {
  
   // Create output collections
   auto edmClusters = m_clusterCollection.createAndPut();
-  edm4hep::CalorimeterHitCollection* edmClusterCells = new edm4hep::CalorimeterHitCollection();
+  std::unique_ptr<edm4hep::CalorimeterHitCollection> edmClusterCells(new edm4hep::CalorimeterHitCollection());
 
   // Finds seeds
   CaloTopoCluster::findingSeeds(allCells, m_seedSigma, firstSeeds);
@@ -106,8 +108,16 @@ StatusCode CaloTopoCluster::execute() {
             });
 
   std::map<uint, std::vector<std::pair<uint64_t, int>>> preClusterCollection;
-  CaloTopoCluster::buildingProtoCluster(m_neighbourSigma, m_lastNeighbourSigma, firstSeeds, allCells,
-                                        preClusterCollection);
+  StatusCode sc = CaloTopoCluster::buildingProtoCluster(m_neighbourSigma,
+                                                        m_lastNeighbourSigma,
+                                                        firstSeeds,
+                                                        allCells,
+                                                        preClusterCollection);
+  if (sc.isFailure()) {
+    error() << "Unable to build protocluster!" << endmsg;
+    return sc;
+  }
+
   // Build Clusters in edm
   debug() << "Building " << preClusterCollection.size() << " cluster." << endmsg;
   double checkTotEnergy = 0.;
@@ -202,7 +212,7 @@ StatusCode CaloTopoCluster::execute() {
 
   }
 
-  m_clusterCellsCollection.put(edmClusterCells);
+  m_clusterCellsCollection.put(std::move(edmClusterCells));
   debug() << "Number of clusters with cells in E and HCal:        " << clusterWithMixedCells << endmsg;
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
   debug() << "Leftover cells :                                    " << allCells.size() << endmsg;

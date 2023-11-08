@@ -7,10 +7,10 @@ ecalBarrelReadoutName = "ECalBarrelPhiEta"
 
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, FCCDataSvc, PodioOutput
+from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
 import sys
 
-podioevent = FCCDataSvc("EventDataSvc")
+podioevent = k4DataSvc("EventDataSvc")
 podioevent.input = "output_fullCalo_SimAndDigi.root"
 # reads HepMC text file and write the HepMC::GenEvent to the data service
 from Configurables import PodioInput

@@ -1,4 +1,5 @@
 #include "NoiseCaloCellsFlatTool.h"
+#include <GaudiKernel/StatusCode.h>
 
 DECLARE_COMPONENT(NoiseCaloCellsFlatTool)
 
@@ -9,19 +10,26 @@ NoiseCaloCellsFlatTool::NoiseCaloCellsFlatTool(const std::string& type, const st
 }
 
 StatusCode NoiseCaloCellsFlatTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
-  if (sc.isFailure()) return sc;
+  {
+    StatusCode sc = GaudiTool::initialize();
+    if (sc.isFailure()) return sc;
+  }
 
   // Initialize random service
   if (service("RndmGenSvc", m_randSvc).isFailure()) {
     error() << "Couldn't get RndmGenSvc" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+  {
+    StatusCode sc = m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.));
+    if (sc.isFailure()) {
+      error() << "Failed to initialize Gaussian random number generator!" << endmsg;
+    }
+  }
 
   info() << "Sigma of the cell noise: " << m_cellNoise * 1.e3 << " MeV" << endmsg;
   info() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void NoiseCaloCellsFlatTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) {

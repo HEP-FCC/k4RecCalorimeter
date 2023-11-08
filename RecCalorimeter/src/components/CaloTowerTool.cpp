@@ -49,7 +49,7 @@ StatusCode CaloTowerTool::initialize() {
     return StatusCode::FAILURE;
   }
   if (m_useHalfTower) {
-   m_decoder = m_geoSvc->lcdd()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
+   m_decoder = m_geoSvc->getDetector()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
   }
   info() << "Retrieving Ecal endcap segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_ecalEndcapReadoutName);
@@ -412,15 +412,15 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
 
 std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType> CaloTowerTool::retrieveSegmentation(std::string aReadoutName) {
   dd4hep::DDSegmentation::Segmentation* segmentation = nullptr;
-  if (m_geoSvc->lcdd()->readouts().find(aReadoutName) == m_geoSvc->lcdd()->readouts().end()) {
+  if (m_geoSvc->getDetector()->readouts().find(aReadoutName) == m_geoSvc->getDetector()->readouts().end()) {
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
   } else {
     info() << "Readout " << aReadoutName << " found." << endmsg;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-      m_geoSvc->lcdd()->readout(aReadoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr) {
       segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->lcdd()->readout(aReadoutName).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr) {
         error() << "There is no phi-eta or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
       } else {

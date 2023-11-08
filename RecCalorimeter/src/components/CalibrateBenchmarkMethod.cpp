@@ -58,7 +58,7 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
   {
     bool readoutMissing = false;
     for (size_t i = 0; i < m_readoutNames.size(); ++i) {
-      auto readouts = m_geoSvc->lcdd()->readouts();
+      auto readouts = m_geoSvc->getDetector()->readouts();
       if (readouts.find(m_readoutNames.value().at(i)) == readouts.end()) {
         readoutMissing = true;
       }
@@ -113,8 +113,8 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   double energyInLastECalLayer = 0; 
   double energyInBoth = 0.;
 
-  int ecal_index;
-  int hcal_index;
+  int ecal_index = -1;
+  int hcal_index = -1;
 
   for (double& eneEcal : m_energyInECalLayer){
     eneEcal = 0.;
@@ -135,8 +135,8 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   }
 
   // decoders for ECal and HCal
-  auto decoder_ECal = m_geoSvc->lcdd()->readout(m_readoutNames[ecal_index]).idSpec().decoder();
-  auto decoder_HCal = m_geoSvc->lcdd()->readout(m_readoutNames[hcal_index]).idSpec().decoder();
+  auto decoder_ECal = m_geoSvc->getDetector()->readout(m_readoutNames[ecal_index]).idSpec().decoder();
+  auto decoder_HCal = m_geoSvc->getDetector()->readout(m_readoutNames[hcal_index]).idSpec().decoder();
 
   std::vector<size_t> cellIDs; 
 

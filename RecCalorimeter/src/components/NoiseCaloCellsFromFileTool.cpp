@@ -51,7 +51,7 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
     info() << "Unable to retrieve cell positions tool, try eta-phi segmentation." << endmsg;
     // Get PhiEta segmentation
     m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-									    m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+									    m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (m_segmentationPhiEta == nullptr) {
       error() << "There is no phi-eta segmentation." << endmsg;
       return StatusCode::FAILURE;
@@ -61,10 +61,10 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
   }    
   // Get PhiEta segmentation
   m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
-    m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+    m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentationPhiEta == nullptr) {
     m_segmentationMulti = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-      m_geoSvc->lcdd()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (m_segmentationMulti == nullptr) {
       error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined." << endmsg;
       return StatusCode::FAILURE;
@@ -81,7 +81,7 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
     }
   }
 
-  m_decoder = m_geoSvc->lcdd()->readout(m_readoutName).idSpec().decoder();
+  m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_index_activeField = m_decoder->index(m_activeFieldName);
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
