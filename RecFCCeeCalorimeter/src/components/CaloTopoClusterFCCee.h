@@ -13,10 +13,10 @@
 #include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/ITopoClusterInputTool.h"
 
+#include <Gaudi/Property.h>
 #include <cstdint>
 #include <sys/types.h>
 #include <vector>
-#include <unordered_map>
 #include <map>
 
 class IGeoSvc;
@@ -115,7 +115,7 @@ private:
   /// Handle for neighbors tool
   ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 
-  /// no segmentation used in HCal
+  /// No segmentation used in HCal
   Gaudi::Property<bool> m_noSegmentationHCalUsed{this, "noSegmentationHCal", true, "HCal Barrel readout without DD4hep theta-module segmentation used."};
   /// Seed threshold in sigma
   Gaudi::Property<int> m_seedSigma{this, "seedSigma", 4, "number of sigma in noise threshold"};
@@ -126,22 +126,27 @@ private:
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
 
-  /// General decoder to encode the calorimeter sub-system to determine which positions tool to use
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:4");
-  int m_index_system = m_decoder->index("system");
+  /// System encoding string
+  Gaudi::Property<std::string> m_systemEncoding{
+    this, "systemEncoding", "system:4", "System encoding string"};
+  /// General decoder to encode the calorimeter sub-system to determine which
+  /// positions tool to use
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+  int m_indexSystem;
 
   /// Decoder for ECal layers
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder_ecal;
   int m_index_layer_ecal;
-
-  // Map of all calorimeter cells, key: cellID
-  std::map<uint64_t, const edm4hep::CalorimeterHit> m_allCellsMap;
 
   // minimum noise and offset per barrel ECal layer
   // this serves as a very small cache for fast lookups and avoid looking into the huge map for most of the cells.
   std::vector<double> m_min_offset;
   std::vector<double> m_min_noise;
 
+  // Utility functions
   void createCache(const edm4hep::CalorimeterHitCollection* aCells);
+  inline bool cellIdInColl(const uint64_t cellId,
+                           const edm4hep::CalorimeterHitCollection& coll);
+
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */
