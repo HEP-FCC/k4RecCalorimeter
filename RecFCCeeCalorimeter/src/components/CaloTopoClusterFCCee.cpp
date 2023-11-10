@@ -35,27 +35,37 @@ DECLARE_COMPONENT(CaloTopoClusterFCCee)
 
 
 CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
-  declareProperty("cells", m_inCells,
+  declareProperty("cells", m_cells,
                   "Handle for cells from ECal Barrel (input collection)");
-  declareProperty("noiseTool", m_noiseTool, "Handle for the cells noise tool");
-  declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbors");
   declareProperty("clusters", m_clusterCollection,
                   "Handle for calo clusters (output collection)");
   declareProperty("clusterCells", m_clusterCellsCollection,
                   "Handle for clusters (output collection)");
+  declareProperty("noiseTool", m_noiseTool,
+                  "Handle for the cells noise tool");
+  declareProperty("neigboursTool", m_neighboursTool,
+                  "Handle for tool to retrieve cell neighbors");
 }
 StatusCode CaloTopoClusterFCCee::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (GaudiAlgorithm::initialize().isFailure()) {
+    return StatusCode::FAILURE;
+  }
+
+  // Check geometry service
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
+
+  // Check the neighbours tool
   if (!m_neighboursTool.retrieve()) {
     error() << "Unable to retrieve the cells neighbours tool!!!" << endmsg;
     return StatusCode::FAILURE;
   }
+
+  // Check the noise tool
   if (!m_noiseTool.retrieve()) {
     error() << "Unable to retrieve the cells noise tool!!!" << endmsg;
     return StatusCode::FAILURE;
@@ -66,19 +76,21 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   m_indexSystem = m_decoder->index("system");
 
   // Setup ECal Barrel decoder
-  m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
-  m_index_layer_ecal = m_decoder_ecal->index("layer");
+  if (!m_readoutName.value().empty()) {
+    m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+    m_index_layer_ecal = m_decoder_ecal->index("layer");
+  }
 
   return StatusCode::SUCCESS;
 }
 
 StatusCode CaloTopoClusterFCCee::execute() {
   // Get the input collection with calorimeter cells
-  const edm4hep::CalorimeterHitCollection* inCells = m_inCells.get();
+  const edm4hep::CalorimeterHitCollection* inCells = m_cells.get();
   debug() << "Input calo cell collection size: " << inCells->size() << endmsg;
 
   // On first event, create cache
-  if (m_min_noise.empty()) {
+  if (m_min_noise.empty() && m_decoder_ecal) {
     createCache(inCells);
   }
 
@@ -193,7 +205,7 @@ edm4hep::CalorimeterHitCollection CaloTopoClusterFCCee::findSeeds(
     // retrieve the noise const and offset assigned to cell
     // first try to use the cache
     int system = m_decoder->get(cell.getCellID(), m_indexSystem);
-    if (system == 4) { // ECal barrel
+    if (system == 4 && m_decoder_ecal) { // ECal barrel
       int layer = m_decoder_ecal->get(cell.getCellID(), m_index_layer_ecal);
 
       double min_threshold = m_min_offset[layer] +
@@ -382,7 +394,7 @@ CaloTopoClusterFCCee::searchForNeighbours (
       // first try to use the cache
       bool isBelow = false;
       int system = m_decoder->get(neighbourID, m_indexSystem);
-      if (system == 4) { // ECal barrel
+      if (system == 4 && m_decoder_ecal) { // ECal barrel
         int layer = m_decoder_ecal->get(neighbourID, m_index_layer_ecal);
         double min_threshold = m_min_offset[layer] +
                                m_min_noise[layer] * aNumSigma;
@@ -473,7 +485,7 @@ void CaloTopoClusterFCCee::createCache(
   // fill all noises and offsets values
   for (const auto& cell : *aCells) {
     int system = m_decoder->get(cell.getCellID(), m_indexSystem);
-    if (system == 4) { //ECal barrel
+    if (system == 4 && m_decoder_ecal) { //ECal barrel
       int layer = m_decoder_ecal->get(cell.getCellID(), m_index_layer_ecal);
       if (layers.find(layer) == layers.end()) {
         offsets[layer] = std::vector<double>{};

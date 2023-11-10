@@ -18,7 +18,7 @@ class IGeoSvc;
  *  Use-case:
  *  Merging multiple calorimeter collections together.
  *  (ECAL barrel, HCAL barrel+extended barrel, ECAL + HCAL endcaps,
- *  ECAL + HCAL forward calorimeter). 
+ *  ECAL + HCAL forward calorimeter).
  *
  *  @author Juraj Smiesko
  *  @date   2023-11-06

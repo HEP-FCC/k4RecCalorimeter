@@ -99,16 +99,18 @@ public:
   StatusCode finalize();
 
 private:
-  // Cluster collection
-  DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"calo/clusters", Gaudi::DataHandle::Writer, this};
-  // Cluster cells in collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Handle for electromagnetic barrel cells (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_inCells{
+  DataHandle<edm4hep::CalorimeterHitCollection> m_cells{
       "cells", Gaudi::DataHandle::Reader, this};
+  // Cluster collection (output)
+  DataHandle<edm4hep::ClusterCollection> m_clusterCollection{
+      "clusters", Gaudi::DataHandle::Writer, this};
+  // Cluster cells in collection (output)
+  DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
+      "clusterCells", Gaudi::DataHandle::Writer, this};
 
   /// Handle for the cells noise tool
   ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
@@ -124,7 +126,8 @@ private:
   /// Last neighbour threshold in sigma
   Gaudi::Property<int> m_lastNeighbourSigma{this, "lastNeighbourSigma", 0, "number of sigma in noise threshold"};
   /// Name of the electromagnetic calorimeter readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
+  // Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", ""};
 
   /// System encoding string
   Gaudi::Property<std::string> m_systemEncoding{
