@@ -4,7 +4,7 @@
 // from Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/ICaloReadNeighboursMap.h"
 
 class IGeoSvc;

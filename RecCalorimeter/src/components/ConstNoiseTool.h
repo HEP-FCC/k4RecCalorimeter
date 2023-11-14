@@ -5,8 +5,10 @@
 #include "GaudiAlg/GaudiTool.h"
 class IRndmGenSvc;
 
-// FCCSW
+// k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/INoiseConstTool.h"
 class IGeoSvc;
 

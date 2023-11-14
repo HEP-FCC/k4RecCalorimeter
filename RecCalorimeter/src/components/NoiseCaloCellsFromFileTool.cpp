@@ -1,13 +1,15 @@
 #include "NoiseCaloCellsFromFileTool.h"
 
-// FCCSW
+// k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 
-// Root
+// ROOT
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"

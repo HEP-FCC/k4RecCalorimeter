@@ -1,7 +1,9 @@
 #include "CreateCaloCells.h"
 
-// FCCSW
+// k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
@@ -9,7 +11,7 @@
 #include "DD4hep/Volumes.h"
 #include "TGeoManager.h"
 
-// EDM4HEP
+// edm4hep
 #include "edm4hep/CalorimeterHit.h"
 
 DECLARE_COMPONENT(CreateCaloCells)

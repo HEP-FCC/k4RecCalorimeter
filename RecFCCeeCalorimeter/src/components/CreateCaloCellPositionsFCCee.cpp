@@ -62,6 +62,10 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
 
       m_positions_cache[cellId] = edmPos;
       positionedHit.setPosition(edmPos);
+
+      debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+      debug() << "Position of cell (mm) : \t" << edmPos.x << "\t" << edmPos.y << "\t" << edmPos.z << endmsg;
+
     }
     else {
       positionedHit.setPosition(cached_pos->second);

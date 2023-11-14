@@ -1,7 +1,7 @@
 #ifndef RECCALORIMETER_CREATECALOCELLS_H
 #define RECCALORIMETER_CREATECALOCELLS_H
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
@@ -12,7 +12,7 @@
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// EDM4HEP
+// edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
 

@@ -1,14 +1,14 @@
 #ifndef RECCALORIMETER_CREATEEMPTYCALOCELLSCOLLECTION_H
 #define RECCALORIMETER_CREATEEMPTYCALOCELLSCOLLECTION_H
 
-//FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-//EDM
+// edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 
 class IGeoSvc;

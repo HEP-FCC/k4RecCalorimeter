@@ -1,28 +1,32 @@
 #include "CorrectECalBarrelSliWinCluster.h"
 
-// FCCSW
+// k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
-#include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
+#include "k4Interface/IGeoSvc.h"
+
+// Gaudi
 #include "GaudiKernel/ITHistSvc.h"
+#include "GaudiKernel/MsgStream.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DDSegmentation/MultiSegmentation.h"
 
-// our EDM4HEP
+// edm4hep
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/MCParticleCollection.h"
 #include "edm4hep/VertexCollection.h"
 
-// Root
+// ROOT
 #include "TFile.h"
 #include "TLorentzVector.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
-#include <GaudiKernel/MsgStream.h>
 
 DECLARE_COMPONENT(CorrectECalBarrelSliWinCluster)
 

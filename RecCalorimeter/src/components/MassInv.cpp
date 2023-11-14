@@ -6,7 +6,7 @@
 // Key4HEP
 #include "k4Interface/IGeoSvc.h"
 
-// FCC Detectors
+// k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 

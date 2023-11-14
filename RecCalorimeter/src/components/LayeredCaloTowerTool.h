@@ -1,22 +1,25 @@
 #ifndef RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
 #define RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
 
-// from Gaudi
+// Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
+// k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerTool.h"
 class IGeoSvc;
 
-// datamodel
+// edm4hep
 namespace edm4hep {
 class CalorimeterHitCollection;
 class Cluster;
 class MutableCluster;
 }
 
+// DD4hep
 namespace dd4hep {
 namespace DDSegmentation {
 class Segmentation;

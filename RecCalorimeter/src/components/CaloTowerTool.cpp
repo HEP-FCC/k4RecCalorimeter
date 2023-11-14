@@ -1,9 +1,9 @@
 #include "CaloTowerTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-// datamodel
+// edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/MutableCluster.h"

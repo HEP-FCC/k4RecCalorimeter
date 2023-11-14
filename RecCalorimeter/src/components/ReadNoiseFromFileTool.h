@@ -5,12 +5,14 @@
 #include "GaudiAlg/GaudiTool.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+
+// k4geo
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 class IGeoSvc;
 

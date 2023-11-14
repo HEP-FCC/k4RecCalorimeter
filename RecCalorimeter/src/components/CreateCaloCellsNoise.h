@@ -1,7 +1,7 @@
 #ifndef RECCALORIMETER_CREATECALOCELLSNOISE_H
 #define RECCALORIMETER_CREATECALOCELLSNOISE_H
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 #include "k4Interface/ICalorimeterTool.h"
@@ -18,6 +18,8 @@
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Volumes.h"
+
+// ROOT
 #include "TGeoManager.h"
 
 class IGeoSvc;

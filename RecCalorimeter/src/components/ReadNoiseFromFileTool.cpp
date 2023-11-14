@@ -1,15 +1,17 @@
 #include "ReadNoiseFromFileTool.h"
 
-// FCCSW
+// k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
-#include "DDSegmentation/Segmentation.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
+#include "DDSegmentation/Segmentation.h"
 
-// Root
+// ROOT
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"

@@ -5,7 +5,7 @@
 #include "GaudiAlg/GaudiTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 class IGeoSvc;
 

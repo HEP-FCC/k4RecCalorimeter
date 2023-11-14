@@ -6,8 +6,10 @@
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
 
-// k4
+// k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/INoiseCaloCellsTool.h"
 #include "k4Interface/ICellPositionsTool.h"
 class IGeoSvc;

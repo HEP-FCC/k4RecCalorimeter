@@ -4,20 +4,16 @@
 // from Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
+// k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerTool.h"
-
 class IGeoSvc;
-#include "DDSegmentation/MultiSegmentation.h"
 
-// datamodel
-namespace edm4hep {
-class CalorimeterHitCollection;
-class CalorimeterHit;
-class Cluster;
-}
+// dd4hep
+#include "DDSegmentation/MultiSegmentation.h"
 
 namespace dd4hep {
 namespace DDSegmentation {
@@ -25,6 +21,14 @@ class Segmentation;
 class BitFieldCoder;
 }
 }
+
+// edm4hep
+namespace edm4hep {
+class CalorimeterHitCollection;
+class CalorimeterHit;
+class Cluster;
+}
+
 
 /** @class CaloTowerTool Reconstruction/RecCalorimeter/src/components/CaloTowerTool.h
  * CaloTowerTool.h
