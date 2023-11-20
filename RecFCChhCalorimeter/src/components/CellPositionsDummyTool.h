@@ -6,7 +6,7 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
