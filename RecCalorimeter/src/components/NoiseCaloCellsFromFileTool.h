@@ -6,8 +6,10 @@
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
 
-// FCCSW
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+// k4geo
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/INoiseCaloCellsTool.h"
 #include "k4Interface/ICellPositionsTool.h"
 class IGeoSvc;
@@ -95,7 +97,7 @@ private:
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   /// PhiEta segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentationPhiEta;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentationPhiEta;
   /// Multi segmentation
   dd4hep::DDSegmentation::MultiSegmentation* m_segmentationMulti;
 

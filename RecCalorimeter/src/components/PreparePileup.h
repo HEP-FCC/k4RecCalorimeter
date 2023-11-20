@@ -8,7 +8,7 @@
 class IGeoSvc;
 
 // FCC Detectors
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
@@ -118,7 +118,7 @@ private:
   // Recalculatee to half size N (window size = 2*N+1)
   std::vector<int> m_halfEtaFin;
   /// PhiEta segmentation (owned by DD4hep)
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Sum of energy of optimised cluster centred around each eta/phi cell
   std::vector<std::vector<float>> m_energyOptimised;
