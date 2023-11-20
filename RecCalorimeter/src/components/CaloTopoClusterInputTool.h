@@ -3,7 +3,7 @@
 // from Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITopoClusterInputTool.h"
 
@@ -77,7 +77,8 @@ private:
   Gaudi::Property<std::string> m_ecalEndcapReadoutName{this, "ecalEndcapReadoutName", "",
                                                       "name of the ecal endcap readout"};
   /// Name of the ecal forward calorimeter readout
-  Gaudi::Property<std::string> m_ecalFwdReadoutName{this, "ecalFwdReadoutName", "", "name of the ecal fwd readout"};
+  Gaudi::Property<std::string> m_ecalFwdReadoutName{this, "ecalFwdReadoutName", "",
+                                                    "name of the ecal fwd readout"};
   /// Name of the hadronic barrel readout
   Gaudi::Property<std::string> m_hcalBarrelReadoutName{this, "hcalBarrelReadoutName", "",
                                                        "name of the hcal barrel readout"};

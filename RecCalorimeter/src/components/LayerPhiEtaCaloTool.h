@@ -1,10 +1,10 @@
 #ifndef RECCALORIMETER_TUBELAYERPHIETACALOTOOL_H
 #define RECCALORIMETER_TUBELAYERPHIETACALOTOOL_H
 
-// from Gaudi
+// Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/ICalorimeterTool.h"
 
 class IGeoSvc;

@@ -5,11 +5,11 @@
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerTool.h"
 
-// datamodel
+// edm4hep
 namespace edm4hep {
 class ClusterCollection;
 }
