@@ -1,15 +1,18 @@
 #include "ReadNoiseVsThetaFromFileTool.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
-#include "DDSegmentation/Segmentation.h"
+
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
+#include "DDSegmentation/Segmentation.h"
 
-// Root
+// ROOT
 #include "TFile.h"
 #include "TH1F.h"
 
@@ -41,7 +44,7 @@ StatusCode ReadNoiseVsThetaFromFileTool::initialize() {
 
   // Get segmentation
   if (m_useSeg) {
-    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (m_segmentation == nullptr) {
       error() << "There is no module-theta segmentation." << endmsg;

@@ -23,7 +23,7 @@ StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
   }
 
   // get segmentation
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no module-theta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
