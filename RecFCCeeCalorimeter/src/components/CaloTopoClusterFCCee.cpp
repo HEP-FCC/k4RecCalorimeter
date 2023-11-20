@@ -72,11 +72,16 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     error() << "Unable to retrieve ECal Barrel cell positions tool!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  // Check if cell position HCal Barrel tool available
-  if (!m_cellPositionsHCalBarrelTool.retrieve()) {
-    error() << "Unable to retrieve HCal Barrel cell positions tool!!!" << endmsg;
+  // Check if cell position HCal Barrel tool available (if name is set)
+  if (!m_cellPositionsHCalBarrelTool.empty()) {
+    if (!m_cellPositionsHCalBarrelTool.retrieve()) {
+      error() << "Unable to retrieve HCal Barrel cell positions tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
+  if (!m_cellPositionsHCalBarrelNoSegTool.empty()) {
     if (!m_cellPositionsHCalBarrelNoSegTool.retrieve()) {
-      error() << "Also unable to retrieve HCal Barrel no segmentation cell positions tool!!!" << endmsg;
+      error() << "Unable to retrieve HCal Barrel no segmentation cell positions tool!!!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
@@ -88,7 +93,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
 }
 
 StatusCode CaloTopoClusterFCCee::execute() {
-  
+
   //std::unordered_map<uint64_t, double> allCells; // transform it into a member variable to avoid
   // recreating such a huge map at every event. Only update the energy values
   std::vector<std::pair<uint64_t, double>> firstSeeds;
@@ -223,7 +228,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
     vecEnergy.clear();
 
   }
-
+  
   m_clusterCellsCollection.put(std::move(edmClusterCells));
   debug() << "Number of clusters with cells in E and HCal:        " << clusterWithMixedCells << endmsg;
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
