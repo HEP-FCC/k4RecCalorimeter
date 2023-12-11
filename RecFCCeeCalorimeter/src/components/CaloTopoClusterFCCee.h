@@ -110,11 +110,11 @@ private:
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
+  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"", this};
   /// Handle for tool to get positions in HCal Barrel 
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
+  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"", this};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
+  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"", this};
   ///// Handle for tool to get positions in Calo Discs
   //ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
   ///// Handle for tool to get positions in Calo Discs

@@ -47,6 +47,7 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
   declareProperty("clusters", m_clusterCollection, "Handle for calo clusters (output collection)");
   declareProperty("clusterCells", m_clusterCellsCollection, "Handle for clusters (output collection)");
 }
+
 StatusCode CaloTopoClusterFCCee::initialize() {
   if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
   m_geoSvc = service("GeoSvc");
@@ -190,6 +191,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
       else
         warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
 
+      newCell.setPosition(edm4hep::Vector3f(posCell.X(), posCell.Y(), posCell.Z()));
       posX += posCell.X() * newCell.getEnergy();
       posY += posCell.Y() * newCell.getEnergy();
       posZ += posCell.Z() * newCell.getEnergy();
