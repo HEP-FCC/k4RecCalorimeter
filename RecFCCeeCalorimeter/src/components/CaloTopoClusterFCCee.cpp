@@ -34,11 +34,11 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
   declareProperty("positionsECalBarrelTool", m_cellPositionsECalBarrelTool,
                   "Handle for tool to retrieve cell positions in ECal Barrel");
-  declareProperty("positionsHCalBarrelTool", m_cellPositionsHCalBarrelTool,
+  declareProperty("positionsHCalBarrelTool", m_cellPositionsHCalBarrelTool=0,
                   "Handle for tool to retrieve cell positions in HCal Barrel");
-  declareProperty("positionsHCalBarrelNoSegTool", m_cellPositionsHCalBarrelNoSegTool,
+  declareProperty("positionsHCalBarrelNoSegTool", m_cellPositionsHCalBarrelNoSegTool=0,
                   "Handle for tool to retrieve cell positions in HCal Barrel without DD4hep segmentation");
-  declareProperty("positionsHCalExtBarrelTool", m_cellPositionsHCalExtBarrelTool,
+  declareProperty("positionsHCalExtBarrelTool", m_cellPositionsHCalExtBarrelTool=0,
                   "Handle for tool to retrieve cell positions in HCal ext Barrel");
   //declareProperty("positionsEMECTool", m_cellPositionsEMECTool, "Handle for tool to retrieve cell positions in EMEC");
   //declareProperty("positionsHECTool", m_cellPositionsHECTool, "Handle for tool to retrieve cell positions in HEC");
