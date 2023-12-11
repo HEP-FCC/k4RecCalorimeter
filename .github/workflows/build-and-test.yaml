@@ -1,23 +1,26 @@
-name: CITestsNightlies
+name: 'Build and Test'
 on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        SETUP: ["/cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh"]
+        STACK: ['/cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh',
+                '/cvmfs/sw.hsf.org/key4hep/setup.sh']
+        OS: ['centos7', 'alma9']
     steps:
-    - uses: actions/checkout@v2
-    - uses: cvmfs-contrib/github-action-cvmfs@v2
-      with:
-        cvmfs_repositories: 'sw.hsf.org,sw-nightlies.hsf.org,sft-nightlies.cern.ch,sft.cern.ch,geant4.cern.ch'
+    - uses: actions/checkout@v3
+    - uses: cvmfs-contrib/github-action-cvmfs@v3
     - name: Start container
       run: |
-        docker run -it --name CI_container -v ${GITHUB_WORKSPACE}:/Package -v /cvmfs:/cvmfs:shared -d ghcr.io/aidasoft/centos7:latest /bin/bash
+        docker run -it --name CI_container \
+                       -v ${GITHUB_WORKSPACE}:/Package \
+                       -v /cvmfs:/cvmfs:shared \
+                       -d ghcr.io/key4hep/key4hep-images/${{ matrix.OS }}:latest /bin/bash
     - name: Compile
       run: |
         docker exec CI_container /bin/bash -c 'cd ./Package;\
-        source ${{ matrix.SETUP }};\
+        source ${{ matrix.STACK }};\
         mkdir build install;\
         cd build;\
         cmake -DCMAKE_INSTALL_PREFIX=../install -DBUILD_TESTING=ON ..;\
