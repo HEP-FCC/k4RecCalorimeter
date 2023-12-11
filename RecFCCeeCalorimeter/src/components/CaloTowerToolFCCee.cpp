@@ -369,6 +369,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
         m_geoSvc->lcdd()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr) {
         error() << "There is no module-theta or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
+        return std::make_pair(nullptr, SegmentationType::kWrong);
       } else {
         // check if multisegmentation contains only module-theta sub-segmentations
         dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
