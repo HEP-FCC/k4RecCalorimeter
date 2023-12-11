@@ -28,6 +28,6 @@ jobs:
 
     - name: Test
       run: |
-        docker exec CI_container /bin/bash -c 'cd ./Package; source ${{ matrix.SETUP }};\
+        docker exec CI_container /bin/bash -c 'cd ./Package; source ${{ matrix.STACK }};\
          cd build;\
          ctest -j `getconf _NPROCESSORS_ONLN` --output-on-failure;'
