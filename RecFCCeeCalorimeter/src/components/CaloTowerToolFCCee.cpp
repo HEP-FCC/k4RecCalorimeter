@@ -44,59 +44,87 @@ StatusCode CaloTowerToolFCCee::initialize() {
   tmpPair = retrieveSegmentation(m_ecalBarrelReadoutName);
   m_ecalBarrelSegmentation = tmpPair.first;
   m_ecalBarrelSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   if (m_useHalfTower) {
-    m_decoder = m_geoSvc->lcdd()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
+    m_decoder = m_geoSvc->getDetector()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
   }
   info() << "Retrieving Ecal endcap segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_ecalEndcapReadoutName);
   m_ecalEndcapSegmentation = tmpPair.first;
   m_ecalEndcapSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Ecal forward segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_ecalFwdReadoutName);
   m_ecalFwdSegmentation = tmpPair.first;
   m_ecalFwdSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal barrel segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalBarrelReadoutName);
   m_hcalBarrelSegmentation = tmpPair.first;
   m_hcalBarrelSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal extended barrel segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalExtBarrelReadoutName);
   m_hcalExtBarrelSegmentation = tmpPair.first;
   m_hcalExtBarrelSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal endcap segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalEndcapReadoutName);
   m_hcalEndcapSegmentation = tmpPair.first;
   m_hcalEndcapSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal forward segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalFwdReadoutName);
   m_hcalFwdSegmentation = tmpPair.first;
   m_hcalFwdSegmentationType = tmpPair.second;
-  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
-    error() << "Wrong type of segmentation" << endmsg;
+  if (tmpPair.second == SegmentationType::kWrong) {
+    if (tmpPair.first != nullptr) {
+      error() << "Wrong type of segmentation" << endmsg;
+    } else {
+      error() << "Segmentation does not exist" << endmsg;
+    }
     return StatusCode::FAILURE;
   }
   return StatusCode::SUCCESS;
@@ -358,15 +386,15 @@ void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
 
 std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::SegmentationType> CaloTowerToolFCCee::retrieveSegmentation(std::string aReadoutName) {
   dd4hep::DDSegmentation::Segmentation* segmentation = nullptr;
-  if (m_geoSvc->lcdd()->readouts().find(aReadoutName) == m_geoSvc->lcdd()->readouts().end()) {
+  if (m_geoSvc->getDetector()->readouts().find(aReadoutName) == m_geoSvc->getDetector()->readouts().end()) {
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
   } else {
     info() << "Readout " << aReadoutName << " found." << endmsg;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(
-      m_geoSvc->lcdd()->readout(aReadoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr) {
       segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->lcdd()->readout(aReadoutName).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr) {
         error() << "There is no module-theta or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
         return std::make_pair(nullptr, SegmentationType::kWrong);
