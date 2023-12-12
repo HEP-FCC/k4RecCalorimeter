@@ -396,7 +396,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
       segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
         m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr) {
-        error() << "There is no module-theta or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
+        warning() << "There is no module-theta or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
         return std::make_pair(nullptr, SegmentationType::kWrong);
       } else {
         // check if multisegmentation contains only module-theta sub-segmentations
@@ -404,7 +404,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
         for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
           subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(subSegm.segmentation);
           if (subsegmentation == nullptr) {
-            error() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
+            warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
             return std::make_pair(nullptr, SegmentationType::kWrong);
           }
         }
