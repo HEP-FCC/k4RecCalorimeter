@@ -1,13 +1,15 @@
 #include "CreateCaloCellPositionsFCCee.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
+
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 
-// EDM
+// edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CreateCaloCellPositionsFCCee)
@@ -62,6 +64,10 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
 
       m_positions_cache[cellId] = edmPos;
       positionedHit.setPosition(edmPos);
+
+      debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+      debug() << "Position of cell (mm) : \t" << edmPos.x << "\t" << edmPos.y << "\t" << edmPos.z << endmsg;
+
     }
     else {
       positionedHit.setPosition(cached_pos->second);

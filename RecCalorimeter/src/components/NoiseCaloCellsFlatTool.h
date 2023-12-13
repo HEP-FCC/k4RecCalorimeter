@@ -1,13 +1,12 @@
 #ifndef RECCALORIMETER_NOISECALOCELLSFLATTOOL_H
 #define RECCALORIMETER_NOISECALOCELLSFLATTOOL_H
 
-// from Gaudi
+// Gaudi
 #include "GaudiAlg/GaudiTool.h"
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
-//class IRndmGenSvc;
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/INoiseCaloCellsTool.h"
 
 /** @class NoiseCaloCellsFlatTool

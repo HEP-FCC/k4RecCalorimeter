@@ -2,7 +2,7 @@
 
 // segm
 #include "DD4hep/Detector.h"
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
 DECLARE_COMPONENT(NestedVolumesCaloTool)

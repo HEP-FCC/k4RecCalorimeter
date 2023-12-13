@@ -1,15 +1,17 @@
 #include "ReadNoiseFromFileTool.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
-#include "DDSegmentation/Segmentation.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
+#include "DDSegmentation/Segmentation.h"
 
-// Root
+// ROOT
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
@@ -29,7 +31,7 @@ StatusCode ReadNoiseFromFileTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
