@@ -1,10 +1,10 @@
 #ifndef RECCALORIMETER_NESTEDVOLUMESCALOTOOL_H
 #define RECCALORIMETER_NESTEDVOLUMESCALOTOOL_H
 
-// from Gaudi
+// Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/ICalorimeterTool.h"
 
 class IGeoSvc;

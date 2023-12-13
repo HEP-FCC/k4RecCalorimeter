@@ -6,9 +6,9 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
@@ -58,7 +58,7 @@ private:
   /// Radius of central Tail Catcher cylinder
   Gaudi::Property<double> m_centralRadius{this, "centralRadius", {}, "radius in cm"};
   /// Eta-phi segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   /// Cellid decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Volume manager

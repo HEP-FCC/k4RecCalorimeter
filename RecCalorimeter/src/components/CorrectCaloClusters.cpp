@@ -7,8 +7,8 @@
 #include "k4Interface/IGeoSvc.h"
 
 // FCC Detectors
-#include "DetCommon/DetUtils.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+#include "detectorCommon/DetUtils_k4geo.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"

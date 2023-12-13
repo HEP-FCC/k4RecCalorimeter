@@ -1,7 +1,7 @@
 #ifndef DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H
 #define DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
@@ -10,6 +10,7 @@
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
+// edm4hep
 #include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Constants.h"

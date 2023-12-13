@@ -3,19 +3,22 @@
 
 // Gaudi
 #include "GaudiKernel/Service.h"
-#include "k4Interface/ICaloCreateMap.h"
 
-#include "DetCommon/DetUtils.h"
+// k4FWCore
+#include "k4Interface/ICaloCreateMap.h"
 #include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
-#include "DetSegmentation/FCCSWGridPhiTheta.h"
-#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
+
+// DD4hep
 #include "DD4hep/Readout.h"
 #include "DD4hep/Volumes.h"
 #include "DDSegmentation/Segmentation.h"
+
+// ROOT
 #include "TGeoManager.h"
 
 class IGeoSvc;
@@ -24,7 +27,6 @@ class IGeoSvc;
  *
  *  Service building a map of neighbours for all existing cells in the geometry.
  *  The volumes for which the neighbour map is created can be either segmented in theta-module (e.g. ECal inclined),
- *  or can contain nested volumes (e.g. HCal barrel).
  *
  *  @author Giovanni Marchiori
  */
@@ -49,13 +51,13 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Names of the detector readout for volumes with theta-module segmentation
-  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNamesModuleTheta", {"ECalBarrelModuleThetaMerged"}};
+  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNames", {"ECalBarrelModuleThetaMerged"}};
   /// Name of the fields describing the segmented volume
-  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNamesModuleTheta", {"system"}};
+  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system"}};
   /// Values of the fields describing the segmented volume
-  Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValuesModuleTheta", {5}};
-  /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module", "theta"
-  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNamesModuleTheta", {"layer"}};
+  Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {5}};
+  /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module"/"phi", "theta"
+  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer"}};
   /// Number of layers in the segmented volume
   Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {12}};
   // Radii of layers in the segmented volume
@@ -63,20 +65,6 @@ private:
   /// Whether to create the geant4 geometry or not
   Gaudi::Property<bool> m_includeDiagonalCells{this, "includeDiagonalCells", false, "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
   
-  /// Names of the detector readout for volumes with nested volume structure and no segmentation
-  Gaudi::Property<std::vector<std::string>> m_readoutNamesNested{this, "readoutNamesVolumes"};
-  /// Name of the field describing the nested volume
-  Gaudi::Property<std::string> m_fieldNameNested{this, "systemNameNested"};
-  /// Values of the fields describing the nested volume
-  Gaudi::Property<std::vector<int>> m_fieldValuesNested{this, "systemValuesNested"};
-  /// Names of the active volume in geometry: along radial axis, azimuthal angle, and along z axis
-  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesNested{
-      this, "activeFieldNamesNested"};
-  /// Names of the nested volumes - to retrieve the number of active volumes, need to correspond to m_activeFieldNamesNested
-  Gaudi::Property<std::vector<std::string>> m_activeVolumeNamesNested{
-      this,
-      "activeVolumeNamesNested",
-      {"layerVolume", "moduleVolume", "wedgeVolume"}};  // to find out number of volumes
   /// Name of output file
   std::string m_outputFileName;
 

@@ -1,9 +1,11 @@
 #include "CaloTopoCluster.h"
 #include "NoiseCaloCellsFromFileTool.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
+
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
 
 // datamodel
 #include "edm4hep/Cluster.h"

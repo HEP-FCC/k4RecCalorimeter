@@ -5,12 +5,14 @@
 #include "GaudiAlg/GaudiTool.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// FCCSW
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+
+// k4geo
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 class IGeoSvc;
 
@@ -86,7 +88,7 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// PhiEta segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   // Decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 

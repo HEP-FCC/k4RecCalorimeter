@@ -1,22 +1,25 @@
 #ifndef RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
 #define RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
 
-// from Gaudi
+// Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// FCCSW
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+// k4geo
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerTool.h"
 class IGeoSvc;
 
-// datamodel
+// edm4hep
 namespace edm4hep {
 class CalorimeterHitCollection;
 class Cluster;
 class MutableCluster;
 }
 
+// DD4hep
 namespace dd4hep {
 namespace DDSegmentation {
 class Segmentation;
@@ -137,7 +140,7 @@ private:
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "Name of the detector readout"};
   /// PhiEta segmentation (owned by DD4hep)
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   /// Radius used to calculate cluster position from eta and phi (in mm)
   Gaudi::Property<double> m_radius{this, "radiusForPosition", 1.0,
                                    "Radius used to calculate cluster position from eta and phi (in mm)"};
