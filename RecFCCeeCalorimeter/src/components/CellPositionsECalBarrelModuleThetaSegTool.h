@@ -5,12 +5,14 @@
 #include "GaudiAlg/GaudiTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
-#include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridModuleThetaMerged.h"
+// k4FWCore
 #include "k4FWCore/DataHandle.h"
+#include "k4Interface/IGeoSvc.h"
 #include "k4Interface/ICellPositionsTool.h"
+
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
+#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 
 // DD4hep
 #include "DD4hep/Readout.h"
@@ -56,7 +58,7 @@ private:
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
   /// Merged module-theta segmentation
-  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* m_segmentation;
+  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* m_segmentation;
   /// Cellid decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Volume manager

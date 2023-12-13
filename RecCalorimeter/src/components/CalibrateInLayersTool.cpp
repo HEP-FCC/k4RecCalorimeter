@@ -1,6 +1,6 @@
 #include "CalibrateInLayersTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep

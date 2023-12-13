@@ -4,7 +4,7 @@
 #include "k4Interface/IGeoSvc.h"
 
 // FCC Detectors
-#include "DetCommon/DetUtils.h"
+#include "detectorCommon/DetUtils_k4geo.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"

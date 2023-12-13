@@ -1,28 +1,32 @@
 #include "CorrectECalBarrelSliWinCluster.h"
 
-// FCCSW
-#include "DetCommon/DetUtils.h"
+// k4geo
+#include "detectorCommon/DetUtils_k4geo.h"
+#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
-#include "DetSegmentation/FCCSWGridPhiEta.h"
+
+// Gaudi
 #include "GaudiKernel/ITHistSvc.h"
+#include "GaudiKernel/MsgStream.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DDSegmentation/MultiSegmentation.h"
 
-// our EDM4HEP
+// edm4hep
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/MCParticleCollection.h"
 #include "edm4hep/VertexCollection.h"
 
-// Root
+// ROOT
 #include "TFile.h"
 #include "TLorentzVector.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
-#include <GaudiKernel/MsgStream.h>
 
 DECLARE_COMPONENT(CorrectECalBarrelSliWinCluster)
 
@@ -147,7 +151,7 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
       return StatusCode::FAILURE;
     }
     // retrieve PhiEta segmentation
-    m_segmentationPhiEta[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+    m_segmentationPhiEta[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
         m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
     m_segmentationMulti[m_systemId[iSys]] = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
         m_geoSvc->getDetector()->readout(m_readoutName[iSys]).segmentation().segmentation());
@@ -235,7 +239,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
 
   // TODO change that so all systems can be used
   uint systemId = m_systemId[0];
-  const dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation = nullptr;
+  const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
   if (m_segmentationPhiEta[systemId] != nullptr) {
     segmentation = m_segmentationPhiEta[systemId];
   }
@@ -267,7 +271,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     newCluster.setPosition(cluster.getPosition());
     for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); cell++) {
       if (m_segmentationMulti[systemId] != nullptr) {
-        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
+        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
         oldEtaId = int(floor((oldEta + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
         oldPhiId = int(floor((oldPhi + 0.5 * segmentation->gridSizePhi() - segmentation->offsetPhi()) / segmentation->gridSizePhi()));
       }
@@ -319,7 +323,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     // repeat but calculating eta barycentre in each layer
     for (auto cell = newCluster.hits_begin(); cell != newCluster.hits_end(); cell++) {
       if (m_segmentationMulti[systemId] != nullptr) {
-        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
+        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
       }
       dd4hep::DDSegmentation::CellID cID = cell->getCellID();
       uint layer = m_decoder[systemId]->get(cID, m_layerFieldName) + m_firstLayerId;

@@ -1,9 +1,9 @@
 #include "CaloTowerTool.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-// datamodel
+// edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/MutableCluster.h"
@@ -113,12 +113,12 @@ StatusCode CaloTowerTool::finalize() {
 std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {
   double phiMax = -1;
   double etaMax = -1;
-  dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation = nullptr;
+  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
   if (aSegmentation != nullptr) {
     switch (aType) {
     case SegmentationType::kPhiEta: {
       info() << "== Retrieving phi-eta segmentation " << aSegmentation->name() << endmsg;
-      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(aSegmentation);
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(aSegmentation);
       phiMax = fabs(segmentation->offsetPhi()) + M_PI / (double)segmentation->phiBins();
       etaMax = fabs(segmentation->offsetEta()) + segmentation->gridSizeEta() * 0.5;
       break;
@@ -128,7 +128,7 @@ std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegment
       double eta = -1;
       info() << "== Retrieving multi segmentation " << aSegmentation->name() << endmsg;
       for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation)->subSegmentations()) {
-        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(subSegm.segmentation);
+        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
         phi = fabs(segmentation->offsetPhi()) + M_PI / (double)segmentation->phiBins();
         eta = fabs(segmentation->offsetEta()) + segmentation->gridSizeEta() * 0.5;
         if (eta > etaMax) { etaMax = eta;}
@@ -320,10 +320,10 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
   float fracEtaMin = 1.0, fracEtaMax = 1.0, fracEtaMiddle = 1.0;
   float fracPhiMin = 1.0, fracPhiMax = 1.0, fracPhiMiddle = 1.0;
   float epsilon = 0.0001;
-  const dd4hep::DDSegmentation::FCCSWGridPhiEta* segmentation = nullptr;
+  const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
   const dd4hep::DDSegmentation::MultiSegmentation* multisegmentation = nullptr;
   if( aType == SegmentationType::kPhiEta) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(aSegmentation);
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(aSegmentation);
   } else if( aType == SegmentationType::kMulti) {
     multisegmentation = dynamic_cast<const dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation);
   }
@@ -332,7 +332,7 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
     pass = true;
     // if multisegmentation is used - first find out which segmentation to use
     if( aType == SegmentationType::kMulti) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta*>(&multisegmentation->subsegmentation(cell.getCellID()));
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&multisegmentation->subsegmentation(cell.getCellID()));
     }
     if (m_useHalfTower) {
         uint layerId = m_decoder->get(cell.getCellID(), "layer");
@@ -416,7 +416,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
   } else {
     info() << "Readout " << aReadoutName << " found." << endmsg;
-    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(
+    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
       m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr) {
       segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
@@ -427,7 +427,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType
         // check if multisegmentation contains only phi-eta sub-segmentations
         dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
         for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
-          subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta*>(subSegm.segmentation);
+          subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
           if (subsegmentation == nullptr) {
             error() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a phi-eta grid." << endmsg;
             return std::make_pair(nullptr, SegmentationType::kWrong);
