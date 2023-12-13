@@ -1,9 +1,9 @@
 #include "CaloTowerToolFCCee.h"
 
-// FCCSW
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-// datamodel
+// edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/MutableCluster.h"
@@ -140,12 +140,12 @@ StatusCode CaloTowerToolFCCee::finalize() {
 std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {
   double phiMax = -1;
   double thetaMax = -1;
-  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* segmentation = nullptr;
+  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation = nullptr;
   if (aSegmentation != nullptr) {
     switch (aType) {
     case SegmentationType::kModuleTheta: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
-      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(aSegmentation);
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
       phiMax = M_PI - M_PI/segmentation->nModules();
       thetaMax = M_PI - fabs(segmentation->offsetTheta()) + segmentation->gridSizeTheta() * .5;
       break;
@@ -155,7 +155,7 @@ std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(dd4hep::DD
       double theta = -1;
       info() << "== Retrieving multi segmentation " << aSegmentation->name() << endmsg;
       for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation)->subSegmentations()) {
-        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(subSegm.segmentation);
+        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
         phi = M_PI - M_PI/segmentation->nModules();
         theta = M_PI - fabs(segmentation->offsetTheta()) + segmentation->gridSizeTheta() * .5;
         if (theta > thetaMax) { thetaMax = theta;}
@@ -345,10 +345,10 @@ void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
   // tower index of the borders of the cell
   int iTheta = 0;
   int iPhi = 0;
-  const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged* segmentation = nullptr;
+  const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation = nullptr;
   const dd4hep::DDSegmentation::MultiSegmentation* multisegmentation = nullptr;
   if( aType == SegmentationType::kModuleTheta) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(aSegmentation);
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
   } else if( aType == SegmentationType::kMulti) {
     multisegmentation = dynamic_cast<const dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation);
   }
@@ -357,7 +357,7 @@ void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
     pass = true;
     // if multisegmentation is used - first find out which segmentation to use
     if( aType == SegmentationType::kMulti) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(&multisegmentation->subsegmentation(cell.getCellID()));
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(&multisegmentation->subsegmentation(cell.getCellID()));
     }
     if (m_useHalfTower) {
         uint layerId = m_decoder->get(cell.getCellID(), "layer");
@@ -390,7 +390,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
   } else {
     info() << "Readout " << aReadoutName << " found." << endmsg;
-    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(
+    segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
       m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr) {
       segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
@@ -402,7 +402,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
         // check if multisegmentation contains only module-theta sub-segmentations
         dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
         for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
-          subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged*>(subSegm.segmentation);
+          subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
           if (subsegmentation == nullptr) {
             warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
             return std::make_pair(nullptr, SegmentationType::kWrong);

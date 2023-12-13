@@ -24,7 +24,6 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
     error() << "Unable to retrieve the tower building tool." << endmsg;
     return StatusCode::FAILURE;
   }
-
   // Get number of calorimeter towers
   auto towerMapSize = m_towerTool->towersNumber();
   m_nThetaTower = towerMapSize.theta;
