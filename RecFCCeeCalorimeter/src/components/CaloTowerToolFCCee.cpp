@@ -44,12 +44,8 @@ StatusCode CaloTowerToolFCCee::initialize() {
   tmpPair = retrieveSegmentation(m_ecalBarrelReadoutName);
   m_ecalBarrelSegmentation = tmpPair.first;
   m_ecalBarrelSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   if (m_useHalfTower) {
@@ -59,72 +55,48 @@ StatusCode CaloTowerToolFCCee::initialize() {
   tmpPair = retrieveSegmentation(m_ecalEndcapReadoutName);
   m_ecalEndcapSegmentation = tmpPair.first;
   m_ecalEndcapSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Ecal forward segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_ecalFwdReadoutName);
   m_ecalFwdSegmentation = tmpPair.first;
   m_ecalFwdSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal barrel segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalBarrelReadoutName);
   m_hcalBarrelSegmentation = tmpPair.first;
   m_hcalBarrelSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal extended barrel segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalExtBarrelReadoutName);
   m_hcalExtBarrelSegmentation = tmpPair.first;
   m_hcalExtBarrelSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal endcap segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalEndcapReadoutName);
   m_hcalEndcapSegmentation = tmpPair.first;
   m_hcalEndcapSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   info() << "Retrieving Hcal forward segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_hcalFwdReadoutName);
   m_hcalFwdSegmentation = tmpPair.first;
   m_hcalFwdSegmentationType = tmpPair.second;
-  if (tmpPair.second == SegmentationType::kWrong) {
-    if (tmpPair.first != nullptr) {
-      error() << "Wrong type of segmentation" << endmsg;
-    } else {
-      error() << "Segmentation does not exist" << endmsg;
-    }
+  if (tmpPair.first != nullptr && tmpPair.second == SegmentationType::kWrong) {
+    error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
   }
   return StatusCode::SUCCESS;
