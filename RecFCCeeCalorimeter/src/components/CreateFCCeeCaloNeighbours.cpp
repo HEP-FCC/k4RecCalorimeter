@@ -48,23 +48,20 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
   std::pair<int, int> extremaECalLastLayerPhi;
   std::pair<int, int> extremaECalLastLayerModule;
   std::pair<int, int> extremaECalLastLayerTheta;
-  // double eCalThetaOffset = 0;
-  // double eCalThetaSize = 0;
-  // double eCalPhiOffset = 0;
-  // double eCalModuleSize = 0;
-  // double hCalThetaOffset = 0;
-  // double hCalThetaSize = 0;
-  // double hCalPhiOffset = 0;
+  int ecalBarrelId = -1; // index of ecal barrel in segmentation list
   dd4hep::DDSegmentation::BitFieldCoder *decoderECalBarrel = nullptr;
+  dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo *hcalBarrelSegmentation = nullptr;
   //  will be used for volume connecting
   std::pair<int, int> extremaHCalFirstLayerPhi;
   std::pair<int, int> extremaHCalFirstLayerTheta;
-  std::pair<int, int> extremaHCalFirstLayerZ;
+  int hcalBarrelId = -1; // index of hcal barrel in segmentation list
   dd4hep::DDSegmentation::BitFieldCoder *decoderHCalBarrel = nullptr;
+  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *ecalBarrelModuleThetaSegmentation = nullptr;
+  dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo *ecalBarrelPhiThetaSegmentation = nullptr;
 
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++)
   {
-    // Check if readouts exist
+    // Check if readout exists
     info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
     if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) == m_geoSvc->getDetector()->readouts().end())
     {
@@ -72,7 +69,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       return StatusCode::FAILURE;
     }
 
-    // get Theta-based segmentation
+    // get theta-based segmentation
     dd4hep::DDSegmentation::Segmentation *aSegmentation = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation();
     if (aSegmentation == nullptr)
     {
@@ -122,31 +119,46 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 
     // retrieve decoders and other info needed for volume (ECal-HCal) connection
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
-    // hardcoding values (4,8) for ECal and HCal barrel systems looks quite error prone..
-    // to be fixed in the future
-    if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == 4)
+    if (m_connectBarrels)
     {
-      decoderECalBarrel = decoder;
-      // eCalThetaSize = segmentation->gridSizeTheta();
-      // eCalModuleSize = 2 * M_PI / segmentation->nModules();
-      // eCalModuleSize = 2 * M_PI / segmentation->phiBins();
-      // eCalThetaOffset = segmentation->offsetTheta();
-      // eCalPhiOffset = segmentation->offsetPhi();
-    }
-    if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == 8)
-    {
-      decoderHCalBarrel = decoder;
-      // hCalThetaSize = segmentation->gridSizeTheta();
-      // hCalThetaOffset = segmentation->offsetTheta();
-      // hCalPhiOffset = segmentation->offsetPhi();
+      if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId)
+      {
+        decoderECalBarrel = decoder;
+        ecalBarrelId = iSys;
+        if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
+        {
+          ecalBarrelModuleThetaSegmentation = moduleThetaSegmentation;
+        }
+        else if (segmentationType == "FCCSWGridPhiTheta_k4geo")
+        {
+          ecalBarrelPhiThetaSegmentation = phiThetaSegmentation;
+        }
+        else
+        {
+          error() << "ECAL barrel segmentation type not handled for connectBarrels option." << endmsg;
+          return StatusCode::FAILURE;
+        }
+      }
+
+      if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId)
+      {
+        decoderHCalBarrel = decoder;
+        hcalBarrelId = iSys;
+        if (segmentationType == "FCCSWGridPhiTheta_k4geo")
+        {
+          hcalBarrelSegmentation = phiThetaSegmentation;
+        }
+        else
+        {
+          error() << "HCAL barrel segmentation type not handled for connectBarrels option." << endmsg;
+          return StatusCode::FAILURE;
+        }
+      }
     }
 
+    // Loop over all cells in the calorimeter and retrieve existing cellIDs and find neihbours
     if (segmentationType == "FCCSWGridPhiTheta_k4geo")
     {
-      // GM: code copied from RecFCChhCalorimeter, just replacing Eta->Theta
-      //     did not review the code itself
-
-      // Loop over all cells in the calorimeter and retrieve existing cellIDs
       // Loop over active layers
       std::vector<std::pair<int, int>> extrema;
       extrema.push_back(std::make_pair(0, m_activeVolumesNumbersSegmented[iSys] - 1));
@@ -164,15 +176,19 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         (*decoder)["phi"].set(volumeId, 0);
         // Get number of segmentation cells within the active volume
         std::array<uint, 3> numCells;
-        // for HCAL use theta range passed via activeVolumesTheta option
-        if (m_fieldValuesSegmented[iSys]==8) {
-          int nPhiCells = TMath::TwoPi()/phiThetaSegmentation->gridSizePhi();
+        // for vlume such as HCAL for which the numberOfCells function does not work
+        // (because the G4 volume does not span the whole z of the detector)
+        // use theta range passed via activeVolumesTheta option
+        // if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId)
+        if (m_activeVolumesTheta[iSys].size() > 0)
+        {
+          int nPhiCells = phiThetaSegmentation->phiBins();
           double thetaCellSize = phiThetaSegmentation->gridSizeTheta();
           double thetaOffset = phiThetaSegmentation->offsetTheta();
-          double thetaMin = m_activeVolumesTheta[ilayer];
+          double thetaMin = m_activeVolumesTheta[iSys][ilayer];
           double thetaMax = TMath::Pi() - thetaMin;
           // debug
-          std::cout << "thetaMin, thetaMax = " << thetaMin << " " << thetaMax << std::endl;
+          debug() << "thetaMin, thetaMax = " << thetaMin << " " << thetaMax << endmsg;
           uint minThetaID = int(floor((thetaMin + 0.5 * thetaCellSize - thetaOffset) / thetaCellSize));
           uint maxThetaID = int(floor((thetaMax + 0.5 * thetaCellSize - thetaOffset) / thetaCellSize));
           uint nThetaCells = 1 + maxThetaID - minThetaID;
@@ -180,49 +196,34 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
           numCells[1] = nThetaCells;
           numCells[2] = minThetaID;
         }
-        else {
+        else
+        {
           numCells = det::utils::numberOfCells(volumeId, *phiThetaSegmentation);
         }
         // extrema 1: 0, ID of last cell in phi
         extrema[1] = std::make_pair(0, numCells[0] - 1);
-        // extrema[2]: min theta ID, n theta cells     
+        // extrema[2]: min theta ID, n theta cells
         extrema[2] = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
 
-        // for layer N-1 of ECal barrel,  will be used for volume connecting
-        /*
+        // for layer 0 of HCal barrel,  will be used for volume connecting
         if (
             m_fieldNamesSegmented[iSys] == "system" &&
-            m_fieldValuesSegmented[iSys] == 4 &&
-            ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1)
-        )
+            m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId &&
+            ilayer == 0)
+        {
+          extremaHCalFirstLayerPhi = std::make_pair(0, numCells[0] - 1);
+          extremaHCalFirstLayerTheta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
+        }
+        // for layer N-1 of ECal barrel,  will be used for volume connecting
+        if (m_fieldNamesSegmented[iSys] == "system" &&
+            m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId &&
+            ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1))
         {
           eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
-          // not really needed, same for all layers... unless we really restrict theta for each layer 
-          // to the physical volume (not sure it's really needed, we can maybe allow for non-physical 
-          // cells at edge in neighbour map, they simply won´t be added to the cluster since they do
-          // not exist in the list of cells)
-          extremaECalLastLayerPhi = std::make_pair(0, numCells[0] - 1);
-          extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
+          extremaECalLastLayerPhi = std::make_pair(0, (numCells[0] - 1));
+          extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1));
         }
-        else if (
-          m_fieldNamesSegmented[iSys] == "system" &&
-          m_fieldValuesSegmented[iSys] == 8 && 
-          m_readoutNamesSegmented[iSys] == "HCalBarrelReadout" // why is this needed? because there's also the HCAL endcap?
-        )
-        {
-          uint cellsTheta = ceil((2 * m_activeVolumesTheta[ilayer] - segmentation->gridSizeTheta()) / 2 / segmentation->gridSizeTheta()) * 2 + 1; // ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta()) ;
-          uint minThetaID = int(floor((-m_activeVolumesTheta[ilayer] + 0.5 * segmentation->gridSizeTheta() - segmentation->offsetTheta()) / segmentation->gridSizeTheta()));
-          numCells[1] = cellsTheta;
-          numCells[2] = minThetaID;
-          // for layer 0 of HCal barrel,  will be used for volume connecting
-          if (ilayer == 0)
-          {
-            extremaHCalFirstLayerPhi = std::make_pair(0, numCells[0] - 1);
-            extremaHCalFirstLayerTheta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
-            extrema[2] = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
-          }
-        }
-        */
+
         debug() << "Layer: " << ilayer << endmsg;
         debug() << "Extrema[0]: " << extrema[0].first << " , " << extrema[0].second << endmsg;
         debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
@@ -237,7 +238,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
             decoder->set(cellId, "phi", iphi);
             decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
             uint64_t id = cellId;
-	    if (ilayer==7 && iphi==95) debug() << itheta+numCells[2] << " " << cellId << endmsg;
             map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
                 id, det::utils::neighbours(*decoder, {m_activeFieldNamesSegmented[iSys], "phi", "theta"}, extrema,
                                            id, {false, true, false}, m_includeDiagonalCells)));
@@ -257,8 +257,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       {
         dd4hep::DDSegmentation::CellID volumeId = 0;
         // Get VolumeID
-        // m_fieldValuesSegmented: in .py systemValuesModuleTheta = [4]
-        // m_activeFieldNamesSegmented: in .py activeFieldNamesModuleTheta = ["layer"]
         (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
         (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
         (*decoder)["theta"].set(volumeId, 0);
@@ -271,35 +269,19 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         // extrema[2]: min theta ID, n (merged) theta cells
         extrema[2] = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(ilayer));
         // for layer N-1 of ECal barrel,  will be used for volume connecting
-        // should 4 be systemValuesModuleTheta instead?
         if (ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1) && m_fieldNamesSegmented[iSys] == "system" &&
-            m_fieldValuesSegmented[iSys] == 4)
+            m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId)
         {
-          // eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
-          extremaECalLastLayerModule = std::make_pair(0, numCells[0] - 1);
-          extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
-        }
-        else if (m_fieldNamesSegmented[iSys] == "system" &&
-                 m_fieldValuesSegmented[iSys] == 8 && m_readoutNamesSegmented[iSys] == "BarHCal_Readout_phitheta")
-        {
-          ////
-          uint cellsTheta = ceil((2 * m_activeVolumesTheta[ilayer] - segmentation->gridSizeTheta()) / 2 / segmentation->gridSizeTheta()) * 2 + 1; // ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeTheta());
-          uint minThetaID = int(floor((-m_activeVolumesTheta[ilayer] + 0.5 * segmentation->gridSizeTheta() - segmentation->offsetTheta()) / segmentation->gridSizeTheta()));
-          numCells[1] = cellsTheta;
-          numCells[2] = minThetaID;
-          // for layer 0 of HCal barrel,  will be used for volume connecting
-          if (ilayer == 0)
-          {
-            extremaHCalFirstLayerPhi = std::make_pair(0, numCells[0] - 1);
-            extremaHCalFirstLayerTheta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
-          }
+          eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
+          extremaECalLastLayerModule = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(eCalLastLayer));
+          extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(eCalLastLayer));
         }
         debug() << "Layer: " << ilayer << endmsg;
         debug() << "Extrema[0]: " << extrema[0].first << " , " << extrema[0].second << endmsg;
         debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
         debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
         debug() << "Number of segmentation cells in (module,theta): " << numCells << endmsg;
-        // Loop over segmentation cells
+        // Loop over segmentation cells to find neighbours in ECAL
         for (int imodule = extrema[1].first; imodule <= extrema[1].second; imodule += moduleThetaSegmentation->mergedModules(ilayer))
         {
           for (int itheta = extrema[2].first; itheta <= extrema[2].second; itheta += moduleThetaSegmentation->mergedThetaCells(ilayer))
@@ -349,100 +331,314 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 
   if (m_connectBarrels)
   {
-    /*
-    // first check if ECAL barrel (system==5) and HCal barrel (system==8) are configured
+    // first check if ECAL barrel and HCal barrel are configured
     if (decoderECalBarrel == nullptr || decoderHCalBarrel == nullptr)
     {
-      error() << "ECAL barrel and/or HCal barrel are not configured correctly!" << endmsg;
+      error() << "ECAL barrel and/or HCal barrel are not configured correctly, cannot link barrels!" << endmsg;
       return StatusCode::FAILURE;
     }
+
     // print how many cells in each dimensions will be matched
     info() << "ECAL layer " << eCalLastLayer << " is a neighbour of HCAL layer 0." << endmsg;
-    info() << "ECAL phi cells " << extremaECalLastLayerModule.first << " - " << extremaECalLastLayerModule.second
-           << " will be matched to HCAL cells " << extremaHCalFirstLayerPhi.first
+    if (ecalBarrelModuleThetaSegmentation)
+    {
+      info() << "ECAL modules " << extremaECalLastLayerModule.first << " - " << extremaECalLastLayerModule.second;
+    }
+    else
+    {
+      info() << "ECAL phi cells " << extremaECalLastLayerPhi.first << " - " << extremaECalLastLayerPhi.second;
+    }
+    info() << " will be matched to HCAL phi cells " << extremaHCalFirstLayerPhi.first
            << " - " << extremaHCalFirstLayerPhi.second << endmsg;
     info() << "ECAL theta cells " << extremaECalLastLayerTheta.first << " - " << extremaECalLastLayerTheta.second
-           << " will be matched to HCAL " << extremaHCalFirstLayerTheta.first
+           << " will be matched to HCAL theta cells " << extremaHCalFirstLayerTheta.first
            << " - " << extremaHCalFirstLayerTheta.second << endmsg;
 
-    std::unordered_map<uint, std::vector<uint>> thetaNeighbours;
-    std::unordered_map<uint, std::vector<uint>> phiNeighbours;
-    double hCalPhiSize = 2 * M_PI / (extremaHCalFirstLayerPhi.second - extremaHCalFirstLayerPhi.first + 1);
-    // loop over theta cells to match in theta
-    for (int iTheta = extremaHCalFirstLayerTheta.first; iTheta < extremaHCalFirstLayerTheta.second + 1; iTheta++)
+    dd4hep::DDSegmentation::CellID volumeIdECal = 0;
+    dd4hep::DDSegmentation::CellID volumeIdHCal = 0;
+    (*decoderECalBarrel)["system"].set(volumeIdECal, m_ecalBarrelSysId);
+    (*decoderECalBarrel)[m_activeFieldNamesSegmented[ecalBarrelId]].set(volumeIdECal, eCalLastLayer);
+    (*decoderHCalBarrel)["system"].set(volumeIdHCal, m_hcalBarrelSysId);
+    (*decoderHCalBarrel)[m_activeFieldNamesSegmented[hcalBarrelId]].set(volumeIdHCal, 0);
+
+    // retrieve needed parameters
+    double hCalThetaSize = hcalBarrelSegmentation->gridSizeTheta();
+    double hCalThetaOffset = hcalBarrelSegmentation->offsetTheta();
+    double hCalPhiOffset = hcalBarrelSegmentation->offsetPhi();
+    double hCalPhiSize = hcalBarrelSegmentation->gridSizePhi();
+    int hCalPhiBins = hcalBarrelSegmentation->phiBins();
+    double eCalThetaOffset, eCalThetaSize;
+    double eCalPhiOffset, eCalPhiSize;
+    int eCalModules(-1);
+    int eCalPhiBins(-1);
+    if (ecalBarrelModuleThetaSegmentation)
     {
-      double lowTheta = hCalThetaOffset + iTheta * hCalThetaSize;
-      double highTheta = hCalThetaOffset + (iTheta + 1) * hCalThetaSize;
-      debug() << "HCal theta range  : " << lowTheta << " -  " << highTheta << endmsg;
-      int lowId = floor((lowTheta - 0.5 * eCalThetaSize - eCalThetaOffset) / eCalThetaSize);
-      int highId = floor((highTheta + 0.5 * eCalThetaSize - eCalThetaOffset) / eCalThetaSize);
-      debug() << "ECal theta range  : " << lowId * eCalThetaSize + eCalThetaOffset << " -  "
-              << highId * eCalThetaSize + eCalThetaOffset << endmsg;
-      std::vector<uint> neighbours;
-      for (int idThetaToAdd = lowId; idThetaToAdd <= highId; idThetaToAdd++)
-      {
-        neighbours.push_back(det::utils::cyclicNeighbour(idThetaToAdd, extremaECalLastLayerTheta));
-      }
-      debug() << "HCal theta id  : " << iTheta << endmsg;
-      debug() << "Found ECal Neighbours in theta : " << neighbours.size() << endmsg;
-      for (auto id : neighbours)
-      {
-        debug() << "ECal Neighbours id : " << id << endmsg;
-      }
-      thetaNeighbours.insert(std::pair<uint, std::vector<uint>>(iTheta, neighbours));
+      eCalThetaOffset = ecalBarrelModuleThetaSegmentation->offsetTheta();
+      eCalThetaSize = ecalBarrelModuleThetaSegmentation->gridSizeTheta();
+      eCalModules = ecalBarrelModuleThetaSegmentation->nModules();
+      // for ECAL barrel with module readout, need to find out phi position of module 0 of ECal barrel last layer
+      // get it from volume manager
+      // for a normal phi grid it would suffice to use the segmentation phi(cellId) method
+      dd4hep::VolumeManager volman = m_geoSvc->getDetector()->volumeManager();
+      auto detelement = volman.lookupDetElement(volumeIdECal);
+      const auto &transformMatrix = detelement.nominal().worldTransformation();
+      double outGlobal[3];
+      double inLocal[] = {0, 0, 0};
+      transformMatrix.LocalToMaster(inLocal, outGlobal);
+      eCalPhiOffset = std::atan2(outGlobal[1], outGlobal[0]);
+      info() << "ECAL modules : " << eCalModules << " , phi of module 0 in last ECAL layer : " << eCalPhiOffset << endmsg;
+      eCalPhiSize = TMath::TwoPi() / eCalModules;
+    }
+    else
+    {
+      eCalThetaOffset = ecalBarrelPhiThetaSegmentation->offsetTheta();
+      eCalThetaSize = ecalBarrelPhiThetaSegmentation->gridSizeTheta();
+      eCalPhiOffset = ecalBarrelPhiThetaSegmentation->offsetPhi();
+      eCalPhiSize = ecalBarrelPhiThetaSegmentation->gridSizePhi();
+      eCalPhiBins = ecalBarrelPhiThetaSegmentation->phiBins();
     }
 
-    // loop over phi and find which phi cells to add
-    for (int iPhi = 0; iPhi < extremaHCalFirstLayerPhi.second + 1; iPhi++)
+    dd4hep::DDSegmentation::CellID cellIdECal = volumeIdECal;
+    dd4hep::DDSegmentation::CellID cellIdHCal = volumeIdHCal;
+
+    // Loop over ECAL segmentation cells to find neighbours in HCAL
+    if (ecalBarrelModuleThetaSegmentation)
     {
-      double lowPhi = hCalPhiOffset + iPhi * hCalPhiSize;
-      double highPhi = hCalPhiOffset + (iPhi + 1) * hCalPhiSize;
-      debug() << "HCal phi range  : " << lowPhi << " -  " << highPhi << endmsg;
-      int lowId = floor((lowPhi - 0.5 * eCalModuleSize - eCalPhiOffset) / eCalModuleSize);
-      int highId = floor((highPhi + 0.5 * eCalModuleSize - eCalPhiOffset) / eCalModuleSize);
-      debug() << "ECal phi range  : " << lowId * eCalModuleSize + eCalPhiOffset << " -  "
-              << highId * eCalModuleSize + eCalPhiOffset << endmsg;
-      std::vector<uint> neighbours;
-      for (int idPhiToAdd = lowId; idPhiToAdd <= highId; idPhiToAdd++)
+      for (int imodule = extremaECalLastLayerModule.first; imodule <= extremaECalLastLayerModule.second; imodule += ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer))
       {
-        neighbours.push_back(det::utils::cyclicNeighbour(idPhiToAdd, extremaECalLastLayerModule));
-      }
-      debug() << "HCal phi id  : " << iPhi << endmsg;
-      debug() << "Found ECal Neighbours in phi : " << neighbours.size() << endmsg;
-      for (auto id : neighbours)
-      {
-        debug() << "ECal Neighbours id : " << id << endmsg;
-      }
-      phiNeighbours.insert(std::pair<uint, std::vector<uint>>(iPhi, neighbours));
-    }
-    // add neighbours to both ecal cell and hcal cells
-    dd4hep::DDSegmentation::CellID ecalCellId = 0;
-    dd4hep::DDSegmentation::CellID hcalCellId = 0;
-    (*decoderECalBarrel)["system"].set(ecalCellId, 5);
-    (*decoderECalBarrel)[m_activeFieldNamesSegmented[0]].set(ecalCellId, eCalLastLayer);
-    (*decoderHCalBarrel)["system"].set(hcalCellId, 8);
-    (*decoderHCalBarrel)[m_activeFieldNamesSegmented[1]].set(hcalCellId, 0);
-    // loop over segmented hcal cells
-    for (auto iThetaHCal : thetaNeighbours)
-    {
-      (*decoderHCalBarrel)["theta"].set(hcalCellId, iThetaHCal.first);
-      for (auto iPhiHCal : phiNeighbours)
-      {
-        (*decoderHCalBarrel)["phi"].set(hcalCellId, iPhiHCal.first);
-        for (auto iTheta : iThetaHCal.second)
+        (*decoderECalBarrel)["module"].set(cellIdECal, imodule);
+        double dphi = ecalBarrelModuleThetaSegmentation->phi(cellIdECal);
+        double phiVol = eCalPhiOffset + imodule * eCalPhiSize;
+        double phi = phiVol + dphi;
+        double phiMin = phi - 0.5 * eCalPhiSize * ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
+        double phiMax = phi + 0.5 * eCalPhiSize * ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
+        int minPhiHCal = (phiMin - hCalPhiOffset) / hCalPhiSize;
+        int maxPhiHCal = (phiMax - hCalPhiOffset) / hCalPhiSize;
+        for (int itheta = extremaECalLastLayerTheta.first; itheta <= extremaECalLastLayerTheta.second; itheta += ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer))
         {
-          (*decoderECalBarrel)["theta"].set(ecalCellId, iTheta);
-          for (auto iPhi : iPhiHCal.second)
+          (*decoderECalBarrel)["theta"].set(cellIdECal, itheta);
+          double theta = ecalBarrelModuleThetaSegmentation->theta(cellIdECal);
+          double thetaMin = theta - eCalThetaSize * ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer) / 2.;
+          double thetaMax = theta + eCalThetaSize * ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer) / 2.;
+          int minThetaHCal = (thetaMin - hCalThetaOffset) / hCalThetaSize;
+          int maxThetaHCal = (thetaMax - hCalThetaOffset) / hCalThetaSize;
+          debug() << "ECAL cell: cellId = " << cellIdECal << " module = " << imodule << " theta bin = " << itheta << endmsg;
+          debug() << "ECAL cell: phi = " << phi << " theta = " << theta << endmsg;
+          debug() << "ECAL cell: thetaMin = " << thetaMin << " thetaMax = " << thetaMax << endmsg;
+          debug() << "ECAL cell: phiMin = " << phiMin << " phiMax = " << phiMax << endmsg;
+          debug() << "ECAL cell: theta bin of neighbours in HCAL layer 0 = " << minThetaHCal << " - " << maxThetaHCal << endmsg;
+          debug() << "ECAL cell: phi bin of neighbours in HCAL layer 0 = " << minPhiHCal << " - " << maxPhiHCal << endmsg;
+          bool hasNeighbours = false;
+          for (int iphiHCal = minPhiHCal; iphiHCal <= maxPhiHCal; iphiHCal++)
           {
-            (*decoderECalBarrel)["phi"].set(ecalCellId, iPhi);
-            map.find(hcalCellId)->second.push_back(ecalCellId);
-            map.find(ecalCellId)->second.push_back(hcalCellId);
-            count++;
+            int phiBinHCal = iphiHCal;
+            // bring phi bin in 0..nbins-1 range
+            if (phiBinHCal < 0)
+              phiBinHCal += hCalPhiBins;
+            if (phiBinHCal >= hCalPhiBins)
+              phiBinHCal -= hCalPhiBins;
+            if (phiBinHCal < extremaHCalFirstLayerPhi.first || phiBinHCal > extremaHCalFirstLayerPhi.second)
+            {
+              warning() << "phi bin " << phiBinHCal << " out of range, skipping" << endmsg;
+              continue;
+            }
+            (*decoderHCalBarrel)["phi"].set(cellIdHCal, phiBinHCal);
+            for (int ithetaHCal = minThetaHCal; ithetaHCal <= maxThetaHCal; ithetaHCal++)
+            {
+              if (ithetaHCal < extremaHCalFirstLayerTheta.first || ithetaHCal > extremaHCalFirstLayerTheta.second)
+              {
+                warning() << "theta bin " << ithetaHCal << " out of range, skipping" << endmsg;
+                continue;
+              }
+              (*decoderHCalBarrel)["theta"].set(cellIdHCal, ithetaHCal);
+              debug() << "ECAL cell: neighbour in HCAL has cellID = " << cellIdHCal << endmsg;
+              map.find((uint64_t)cellIdECal)->second.push_back((uint64_t)cellIdHCal);
+              hasNeighbours = true;
+            }
           }
+          if (hasNeighbours)
+            count++;
         }
       }
     }
-    */
+    else
+    {
+      for (int iphi = extremaECalLastLayerPhi.first; iphi <= extremaECalLastLayerPhi.second; iphi++)
+      {
+        (*decoderECalBarrel)["phi"].set(cellIdECal, iphi);
+        double phi = ecalBarrelPhiThetaSegmentation->phi(cellIdECal);
+        double phiMin = phi - 0.5 * eCalPhiSize;
+        double phiMax = phi + 0.5 * eCalPhiSize;
+        int minPhiHCal = (phiMin - hCalPhiOffset) / hCalPhiSize;
+        int maxPhiHCal = (phiMax - hCalPhiOffset) / hCalPhiSize;
+        for (int itheta = extremaECalLastLayerTheta.first; itheta <= extremaECalLastLayerTheta.second; itheta ++)
+        {
+          (*decoderECalBarrel)["theta"].set(cellIdECal, itheta);
+          double theta = ecalBarrelPhiThetaSegmentation->theta(cellIdECal);
+          double thetaMin = theta - 0.5 * eCalThetaSize;
+          double thetaMax = theta + 0.5 * eCalThetaSize;
+          int minThetaHCal = (thetaMin - hCalThetaOffset) / hCalThetaSize;
+          int maxThetaHCal = (thetaMax - hCalThetaOffset) / hCalThetaSize;
+          debug() << "ECAL cell: cellId = " << cellIdECal << " phi bin = " << iphi << " theta bin = " << itheta << endmsg;
+          debug() << "ECAL cell: phi = " << phi << " theta = " << theta << endmsg;
+          debug() << "ECAL cell: thetaMin = " << thetaMin << " thetaMax = " << thetaMax << endmsg;
+          debug() << "ECAL cell: phiMin = " << phiMin << " phiMax = " << phiMax << endmsg;
+          debug() << "ECAL cell: theta bin of neighbours in HCAL layer 0 = " << minThetaHCal << " - " << maxThetaHCal << endmsg;
+          debug() << "ECAL cell: phi bin of neighbours in HCAL layer 0 = " << minPhiHCal << " - " << maxPhiHCal << endmsg;
+          bool hasNeighbours = false;
+          for (int iphiHCal = minPhiHCal; iphiHCal <= maxPhiHCal; iphiHCal++)
+          {
+            int phiBinHCal = iphiHCal;
+            // bring phi bin in 0..nbins-1 range
+            if (phiBinHCal < 0)
+              phiBinHCal += hCalPhiBins;
+            if (phiBinHCal >= hCalPhiBins)
+              phiBinHCal -= hCalPhiBins;
+            if (phiBinHCal < extremaHCalFirstLayerPhi.first || phiBinHCal > extremaHCalFirstLayerPhi.second)
+            {
+              warning() << "phi bin " << phiBinHCal << " out of range, skipping" << endmsg;
+              continue;
+            }
+            (*decoderHCalBarrel)["phi"].set(cellIdHCal, phiBinHCal);
+            for (int ithetaHCal = minThetaHCal; ithetaHCal <= maxThetaHCal; ithetaHCal++)
+            {
+              if (ithetaHCal < extremaHCalFirstLayerTheta.first || ithetaHCal > extremaHCalFirstLayerTheta.second)
+              {
+                warning() << "theta bin " << ithetaHCal << " out of range, skipping" << endmsg;
+                continue;
+              }
+              (*decoderHCalBarrel)["theta"].set(cellIdHCal, ithetaHCal);
+              debug() << "ECAL cell: neighbour in HCAL has cellID = " << cellIdHCal << endmsg;
+              map.find((uint64_t)cellIdECal)->second.push_back((uint64_t)cellIdHCal);
+              hasNeighbours = true;
+            }
+          }
+          if (hasNeighbours)
+            count++;
+        }
+      }
+    }
+
+    // Loop over HCAL segmentation cells to find neighbours in ECAL
+    // Loop on phi
+    for (int iphi = extremaHCalFirstLayerPhi.first; iphi <= extremaHCalFirstLayerPhi.second; iphi++)
+    {
+      // determine phi extent of HCAL cell
+      (*decoderHCalBarrel)["phi"].set(cellIdHCal, iphi);
+      double phi = hcalBarrelSegmentation->phi(cellIdHCal);
+      double phiMin = phi - 0.5 * hCalPhiSize;
+      double phiMax = phi + 0.5 * hCalPhiSize;
+
+      // find ECAL barrel modules corresponding to this phi range
+      int minModuleECal(-1), maxModuleECal(-1), minPhiECal(-1), maxPhiECal(-1);
+      if (ecalBarrelModuleThetaSegmentation)
+      {
+        minModuleECal = (int)((phiMin - eCalPhiOffset) / eCalPhiSize);
+        if (minModuleECal < 0)
+          minModuleECal += eCalModules; // need module to be >=0 so that subtracting module%mergedModules gives the correct result
+        minModuleECal -= minModuleECal % ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
+        maxModuleECal = (int)((phiMax - eCalPhiOffset) / eCalPhiSize);
+        if (maxModuleECal < 0)
+          maxModuleECal += eCalModules;
+        maxModuleECal -= maxModuleECal % ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
+        // due to ciclic behaviour of modules, one could have e.g min = 1534 and max = 2 (for N=1536)
+        if (maxModuleECal < minModuleECal)
+          maxModuleECal += eCalModules;
+      }
+      else
+      {
+        minPhiECal = (int)((phiMin - eCalPhiOffset) / eCalPhiSize);
+        maxPhiECal = (int)((phiMax - eCalPhiOffset) / eCalPhiSize);
+      }
+
+      // Loop on theta
+      for (int itheta = extremaHCalFirstLayerTheta.first; itheta <= extremaHCalFirstLayerTheta.second; itheta++)
+      {
+        // determine theta extent of HCAL cell
+        (*decoderHCalBarrel)["theta"].set(cellIdHCal, itheta);
+        double theta = hcalBarrelSegmentation->theta(cellIdHCal);
+        double thetaMin = theta - 0.5 * hCalThetaSize;
+        double thetaMax = theta + 0.5 * hCalThetaSize;
+        // find ECAL barrel theta bins corresponding to this theta range
+        int minThetaECal = (thetaMin - eCalThetaOffset) / eCalThetaSize;
+        int maxThetaECal = (thetaMax - eCalThetaOffset) / eCalThetaSize;
+        if (ecalBarrelModuleThetaSegmentation)
+        {
+          minThetaECal -= minThetaECal % ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer);
+          maxThetaECal -= maxThetaECal % ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer);
+        }
+        // print out some debug info
+        debug() << "HCAL cell: cellId = " << cellIdHCal << " phi bin = " << iphi << " theta bin = " << itheta << endmsg;
+        debug() << "HCAL cell: phi = " << phi << " theta = " << theta << endmsg;
+        debug() << "HCAL cell: thetaMin = " << thetaMin << " thetaMax = " << thetaMax << endmsg;
+        debug() << "HCAL cell: phiMin = " << phiMin << " phiMax = " << phiMax << endmsg;
+        debug() << "HCAL cell: theta bin of neighbours in ECAL layer max = " << minThetaECal << " - " << maxThetaECal << endmsg;
+        if (ecalBarrelModuleThetaSegmentation)
+        {
+          debug() << "HCAL cell: module of neighbours in ECAL layer max = " << minModuleECal << " - " << maxModuleECal << endmsg;
+        }
+        else
+        {
+          debug() << "HCAL cell: phi bin of neighbours in ECAL layer max = " << minPhiECal << " - " << maxPhiECal << endmsg;
+        }
+
+        // add the neighbours if within the acceptance of the layer
+        bool hasNeighbours = false;
+        int thetaStep = (ecalBarrelModuleThetaSegmentation) ? ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer) : 1;
+        for (int ithetaECal = minThetaECal; ithetaECal <= maxThetaECal; ithetaECal += thetaStep)
+        {
+          if (ithetaECal < extremaECalLastLayerTheta.first || ithetaECal > extremaECalLastLayerTheta.second)
+          {
+            debug() << "theta bin " << ithetaECal << " out of range, skipping" << endmsg;
+            continue;
+          }
+          (*decoderECalBarrel)["theta"].set(cellIdECal, ithetaECal);
+          if (ecalBarrelModuleThetaSegmentation)
+          {
+            for (int iModule = minModuleECal; iModule <= maxModuleECal; iModule += ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer))
+            {
+              int module = iModule;
+              if (module < 0)
+                module += eCalModules;
+              if (module >= eCalModules)
+                module -= eCalModules;
+              if (module < extremaECalLastLayerModule.first || module > extremaECalLastLayerModule.second)
+              {
+                warning() << "module " << module << " out of range, skipping" << endmsg;
+                continue;
+              }
+              (*decoderECalBarrel)["module"].set(cellIdECal, module);
+              debug() << "HCAL cell: neighbour in ECAL has cellID = " << cellIdECal << endmsg;
+              map.find((uint64_t)cellIdHCal)->second.push_back((uint64_t)cellIdECal);
+              hasNeighbours = true;
+            }
+          }
+          else
+          {
+            for (int iphiECal = minPhiECal; iphiECal <= maxPhiECal; iphiECal++)
+            {
+              int phiBinECal = iphiECal;
+              // bring phi bin in 0..nbins-1 range
+              if (phiBinECal < 0)
+                phiBinECal += eCalPhiBins;
+              if (phiBinECal >= eCalPhiBins)
+                phiBinECal -= eCalPhiBins;
+              if (phiBinECal < extremaECalLastLayerPhi.first || phiBinECal > extremaECalLastLayerPhi.second)
+              {
+                warning() << "phi bin " << phiBinECal << " out of range, skipping" << endmsg;
+                continue;
+              }
+              (*decoderECalBarrel)["phi"].set(cellIdECal, phiBinECal);
+              debug() << "HCAL cell: neighbour in ECAL has cellID = " << cellIdECal << endmsg;
+              map.find((uint64_t)cellIdHCal)->second.push_back((uint64_t)cellIdECal);
+              hasNeighbours = true;
+            }
+          }
+          if (hasNeighbours)
+            count++;
+        }
+      }
+    }
   }
   // end of connectBarrels
 

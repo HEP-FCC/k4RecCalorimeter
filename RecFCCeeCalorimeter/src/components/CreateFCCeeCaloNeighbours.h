@@ -50,23 +50,24 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
 
-  /// Names of the detector readout for volumes with theta-module segmentation
-  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNames", {"ECalBarrelModuleThetaMerged"}};
+  /// Names of the detector readout for the volumes
+  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNames", {"ECalBarrelModuleThetaMerged", "BarHCal_Readout_phitheta"}};
   /// Name of the fields describing the segmented volume
-  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system"}};
+  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system", "system"}};
   /// Values of the fields describing the segmented volume
-  Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {5}};
-  /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module"/"phi", "theta"
-  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer"}};
-  /// Number of layers in the segmented volume
-  Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {12}};
-  // Radii of layers in the segmented volume
-  Gaudi::Property<std::vector<double>> m_activeVolumesTheta{this, "activeVolumesTheta"};
-  /// Whether to create the geant4 geometry or not
+  Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {4, 8}};
+  /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module" or "phi", "theta"
+  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer", "layer"}};
+  /// Number of layers in the segmented volumes
+  Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {12, 13}};
+  // Theta ranges of layers in the segmented volumes
+  Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
+  /// Whether to consider diagonal cells as neighbours or not
   Gaudi::Property<bool> m_includeDiagonalCells{this, "includeDiagonalCells", false, "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
-  
-  /// Name of output file
-  std::string m_outputFileName;
+
+  // System ID of ECAL and HCAL barrels
+  Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
+  Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
 
   // For combination of barrels: flag if ECal and HCal barrels should be merged
   Gaudi::Property<bool> m_connectBarrels{this, "connectBarrels", true};
@@ -78,6 +79,9 @@ private:
   Gaudi::Property<double> m_hCalRinner{this, "hCalRinner", 2850};
   // For combination of barrels: offset of HCal modules in phi (lower edge)
   Gaudi::Property<double> m_hCalPhiOffset{this, "hCalPhiOffset"};
+
+  /// Name of output file
+  std::string m_outputFileName;
 };
 
 #endif /* RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H */
