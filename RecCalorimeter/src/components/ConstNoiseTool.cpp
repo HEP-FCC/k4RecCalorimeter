@@ -34,12 +34,12 @@ StatusCode ConstNoiseTool::initialize() {
   m_systemNoiseConstMap.emplace(11, m_HCalFwdThreshold );
 
   m_systemNoiseOffsetMap.emplace(5, 0. );
-  m_systemNoiseOffsetMap.emplace(6, 0.  );
+  m_systemNoiseOffsetMap.emplace(6, 0. );
   m_systemNoiseOffsetMap.emplace(7, 0. );
-  m_systemNoiseOffsetMap.emplace(8, 0.  );
-  m_systemNoiseOffsetMap.emplace(9, 0.  );
-  m_systemNoiseOffsetMap.emplace(10,0.  );
-  m_systemNoiseOffsetMap.emplace(11,0.  );
+  m_systemNoiseOffsetMap.emplace(8, 0. );
+  m_systemNoiseOffsetMap.emplace(9, 0. );
+  m_systemNoiseOffsetMap.emplace(10,0. );
+  m_systemNoiseOffsetMap.emplace(11,0. );
 
   // Get GeoSvc
   m_geoSvc = service("GeoSvc");
@@ -67,10 +67,10 @@ double ConstNoiseTool::getNoiseConstantPerCell(uint64_t aCellId) {
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, "system");
   // cell noise in system
-  if (m_systemNoiseConstMap[cellSystem])
+  if (m_systemNoiseConstMap.count(cellSystem))
     Noise = m_systemNoiseConstMap[cellSystem];
   else
-    warning() << "No noise constants set for this subsystem! Noise of cell set to 0. " << endmsg;
+    warning() << "No noise constant set for subsystem " << cellSystem << "! Noise constant of cell set to 0. " << endmsg;
   return Noise;
 }
 
@@ -81,9 +81,9 @@ double ConstNoiseTool::getNoiseOffsetPerCell(uint64_t aCellId) {
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, "system");
   // cell noise in system
-  if (m_systemNoiseOffsetMap[cellSystem])
+  if (m_systemNoiseOffsetMap.count(cellSystem))
     Noise = m_systemNoiseOffsetMap[cellSystem];
   else
-    warning() << "No noise constants set for this subsystem! Noise of cell set to 0. " << endmsg;
+    warning() << "No noise offset set for subsystem " << cellSystem << "! Noise offset of cell set to 0. " << endmsg;
   return Noise;
 }
