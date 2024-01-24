@@ -14,16 +14,6 @@ namespace edm4hep {
 class ClusterCollection;
 }
 
-// Cluster
-struct cluster {
-  float transEnergy;
-  float theta;
-  float phi;
-  float X;
-  float Y;
-  float Z;
-};
-
 /** @class CreateCaloClustersSlidingWindowFCCee
  *
  *  Algorithm for creating calorimeter clusters from cells.
@@ -79,6 +69,16 @@ public:
   StatusCode finalize();
 
 private:
+  // Cluster
+  struct cluster {
+    float transEnergy;
+    float theta;
+    float phi;
+    float X;
+    float Y;
+    float Z;
+  };
+
   /**  Correct way to access the neighbour of the phi tower, taking into account the full coverage in phi.
    *   Full coverage means that first tower in phi, with ID = 0 is a direct neighbour
    *   of the last tower in phi with ID = m_nPhiTower - 1).
