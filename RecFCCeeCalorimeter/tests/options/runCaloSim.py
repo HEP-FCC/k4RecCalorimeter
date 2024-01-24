@@ -46,9 +46,9 @@ ApplicationMgr().TopAlg += [hepmc_converter]
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc")
 # if FCC_DETECTORS is empty, this should use relative path to working directory
-path_to_detectors = os.environ.get("FCCDETECTORS", "")
+path_to_detectors = os.environ.get("K4GEO", "")
 detectors = [
-    'Detector/DetFCCeeIDEA-LAr/compact/FCCee_DectMaster.xml',
+        'FCCee/ALLEGRO/compact/ALLEGRO_o1_v01/ALLEGRO_o1_v01.xml'
 ]
 # prefix all xmls with path_to_detectors
 for det in detectors:
