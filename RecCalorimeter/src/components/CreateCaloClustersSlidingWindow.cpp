@@ -25,9 +25,7 @@ StatusCode CreateCaloClustersSlidingWindow::initialize() {
     return StatusCode::FAILURE;
   }
   // Get number of calorimeter towers
-  auto towerMapSize = m_towerTool->towersNumber();
-  m_nEtaTower = towerMapSize.eta;
-  m_nPhiTower = towerMapSize.phi;
+  m_towerTool->towersNumber(m_nEtaTower, m_nPhiTower);
   debug() << "Number of calorimeter towers (eta x phi) : " << m_nEtaTower << " x " << m_nPhiTower << endmsg;
   // make sure that the number of towers in eta is larger than the seeding sliding window
   if (m_nEtaTower < m_nEtaWindow) {
