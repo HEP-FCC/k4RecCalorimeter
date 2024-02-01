@@ -30,7 +30,7 @@ StatusCode CaloTowerToolFCCee::initialize() {
   if (GaudiTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
-  
+ 
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
@@ -105,9 +105,9 @@ StatusCode CaloTowerToolFCCee::initialize() {
 StatusCode CaloTowerToolFCCee::finalize() { 
   for (auto& towerInMap : m_cellsInTowers) {
     towerInMap.second.clear();
-    }
-  return GaudiTool::finalize();
   }
+  return GaudiTool::finalize();
+}
 
 std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {
   double phiMax = -1;
@@ -146,8 +146,7 @@ std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(dd4hep::DD
   return std::make_pair(phiMax, thetaMax);
 }
 
-tower CaloTowerToolFCCee::towersNumber() {
-
+void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {
   std::vector<double> listPhiMax;
   std::vector<double> listThetaMax;
   listPhiMax.reserve(7);
@@ -192,10 +191,8 @@ tower CaloTowerToolFCCee::towersNumber() {
   debug() << "Towers: phiMax " << m_phiMax << ", deltaPhiTower " << m_deltaPhiTower << ", nPhiTower " << m_nPhiTower
           << endmsg;
 
-  tower total;
-  total.theta = m_nThetaTower;
-  total.phi = m_nPhiTower;
-  return total;
+  nTheta = m_nThetaTower;
+  nPhi = m_nPhiTower;
 }
 
 uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells) {

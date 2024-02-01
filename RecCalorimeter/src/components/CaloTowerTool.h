@@ -65,9 +65,10 @@ public:
    * deltaPhiTower').
    *   Number of towers in eta is calculated from maximum detector eta ('\b etaMax`) and the size of tower in eta ('\b
    * deltaEtaTower').
-   *   @return Array containing number of towers in eta and phi.
+   *   @param[out] nEta Number of towers in eta.
+   *   @param[out] nPhi Number of towers in phi.
    */
-  virtual tower towersNumber() final;
+  virtual void towersNumber(int& nEta, int& nPhi) final;
   /**  Build calorimeter towers.
    *   Tower is defined by a segment in eta and phi, with the energy from all layers (no r segmentation).
    *   @param[out] aTowers Calorimeter towers.

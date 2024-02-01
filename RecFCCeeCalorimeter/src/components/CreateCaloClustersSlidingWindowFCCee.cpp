@@ -25,9 +25,8 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
     return StatusCode::FAILURE;
   }
   // Get number of calorimeter towers
-  auto towerMapSize = m_towerTool->towersNumber();
-  m_nThetaTower = towerMapSize.theta;
-  m_nPhiTower = towerMapSize.phi;
+  m_towerTool->towersNumber(m_nThetaTower, m_nPhiTower);
+
   debug() << "Number of calorimeter towers (theta x phi) : " << m_nThetaTower << " x " << m_nPhiTower << endmsg;
   // make sure that the number of towers in theta is larger than the seeding sliding window
   if (m_nThetaTower < m_nThetaWindow) {

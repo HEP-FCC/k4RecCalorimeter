@@ -56,6 +56,15 @@ public:
    *   @return status code
    */
   virtual StatusCode finalize() final;
+  /**  Find number of calorimeter towers.
+   *   Number of towers in phi is calculated from full azimuthal angle (2 pi) and the size of tower in phi ('\b
+   * deltaPhiTower').
+   *   Number of towers in theta is calculated from maximum detector theta ('\b thetaMax`) and the size of tower in theta ('\b
+   * deltaThetaTower').
+   *   @param[out] nTheta Number of towers in theta.
+   *   @param[out] nPhi Number of towers in phi.
+   */
+  virtual void towersNumber(int& nTheta, int& nPhi) final;
   /**  Build calorimeter towers.
    *   Tower is defined by a segment in theta and phi, with the energy from all layers (no r segmentation).
    *   @param[out] aTowers Calorimeter towers.

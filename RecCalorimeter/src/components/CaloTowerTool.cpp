@@ -30,7 +30,7 @@ StatusCode CaloTowerTool::initialize() {
   if (GaudiTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
-  
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
@@ -147,7 +147,7 @@ std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegment
   return std::make_pair(phiMax, etaMax);
 }
 
-tower CaloTowerTool::towersNumber() {
+void CaloTowerTool::towersNumber(int& nEta, int& nPhi) {
 
   std::vector<double> listPhiMax;
   std::vector<double> listEtaMax;
@@ -193,10 +193,8 @@ tower CaloTowerTool::towersNumber() {
   debug() << "Towers: phiMax " << m_phiMax << ", deltaPhiTower " << m_deltaPhiTower << ", nPhiTower " << m_nPhiTower
           << endmsg;
 
-  tower total;
-  total.eta = m_nEtaTower;
-  total.phi = m_nPhiTower;
-  return total;
+  nEta = m_nEtaTower;
+  nPhi = m_nPhiTower;
 }
 
 uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells) {
