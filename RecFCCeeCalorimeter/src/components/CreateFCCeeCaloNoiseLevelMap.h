@@ -40,9 +40,11 @@ private:
   /// ideally could replace with vector of handles (so that we can also have ecal endcap and so on)
   /// Handle for the cells noise tool in ECal
   ToolHandle<INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
-  Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 5};
   /// Handle for the cells noise tool in HCal
   ToolHandle<INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+
+  // System ID of ECAL and HCAL barrels
+  Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
   Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
 
   /// Names of the detector readout for the volumes
@@ -52,11 +54,11 @@ private:
   /// Values of the fields describing the segmented volume
   Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {4, 8}};
   /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module" or "phi", "theta"
-  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer"}};
-  /// Number of layers in the segmented volume
+  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer", "layer"}};
+  /// Number of layers in the segmented volumes
   Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {12, 13}};
-  // Radii of layers in the segmented volume
-  Gaudi::Property<std::vector<double>> m_activeVolumesTheta{this, "activeVolumesTheta"};
+  // Theta ranges of layers in the segmented volumes (if needed)
+  Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
 
   /// Name of output file
   std::string m_outputFileName;
