@@ -18,6 +18,7 @@ source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
 
 ## Building
 
+After fetching the repository, do
 ```
 source /cvmfs/sw.hsf.org/key4hep/setup.sh
 mkdir build install
