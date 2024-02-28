@@ -101,6 +101,8 @@ StatusCode CalibrateCaloClusters::initialize()
 
 StatusCode CalibrateCaloClusters::execute(const EventContext& evtCtx) const
 {
+  (void) evtCtx;  // event context not used
+
   verbose() << "-------------------------------------------" << endmsg;
 
   // Get the input collection with clusters
@@ -241,7 +243,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   // we will calibrate once at a time
   if (m_input_shapes.size() != 2 ||
       m_output_shapes.size() != 2 ||
-      m_input_shapes[1] != (m_numLayersTotal + 1) ||
+      m_input_shapes[1] != ((int)(m_numLayersTotal + 1)) ||
       m_output_shapes[1] != 1)
   {
     error() << "The input or output shapes in the calibration files do not match the expected architecture" << endmsg;
