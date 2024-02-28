@@ -28,7 +28,7 @@ Ort::Value vec_to_tensor(std::vector<T> &data, const std::vector<std::int64_t> &
 
 CalibrateCaloClusters::CalibrateCaloClusters(const std::string &name,
                                              ISvcLocator *svcLoc)
-    : GaudiAlgorithm(name, svcLoc),
+    : Gaudi::Algorithm(name, svcLoc),
       m_geoSvc("GeoSvc", "CalibrateCaloClusters")
 {
   declareProperty("inClusters", m_inClusters,
@@ -41,7 +41,7 @@ StatusCode CalibrateCaloClusters::initialize()
 {
   // Initialize base class
   {
-    StatusCode sc = GaudiAlgorithm::initialize();
+    StatusCode sc = Gaudi::Algorithm::initialize();
     if (sc.isFailure())
     {
       return sc;
@@ -49,17 +49,10 @@ StatusCode CalibrateCaloClusters::initialize()
   }
 
   // Check if readouts exist
+  for (size_t i = 0; i < m_readoutNames.size(); ++i)
   {
-    bool readoutMissing = false;
-    for (size_t i = 0; i < m_readoutNames.size(); ++i)
-    {
-      auto readouts = m_geoSvc->getDetector()->readouts();
-      if (readouts.find(m_readoutNames.value().at(i)) == readouts.end())
-      {
-        readoutMissing = true;
-      }
-    }
-    if (readoutMissing)
+    auto readouts = m_geoSvc->getDetector()->readouts();
+    if (readouts.find(m_readoutNames.value().at(i)) == readouts.end())
     {
       error() << "Missing readout, exiting!" << endmsg;
       return StatusCode::FAILURE;
@@ -106,7 +99,7 @@ StatusCode CalibrateCaloClusters::initialize()
   return StatusCode::SUCCESS;
 }
 
-StatusCode CalibrateCaloClusters::execute()
+StatusCode CalibrateCaloClusters::execute(const EventContext& evtCtx) const
 {
   verbose() << "-------------------------------------------" << endmsg;
 
@@ -140,23 +133,22 @@ StatusCode CalibrateCaloClusters::execute()
 
 StatusCode CalibrateCaloClusters::finalize()
 {
-  if (ortSession)
-    delete ortSession;
-  if (ortEnv)
-    delete ortEnv;
+  if (m_ortSession)
+    delete m_ortSession;
+  if (m_ortEnv)
+    delete m_ortEnv;
 
-  return GaudiAlgorithm::finalize();
+  return Gaudi::Algorithm::finalize();
 }
 
 edm4hep::ClusterCollection *CalibrateCaloClusters::initializeOutputClusters(
-    const edm4hep::ClusterCollection *inClusters)
+    const edm4hep::ClusterCollection *inClusters) const
 {
   edm4hep::ClusterCollection *outClusters = m_outClusters.createAndPut();
 
   for (auto const &inCluster : *inClusters)
   {
     auto outCluster = inCluster.clone();
-    // verbose() << "Cluster energy before calibration:" << outCluster.getEnergy() << endmsg;
     outClusters->push_back(outCluster);
   }
 
@@ -170,31 +162,33 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   MSG::Level outputLevel = this->msgStream().level();
   switch (outputLevel)
   {
-  case MSG::Level::FATAL: // 6
+  case MSG::Level::FATAL:                   // 6
     loggingLevel = ORT_LOGGING_LEVEL_FATAL; // 4
     break;
-  case MSG::Level::ERROR: // 5
+  case MSG::Level::ERROR:                   // 5
     loggingLevel = ORT_LOGGING_LEVEL_ERROR; // 3
     break;
-  case MSG::Level::WARNING: // 4
+  case MSG::Level::WARNING:                   // 4
     loggingLevel = ORT_LOGGING_LEVEL_WARNING; // 2
     break;
-  case MSG::Level::INFO: // 3
+  case MSG::Level::INFO:                      // 3
     loggingLevel = ORT_LOGGING_LEVEL_WARNING; // 2 (ORT_LOGGING_LEVEL_INFO too verbose..)
     break;
-  case MSG::Level::DEBUG: // 2
+  case MSG::Level::DEBUG:                  // 2
     loggingLevel = ORT_LOGGING_LEVEL_INFO; // 1
     break;
-  case MSG::Level::VERBOSE: // 1
+  case MSG::Level::VERBOSE:                   // 1
     loggingLevel = ORT_LOGGING_LEVEL_VERBOSE; // 0
+    break;
+  default:
     break;
   }
   try
   {
-    ortEnv = new Ort::Env(loggingLevel, "ONNX runtime environment");
+    m_ortEnv = new Ort::Env(loggingLevel, "ONNX runtime environment");
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
-    ortSession = new Ort::Experimental::Session(*ortEnv, const_cast<std::string &>(calibrationFile), session_options);
+    m_ortSession = new Ort::Experimental::Session(*m_ortEnv, const_cast<std::string &>(calibrationFile), session_options);
   }
   catch (const Ort::Exception &exception)
   {
@@ -205,21 +199,20 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   // print name/shape of inputs
   // use default allocator (CPU)
   Ort::AllocatorWithDefaultOptions allocator;
-  debug() << "Input Node Name/Shape (" << input_names.size() << "):" << endmsg;
-  for (std::size_t i = 0; i < ortSession->GetInputCount(); i++)
+  debug() << "Input Node Name/Shape (" << m_input_names.size() << "):" << endmsg;
+  for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
   {
-    // input_names.emplace_back(ortSession->GetInputNameAllocated(i, allocator).get());
-    input_names.emplace_back(ortSession->GetInputName(i, allocator));
-    input_shapes = ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
-    debug() << "\t" << input_names.at(i) << " : ";
-    for (std::size_t k = 0; k < input_shapes.size() - 1; k++)
+    m_input_names.emplace_back(m_ortSession->GetInputName(i, allocator));
+    m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+    debug() << "\t" << m_input_names.at(i) << " : ";
+    for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
     {
-      debug() << input_shapes[k] << "x";
+      debug() << m_input_shapes[k] << "x";
     }
-    debug() << input_shapes[input_shapes.size() - 1] << endmsg;
+    debug() << m_input_shapes[m_input_shapes.size() - 1] << endmsg;
   }
   // some models might have negative shape values to indicate dynamic shape, e.g., for variable batch size.
-  for (auto &s : input_shapes)
+  for (auto &s : m_input_shapes)
   {
     if (s < 0)
     {
@@ -228,19 +221,17 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   }
 
   // print name/shape of outputs
-  // std::vector<std::string> output_names;
-  debug() << "Output Node Name/Shape (" << output_names.size() << "):" << endmsg;
-  for (std::size_t i = 0; i < ortSession->GetOutputCount(); i++)
+  debug() << "Output Node Name/Shape (" << m_output_names.size() << "):" << endmsg;
+  for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
   {
-    // output_names.emplace_back(ortSession->GetOutputNameAllocated(i, allocator).get());
-    output_names.emplace_back(ortSession->GetOutputName(i, allocator));
-    output_shapes = ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
-    debug() << "\t" << output_names.at(i) << " : ";
-    for (std::size_t k = 0; k < output_shapes.size() - 1; k++)
+    m_output_names.emplace_back(m_ortSession->GetOutputName(i, allocator));
+    m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+    debug() << "\t" << m_output_names.at(i) << " : ";
+    for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++)
     {
-      debug() << output_shapes[k] << "x";
+      debug() << m_output_shapes[k] << "x";
     }
-    debug() << output_shapes[output_shapes.size() - 1] << endmsg;
+    debug() << m_output_shapes[m_output_shapes.size() - 1] << endmsg;
   }
 
   // the output should be a single value (the correction)
@@ -248,10 +239,10 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   // the first dimension of the tensors are the number of clusters
   // to be calibrated simultaneously (-1 = dynamic)
   // we will calibrate once at a time
-  if (input_shapes.size() != 2 ||
-      output_shapes.size() != 2 ||
-      input_shapes[1] != (m_numLayersTotal + 1) ||
-      output_shapes[1] != 1)
+  if (m_input_shapes.size() != 2 ||
+      m_output_shapes.size() != 2 ||
+      m_input_shapes[1] != (m_numLayersTotal + 1) ||
+      m_output_shapes[1] != 1)
   {
     error() << "The input or output shapes in the calibration files do not match the expected architecture" << endmsg;
     return StatusCode::FAILURE;
@@ -261,7 +252,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
 }
 
 StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollection *inClusters,
-                                                    edm4hep::ClusterCollection *outClusters)
+                                                    edm4hep::ClusterCollection *outClusters) const
 {
 
   // this vector will contain the input features for the calibration
@@ -298,18 +289,18 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     float corr = 1.0;
     // Create a single Ort tensor
     std::vector<Ort::Value> input_tensors;
-    input_tensors.emplace_back(vec_to_tensor<float>(energiesInLayers, input_shapes));
+    input_tensors.emplace_back(vec_to_tensor<float>(energiesInLayers, m_input_shapes));
 
     // double-check the dimensions of the input tensor
-    // assert(input_tensors[0].IsTensor() && input_tensors[0].GetTensorTypeAndShapeInfo().GetShape() == input_shapes);
+    // assert(input_tensors[0].IsTensor() && input_tensors[0].GetTensorTypeAndShapeInfo().GetShape() == m_input_shapes);
 
     // pass data through model
     try
     {
-      std::vector<Ort::Value> output_tensors = ortSession->Run(input_names,
-                                                               input_tensors,
-                                                               output_names,
-                                                               Ort::RunOptions{nullptr});
+      std::vector<Ort::Value> output_tensors = m_ortSession->Run(m_input_names,
+                                                                 input_tensors,
+                                                                 m_output_names,
+                                                                 Ort::RunOptions{nullptr});
 
       // double-check the dimensions of the output tensors
       // NOTE: the number of output tensors is equal to the number of output nodes specifed in the Run() call
@@ -333,7 +324,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
 }
 
 void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
-                                                 std::vector<float> &energiesInLayer)
+                                                 std::vector<float> &energiesInLayer) const
 {
   // reset vector with energies per layer
   std::fill(energiesInLayer.begin(), energiesInLayer.end(), 0.0);

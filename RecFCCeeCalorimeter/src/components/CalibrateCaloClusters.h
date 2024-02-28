@@ -5,7 +5,7 @@
 #include "k4FWCore/DataHandle.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "GaudiKernel/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/MsgStream.h"
 class IGeoSvc;
@@ -34,16 +34,16 @@ namespace dd4hep {
  *  @author Giovanni Marchiori
  */
 
-class CalibrateCaloClusters : public GaudiAlgorithm {
+class CalibrateCaloClusters : public Gaudi::Algorithm {
 
 public:
   CalibrateCaloClusters(const std::string& name, ISvcLocator* svcLoc);
 
-  StatusCode initialize();
+  virtual StatusCode initialize();
 
-  StatusCode execute();
+  virtual StatusCode execute(const EventContext& evtCtx) const;
 
-  StatusCode finalize();
+  virtual StatusCode finalize();
 
 private:
   /**
@@ -53,7 +53,7 @@ private:
    *
    * @return                Pointer to the output cluster collection.
    */
-  edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters);
+  edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const;
 
   /**
    * Initialize vectors of upstream and downstream correction functions.
@@ -71,7 +71,7 @@ private:
    * @return                  Status code.
    */
   StatusCode calibrateClusters(const edm4hep::ClusterCollection* inClusters,
-                               edm4hep::ClusterCollection* outClusters);
+                               edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Get sum of energy from cells in each layer.
@@ -81,15 +81,15 @@ private:
    * @param[out] energiesInLayer  Reference to vector that will contain the energies
    */
   void calcEnergiesInLayers(edm4hep::Cluster cluster,
-                            std::vector<float>& energiesInLayer);
+                            std::vector<float>& energiesInLayer) const;
 
 
   /// Handle for input calorimeter clusters collection
-  DataHandle<edm4hep::ClusterCollection> m_inClusters {
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {
     "inClusters", Gaudi::DataHandle::Reader, this
   };
   /// Handle for corrected (output) calorimeter clusters collection
-  DataHandle<edm4hep::ClusterCollection> m_outClusters {
+  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters {
     "outClusters", Gaudi::DataHandle::Writer, this
   };
 
@@ -131,12 +131,12 @@ private:
 
   // the ONNX runtime session for applying the calibration,
   // the environment, and the input and output shapes and names
-  Ort::Experimental::Session* ortSession = nullptr;
-  Ort::Env* ortEnv = nullptr;
-  std::vector<std::int64_t> input_shapes;
-  std::vector<std::int64_t> output_shapes;
-  std::vector<std::string> input_names;
-  std::vector<std::string> output_names;
+  Ort::Experimental::Session* m_ortSession = nullptr;
+  Ort::Env* m_ortEnv = nullptr;
+  std::vector<std::int64_t> m_input_shapes;
+  std::vector<std::int64_t> m_output_shapes;
+  std::vector<std::string> m_input_names;
+  std::vector<std::string> m_output_names;
 };
 
 #endif /* RECFCCEECALORIMETER_CALIBRATECALOCLUSTERS_H */
