@@ -13,4 +13,4 @@ source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
 * k4FWCore
 * DD4hep
 * k4geo
-
+* ONNXRuntime

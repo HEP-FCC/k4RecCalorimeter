@@ -3,7 +3,6 @@
 ################################################################################
 
 # ONNX DEPENDENCIES
-find_package(ONNXRuntime REQUIRED)
 # includes
 include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
 # libs

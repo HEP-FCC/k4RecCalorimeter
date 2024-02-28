@@ -28,6 +28,7 @@ find_package(k4FWCore) # implicit: Gaudi
 find_package(EDM4HEP 0.10.1) # implicit: Podio
 find_package(DD4hep)
 find_package(k4geo)
+find_package(ONNXRuntime)
 #---------------------------------------------------------------
 
 
