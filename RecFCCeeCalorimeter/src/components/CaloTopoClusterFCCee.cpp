@@ -189,7 +189,9 @@ StatusCode CaloTopoClusterFCCee::execute() {
       else
         warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
 
-      newCell.setPosition(edm4hep::Vector3f(posCell.X(), posCell.Y(), posCell.Z()));
+      newCell.setPosition(edm4hep::Vector3f{posCell.X() / dd4hep::mm,
+                                            posCell.Y() / dd4hep::mm,
+                                            posCell.Z() / dd4hep::mm});
       posX += posCell.X() * newCell.getEnergy();
       posY += posCell.Y() * newCell.getEnergy();
       posZ += posCell.Z() * newCell.getEnergy();
@@ -207,7 +209,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
               info() << "Problem in erasing cell ID from map." << endmsg;
     }
     cluster.setEnergy(energy);
-    cluster.setPosition(edm4hep::Vector3f(posX / energy, posY / energy, posZ / energy));
+    cluster.setPosition(edm4hep::Vector3f{posX / energy, posY / energy, posZ / energy});
     // store deltaR of cluster in time for the moment..
     sumPhi = sumPhi / energy;
     sumTheta = sumTheta / energy;
