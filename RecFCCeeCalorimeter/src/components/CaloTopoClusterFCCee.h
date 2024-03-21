@@ -1,6 +1,11 @@
 #ifndef RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H
 #define RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H
 
+// std
+#include <cstdint>
+#include <unordered_map>
+#include <map>
+
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
@@ -13,12 +18,10 @@
 #include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/ITopoClusterInputTool.h"
 
-#include <unordered_map>
-#include <map>
-
+// k4SimGeant4
 class IGeoSvc;
 
-// datamodel
+// Datamodel
 namespace edm4hep {
 class CalorimeterHit;
 class CalorimeterHitCollection;
@@ -143,14 +146,11 @@ private:
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder_ecal;
   int m_index_layer_ecal;
 
-  std::unordered_map<uint64_t, double> m_allCells;
-
   // minimum noise and offset per barrel ECal layer
   // this serves as a very small cache for fast lookups and avoid looking into the huge map for most of the cells.
   std::vector<double> m_min_offset;
   std::vector<double> m_min_noise;
 
   void createCache(const std::unordered_map<uint64_t, double>& aCells);
-
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */

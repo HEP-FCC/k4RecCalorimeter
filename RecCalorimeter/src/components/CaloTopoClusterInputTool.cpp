@@ -42,9 +42,6 @@ StatusCode CaloTopoClusterInputTool::initialize() {
 StatusCode CaloTopoClusterInputTool::finalize() { return GaudiTool::finalize(); }
 
 StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, double>& aCells) {
-  for (auto& iCell : aCells) {
-    iCell.second = 0;
-  }
   uint totalNumberOfCells = 0;
 
   // 1. ECAL barrel
@@ -56,7 +53,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += ecalBarrelCells->size();
-  
+
   // 2. ECAL endcap calorimeter
   const edm4hep::CalorimeterHitCollection* ecalEndcapCells = m_ecalEndcapCells.get();
   debug() << "Input Ecal endcap cell collection size: " << ecalEndcapCells->size() << endmsg;
@@ -65,7 +62,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += ecalEndcapCells->size();
-    
+
   // 3. ECAL forward calorimeter
   const edm4hep::CalorimeterHitCollection* ecalFwdCells = m_ecalFwdCells.get();
   debug() << "Input Ecal forward cell collection size: " << ecalFwdCells->size() << endmsg;
@@ -74,7 +71,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += ecalFwdCells->size();
-  
+
   // 4. HCAL barrel
   const edm4hep::CalorimeterHitCollection* hcalBarrelCells = m_hcalBarrelCells.get();
   debug() << "Input hadronic barrel cell collection size: " << hcalBarrelCells->size() << endmsg;
@@ -83,7 +80,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalBarrelCells->size();
-  
+
   // 5. HCAL extended barrel
   const edm4hep::CalorimeterHitCollection* hcalExtBarrelCells = m_hcalExtBarrelCells.get();
   debug() << "Input hadronic extended barrel cell collection size: " << hcalExtBarrelCells->size() << endmsg;
@@ -92,8 +89,8 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalExtBarrelCells->size();
-  
-  // 6. HCAL endcap calorimeter                                                                                                              
+
+  // 6. HCAL endcap calorimeter
   const edm4hep::CalorimeterHitCollection* hcalEndcapCells = m_hcalEndcapCells.get();
   debug() << "Input Hcal endcap cell collection size: " << hcalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
@@ -101,7 +98,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalEndcapCells->size();
-  
+
   // 7. HCAL forward calorimeter
   const edm4hep::CalorimeterHitCollection* hcalFwdCells = m_hcalFwdCells.get();
   debug() << "Input Hcal forward cell collection size: " << hcalFwdCells->size() << endmsg;
@@ -110,7 +107,7 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
   }
   totalNumberOfCells += hcalFwdCells->size();
-  
+
   //if (totalNumberOfCells != aCells.size()){
   //error() << "Map size != total number of cells! " << endmsg;
   //return StatusCode::FAILURE;
