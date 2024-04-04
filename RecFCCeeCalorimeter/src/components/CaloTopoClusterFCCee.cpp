@@ -1,30 +1,26 @@
 #include "CaloTopoClusterFCCee.h"
 #include "../../../RecCalorimeter/src/components/NoiseCaloCellsFromFileTool.h"
 
+// std
+#include <algorithm>
+#include <memory>
+#include <numeric>
+#include <unordered_set>
+#include <vector>
+
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 
 // k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-// edm4hep
-#include "edm4hep/Cluster.h"
+// EDM4hep
 #include "edm4hep/ClusterCollection.h"
-#include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
-
-// std C++ includes
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <numeric>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 DECLARE_COMPONENT(CaloTopoClusterFCCee)
 
@@ -94,30 +90,32 @@ StatusCode CaloTopoClusterFCCee::initialize() {
 }
 
 StatusCode CaloTopoClusterFCCee::execute() {
+  // Create output collections
+  auto edmClusters = m_clusterCollection.createAndPut();
+  auto edmClusterCells = m_clusterCellsCollection.createAndPut();
 
-  //std::unordered_map<uint64_t, double> allCells; // transform it into a member variable to avoid
-  // recreating such a huge map at every event. Only update the energy values
+  std::unordered_map<uint64_t, double> allCells;
   std::vector<std::pair<uint64_t, double>> firstSeeds;
-  
-  // get input cell map from input tool
-  StatusCode sc_prepareCellMap = m_inputTool->cellIDMap(m_allCells);
+
+  // Get input cell map from the input tool
+  StatusCode sc_prepareCellMap = m_inputTool->cellIDMap(allCells);
   if (sc_prepareCellMap.isFailure()) {
     error() << "Unable to create cell map!" << endmsg;
     return StatusCode::FAILURE;
   }
-  debug() << "Active Cells          :    " << m_allCells.size() << endmsg;
-
-  // on first event, create cache
-  if (m_min_noise.empty()) {
-    createCache(m_allCells);
+  if (allCells.empty()) {
+    debug() << "No active cells, skipping event..." << endmsg;
+    return StatusCode::SUCCESS;
   }
- 
-  // Create output collections
-  auto edmClusters = m_clusterCollection.createAndPut();
-  std::unique_ptr<edm4hep::CalorimeterHitCollection> edmClusterCells(new edm4hep::CalorimeterHitCollection());
+  debug() << "Number of active cells: " << allCells.size() << endmsg;
+
+  // On first event, create cache
+  if (m_min_noise.empty()) {
+    createCache(allCells);
+  }
 
   // Finds seeds
-  CaloTopoClusterFCCee::findingSeeds(m_allCells, m_seedSigma, firstSeeds);
+  CaloTopoClusterFCCee::findingSeeds(allCells, m_seedSigma, firstSeeds);
   debug() << "Number of seeds found :    " << firstSeeds.size() << endmsg;
 
   // decending order of seeds
@@ -129,7 +127,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
   std::map<uint, std::vector<std::pair<uint64_t, int>>> preClusterCollection;
   StatusCode sc_buildProtoClusters = CaloTopoClusterFCCee::buildingProtoCluster(m_neighbourSigma,
                                                                                 m_lastNeighbourSigma,
-                                                                                firstSeeds, m_allCells,
+                                                                                firstSeeds, allCells,
                                                                                 preClusterCollection);
   if (sc_buildProtoClusters.isFailure()) {
     error() << "Unable to build the protoclusters!" << endmsg;
@@ -159,8 +157,8 @@ StatusCode CaloTopoClusterFCCee::execute() {
       dd4hep::DDSegmentation::CellID cID = pair.first;
       // auto cellID = pair.first;
       // get CalorimeterHit by cellID
-      auto newCell = edmClusterCells->create();
-      newCell.setEnergy(m_allCells[cID]);
+      auto newCell = edm4hep::MutableCalorimeterHit();
+      newCell.setEnergy(allCells[cID]);
       newCell.setCellID(cID);
       newCell.setType(pair.second);
       energy += newCell.getEnergy();
@@ -177,7 +175,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
           posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cID);
         else
           posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cID);
-      } 
+      }
       //else if (systemId == 9)  // HCAL EXT BARREL system id
       //  posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cID);
       //else if (systemId == 6)  // EMEC system id
@@ -191,7 +189,9 @@ StatusCode CaloTopoClusterFCCee::execute() {
       else
         warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
 
-      newCell.setPosition(edm4hep::Vector3f(posCell.X(), posCell.Y(), posCell.Z()));
+      newCell.setPosition(edm4hep::Vector3f{posCell.X() / dd4hep::mm,
+                                            posCell.Y() / dd4hep::mm,
+                                            posCell.Z() / dd4hep::mm});
       posX += posCell.X() * newCell.getEnergy();
       posY += posCell.Y() * newCell.getEnergy();
       posZ += posCell.Z() * newCell.getEnergy();
@@ -200,15 +200,18 @@ StatusCode CaloTopoClusterFCCee::execute() {
       vecEnergy.push_back(newCell.getEnergy());
       sumPhi += posCell.Phi() * newCell.getEnergy();
       sumTheta += posCell.Theta() * newCell.getEnergy();
-      
+
       cluster.addToHits(newCell);
-      auto er = m_allCells.erase(cID);
-      
+      edmClusterCells->push_back(newCell);
+      auto er = allCells.erase(cID);
+
       if (er!=1)
               info() << "Problem in erasing cell ID from map." << endmsg;
     }
     cluster.setEnergy(energy);
-    cluster.setPosition(edm4hep::Vector3f(posX / energy, posY / energy, posZ / energy));
+    cluster.setPosition(edm4hep::Vector3f{(posX / energy) / dd4hep::mm,
+                                          (posY / energy) / dd4hep::mm,
+                                          (posZ / energy) / dd4hep::mm});
     // store deltaR of cluster in time for the moment..
     sumPhi = sumPhi / energy;
     sumTheta = sumTheta / energy;
@@ -228,19 +231,17 @@ StatusCode CaloTopoClusterFCCee::execute() {
     posPhi.clear();
     posTheta.clear();
     vecEnergy.clear();
-
   }
-  
-  m_clusterCellsCollection.put(std::move(edmClusterCells));
+
   debug() << "Number of clusters with cells in E and HCal:        " << clusterWithMixedCells << endmsg;
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
-  debug() << "Leftover cells :                                    " << m_allCells.size() << endmsg;
+  debug() << "Leftover cells :                                    " << allCells.size() << endmsg;
   return StatusCode::SUCCESS;
 }
 
 void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, double>& aCells,
-                                   int aNumSigma,
-                                   std::vector<std::pair<uint64_t, double>>& aSeeds) {
+                                        int aNumSigma,
+                                        std::vector<std::pair<uint64_t, double>>& aSeeds) {
   for (const auto& cell : aCells) {
     // retrieve the noise const and offset assigned to cell
     // first try to use the cache
@@ -250,11 +251,11 @@ void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, doubl
 
       double min_threshold = m_min_offset[layer] + m_min_noise[layer] * aNumSigma;
 
-      debug() << "m_min_offset[layer]   = " << m_min_offset[layer] << endmsg;
-      debug() << "m_min_noise[layer]   = " << m_min_noise[layer] << endmsg;
-      debug() << "aNumSigma   = " << aNumSigma << endmsg;
-      debug() << "min_threshold   = " << min_threshold << endmsg;
-      debug() << "abs(cell.second)   = " << abs(cell.second) << endmsg;
+      verbose() << "m_min_offset[layer]   = " << m_min_offset[layer] << endmsg;
+      verbose() << "m_min_noise[layer]   = " << m_min_noise[layer] << endmsg;
+      verbose() << "aNumSigma   = " << aNumSigma << endmsg;
+      verbose() << "min_threshold   = " << min_threshold << endmsg;
+      verbose() << "abs(cell.second)   = " << abs(cell.second) << endmsg;
 
       if (abs(cell.second) < min_threshold) {
         // if we are below the minimum threshold for the full layer, no need to retrieve the exact value
@@ -456,14 +457,17 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
 
 StatusCode CaloTopoClusterFCCee::finalize() { return GaudiAlgorithm::finalize(); }
 
-void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double>& aCells) {
-  // cache the minimum offset and noise per layer for faster lookups down the chain.
 
+/**
+ * \brief Cache the minimum offset and noise per layer for faster lookups down
+ * the chain.
+ */
+void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double>& aCells) {
   std::unordered_map<int, std::vector<double>> offsets;
   std::unordered_map<int, std::vector<double>> noises;
   std::unordered_set<int> layers;
 
-  // fill all noises and offsets values
+  // Fill all noises and offsets values
   for (const auto& cell : aCells) {
     int system = m_decoder->get(cell.first, m_index_system);
     if (system == 4) { //ECal barrel
@@ -489,5 +493,4 @@ void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double
   for (auto& n : noises) {
     m_min_noise[n.first] = *std::min_element(n.second.begin(), n.second.end());
   }
-
 }
