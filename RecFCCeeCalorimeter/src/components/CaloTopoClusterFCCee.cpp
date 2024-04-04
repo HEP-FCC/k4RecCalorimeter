@@ -209,7 +209,9 @@ StatusCode CaloTopoClusterFCCee::execute() {
               info() << "Problem in erasing cell ID from map." << endmsg;
     }
     cluster.setEnergy(energy);
-    cluster.setPosition(edm4hep::Vector3f{posX / energy, posY / energy, posZ / energy});
+    cluster.setPosition(edm4hep::Vector3f{(posX / energy) / dd4hep::mm,
+                                          (posY / energy) / dd4hep::mm,
+                                          (posZ / energy) / dd4hep::mm});
     // store deltaR of cluster in time for the moment..
     sumPhi = sumPhi / energy;
     sumTheta = sumTheta / energy;
