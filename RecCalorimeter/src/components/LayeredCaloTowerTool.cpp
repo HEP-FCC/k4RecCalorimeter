@@ -81,7 +81,8 @@ void LayeredCaloTowerTool::towersNumber(int& nEta, int& nPhi) {
   nPhi = m_nPhiTower;
 }
 
-uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells) {
+uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers,
+                                       [[maybe_unused]] bool fillTowerCells) {
   // Get the input collection with cells from simulation + digitisation (after
   // calibration and with noise)
   const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
