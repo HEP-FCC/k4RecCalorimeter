@@ -78,7 +78,7 @@ StatusCode AugmentClustersFCCee::initialize()
     {
       if (layer > 0)
         showerShapeDecorations += ":";
-      showerShapeDecorations += TString::Form("f%s%d:theta%s%d:phi%s%d",
+      showerShapeDecorations += TString::Format("f%s%d:theta%s%d:phi%s%d",
         detector, layer, detector, layer, detector, layer);
     }
   }
