@@ -78,7 +78,7 @@ StatusCode AugmentClustersFCCee::initialize()
     {
       if (layer > 0)
         showerShapeDecorations += ":";
-      showerShapeDecorations += Form("f%s%d:theta%s%d:phi%s%d",
+      showerShapeDecorations += TString::Form("f%s%d:theta%s%d:phi%s%d",
         detector, layer, detector, layer, detector, layer);
     }
   }
@@ -92,10 +92,8 @@ StatusCode AugmentClustersFCCee::finalize()
   return Gaudi::Algorithm::finalize();
 }
 
-StatusCode AugmentClustersFCCee::execute(const EventContext &evtCtx) const
+StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext & evtCtx ) const
 {
-  (void)evtCtx; // event context not used
-
   // get the input collection with clusters
   const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
 
