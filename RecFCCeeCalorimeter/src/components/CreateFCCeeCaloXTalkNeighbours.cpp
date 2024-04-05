@@ -105,10 +105,10 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
       for (unsigned int ilayer = 0; ilayer < m_activeVolumesNumbersSegmented[iSys]; ilayer++)
       {
         dd4hep::DDSegmentation::CellID volumeId = 0;
-        (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
-        (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
-        (*decoder)["theta"].set(volumeId, 0);
-        (*decoder)["module"].set(volumeId, 0);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)["theta"].set(volumeId, 0);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)["module"].set(volumeId, 0);
         auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
 	
 	std::vector<std::pair<int, int>> extrema;
@@ -130,10 +130,10 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
       {
         dd4hep::DDSegmentation::CellID volumeId = 0;
         // Get VolumeID
-        (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
-        (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
-        (*decoder)["theta"].set(volumeId, 0);
-        (*decoder)["module"].set(volumeId, 0);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)["theta"].set(volumeId, 0);
+        static_cast<dd4hep::DDSegmentation::BitFieldCoder>(*decoder)["module"].set(volumeId, 0);
         // Loop over segmentation cells to find crosstalk neighbours in ECAL
         for (int imodule = extrema_layer[ilayer][1].first; imodule <= extrema_layer[ilayer][1].second; imodule += moduleThetaSegmentation->mergedModules(ilayer))
         {
