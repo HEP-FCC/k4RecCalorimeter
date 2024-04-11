@@ -68,21 +68,18 @@ StatusCode AugmentClustersFCCee::initialize()
 
   // initialise the list of metadata for the clusters
   // append to the metadata of the input clusters
-  std::string showerShapeDecorations = m_inShapeParameterHandle.get();
-  if (showerShapeDecorations != "")
-    showerShapeDecorations += ":";
+  std::vector<std::string> showerShapeDecorations = m_inShapeParameterHandle.get();
   for (size_t k = 0; k < m_detectorNames.size(); k++)
   {
     const char *detector = m_detectorNames[k].c_str();
     for (unsigned layer = 0; layer < m_numLayers[k]; layer++)
     {
-      if (layer > 0)
-        showerShapeDecorations += ":";
-      showerShapeDecorations += TString::Format("f%s%d:theta%s%d:phi%s%d",
-        detector, layer, detector, layer, detector, layer);
+      showerShapeDecorations.push_back(Form("f%s%d", detector, layer));
+      showerShapeDecorations.push_back(Form("theta%s%d", detector, layer));
+      showerShapeDecorations.push_back(Form("phi%s%d", detector, layer));
     }
   }
-  m_showerShapeHandle.put(showerShapeDecorations.c_str());
+  m_showerShapeHandle.put(showerShapeDecorations);
 
   return StatusCode::SUCCESS;
 }
@@ -92,8 +89,10 @@ StatusCode AugmentClustersFCCee::finalize()
   return Gaudi::Algorithm::finalize();
 }
 
-StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext & evtCtx ) const
+StatusCode AugmentClustersFCCee::execute(const EventContext &evtCtx) const
 {
+  (void)evtCtx; // event context not used
+
   // get the input collection with clusters
   const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
 

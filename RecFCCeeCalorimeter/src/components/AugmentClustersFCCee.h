@@ -48,16 +48,17 @@ private:
   /// Handle for output clusters
   mutable DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for the cluster shape metadata to read and to write
-  MetaDataHandle<std::string> m_inShapeParameterHandle{m_inClusters,
-                                                       edm4hep::shapeParameterNames,
-                                                       Gaudi::DataHandle::Reader};
-  MetaDataHandle<std::string> m_showerShapeHandle{m_outClusters,
-                                                  edm4hep::shapeParameterNames,
-                                                  Gaudi::DataHandle::Writer};
+  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
+    m_inClusters,
+    edm4hep::shapeParameterNames,
+    Gaudi::DataHandle::Reader};
+  MetaDataHandle<std::vector<std::string>> m_showerShapeHandle{
+    m_outClusters,
+    edm4hep::shapeParameterNames,
+    Gaudi::DataHandle::Writer};
+
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
-  /// General decoder to decode the information from the cellID
-  // dd4hep::DDSegmentation::BitFieldCoder *m_decoder;
   /// ID of the detectors
   Gaudi::Property<std::vector<int>> m_systemIDs{
       this, "systemIDs", {4}, "IDs of systems"};
