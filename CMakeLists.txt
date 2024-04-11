@@ -1,74 +1,66 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
+################################################################################
+# Package: RecFCCeeCalorimeter
+################################################################################
 
-project(k4RecCalorimeter)
+# ONNX DEPENDENCIES
+# includes
+include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
+# libs
+link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
 
-include(GNUInstallDirs)
-include(CTest)
-
-# Set default for install prefix
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/InstallArea/ CACHE PATH
-    "Install path prefix, prepended onto install directories." FORCE )
-endif()
-
-# Set up C++ Standard
-# ``-DCMAKE_CXX_STANDARD=<standard>`` when invoking CMake
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "")
-if(NOT CMAKE_CXX_STANDARD MATCHES "17|20")
-  message(FATAL_ERROR "Unsupported C++ standard: ${CMAKE_CXX_STANDARD}")
-endif()
-
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-
-
-#---------------------------------------------------------------
-find_package(ROOT COMPONENTS RIO Tree)
-find_package(Gaudi)
-find_package(k4FWCore) # implicit: Gaudi
-find_package(EDM4HEP 0.10.1) # implicit: Podio
-find_package(DD4hep)
-find_package(k4geo)
-find_package(ONNXRuntime)
-#---------------------------------------------------------------
-
-
-#--- The genConf directory has been renamed to genConfDir in Gaudi 35r1
-#--- See https://gitlab.cern.ch/gaudi/Gaudi/-/merge_requests/1158
-set(GAUDI_GENCONF_DIR "genConfDir")
-if (${Gaudi_VERSION} VERSION_LESS 35.1)
-  set(GAUDI_GENCONF_DIR "genConf")
-endif()
-
-function(set_test_env _testname)
-  set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
-               LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$<TARGET_FILE_DIR:ROOT::Core>:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>:$<TARGET_FILE_DIR:EDM4HEP::edm4hep>:$<TARGET_FILE_DIR:podio::podio>:$ENV{LD_LIBRARY_PATH})
-
-  set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
-               PYTHONPATH=${CMAKE_BINARY_DIR}/RecCalorimeter/${GAUDI_GENCONF_DIR}:${CMAKE_BINARY_DIR}/RecFCCeeCalorimeter/${GAUDI_GENCONF_DIR}:${CMAKE_BINARY_DIR}/RecFCChhCalorimeter/${GAUDI_GENCONF_DIR}:$ENV{PYTHONPATH}:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>/../python:$ENV{PYTHONPATH})
-
-  set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
-               PATH=$<TARGET_FILE_DIR:k4FWCore::k4FWCore>/../bin:$ENV{PATH}
-  )
-
-  set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
-               K4RECCALORIMETER=${CMAKE_CURRENT_LIST_DIR}/
-  )
-endfunction()
+file(GLOB _module_sources src/components/*.cpp)
+gaudi_add_module(k4RecFCCeeCalorimeterPlugins
+                 SOURCES ${_module_sources}
+                 LINK k4FWCore::k4FWCore
+                      k4FWCore::k4Interface
+                      Gaudi::GaudiAlgLib
+                      Gaudi::GaudiKernel
+                      DD4hep::DDCore
+                      EDM4HEP::edm4hep
+                      k4geo::detectorSegmentations
+                      k4geo::detectorCommon
+                      DD4hep::DDG4
+                      ROOT::Core
+                      ROOT::Hist
+		      ${ONNXRUNTIME_LIBRARY}
+                      )
+install(TARGETS k4RecFCCeeCalorimeterPlugins
+  EXPORT k4RecCalorimeterTargets
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+  COMPONENT dev)
 
 
-add_subdirectory(RecCalorimeter)
-add_subdirectory(RecFCChhCalorimeter)
-add_subdirectory(RecFCCeeCalorimeter)
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
 
+add_test(NAME FCCeeLAr_reproduceSegfault
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/reproduceSegfault.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_reproduceSegfault)
 
+add_test(NAME FCCeeLAr_simulateForReco
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloSim.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_simulateForReco)
 
+add_test(NAME FCCeeLAr_simRecoAllegroV2
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/run_thetamodulemerged.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_simRecoAllegroV2)
 
+add_test(NAME FCCeeLAr_slidingWindowClustering
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/runFullCaloSystem_ReconstructionSW_noiseFromFile.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_slidingWindowClustering)
+set_tests_properties(FCCeeLAr_slidingWindowClustering PROPERTIES DEPENDS "FCCeeLAr_simulateForReco")
 
-install(EXPORT ${PROJECT_NAME}Targets
-  NAMESPACE ${PROJECT_NAME}::
-  FILE "${PROJECT_NAME}Targets.cmake"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/"
-  )
-
-gaudi_install(CMAKE cmake/${PROJECT_NAME}Config.cmake)
+add_test(NAME FCCeeLAr_benchmarkCalibration
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_benchmarkCalibration)
 
