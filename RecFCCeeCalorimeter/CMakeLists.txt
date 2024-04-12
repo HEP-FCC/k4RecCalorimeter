@@ -58,3 +58,8 @@ add_test(NAME FCCeeLAr_benchmarkCalibration
 )
 set_test_env(FCCeeLAr_benchmarkCalibration)
 
+add_test(NAME FCCeeLAr_xtalkNeighbours
+  COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloXTalkNeighbours.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_xtalkNeighbours)
