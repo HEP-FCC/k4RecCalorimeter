@@ -89,9 +89,9 @@ StatusCode AugmentClustersFCCee::finalize()
   return Gaudi::Algorithm::finalize();
 }
 
-StatusCode AugmentClustersFCCee::execute(const EventContext &evtCtx) const
+StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &evtCtx) const
 {
-  (void)evtCtx; // event context not used
+
 
   // get the input collection with clusters
   const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
