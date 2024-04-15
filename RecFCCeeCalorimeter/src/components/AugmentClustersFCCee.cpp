@@ -74,9 +74,9 @@ StatusCode AugmentClustersFCCee::initialize()
     const char *detector = m_detectorNames[k].c_str();
     for (unsigned layer = 0; layer < m_numLayers[k]; layer++)
     {
-      showerShapeDecorations.push_back(Form("f%s%d", detector, layer));
-      showerShapeDecorations.push_back(Form("theta%s%d", detector, layer));
-      showerShapeDecorations.push_back(Form("phi%s%d", detector, layer));
+      showerShapeDecorations.push_back(Form("energy_%s_layer_%d", detector, layer));
+      showerShapeDecorations.push_back(Form("theta_%s_layer_%d", detector, layer));
+      showerShapeDecorations.push_back(Form("phi_%s_layer_%d", detector, layer));
     }
   }
   m_showerShapeHandle.put(showerShapeDecorations);

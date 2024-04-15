@@ -26,7 +26,7 @@ namespace dd4hep
 
 /** @class AugmentClustersFCCee
  *
- *  Add to the cluster shape parameters the energies and barycenter positions
+ *  Add to the cluster shape parameters the sum of the cluster cells energy and barycenter theta/phi coordinates
  *  per layer. The theta position is calculated with a log(E) weighting
  *
  *  @author Alexis Maloizel
