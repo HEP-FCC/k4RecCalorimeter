@@ -573,7 +573,7 @@ calibrateCaloClusters = CalibrateCaloClusters("calibrateCaloClusters",
                                               readoutNames=[
                                                   ecalBarrelReadoutName],
                                               layerFieldNames=["layer"],
-                                              calibrationFile=os.environ['FCCBASEDIR'] + "/LAr_scripts/data/lgbm_calibration-CaloClusters.onnx",
+                                              calibrationFile="/afs/cern.ch/user/m/mmlynari/Public/data_FCC/lgbm_calibration-CaloClusters.onnx",
                                               # calibrationFile=os.environ['FCCBASEDIR'] + "/LAr_scripts/data/xgb_calibration-CaloClusters.onnx",
                                               OutputLevel=INFO
                                               )
@@ -599,19 +599,19 @@ createTopoInput.hcalFwdCells.Path = "emptyCaloCells"
 cellPositionHcalBarrelNoSegTool = None
 cellPositionHcalExtBarrelTool = None
 
-neighboursMap = "/LAr_scripts/data/neighbours_map_barrel_thetamodulemerged.root"
-noiseMap = "/LAr_scripts/data/cellNoise_map_electronicsNoiseLevel_thetamodulemerged.root"
+neighboursMap = "/afs/cern.ch/user/m/mmlynari/Public/data_FCC/neighbours_map_barrel_thetamodulemerged.root"
+noiseMap = "/afs/cern.ch/user/m/mmlynari/Public/data_FCC/cellNoise_map_electronicsNoiseLevel_thetamodulemerged.root"
 if runHCal:
-    neighboursMap = "/LAr_scripts/data/neighbours_map_ecalB_thetamodulemerged_hcalB_thetaphi.root"
-    noiseMap = "/LAr_scripts/data/cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged_hcalB_thetaphi.root"
+    neighboursMap = "/afs/cern.ch/user/m/mmlynari/Public/data_FCC/neighbours_map_ecalB_thetamodulemerged_hcalB_thetaphi.root"
+    noiseMap = "/afs/cern.ch/user/m/mmlynari/Public/data_FCC/cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged_hcalB_thetaphi.root"
 
 readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
-                                       fileName=os.environ['FCCBASEDIR'] + neighboursMap,
+                                       fileName=neighboursMap,
                                        OutputLevel=INFO)
 
 # Noise levels per cell
 readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
-                                       fileName=os.environ['FCCBASEDIR'] + noiseMap,
+                                       fileName=noiseMap,
                                        OutputLevel=INFO)
 
 createTopoClusters = CaloTopoClusterFCCee("CreateTopoClusters",
@@ -678,7 +678,7 @@ calibrateCaloTopoClusters = CalibrateCaloClusters("calibrateCaloTopoClusters",
                                                   readoutNames=[
                                                       ecalBarrelReadoutName],
                                                   layerFieldNames=["layer"],
-                                                  calibrationFile=os.environ['FCCBASEDIR'] + "/LAr_scripts/data/lgbm_calibration-CaloTopoClusters.onnx",
+                                                  calibrationFile="/afs/cern.ch/user/m/mmlynari/Public/data_FCC/lgbm_calibration-CaloTopoClusters.onnx",
                                                   # calibrationFile=os.environ['FCCBASEDIR'] + "/LAr_scripts/data/xgb_calibration-CaloTopoClusters.onnx",
                                                   OutputLevel=INFO
                                                   )
