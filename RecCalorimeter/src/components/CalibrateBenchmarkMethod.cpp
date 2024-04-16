@@ -69,74 +69,68 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
     }
   }
 
-  // book histograms for checks
+  // number of benchmark parameters 
+  int n_param = 6; 
+
+  // book histograms
   m_totalEnergyECal = new TH1F("totalEnergyECal", "Total deposited energy in ECal", 1000, 0, 1.5 * m_energy);
-  if (m_histSvc->regHist("/rec/ecal_total", m_totalEnergyECal).isFailure()) {
-    error() << "Couldn't register histogram" << endmsg;
-    return StatusCode::FAILURE;
-  }
-
   m_totalEnergyHCal = new TH1F("totalEnergyHCal", "Total deposited energy in HCal", 1000, 0, 1.5 * m_energy);
-  if (m_histSvc->regHist("/rec/hcal_total", m_totalEnergyHCal).isFailure()) {
-    error() << "Couldn't register histogram" << endmsg;
-    return StatusCode::FAILURE;
-  }
-
   m_totalEnergyBoth = new TH1F("totalEnergyBoth", "Total deposited energy in ECal+HCal", 1000, 0, 1.5 * m_energy);
-  if (m_histSvc->regHist("/rec/both_total", m_totalEnergyBoth).isFailure()) {
-    error() << "Couldn't register histogram" << endmsg;
-    return StatusCode::FAILURE;
-  }
+  m_parameters = new TH1F("parameters","Benchmark parameters", n_param, 0, n_param);
+  
+  registerHistogram("/rec/ecal_total", m_totalEnergyECal);
+  registerHistogram("/rec/hcal_total", m_totalEnergyHCal);
+  registerHistogram("/rec/both_total", m_totalEnergyBoth);
+  registerHistogram("/rec/parameters", m_parameters);
 
-  m_parameters = new TH1F("parameters","", 4, 0,4);
-  if (m_histSvc->regHist("/rec/parameters", m_parameters).isFailure()) {
-    error() << "Couldn't register histogram" << endmsg;
-    return StatusCode::FAILURE;
-  }
 
   // clear vectors that will be later used for fitting
-  m_vecEgenerated.clear();
-  m_vecEinECaltotal.clear();
-  m_vecEinHCaltotal.clear();
-  m_vecEinHCalfirstLayer.clear();
-  m_vecEinECallastLayer.clear();
+  m_vecGeneratedEnergy.clear();
+  m_vecTotalEnergyinECal.clear();
+  m_vecTotalEnergyinHCal.clear();
+  m_vecEnergyInFirstLayerHCal.clear();
+  m_vecEnergyInLastLayerECal.clear();
+  m_vecEnergyInFirstLayerECal.clear();
 
-  m_energyInECalLayer.resize(m_numLayersECal);
-  m_energyInHCalLayer.resize(m_numLayersHCal);
+  m_energyInLayerECal.resize(m_numLayersECal);
+  m_energyInLayerHCal.resize(m_numLayersHCal);
 
   return StatusCode::SUCCESS;
 }
 
 
 StatusCode CalibrateBenchmarkMethod::execute() {
-  double energyInFirstHCalLayer = 0; 
-  double energyInLastECalLayer = 0; 
+  double totalEnergyInECal = 0.;
+  double totalEnergyInHCal = 0.;
+  double energyInFirstLayerECal = 0; 
+  double energyInLastLayerECal = 0; 
+  double energyInFirstLayerHCal = 0; 
   double energyInBoth = 0.;
 
-  int ecal_index = -1;
-  int hcal_index = -1;
+  int indexECal = -1;
+  int indexHCal = -1;
 
-  for (double& eneEcal : m_energyInECalLayer){
-    eneEcal = 0.;
+  for (double& eneECal : m_energyInLayerECal){
+    eneECal = 0.;
   }
 
-  for (double& eneHcal : m_energyInHCalLayer){
-    eneHcal = 0.;
+  for (double& eneHCal : m_energyInLayerHCal){
+    eneHCal = 0.;
   }
 
   // identify ECal and HCal readout position in the input parameters when running the calibration
   for (uint j=0; j<m_readoutNames.size(); j++){
-    if (m_SystemID[j]==m_ECalSystemID){
-      ecal_index = j; 
+    if (m_systemID[j]==m_systemIDECal){
+      indexECal = j; 
     }
-    else if (m_SystemID[j]==m_HCalSystemID){
-      hcal_index = j; 
+    else if (m_systemID[j]==m_systemIDHCal){
+      indexHCal = j; 
     }
   }
 
   // decoders for ECal and HCal
-  auto decoder_ECal = m_geoSvc->getDetector()->readout(m_readoutNames[ecal_index]).idSpec().decoder();
-  auto decoder_HCal = m_geoSvc->getDetector()->readout(m_readoutNames[hcal_index]).idSpec().decoder();
+  auto decoderECal = m_geoSvc->getDetector()->readout(m_readoutNames[indexECal]).idSpec().decoder();
+  auto decoderHCal = m_geoSvc->getDetector()->readout(m_readoutNames[indexHCal]).idSpec().decoder();
 
   std::vector<size_t> cellIDs; 
 
@@ -150,72 +144,92 @@ StatusCode CalibrateBenchmarkMethod::execute() {
   // Loop over a collection of ECal cells and get energy in each ECal layer
   for (const auto& iCell : *ecalBarrelCells) {
     dd4hep::DDSegmentation::CellID cellID = iCell.getCellID(); 
-    size_t layerIDecal = decoder_ECal->get(cellID, "layer");
-    m_energyInECalLayer.at(layerIDecal) += iCell.getEnergy();
+    size_t layerIDecal = decoderECal->get(cellID, "layer");
+    m_energyInLayerECal.at(layerIDecal) += iCell.getEnergy();
   } 
 
   // Loop over a collection of HCal cells and get energy in each HCal layer
   for (const auto& iCell : *hcalBarrelCells) {
     dd4hep::DDSegmentation::CellID cellID = iCell.getCellID(); 
-    size_t layerIDhcal = decoder_HCal->get(cellID, "layer");
-    m_energyInHCalLayer.at(layerIDhcal) += iCell.getEnergy();
+    size_t layerIDhcal = decoderHCal->get(cellID, "layer");
+    m_energyInLayerHCal.at(layerIDhcal) += iCell.getEnergy();
   }
 
   // Energy deposited in the whole ECal
-  const double energyInECal = std::accumulate(m_energyInECalLayer.begin(), m_energyInECalLayer.end(), 0);
+  for (size_t i = 0; i < m_energyInLayerECal.size(); ++i) {
+    totalEnergyInECal += m_energyInLayerECal.at(i);
+  }
 
-  // Energy deposited in the last ECal layer
-  energyInLastECalLayer = m_energyInECalLayer.at(m_numLayersECal-1);
+  // Energy deposited in the first/last ECal layer
+  energyInFirstLayerECal = m_energyInLayerECal.at(m_firstLayerECal);
+  energyInLastLayerECal = m_energyInLayerECal.at(m_numLayersECal-1);
 
   // Energy deposited in the whole HCal
-  const double energyInHCal = std::accumulate(m_energyInHCalLayer.begin(), m_energyInHCalLayer.end(), 0);
+  for (size_t i = 0; i < m_energyInLayerHCal.size(); ++i) {
+    totalEnergyInHCal += m_energyInLayerHCal.at(i);
+  }
 
   // Energy deposited in the first HCal layer
-  energyInFirstHCalLayer = m_energyInHCalLayer.at(m_firstLayerHCal);
+  energyInFirstLayerHCal = m_energyInLayerHCal.at(m_firstLayerHCal);
 
   // Total energy deposited in ECal and HCal
-  energyInBoth = energyInECal+energyInHCal;
+  energyInBoth = totalEnergyInECal+totalEnergyInHCal;
 
   // Fill histograms with ECal and HCal energy
-  m_totalEnergyECal->Fill(energyInECal);
-  m_totalEnergyHCal->Fill(energyInHCal);
+  m_totalEnergyECal->Fill(totalEnergyInECal);
+  m_totalEnergyHCal->Fill(totalEnergyInHCal);
   m_totalEnergyBoth->Fill(energyInBoth);
   
 
   // Fill vectors that will be later used for the energy fitting - length of the vector = number of events
-  m_vecEgenerated.push_back(m_energy);
-  m_vecEinECaltotal.push_back(energyInECal); 
-  m_vecEinHCaltotal.push_back(energyInHCal); 
-  m_vecEinHCalfirstLayer.push_back(energyInFirstHCalLayer);
-  m_vecEinECallastLayer.push_back(energyInLastECalLayer);
+  m_vecGeneratedEnergy.push_back(m_energy);
+  m_vecTotalEnergyinECal.push_back(totalEnergyInECal); 
+  m_vecTotalEnergyinHCal.push_back(totalEnergyInHCal); 
+  m_vecEnergyInFirstLayerECal.push_back(energyInFirstLayerECal);
+  m_vecEnergyInLastLayerECal.push_back(energyInLastLayerECal);
+  m_vecEnergyInFirstLayerHCal.push_back(energyInFirstLayerHCal);
 
   // Printouts for checks
   verbose() << "********************************************************************" << endmsg;
-  verbose() << "Energy in ECAL and HCAL: " << energyInECal << " GeV" << endmsg;
-  verbose() << "Energy in ECAL: " << energyInECal << " GeV" << endmsg;
-  verbose() << "Energy in HCAL: " << energyInHCal << " GeV" << endmsg;
-  verbose() << "Energy in ECAL last layer: " << energyInLastECalLayer << " GeV" << endmsg;
-  verbose() << "Energy in HCAL first layer: " << energyInFirstHCalLayer << " GeV" << endmsg;
+  verbose() << "Energy in ECAL and HCAL: " << energyInBoth << " GeV" << endmsg;
+  verbose() << "Energy in ECAL: " << totalEnergyInECal << " GeV" << endmsg;
+  verbose() << "Energy in HCAL: " << totalEnergyInHCal << " GeV" << endmsg;
+  verbose() << "Energy in ECAL last layer: " << energyInLastLayerECal << " GeV" << endmsg;
+  verbose() << "Energy in HCAL first layer: " << energyInFirstLayerHCal << " GeV" << endmsg;
  
   return StatusCode::SUCCESS;
 }
 
 
 // minimisation function for the benchmark method
-double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t *par) const {
+double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t *parameter) const {
   double fitvalue = 0.;
   // loop over all events, vector of a size of #evts is filled with the energies 
   // ECal calibrated to EM scale, HCal calibrated to HAD scale
-  for(uint i=0; i<m_vecEinECaltotal.size(); i++){
-    double E_generated = m_vecEgenerated.at(i);
-    double E_ECal_total = m_vecEinECaltotal.at(i);
-    double E_ECal_lastLayer = m_vecEinECallastLayer.at(i);
-    double E_HCal_total = m_vecEinHCaltotal.at(i);
-    double E_HCal_firstLayer = m_vecEinHCalfirstLayer.at(i);
+  for(uint i=0; i<m_vecTotalEnergyinECal.size(); i++){
+    double generatedEnergy = m_vecGeneratedEnergy.at(i);
+    double totalEnergyInECal = m_vecTotalEnergyinECal.at(i);
+    double totalEnergyInHCal = m_vecTotalEnergyinHCal.at(i);
+    double energyInFirstLayerECal = m_vecEnergyInFirstLayerECal.at(i);
+    double energyInLastLayerECal = m_vecEnergyInLastLayerECal.at(i);
+    double energyInFirstLayerHCal = m_vecEnergyInFirstLayerHCal.at(i);
+
+    Double_t benchmarkEnergy = parameter[0] * totalEnergyInECal +
+                               parameter[1] * totalEnergyInHCal +
+                               parameter[2] * std::sqrt(std::fabs(energyInLastLayerECal * parameter[0] * energyInFirstLayerHCal * parameter[1])) +
+                               parameter[3] * std::pow(totalEnergyInECal * parameter[0], 2) +
+                               parameter[4] * energyInFirstLayerECal +
+                               parameter[5];
+
+    // general formula below gives possibility to fit also parameter[1] to scale E_HCal_total and a contant term  parameter[5] to include residuals 
+    // parameter[0] scales ECal to HAD scale
+    // parameter[1] scales HCal to HAD scale (fixed to 1 if HCal is already calibrated at HAD scale at the input level)
+    // parameter[2] energy losses between ECal and HCal 
+    // parameter[3] corrects for non-compensation of ECal
+    // parameter[4] upstream correction 
+    // parameter[5] residuals 
     
-    Double_t E0 = E_ECal_total*par[0] + E_HCal_total*par[1] + par[2]*sqrt(abs(E_ECal_lastLayer*par[0]*E_HCal_firstLayer*par[1])) + par[3]*pow(E_ECal_total*par[0],2);
-    
-    fitvalue += pow((E_generated-E0),2)/E_generated; 
+    fitvalue += std::pow((generatedEnergy-benchmarkEnergy),2)/generatedEnergy; 
   }
   return fitvalue;    
 }
@@ -223,53 +237,83 @@ double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t *par) const {
 
 StatusCode CalibrateBenchmarkMethod::finalize() {
   // the actual minimisation is running here 
-  std::cout << "Running minimisation for " << m_vecEgenerated.size() << " #events! \n";
-  if (m_vecEgenerated.size() != m_vecEinECaltotal.size()){
+  std::cout << "Running minimisation for " << m_vecGeneratedEnergy.size() << " #events! \n";
+  if (m_vecGeneratedEnergy.size() != m_vecTotalEnergyinECal.size()){
     std::cout << "Something's wrong!!" << std::endl; 
   } 
-  ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
-  
-  // set tolerance 
-  min->SetMaxFunctionCalls(1000000); // for Minuit/Minuit2 
-  min->SetMaxIterations(10000);  // for GSL 
-  min->SetTolerance(0.001);
-  min->SetPrintLevel(1);
-    
-  // create funciton wrapper for minimizer
-  int n_param = 4;
-  ROOT::Math::Functor f(this, &CalibrateBenchmarkMethod::chiSquareFitBarrel,n_param);
 
-  static const std::vector<double> steps = {0.001, 0.001, 0.001, 0.001};
-  static const std::vector<double>  variable = {1., 1., .5, .01};
-  min->SetFunction(f);
-    
-  // Variables to be minimized 
-  min->SetVariable(0,"p0", variable[0], steps[0] ); 
-  min->SetVariable(1,"p1", variable[1], steps[1] ); 
-  min->SetVariable(2,"p2", variable[2], steps[2] ); 
-  min->SetVariable(3,"p3", variable[3], steps[3] );
+  // number of benchmark parameters 
+  int n_param = 6;
+  // initial values for the minimization and steps while running the minimization
+  static const std::vector<double> variable = {1., 1., .5, .01, 0.5, 0.};
+  static const std::vector<double> steps = {0.001, 0.001, 0.001, 0.001, 0.001, 0.001};
 
-  // fix par1 because HCal is already calibrated to HAD scale
-  min->FixVariable(1); 
-  //  min->SetVariableLimits(2, 0, 1e6);
-   
-  // do the minimization
-  min->Minimize(); 
-    
-  const Double_t *xs = min->X();
-  const Double_t *ys = min->Errors();
-  std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "," << xs[2] <<  "," << xs[3] << "): "  << min->MinValue()  << std::endl;
-  std::cout << "Minimum: #delta f(" << ys[0] << "," << ys[1] << "," << ys[2] << "," << ys[3] <<std::endl;
-
-  m_parameters->SetBinContent(1, xs[0]);
-  m_parameters->SetBinContent(2, xs[1]);
-  m_parameters->SetBinContent(3, xs[2]);
-  m_parameters->SetBinContent(4, xs[3]);
-
-  m_parameters->SetBinError(1, ys[0]);
-  m_parameters->SetBinError(2, ys[1]);
-  m_parameters->SetBinError(3, ys[2]);
-  m_parameters->SetBinError(4, ys[3]);
+  runMinimization(n_param, variable, steps, m_fixedParameters);
 
   return GaudiAlgorithm::finalize();
 }
+
+void CalibrateBenchmarkMethod::registerHistogram(const std::string& path, TH1F*& histogramName) {
+    if (m_histSvc->regHist(path, histogramName).isFailure()) {
+        error() << "Couldn't register histogram" << endmsg;
+        throw std::runtime_error("Histogram registration failure");
+    }
+}
+
+void CalibrateBenchmarkMethod::runMinimization(int n_param, const std::vector<double>& variable, const std::vector<double>& steps, const std::vector<int>& fixedParameters) const {
+    // Set up the functor (the function to be minimized)
+    ROOT::Math::Functor f(this, &CalibrateBenchmarkMethod::chiSquareFitBarrel, n_param);
+
+    // Initialize the minimizer
+    ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
+    minimizer->SetMaxFunctionCalls(1000000);
+    minimizer->SetMaxIterations(10000);
+    minimizer->SetTolerance(0.001);
+    minimizer->SetPrintLevel(1);
+
+    // Set the function to minimize
+    minimizer->SetFunction(f);
+
+    // Set parameters for the minimization
+    for (int i = 0; i < n_param; ++i) {
+        minimizer->SetVariable(i, "p" + std::to_string(i), variable[i], steps[i]);
+
+        // Fix parameters listed in fixedParameters that will not be included in the fit minimization
+        if (std::find(fixedParameters.begin(), fixedParameters.end(), i) != fixedParameters.end()) {
+            minimizer->FixVariable(i);
+        }
+    }
+
+    // Perform the minimization
+    minimizer->Minimize();
+
+    // Access the results if needed
+    const Double_t* xs = minimizer->X();
+    const Double_t* ys = minimizer->Errors();
+
+    std::cout << "Minimum: f(";
+    for (int i = 0; i < n_param; ++i) {
+        std::cout << xs[i];
+        if (i < n_param - 1) std::cout << ",";
+    }
+    std::cout << "): " << minimizer->MinValue() << std::endl;
+
+    std::cout << "Minimum: #delta f(";
+    for (int i = 0; i < n_param; ++i) {
+        std::cout << ys[i];
+        if (i < n_param - 1) std::cout << ",";
+    }
+    std::cout << std::endl;
+
+    //histogram->SetBinContent(1, xs[0]);
+    //histogram->SetBinError(1, ys[0]);
+
+    // each fitted parameter is stored in one bin of the output histogram 
+    // bin 1 contains the value for par[0] etc
+    for (int i = 0; i < n_param; ++i) {
+      verbose() << "inside filling histos: " << xs[i] << " GeV" << endmsg;
+      m_parameters->SetBinContent(i+1, xs[i]);
+      m_parameters->SetBinError(i+1, ys[i]);
+    }
+}
+
