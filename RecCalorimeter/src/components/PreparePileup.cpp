@@ -126,9 +126,8 @@ StatusCode PreparePileup::initialize() {
     error() << "Unable to retrieve the tower building tool." << endmsg;
     return StatusCode::FAILURE;
   }
-  auto towerMapSize = m_towerTool->towersNumber();
-  m_nEtaTower = towerMapSize.eta;
-  m_nPhiTower = towerMapSize.phi;
+  // Get number of calorimeter towers
+  m_towerTool->towersNumber(m_nEtaTower, m_nPhiTower);
   debug() << "Number of calorimeter towers (eta x phi) : " << m_nEtaTower << " x " << m_nPhiTower << endmsg;
   // OPTIMISATION OF CLUSTER SIZE
   // sanity check

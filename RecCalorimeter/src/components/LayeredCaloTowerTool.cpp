@@ -23,7 +23,7 @@ StatusCode LayeredCaloTowerTool::initialize() {
   if (GaudiTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
-  
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the "
@@ -64,7 +64,7 @@ StatusCode LayeredCaloTowerTool::initialize() {
 
 StatusCode LayeredCaloTowerTool::finalize() { return GaudiTool::finalize(); }
 
-tower LayeredCaloTowerTool::towersNumber() {
+void LayeredCaloTowerTool::towersNumber(int& nEta, int& nPhi) {
   // maximum eta of the detector (== eta offset + half of the cell size)
   m_etaMax = fabs(m_segmentation->offsetEta()) + m_segmentation->gridSizeEta() * 0.5;
   m_phiMax = fabs(m_segmentation->offsetPhi()) + M_PI / (double)m_segmentation->phiBins();
@@ -77,13 +77,12 @@ tower LayeredCaloTowerTool::towersNumber() {
   debug() << "etaMax " << m_etaMax << ", deltaEtaTower " << m_deltaEtaTower << ", nEtaTower " << m_nEtaTower << endmsg;
   debug() << "phiMax " << m_phiMax << ", deltaPhiTower " << m_deltaPhiTower << ", nPhiTower " << m_nPhiTower << endmsg;
 
-  tower total;
-  total.eta = m_nEtaTower;
-  total.phi = m_nPhiTower;
-  return total;
+  nEta = m_nEtaTower;
+  nPhi = m_nPhiTower;
 }
 
-uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells) {
+uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers,
+                                       [[maybe_unused]] bool fillTowerCells) {
   // Get the input collection with cells from simulation + digitisation (after
   // calibration and with noise)
   const edm4hep::CalorimeterHitCollection* cells = m_cells.get();

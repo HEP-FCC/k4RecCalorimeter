@@ -2,6 +2,12 @@
 # Package: RecFCCeeCalorimeter
 ################################################################################
 
+# ONNX DEPENDENCIES
+# includes
+include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
+# libs
+link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
+
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                  SOURCES ${_module_sources}
@@ -16,8 +22,8 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       DD4hep::DDG4
                       ROOT::Core
                       ROOT::Hist
+		      ${ONNXRUNTIME_LIBRARY}
                       )
-
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
@@ -51,3 +57,4 @@ add_test(NAME FCCeeLAr_benchmarkCalibration
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_benchmarkCalibration)
+
