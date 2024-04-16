@@ -28,10 +28,10 @@ neighbours = CreateFCCeeCaloXTalkNeighbours("xtalk_neighbours",
                                        OutputLevel=DEBUG)
 
 # ApplicationMgr
-ApplicationMgr(TopAlg=[],
+ApplicationMgr(TopAlg=[neighbours],
                EvtSel='NONE',
                EvtMax=1,
                # order is important, as GeoSvc is needed by G4SimSvc
-               ExtSvc=[geoservice, neighbours],
+               ExtSvc=[geoservice],
                OutputLevel=INFO
                )

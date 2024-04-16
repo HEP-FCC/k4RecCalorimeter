@@ -12,7 +12,7 @@
 
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
-#include "detectorCommon/xtalk_k4geo.h"
+#include "detectorCommon/xtalk_neighbors_moduleThetaMergedSegmentation.h"
 
 // DD4hep
 #include "DD4hep/Readout.h"
