@@ -22,7 +22,7 @@ GEOSERVICE = GeoSvc("GeoSvc")
 # if FCC_DETECTORS is empty, this should use relative path to working directory
 DETECTORPATH = os.environ.get("K4GEO", "")
 DETECTORS = [
-        'FCCee/ALLEGRO/compact/ALLEGRO_o1_v02/ALLEGRO_o1_v01.xml'
+        'FCCee/ALLEGRO/compact/ALLEGRO_o1_v01/ALLEGRO_o1_v01.xml'
 ]
 for det in DETECTORS:
     GEOSERVICE.detectors += [os.path.join(DETECTORPATH, det)]
