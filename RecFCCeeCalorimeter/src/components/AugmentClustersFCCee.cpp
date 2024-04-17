@@ -74,7 +74,7 @@ StatusCode AugmentClustersFCCee::initialize()
     const char *detector = m_detectorNames[k].c_str();
     for (unsigned layer = 0; layer < m_numLayers[k]; layer++)
     {
-      showerShapeDecorations.push_back(Form("energy_%s_layer_%d", detector, layer));
+      showerShapeDecorations.push_back(Form("energy_fraction_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("theta_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("phi_%s_layer_%d", detector, layer));
     }
@@ -221,11 +221,12 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
       }
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++)
       {
+        // theta
         if (m_thetaRecalcLayerWeights[k][layer]<0)
         {
           if (sumEnLayer[layer+startPositionToFill] != 0.0)
           {
-            sumEnLayer[layer+startPositionToFill] /= sumWeightLayer[layer+startPositionToFill];
+            sumThetaLayer[layer+startPositionToFill] /= sumEnLayer[layer+startPositionToFill];
           }
         }
         else
@@ -235,6 +236,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             sumThetaLayer[layer+startPositionToFill] /= sumWeightLayer[layer+startPositionToFill];
           }
         }
+
+        // phi
         if (sumEnLayer[layer+startPositionToFill] != 0.0)
         {
           sumPhiLayer[layer+startPositionToFill] /= sumEnLayer[layer+startPositionToFill];
