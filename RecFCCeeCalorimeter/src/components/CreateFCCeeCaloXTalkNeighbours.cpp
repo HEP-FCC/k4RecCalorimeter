@@ -236,7 +236,7 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
       {
         moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *>(aSegmentation);
       }
-      saveCellInfo=det::xtalk::xtalk_get_cell_position(
+      saveCellInfo=det::xtalk::xtalk_get_cell_indices(
           *moduleThetaSegmentation,
           *decoder,
           {m_activeFieldNamesSegmented[iSys],"module", "theta"},
