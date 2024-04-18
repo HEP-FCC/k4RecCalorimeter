@@ -3,6 +3,7 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
+#include "k4FWCore/MetaDataHandle.h"
 
 // Gaudi
 #include "GaudiKernel/Algorithm.h"
@@ -56,7 +57,7 @@ private:
   edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const;
 
   /**
-   * Initialize vectors of upstream and downstream correction functions.
+   * Load file with MVA model into memory.
    *
    * @return                  Status code.
    */
@@ -88,10 +89,21 @@ private:
   mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {
     "inClusters", Gaudi::DataHandle::Reader, this
   };
+
   /// Handle for corrected (output) calorimeter clusters collection
   mutable DataHandle<edm4hep::ClusterCollection> m_outClusters {
     "outClusters", Gaudi::DataHandle::Writer, this
   };
+
+  /// Handles for the cluster shower shape metadata to read and to write
+  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
+    m_inClusters,
+    edm4hep::shapeParameterNames,
+    Gaudi::DataHandle::Reader};
+  MetaDataHandle<std::vector<std::string>> m_outShapeParameterHandle{
+    m_outClusters,
+    edm4hep::shapeParameterNames,
+    Gaudi::DataHandle::Writer};
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
@@ -100,7 +112,13 @@ private:
   Gaudi::Property<std::vector<int>> m_systemIDs {
       this, "systemIDs", {4}, "IDs of systems"
   };
+  /// Name of the detectors (for the metadata)
+  /// If the calibration inputs are saved in the cluster shapeParameters
+  Gaudi::Property<std::vector<std::string>> m_detectorNames{
+      this, "systemNames", {"EMB"}, "Names of the detectors, corresponding to systemIDs"};
   /// Names of the detector readouts, corresponding to system IDs
+  /// Needed to calculate calibration inputs from cells if not
+  /// present in cluster shapeParameters
   Gaudi::Property<std::vector<std::string>> m_readoutNames {
       this, "readoutNames", {"ECalBarrelModuleThetaMerged"},
       "Names of the detector readout, corresponding to systemID"
@@ -111,11 +129,11 @@ private:
       "Identifier of layers, corresponding to systemID"
   }; 
   /// Numbers of layers of the detectors
-  Gaudi::Property<std::vector<size_t>> m_numLayers {
+  Gaudi::Property<std::vector<unsigned short int>> m_numLayers {
       this, "numLayers", {12}, "Numbers of layers of the systems"
   };
   /// IDs of the first layers of the detectors
-  Gaudi::Property<std::vector<int>> m_firstLayerIDs {
+  Gaudi::Property<std::vector<unsigned short int>> m_firstLayerIDs {
       this, "firstLayerIDs", {0}, "IDs of first layers in the systems"
   };
 
@@ -127,7 +145,7 @@ private:
 
   // total number of layers summed over the various subsystems
   // should be equal to the number of input features of the MVA
-  size_t m_numLayersTotal;
+  unsigned short int m_numLayersTotal;
 
   // the ONNX runtime session for applying the calibration,
   // the environment, and the input and output shapes and names
@@ -137,6 +155,9 @@ private:
   std::vector<std::int64_t> m_output_shapes;
   std::vector<std::string> m_input_names;
   std::vector<std::string> m_output_names;
+
+  // the indices of the shapeParameters containing the inputs to the model (if they exist)
+  std::vector<unsigned short int> m_inputPositionsInShapeParameters;
 };
 
 #endif /* RECFCCEECALORIMETER_CALIBRATECALOCLUSTERS_H */
