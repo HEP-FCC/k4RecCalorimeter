@@ -49,7 +49,7 @@ StatusCode CalibrateCaloClusters::initialize()
   }
 
   // Check if readouts exist
-  for (int i = 0; i < (int) m_readoutNames.size(); ++i)
+  for (unsigned short int i = 0; i < m_readoutNames.size(); ++i)
   {
     auto readouts = m_geoSvc->getDetector()->readouts();
     if (readouts.find(m_readoutNames.value().at(i)) == readouts.end())
@@ -83,7 +83,7 @@ StatusCode CalibrateCaloClusters::initialize()
 
   // calculate total number of layers summed over the various subsystems
   m_numLayersTotal = 0;
-  for (int i = 0; i < (int) m_numLayers.size(); ++i)
+  for (unsigned short int i = 0; i < m_numLayers.size(); ++i)
   {
     m_numLayersTotal += m_numLayers[i];
   }
@@ -103,12 +103,12 @@ StatusCode CalibrateCaloClusters::initialize()
 
   // check if the shape parameters contain the inputs needed for the calibration
   m_inputPositionsInShapeParameters.clear();
-  for (int iSystem = 0; iSystem < (int) m_systemIDs.size(); iSystem++)
+  for (unsigned short int iSystem = 0; iSystem < m_systemIDs.size(); iSystem++)
   {
     std::string detector = m_detectorNames[iSystem];
-    for (int iLayer=0; iLayer<m_numLayers[iSystem]; iLayer++)
+    for (unsigned short int iLayer=0; iLayer<m_numLayers[iSystem]; iLayer++)
     {
-      std::string decoration = Form("energy_fraction_%s_layer_%d", detector.c_str(), iLayer);
+      std::string decoration = Form("energy_fraction_%s_layer_%hu", detector.c_str(), iLayer);
       auto it = std::find(shapeParameters.begin(), shapeParameters.end(),
                           decoration);
       if (it != shapeParameters.end())
@@ -299,7 +299,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
   std::vector<float> energiesInLayers(m_numLayersTotal + 1);
 
   // loop over the input clusters and perform the calibration
-  for (int j = 0; j < (int) inClusters->size(); ++j)
+  for (unsigned int j = 0; j < inClusters->size(); ++j)
   {
 
     // retrieve total cluster energy
@@ -314,7 +314,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     // calculate cluster energy in each layer and normalize by total cluster energy
     calcEnergiesInLayers(inClusters->at(j), energiesInLayers);
     verbose() << "Calibration inputs:" << endmsg;
-    for (int k = 0; k < (int) energiesInLayers.size(); ++k)
+    for (unsigned short int k = 0; k < energiesInLayers.size(); ++k)
     {
       verbose() << "    f" << k << " : " << energiesInLayers[k] << endmsg;
     }
@@ -368,11 +368,11 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
   double ecl = cluster.getEnergy();
 
   // if all inputs are available as shapeParameters, use them
-  if ((int) m_inputPositionsInShapeParameters.size() == m_numLayersTotal)
+  if (m_inputPositionsInShapeParameters.size() == m_numLayersTotal)
   {
     // the shapeParameters already contain energy fractions so we
     // do not divide by cluster energy
-    for (int i=0; i < (int) m_numLayersTotal; i++)
+    for (unsigned short int i=0; i < m_numLayersTotal; i++)
     {
       energiesInLayers[i] = cluster.getShapeParameters(m_inputPositionsInShapeParameters[i]);
     }
@@ -383,15 +383,15 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
   {
     // calculate the energy fractions from the cells
     // loop over the various readouts/subsystems/...
-    int startPositionToFill = 0;
-    for (int k = 0; k < (int) m_readoutNames.size(); k++)
+    unsigned short int startPositionToFill = 0;
+    for (unsigned short int k = 0; k < m_readoutNames.size(); k++)
     {
       if (k > 0)
       {
         startPositionToFill += m_numLayers[k - 1];
       }
       int systemID = m_systemIDs[k];
-      int firstLayer = m_firstLayerIDs[k];
+      unsigned short int firstLayer = m_firstLayerIDs[k];
       std::string layerField = m_layerFieldNames[k];
       std::string readoutName = m_readoutNames[k];
       dd4hep::DDSegmentation::BitFieldCoder *decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
@@ -410,7 +410,7 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
       }
     }
     // divide by the cluster energy to prepare the inputs for the MVA
-    for (int k = 0; (int) k < m_numLayersTotal; ++k)
+    for (unsigned short int k = 0; k < m_numLayersTotal; ++k)
     {
       energiesInLayers[k] /= ecl;
     }

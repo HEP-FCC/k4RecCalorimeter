@@ -129,11 +129,11 @@ private:
       "Identifier of layers, corresponding to systemID"
   }; 
   /// Numbers of layers of the detectors
-  Gaudi::Property<std::vector<int>> m_numLayers {
+  Gaudi::Property<std::vector<unsigned short int>> m_numLayers {
       this, "numLayers", {12}, "Numbers of layers of the systems"
   };
   /// IDs of the first layers of the detectors
-  Gaudi::Property<std::vector<int>> m_firstLayerIDs {
+  Gaudi::Property<std::vector<unsigned short int>> m_firstLayerIDs {
       this, "firstLayerIDs", {0}, "IDs of first layers in the systems"
   };
 
@@ -145,7 +145,7 @@ private:
 
   // total number of layers summed over the various subsystems
   // should be equal to the number of input features of the MVA
-  int m_numLayersTotal;
+  unsigned short int m_numLayersTotal;
 
   // the ONNX runtime session for applying the calibration,
   // the environment, and the input and output shapes and names
@@ -157,7 +157,7 @@ private:
   std::vector<std::string> m_output_names;
 
   // the indices of the shapeParameters containing the inputs to the model (if they exist)
-  std::vector<int> m_inputPositionsInShapeParameters;
+  std::vector<unsigned short int> m_inputPositionsInShapeParameters;
 };
 
 #endif /* RECFCCEECALORIMETER_CALIBRATECALOCLUSTERS_H */
