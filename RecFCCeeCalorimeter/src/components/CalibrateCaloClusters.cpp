@@ -313,11 +313,6 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
 
     // calculate cluster energy in each layer and normalize by total cluster energy
     calcEnergiesInLayers(inClusters->at(j), energiesInLayers);
-    for (int k = 0; (int) k < m_numLayersTotal; ++k)
-    {
-      energiesInLayers[k] /= ecl;
-    }
-    energiesInLayers[m_numLayersTotal] = ecl;
     verbose() << "Calibration inputs:" << endmsg;
     for (int k = 0; k < (int) energiesInLayers.size(); ++k)
     {
@@ -364,18 +359,25 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
 }
 
 void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
-                                                 std::vector<float> &energiesInLayer) const
+                                                 std::vector<float> &energiesInLayers) const
 {
   // reset vector with energies per layer
-  std::fill(energiesInLayer.begin(), energiesInLayer.end(), 0.0);
+  std::fill(energiesInLayers.begin(), energiesInLayers.end(), 0.0);
+
+  // get total cluster energy
+  double ecl = cluster.getEnergy();
 
   // if all inputs are available as shapeParameters, use them
   if ((int) m_inputPositionsInShapeParameters.size() == m_numLayersTotal)
   {
+    // the shapeParameters already contain energy fractions so we
+    // do not divide by cluster energy
     for (int i=0; i < (int) m_numLayersTotal; i++)
     {
-      energiesInLayer[i] = cluster.getShapeParameters(m_inputPositionsInShapeParameters[i]);
+      energiesInLayers[i] = cluster.getShapeParameters(m_inputPositionsInShapeParameters[i]);
     }
+    // add as last input the total raw cluster energy
+    energiesInLayers[m_numLayersTotal] = ecl;
   }
   else
   {
@@ -404,8 +406,15 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
           continue;
         }
         int layer = decoder->get(cellID, layerField);
-        energiesInLayer[startPositionToFill + layer - firstLayer] += cell->getEnergy();
+        energiesInLayers[startPositionToFill + layer - firstLayer] += cell->getEnergy();
       }
     }
+    // divide by the cluster energy to prepare the inputs for the MVA
+    for (int k = 0; (int) k < m_numLayersTotal; ++k)
+    {
+      energiesInLayers[k] /= ecl;
     }
+    // add as last input the total cluster energy
+    energiesInLayers[m_numLayersTotal] = ecl;
+  }
 }
