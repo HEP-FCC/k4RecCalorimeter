@@ -145,7 +145,7 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
             uint64_t id = cellId;
             map.insert(std::pair<uint64_t, std::vector<std::pair<uint64_t,double>>>(
                 id,
-                det::xtalk::xtalk_neighbours_ModuleThetaMerged(
+                det::crosstalk::getNeighboursModuleThetaMerged(
                     *moduleThetaSegmentation,
                     *decoder,
                     {m_activeFieldNamesSegmented[iSys],
@@ -236,7 +236,7 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
       {
         moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *>(aSegmentation);
       }
-      saveCellInfo=det::xtalk::xtalk_get_cell_indices(
+      saveCellInfo=det::crosstalk::getCellIndices(
           *moduleThetaSegmentation,
           *decoder,
           {m_activeFieldNamesSegmented[iSys],"module", "theta"},
