@@ -45,6 +45,12 @@ add_test(NAME FCCeeLAr_simulateForReco
 )
 set_test_env(FCCeeLAr_simulateForReco)
 
+add_test(NAME FCCeeLAr_simRecoAllegroV3
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/run_thetamodulemerged.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_simRecoAllegroV3)
+
 add_test(NAME FCCeeLAr_slidingWindowClustering
          COMMAND k4run RecFCCeeCalorimeter/tests/options/runFullCaloSystem_ReconstructionSW_noiseFromFile.py
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
