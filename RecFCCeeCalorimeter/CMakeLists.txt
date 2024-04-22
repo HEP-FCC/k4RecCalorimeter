@@ -74,3 +74,9 @@ add_test(NAME FCCeeLAr_xtalkNeighbours
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_xtalkNeighbours)
+
+add_test(NAME FCCeeLAr_benchmarkCorrection
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/run_thetamodulemerged_SW_benchmarkCorr.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_benchmarkCorrection)
