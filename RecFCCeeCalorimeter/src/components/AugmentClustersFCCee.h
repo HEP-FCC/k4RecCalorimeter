@@ -80,6 +80,10 @@ private:
   /// Name of the layer/cell field
   Gaudi::Property<std::vector<std::string>> m_layerFieldNames{
       this, "layerFieldNames", {"layer"}, "Identifiers of layers, corresponding to systemIDs"};
+  Gaudi::Property<std::vector<std::string>> m_thetaFieldNames{
+      this, "thetaFieldNames", {"theta"}, "Identifiers of theta, corresponding to systemIDs"};
+  Gaudi::Property<std::vector<std::string>> m_moduleFieldNames{
+      this, "moduleFieldNames", {"module"}, "Identifiers of module, corresponding to systemIDs"};
 };
 
 #endif /* RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H */
