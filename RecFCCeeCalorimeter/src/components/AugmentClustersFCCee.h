@@ -31,6 +31,7 @@ namespace dd4hep
  *
  *  @author Alexis Maloizel
  *  @author Giovanni Marchiori
+ *  @author Tong Li
  */
 
 class AugmentClustersFCCee : public Gaudi::Algorithm
