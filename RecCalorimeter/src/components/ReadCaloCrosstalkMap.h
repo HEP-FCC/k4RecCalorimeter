@@ -40,7 +40,7 @@ public:
 
 private:
   /// Name of input root file that contains the TTree with cellID->vec<list_crosstalk_neighboursCellID> and cellId->vec<list_crosstalksCellID>
-  Gaudi::Property<std::string> m_fileName{this, "fileName", "", "Name of the file that contains the crosstalk map"};
+  Gaudi::Property<std::string> m_fileName{this, "fileName", "xtalk_neighbours_map_ecalB_thetamodulemerged.root", "Name of the file that contains the crosstalk map"};
   /// Output maps to be used for the fast lookup in the creating calo-cells algorithm
   std::unordered_map<uint64_t, std::vector<uint64_t>> m_mapNeighbours;
   std::unordered_map<uint64_t, std::vector<double>> m_mapCrosstalks;
