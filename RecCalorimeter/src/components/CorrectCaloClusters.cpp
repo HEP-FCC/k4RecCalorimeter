@@ -25,7 +25,9 @@
 
 // ROOT
 #include "TF2.h"
-#include <cmath>  // Include the <cmath> header for std::fabs
+
+// Include the <cmath> header for std::fabs
+#include <cmath>  
 
 DECLARE_COMPONENT(CorrectCaloClusters)
 
@@ -432,7 +434,7 @@ StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollect
     int nParam = m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).size(); 
     std::vector<double> benchmarkParameters(nParam,-1.); 
 
-    if (m_benchmarkTwoFormulas)
+    if (m_benchmarkEneSwitch>0.)
     {
       int benchmarkFormulaIndexLowEne = 1;
       // ensure smooth transition between low- and high-energy formulas (parameter l controls how fast the transition is)

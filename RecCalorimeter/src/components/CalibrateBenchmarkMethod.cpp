@@ -19,6 +19,9 @@
 #include "Math/Factory.h"
 #include "Math/Functor.h"
 
+// Include the <cmath> header for std::fabs
+#include <cmath>  
+
 DECLARE_COMPONENT(CalibrateBenchmarkMethod)
 
 
@@ -239,7 +242,7 @@ StatusCode CalibrateBenchmarkMethod::finalize() {
   // the actual minimisation is running here 
   std::cout << "Running minimisation for " << m_vecGeneratedEnergy.size() << " #events! \n";
   if (m_vecGeneratedEnergy.size() != m_vecTotalEnergyinECal.size()){
-    std::cout << "Something's wrong!!" << std::endl; 
+    std::cout << "Something's wrong! Vector size does not match for generated energy and total energy in ECal." << std::endl; 
   } 
 
   // number of benchmark parameters 

@@ -222,13 +222,11 @@ private:
       this, "benchmarkFormulas", {}, "Benchmark formulas (in ROOT notation)"};
 
   /// Possibility to use different parametrization for very low energies (<10GeV) for benchmark method 
-  /// If true, the second formula in the input vector will be used for energies below m_eneSwitch 
-  Gaudi::Property<bool> m_benchmarkTwoFormulas{this, "benchmarkTwoFormulas", false};
-
   /// For the energy (GeV) below this given threshold, the second energy formula in benchmarkFormulas is used 
-  /// To be used together with setting m_benchmarkTwoFormulas to true 
   Gaudi::Property<double> m_benchmarkEneSwitch {
-      this, "benchmarkEneSwitch", {5.}, "Energy threshold in GeV to use different parametrization"};
+    this, "benchmarkEneSwitch", {-1.}, 
+    "Energy threshold in GeV to use the second formula. Set to a negative value to disable using the second formula."
+};
 
   /// benchmarkParamsApprox are used for the first estimate of the energy 
   /// which is then used to obtain energy dependent benchmark parameters
