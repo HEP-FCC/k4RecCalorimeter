@@ -14,8 +14,6 @@
 // edm4hep
 #include "edm4hep/CalorimeterHit.h"
 
-#include "TFile.h"
-
 DECLARE_COMPONENT(CreateCaloCells)
 
 CreateCaloCells::CreateCaloCells(const std::string& name, ISvcLocator* svcLoc) :
