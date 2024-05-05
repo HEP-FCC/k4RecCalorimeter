@@ -9,6 +9,10 @@
 // DD4hep
 #include "DD4hep/Detector.h"
 
+// k4geo
+#include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
+#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
+
 // ROOT
 #include "TLorentzVector.h"
 #include "TString.h"
@@ -87,11 +91,15 @@ StatusCode AugmentClustersFCCee::initialize()
       showerShapeDecorations.push_back(Form("energy_fraction_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("theta_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("phi_%s_layer_%d", detector, layer));
-      showerShapeDecorations.push_back(Form("width_theta_%s_layer_%d", detector, layer));
-      showerShapeDecorations.push_back(Form("width_module_%s_layer_%d", detector, layer));
-      showerShapeDecorations.push_back(Form("Ratio_E_max_2ndmax_%s_layer_%d", detector, layer));
-      showerShapeDecorations.push_back(Form("Delta_E_2ndmax_min_%s_layer_%d", detector, layer));
-      showerShapeDecorations.push_back(Form("width_theta_3Bin_%s_layer_%d", detector, layer));
+
+      // pi0/photon shape var only calculated in EMB
+      if (m_do_pi0_photon_shapeVar && m_systemIDs[k] == 4) {
+        showerShapeDecorations.push_back(Form("width_theta_%s_layer_%d", detector, layer));
+        showerShapeDecorations.push_back(Form("width_module_%s_layer_%d", detector, layer));
+        showerShapeDecorations.push_back(Form("Ratio_E_max_2ndmax_%s_layer_%d", detector, layer));
+        showerShapeDecorations.push_back(Form("Delta_E_2ndmax_min_%s_layer_%d", detector, layer));
+        showerShapeDecorations.push_back(Form("width_theta_3Bin_%s_layer_%d", detector, layer));
+      }
     }
   }
   m_showerShapeHandle.put(showerShapeDecorations);
@@ -99,9 +107,13 @@ StatusCode AugmentClustersFCCee::initialize()
   return StatusCode::SUCCESS;
 }
 
-std::pair<std::vector<int>, std::vector<double>> MergeSumAndSort(std::vector<int>& A, std::vector<double>& B) {
+// for all cells in a certain layer: vec A is theta_id, vec B is E_cell
+// make a 1D projection to theta: sum up the E_cell over modules with the same theta_id
+// then sort the theta vec (for finding theta neighbors), update the E vec simultaneously
+// return a pair of vectors: theta_id (in ascending order) and E (summed over modules)
+std::pair<std::vector<int>, std::vector<double>> MergeSumAndSort(const std::vector<int>& A, const std::vector<double>& B) {
   std::unordered_map<int, double> elementSum;
-  // traverse vec A, merge the same elements (theta ID) in vec A and sum up the corresponding elements (E_cell) in vec B
+  // merge the same elements in vec A and sum up the corresponding elements in vec B
   for (size_t i = 0; i < A.size(); i ++) {
     elementSum[A[i]] += B[i];
   }
@@ -138,9 +150,29 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 {
   // get the input collection with clusters
   const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
-
   // create the new output collection
   edm4hep::ClusterCollection *outClusters = m_outClusters.createAndPut();
+
+  // get segmentation and nModules of EMB
+  int nModules_EMB = -1;
+  for (size_t k = 0; k < m_readoutNames.size(); k++) {
+    std::string readoutName = m_readoutNames[k];
+    if (readoutName != "ECalBarrelModuleThetaMerged")    continue;
+    dd4hep::DDSegmentation::Segmentation *aSegmentation = m_geoSvc->getDetector()->readout(readoutName).segmentation().segmentation();
+    if (aSegmentation == nullptr) {
+      error() << "Segmentation does not exist." << endmsg;
+      return StatusCode::FAILURE;
+    }
+    dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *segmentation = nullptr;
+    if (aSegmentation->type() == "FCCSWGridModuleThetaMerged_k4geo") {
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *>(aSegmentation);
+      nModules_EMB = segmentation->nModules();
+      debug() << "Number of Modules in EMB : " << nModules_EMB << endmsg;
+    } else {
+      error() << "FCCSWGridModuleThetaMerged_k4geo not found !" << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
 
   // total number of layers
   size_t numLayersTotal = 0;
@@ -163,24 +195,22 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     sumEnLayer.assign(numLayersTotal, 0.);
     double phiMin = 9999.;
     double phiMax = -9999.;
-    int module_id_Min = 1536;
-    int module_id_Max = -1;
+    int module_id_Min = 9999;
+    int module_id_Max = -9999;
 
     // loop over each system/readout
     int startPositionToFill = 0;
     for (size_t k = 0; k < m_readoutNames.size(); k++)
     {
       if (k > 0)
-      {
-        startPositionToFill += m_numLayers[k - 1];  // only 2 sub detectors ?
-      }
+        startPositionToFill += m_numLayers[k - 1];
       int systemID = m_systemIDs[k];
       std::string layerField = m_layerFieldNames[k];
       std::string moduleField = m_moduleFieldNames[k];
       std::string readoutName = m_readoutNames[k];
       dd4hep::DDSegmentation::BitFieldCoder *decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
-      // 1st loop over the cells
+      // loop over the cells
       for (auto cell = newCluster.hits_begin(); cell != newCluster.hits_end(); cell++)
       {
         dd4hep::DDSegmentation::CellID cID = cell->getCellID();
@@ -189,7 +219,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           continue;
         uint layer = decoder->get(cID, layerField);
         int module_id = decoder->get(cID, moduleField);
-        double eCell = cell->getEnergy();  // to MeV in calculation ??
+        double eCell = cell->getEnergy();  // TODO MeV in calculation ?
         sumEnLayer[layer+startPositionToFill] += eCell;
         E += eCell;
         TVector3 v = TVector3(cell->getPosition().x, cell->getPosition().y, cell->getPosition().z);
@@ -204,8 +234,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
       }  // end of loop over cells
     }  // end of loop over system / readout
-    // in the loop above we get E_layer, E_cluster, max and min of cluster phi
-  
+
     // any number close to two pi should do, because if a cluster contains
     // the -pi<->pi transition, phiMin should be close to -pi and phiMax close to pi
     bool isClusterPhiNearPi = false;
@@ -215,7 +244,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     debug() << "Cluster is near phi=pi : " << isClusterPhiNearPi << endmsg;
 
     bool isResetModuleID = false;
-    if (module_id_Max - module_id_Min > 1500)    isResetModuleID = true;
+    if (module_id_Max - module_id_Min > nModules_EMB * .9)    isResetModuleID = true;
     //debug() << "phiMin, phiMax : " << phiMin << " " << phiMax << endmsg;
     //debug() << "Cluster is near phi=pi : " << isClusterPhiNearPi << endmsg;
 
@@ -254,9 +283,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     for (size_t k = 0; k < m_readoutNames.size(); k++)
     {
       if (k > 0)
-      {
         startPositionToFill += m_numLayers[k - 1];
-      }
       int systemID = m_systemIDs[k];
       std::string layerField = m_layerFieldNames[k];
       std::string thetaField = m_thetaFieldNames[k];
@@ -264,7 +291,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
       std::string readoutName = m_readoutNames[k];
       dd4hep::DDSegmentation::BitFieldCoder *decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
-      // 2nd loop over the cells
+      // loop over the cells
       for (auto cell = newCluster.hits_begin(); cell != newCluster.hits_end(); cell++)
       {
         dd4hep::DDSegmentation::CellID cID = cell->getCellID();
@@ -287,8 +314,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         if (isClusterPhiNearPi && phi < 0.) {
           phi += TMath::TwoPi();
         }
-        if (isResetModuleID && module_id > 1536/2) {
-          module_id -= 1536;  // transition of module ID
+        if (systemID == 4 && isResetModuleID && module_id > nModules_EMB/2) {
+          module_id -= nModules_EMB;  // transition of module ID
         }
 
         if (m_thetaRecalcLayerWeights[k][layer]<0)
@@ -298,15 +325,18 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         sumWeightLayer[layer+startPositionToFill] += weightLog;
         sumPhiLayer[layer+startPositionToFill] += (eCell * phi);
 
-        vec_E_cell_layer[layer+startPositionToFill].push_back(eCell);
-        vec_theta_cell_layer[layer+startPositionToFill].push_back(theta_id);
-        vec_module_cell_layer[layer+startPositionToFill].push_back(module_id);
-
-        // sum them for width calculation
-        theta2_E_layer[layer+startPositionToFill] += theta_id * theta_id * eCell;
-        theta_E_layer[layer+startPositionToFill] += theta_id * eCell;
-        module2_E_layer[layer+startPositionToFill] += module_id * module_id * eCell;
-        module_E_layer[layer+startPositionToFill] += module_id * eCell;
+        // do pi0/photon shape var only for EMB
+        if (m_do_pi0_photon_shapeVar && systemID == 4) {
+          // E, theta_id, and module_id of cells in layer
+          vec_E_cell_layer[layer+startPositionToFill].push_back(eCell);
+          vec_theta_cell_layer[layer+startPositionToFill].push_back(theta_id);
+          vec_module_cell_layer[layer+startPositionToFill].push_back(module_id);
+          // sum them for width calculation
+          theta2_E_layer[layer+startPositionToFill] += theta_id * theta_id * eCell;
+          theta_E_layer[layer+startPositionToFill] += theta_id * eCell;
+          module2_E_layer[layer+startPositionToFill] += module_id * module_id * eCell;
+          module_E_layer[layer+startPositionToFill] += module_id * eCell;
+        }
       }  // end of loop over cells
     }  // end of loop over each system / readout
 
@@ -323,6 +353,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
     startPositionToFill = 0;
     for (size_t k = 0; k < m_readoutNames.size(); k++) {
+      if (!m_do_pi0_photon_shapeVar)    break;
+      if (m_systemIDs[k] != 4)    continue;    // do pi0/photon shape var only for EMB
       if (k > 0)    startPositionToFill += m_numLayers[k - 1];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
@@ -392,9 +424,9 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     for (size_t k = 0; k < m_readoutNames.size(); k++)
     {
       if (k > 0)
-      {
         startPositionToFill += m_numLayers[k - 1];
-      }
+
+      int systemID = m_systemIDs[k];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++)
       {
@@ -427,58 +459,56 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         newCluster.addToShapeParameters(sumThetaLayer[layer+startPositionToFill]);
         newCluster.addToShapeParameters(sumPhiLayer[layer+startPositionToFill]);
 
-        //E_frac_Layer[layer+startPositionToFill] = sumEnLayer[layer+startPositionToFill] / E;
-        //if (E == 0)    E_frac_Layer[layer+startPositionToFill] = 0.;
-        //newCluster.addToShapeParameters(E_frac_Layer[layer+startPositionToFill]);
+        // do pi0/photon shape var only for EMB
+        if (m_do_pi0_photon_shapeVar && systemID == 4) {
+          double w_theta = sqrt(fabs(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
+          if (std::isnan(w_theta))    w_theta = 0.;
+          if (w_theta > 40)    w_theta = 40;
+          width_theta[layer+startPositionToFill] = w_theta;
 
-        double w_theta = sqrt(fabs(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
-        if (std::isnan(w_theta))    w_theta = 0.;
-        if (w_theta > 40)    w_theta = 40;
-        width_theta[layer+startPositionToFill] = w_theta;
+          double w_module = sqrt(fabs(module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
+          if (std::isnan(w_module))    w_module = 0.;
+          if (w_module > 40)    w_module = 40;
+          width_module[layer+startPositionToFill] = w_module;
 
-        double w_module = sqrt(fabs(module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
-        if (std::isnan(w_module))    w_module = 0.;
-        if (w_module > 40)    w_module = 40;
-        width_module[layer+startPositionToFill] = w_module;
+          double Ratio_E = (E_cell_Max[layer+startPositionToFill] - E_cell_secMax[layer+startPositionToFill]) /
+                           (E_cell_Max[layer+startPositionToFill] + E_cell_secMax[layer+startPositionToFill]);
+          if (E_cell_Max[layer+startPositionToFill] + E_cell_secMax[layer+startPositionToFill] == 0)    Ratio_E = 1.;
+          Ratio_E_max_2ndmax[layer+startPositionToFill] = Ratio_E;
+          Delta_E_2ndmax_min[layer+startPositionToFill] = E_cell_secMax[layer+startPositionToFill] - E_cell_Min[layer+startPositionToFill];
 
-        double Ratio_E = (E_cell_Max[layer+startPositionToFill] - E_cell_secMax[layer+startPositionToFill]) /
-                         (E_cell_Max[layer+startPositionToFill] + E_cell_secMax[layer+startPositionToFill]);
-        if (E_cell_Max[layer+startPositionToFill] + E_cell_secMax[layer+startPositionToFill] == 0)    Ratio_E = 1.;
-        Ratio_E_max_2ndmax[layer+startPositionToFill] = Ratio_E;
-        Delta_E_2ndmax_min[layer+startPositionToFill] = E_cell_secMax[layer+startPositionToFill] - E_cell_Min[layer+startPositionToFill];
+          if (local_E_Max[layer+startPositionToFill].size() > 0) {
+            double E_m1 = 0.;
+            double E_p1 = 0.;
+            int theta_m1 = 0;
+            int theta_p1 = 0;
+            double theta2_E_3Bin = 0.;
+            double theta_E_3Bin = 0.;
+            double sum_E_3Bin = 0.;
 
-        if (local_E_Max[layer+startPositionToFill].size() > 0) {
-          double E_m1 = 0.;
-          double E_p1 = 0.;
-          int theta_m1 = 0;
-          int theta_p1 = 0;
-          double theta2_E_3Bin = 0.;
-          double theta_E_3Bin = 0.;
-          double sum_E_3Bin = 0.;
+            auto it_1 = std::find(theta_E_pair[layer+startPositionToFill].second.begin(), theta_E_pair[layer+startPositionToFill].second.end(), E_cell_Max[layer+startPositionToFill]);
+            int ind_1 = std::distance(theta_E_pair[layer+startPositionToFill].second.begin(), it_1);
+            E_m1 = theta_E_pair[layer+startPositionToFill].second[ind_1-1];
+            E_p1 = theta_E_pair[layer+startPositionToFill].second[ind_1+1];
+            theta_m1 = theta_E_pair[layer+startPositionToFill].first[ind_1-1];
+            theta_p1 = theta_E_pair[layer+startPositionToFill].first[ind_1+1];
+            sum_E_3Bin = E_m1 + E_cell_Max[layer+startPositionToFill] + E_p1;
+            theta2_E_3Bin = theta_m1 * theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * theta_p1 * E_p1;
+            theta_E_3Bin = theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * E_p1;
 
-          auto it_1 = std::find(theta_E_pair[layer+startPositionToFill].second.begin(), theta_E_pair[layer+startPositionToFill].second.end(), E_cell_Max[layer+startPositionToFill]);
-          int ind_1 = std::distance(theta_E_pair[layer+startPositionToFill].second.begin(), it_1);
-          E_m1 = theta_E_pair[layer+startPositionToFill].second[ind_1-1];
-          E_p1 = theta_E_pair[layer+startPositionToFill].second[ind_1+1];
-          theta_m1 = theta_E_pair[layer+startPositionToFill].first[ind_1-1];
-          theta_p1 = theta_E_pair[layer+startPositionToFill].first[ind_1+1];
-          sum_E_3Bin = E_m1 + E_cell_Max[layer+startPositionToFill] + E_p1;
-          theta2_E_3Bin = theta_m1 * theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * theta_p1 * E_p1;
-          theta_E_3Bin = theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * E_p1;
+            double _w_theta_3Bin = sqrt(fabs(theta2_E_3Bin / sum_E_3Bin - std::pow(theta_E_3Bin / sum_E_3Bin, 2)));
+            if (std::isnan(_w_theta_3Bin))    _w_theta_3Bin = 0.;
+            width_theta_3Bin[layer+startPositionToFill] = _w_theta_3Bin;
+          } else {
+            width_theta_3Bin[layer+startPositionToFill] = 0.;
+          }
 
-          double _w_theta_3Bin = sqrt(fabs(theta2_E_3Bin / sum_E_3Bin - std::pow(theta_E_3Bin / sum_E_3Bin, 2)));
-          if (std::isnan(_w_theta_3Bin))    _w_theta_3Bin = 0.;
-          width_theta_3Bin[layer+startPositionToFill] = _w_theta_3Bin;
-        } else {
-          width_theta_3Bin[layer+startPositionToFill] = 0.;
+          newCluster.addToShapeParameters(width_theta[layer+startPositionToFill]);
+          newCluster.addToShapeParameters(width_module[layer+startPositionToFill]);
+          newCluster.addToShapeParameters(Ratio_E_max_2ndmax[layer+startPositionToFill]);
+          newCluster.addToShapeParameters(Delta_E_2ndmax_min[layer+startPositionToFill]);
+          newCluster.addToShapeParameters(width_theta_3Bin[layer+startPositionToFill]);
         }
-
-        newCluster.addToShapeParameters(width_theta[layer+startPositionToFill]);
-        newCluster.addToShapeParameters(width_module[layer+startPositionToFill]);
-        newCluster.addToShapeParameters(Ratio_E_max_2ndmax[layer+startPositionToFill]);
-        newCluster.addToShapeParameters(Delta_E_2ndmax_min[layer+startPositionToFill]);
-        newCluster.addToShapeParameters(width_theta_3Bin[layer+startPositionToFill]);
-
       }  // end of loop over layers
     }  // end of loop over system/readout
   }  // end of loop over clusters
