@@ -42,7 +42,7 @@ endif()
 
 function(set_test_env _testname)
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
-               LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$<TARGET_FILE_DIR:ROOT::Core>:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>:$<TARGET_FILE_DIR:EDM4hep::edm4hep>:$<TARGET_FILE_DIR:podio::podio>:$ENV{LD_LIBRARY_PATH})
+               LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$<TARGET_FILE_DIR:ROOT::Core>:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>:$<TARGET_FILE_DIR:EDM4HEP::edm4hep>:$<TARGET_FILE_DIR:podio::podio>:$ENV{LD_LIBRARY_PATH})
 
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
                PYTHONPATH=${CMAKE_BINARY_DIR}/RecCalorimeter/${GAUDI_GENCONF_DIR}:${CMAKE_BINARY_DIR}/RecFCCeeCalorimeter/${GAUDI_GENCONF_DIR}:${CMAKE_BINARY_DIR}/RecFCChhCalorimeter/${GAUDI_GENCONF_DIR}:$ENV{PYTHONPATH}:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>/../python:$ENV{PYTHONPATH})
