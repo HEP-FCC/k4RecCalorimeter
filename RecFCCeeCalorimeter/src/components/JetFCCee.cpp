@@ -37,6 +37,8 @@ StatusCode JetFCCee::execute() {
 
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
+
+  // Need to convert cluster position in space to the momentum
   for(auto cluster: *inClusters){
     const edm4hep::Vector3f position = cluster.getPosition();
     float x = position.x;
@@ -81,7 +83,6 @@ StatusCode JetFCCee::execute() {
 
 
 StatusCode JetFCCee::finalize() { 
-  std::cout << m_jetRadius << "\t" << m_minPt << std::endl;
   return GaudiAlgorithm::finalize(); 
 }
 

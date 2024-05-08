@@ -25,13 +25,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(ROOT COMPONENTS RIO Tree)
 find_package(Gaudi)
 find_package(k4FWCore) # implicit: Gaudi
-#find_package(EDM4HEP 0.10.1) # implicit: Podio
+find_package(EDM4HEP 0.10.1) # implicit: Podio
 find_package(DD4hep)
 find_package(k4geo)
 find_package(ONNXRuntime)
-
-# need to use our own FindFastJet.cmake
-#set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(FastJet)
 #---------------------------------------------------------------
 
@@ -60,13 +57,9 @@ function(set_test_env _testname)
 endfunction()
 
 
-add_subdirectory(EDM4hep)
 add_subdirectory(RecCalorimeter)
 add_subdirectory(RecFCChhCalorimeter)
 add_subdirectory(RecFCCeeCalorimeter)
-
-
-
 
 
 install(EXPORT ${PROJECT_NAME}Targets
