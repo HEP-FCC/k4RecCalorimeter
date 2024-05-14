@@ -125,15 +125,6 @@ StatusCode CreateCaloCells::execute() {
     }
     
   }
-  // debug
-  ///*
-  for (const auto& this_cell : m_cellsMap) {
-    std::cout<<m_cellsMap.size()<<" "<<this_cell.first<<" "<<this_cell.second<<std::endl;
-    if(this_cell.second<0) std::cout<<this_cell.first<<" NEGATIVE!!!"<<std::endl;
-  }
-  std::cout<<std::endl;
-  //*/
-  // end of debug
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
   // 2. Calibrate simulation energy to EM scale
