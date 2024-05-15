@@ -129,6 +129,7 @@ private:
    *
    * @param[in]  cluster       Pointer to cluster of interest.
    * @param[in]  readoutName   Name of the readout.
+   * @param[in]  systemID      ID of the system.
    * @param[in]  layerID       ID of the layer of the readout.
    *
    * @return                   Energy in layer.
@@ -144,6 +145,7 @@ private:
    *
    * @param[in]  cluster       Pointer to cluster of interest.
    * @param[in]  readoutName   Name of the readout.
+   * @param[in]  systemID      ID of the system.
    *
    * @return                   Total energy.
    */

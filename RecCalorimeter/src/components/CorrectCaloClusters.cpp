@@ -78,6 +78,10 @@ StatusCode CorrectCaloClusters::initialize() {
     return StatusCode::FAILURE;
   }
   if (m_upstreamCorr) {
+    if (m_upstreamFormulas.empty() || m_upstreamParams.empty()){ 
+      error() << "Upstream correction is turned on, but upstreamFormulas or upstreamParams vector is empty, exiting!" << endmsg;
+      return StatusCode::FAILURE;
+    }
     if (m_systemIDs.size() != m_upstreamFormulas.size()) {
       error() <<  "Sizes of systemIDs vector and upstreamFormulas vector does not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
@@ -88,6 +92,10 @@ StatusCode CorrectCaloClusters::initialize() {
     }
   }
   if (m_downstreamCorr) { 
+    if (m_downstreamFormulas.empty() || m_downstreamParams.empty()){ 
+      error() << "Downstream correction is turned on, but downstreamFormulas or downstreamParams vector is empty, exiting!" << endmsg;
+      return StatusCode::FAILURE;
+    }
     if (m_systemIDs.size() != m_downstreamFormulas.size()) {
       error() <<  "Sizes of systemIDs vector and downstreamFormulas vector does not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
@@ -97,14 +105,37 @@ StatusCode CorrectCaloClusters::initialize() {
       return StatusCode::FAILURE;
     }
   }
-  if (m_benchmarkCorr) {  
-    if (m_systemIDs.size() != m_benchmarkFormulas.size()) {
-      error() <<  "Sizes of systemIDs vector and benchmarkFormulas vector does not match, exiting!" << endmsg;
+  if (m_benchmarkCorr) { 
+    // number of benchmark parameters is 6 
+    size_t nBenchmarkParams = 6; 
+    // check that all benchmark parameters and functions are not empty and have the correct size
+    if (m_benchmarkFormulas.empty() || m_benchmarkParametrization.empty()){ 
+      error() << "Benchmark correction is turned on, but benchmarkFormulas or benchmarkParametrization vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_systemIDs.size() != m_benchmarkParametrization.size()) {
-      error() <<  "Sizes of systemIDs vector and benchmarkParams vector does not match, exiting!" << endmsg;
+    if (m_benchmarkFormulas.size() != m_benchmarkParametrization.size()) {
+      error() <<  "Sizes of benchmarkFormulas vector and benchmarkParametrization vector does not match, exiting! " << m_benchmarkFormulas.size() << endmsg;
       return StatusCode::FAILURE;
+    }
+    if (m_benchmarkParamsApprox.size() != nBenchmarkParams){
+        error() <<  "The benchmarkParamsApprox vector does not have the proper size, the size should be 6." << endmsg;
+        return StatusCode::FAILURE;
+      }
+    if (m_benchmarkEneSwitch<0.){
+      if (m_benchmarkFormulas[0].size() != m_benchmarkParamsApprox.size()){
+        error() <<  "A single formula parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] vector does not have the proper size, the size should be 6." << endmsg;
+        return StatusCode::FAILURE;
+      }
+    }
+    if (m_benchmarkEneSwitch>0.){
+      if (m_benchmarkFormulas.size()<2){
+        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas vector does not have the proper size, the size should be 2." << endmsg;
+        return StatusCode::FAILURE;
+      }
+      if (m_benchmarkFormulas[0].size() != m_benchmarkParamsApprox.size() || m_benchmarkFormulas[1].size() != m_benchmarkParamsApprox.size()){
+        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] or benchmarkFormulas[1] vector does not have the proper size, the size should be 6." << endmsg;
+        return StatusCode::FAILURE;
+      }
     }
   }
 
@@ -221,7 +252,6 @@ StatusCode CorrectCaloClusters::execute() {
 
   if ((m_upstreamCorr && m_downstreamCorr && m_benchmarkCorr) || (m_upstreamCorr && m_benchmarkCorr) || (m_downstreamCorr && m_benchmarkCorr)){
     warning() << "Too many corrections in the house, apply upstream and downstream on ECal standalone and benchmark on combined ECal and HCal simulation." << endmsg;
-
   }
 
   return StatusCode::SUCCESS;
@@ -421,55 +451,47 @@ StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollect
                                          
 
     // calculate approximate benchmark energy using non energy dependent benchmark parameters
-    double approximateBenchmarkEnergy = 0.0; 
-    approximateBenchmarkEnergy = m_benchmarkParamsApprox[0] * totalEnergyInECal +
-                                 m_benchmarkParamsApprox[1] * totalEnergyInHCal +
-                                 m_benchmarkParamsApprox[2] * sqrt(abs(energyInLastLayerECal * m_benchmarkParamsApprox[0] * energyInFirstLayerHCal * m_benchmarkParamsApprox[1])) +
-                                 m_benchmarkParamsApprox[3] * pow(totalEnergyInECal * m_benchmarkParamsApprox[0], 2) +
-                                 m_benchmarkParamsApprox[4] * energyInFirstLayerECal +
-                                 m_benchmarkParamsApprox[5];
+    double approximateBenchmarkEnergy = m_benchmarkParamsApprox[0] * totalEnergyInECal +
+                                        m_benchmarkParamsApprox[1] * totalEnergyInHCal +
+                                        m_benchmarkParamsApprox[2] * sqrt(abs(energyInLastLayerECal * m_benchmarkParamsApprox[0] * energyInFirstLayerHCal * m_benchmarkParamsApprox[1])) +
+                                        m_benchmarkParamsApprox[3] * pow(totalEnergyInECal * m_benchmarkParamsApprox[0], 2) +
+                                        m_benchmarkParamsApprox[4] * energyInFirstLayerECal +
+                                        m_benchmarkParamsApprox[5];
 
     // Calculate energy-dependent benchmark parameters p[0]-p[5]
-    int benchmarkFormulaIndexHighEne = 0;
-    int nParam = m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).size(); 
+    auto benchmarkFormulasHighEne = m_benchmarkFunctions.at(0);
+    int nParam = benchmarkFormulasHighEne.size(); 
     std::vector<double> benchmarkParameters(nParam,-1.); 
-
+    
     if (m_benchmarkEneSwitch>0.)
     {
-      int benchmarkFormulaIndexLowEne = 1;
+      auto benchmarkFormulasLowEne = m_benchmarkFunctions.at(1);
       // ensure smooth transition between low- and high-energy formulas (parameter l controls how fast the transition is)
       int l=2;
       double transition = 0.5 * (1 + tanh(l * (approximateBenchmarkEnergy - m_benchmarkEneSwitch) / 2));
       verbose() << "Using two formulas for benchmark calibration, the second formula provided will be used to correct energies below benchmarkEneSwitch threshold." << endmsg;
-      // number of benchmark parameters must be the same for the two formulas 
-      if (m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).size() != m_benchmarkFunctions.at(benchmarkFormulaIndexLowEne).size()){
-        info() << "Size of the benchmarkFormulaIndexHighEne vector and benchmarkFormulaIndexLowEne vector does not match, exiting!" << endmsg;
-        return StatusCode::FAILURE;
-      }
-      for (size_t k = 0; k < m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).size(); ++k) {
-        auto func_low_ene = m_benchmarkFunctions.at(benchmarkFormulaIndexLowEne).at(k);
-        auto func_high_ene = m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).at(k);
+      for (size_t k = 0; k < benchmarkFormulasHighEne.size(); ++k) {
+        auto func_low_ene = benchmarkFormulasLowEne.at(k);
+        auto func_high_ene = benchmarkFormulasHighEne.at(k);
         benchmarkParameters[k] = (1 - transition) * func_low_ene->Eval(approximateBenchmarkEnergy) +
                                 transition * func_high_ene->Eval(approximateBenchmarkEnergy);
       }
     }
     else{
       verbose() << "Using one formula for benchmark calibration." << endmsg;
-      for (size_t k = 0; k < m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).size(); ++k) {
-        auto func = m_benchmarkFunctions.at(benchmarkFormulaIndexHighEne).at(k);
+      for (size_t k = 0; k < benchmarkFormulasHighEne.size(); ++k) {
+        auto func = benchmarkFormulasHighEne.at(k);
         benchmarkParameters[k] = func->Eval(approximateBenchmarkEnergy);
       }
     }
 
-    // Get final benchmark energy using the energy dependent benchmark parameters 
-    double benchmarkEnergy = 0.0;
-    
-    benchmarkEnergy = benchmarkParameters[0] * totalEnergyInECal +
-                      benchmarkParameters[1] * totalEnergyInHCal +
-                      benchmarkParameters[2] * std::sqrt(std::fabs(energyInLastLayerECal * benchmarkParameters[0] * energyInFirstLayerHCal * benchmarkParameters[1])) +
-                      benchmarkParameters[3] * std::pow(totalEnergyInECal * benchmarkParameters[0], 2) +
-                      benchmarkParameters[4] * energyInFirstLayerECal +
-                      benchmarkParameters[5];
+    // Get final benchmark energy using the energy dependent benchmark parameters     
+    double benchmarkEnergy = benchmarkParameters[0] * totalEnergyInECal +
+                             benchmarkParameters[1] * totalEnergyInHCal +
+                             benchmarkParameters[2] * std::sqrt(std::fabs(energyInLastLayerECal * benchmarkParameters[0] * energyInFirstLayerHCal * benchmarkParameters[1])) +
+                             benchmarkParameters[3] * std::pow(totalEnergyInECal * benchmarkParameters[0], 2) +
+                             benchmarkParameters[4] * energyInFirstLayerECal +
+                             benchmarkParameters[5];
 
     // Protection against negative energy (might be improved)
     if (benchmarkEnergy < 0.0) {
