@@ -11,7 +11,7 @@ class IGeoSvc;
 #include "GaudiKernel/ToolHandle.h"
 
 // DD4HEP
-#include "DDSegmentation/Segmentation.h"
+//#include "DDSegmentation/Segmentation.h"
 
 // EDM4HEP
 namespace edm4hep
@@ -71,6 +71,8 @@ private:
   /// Name of the detectors (for the metadata)  
   Gaudi::Property<std::vector<std::string>> m_detectorNames{
       this, "systemNames", {"EMB"}, "Names of the detectors, corresponding to systemIDs"};
+  /// systemID of EMB, should be retrieved from: mydetector.constantAsDouble("DetID_ECAL_Barrel")
+  int systemID_EMB;
   /// Numbers of layers of the detectors
   Gaudi::Property<std::vector<size_t>> m_numLayers{
       this, "numLayers", {11}, "Numbers of layers of the systems"};
@@ -92,6 +94,12 @@ private:
       this, "moduleFieldNames", {"module"}, "Identifiers of module, corresponding to systemIDs"};
   Gaudi::Property<bool> m_do_pi0_photon_shapeVar{
       this, "do_pi0_photon_shapeVar", false, "Calculate shape variables for pi0/photon separation: E_ratio, Delta_E etc."};
+
+  // the number of grouped theta and phi cells
+  std::vector<int> nMergedThetaCells;
+  std::vector<int> nMergedModules;
+  // the number of modules / phi cells
+  std::vector<int> nModules;
 };
 
 #endif /* RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H */
