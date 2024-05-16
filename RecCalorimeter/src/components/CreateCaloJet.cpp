@@ -1,4 +1,4 @@
-#include "JetFCCee.h"
+#include "CreateCaloJet.h"
 
 // std
 #include <vector>
@@ -7,10 +7,10 @@
 // EDM4hep
 #include "edm4hep/ClusterCollection.h"
 
-DECLARE_COMPONENT(JetFCCee)
+DECLARE_COMPONENT(CreateCaloJet)
 
-JetFCCee::JetFCCee(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
-  declareProperty("TopoClusterInput", m_inputClusters, "Handle for input cluster collection");
+CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+  declareProperty("ClusterInput", m_inputClusters, "Handle for input cluster collection");
   declareProperty("JetOutput", m_jetCollection, "Handle for output jet collection");
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
@@ -18,13 +18,18 @@ JetFCCee::JetFCCee(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorith
 }
 
 
-StatusCode JetFCCee::initialize() {
+StatusCode CreateCaloJet::initialize() {
   if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+
+  if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
+    error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   return StatusCode::SUCCESS;
 }
 
-StatusCode JetFCCee::execute() {
+StatusCode CreateCaloJet::execute() {
   // Create output collections
   auto* edmJets = m_jetCollection.createAndPut();
 
@@ -82,7 +87,7 @@ StatusCode JetFCCee::execute() {
 }
 
 
-StatusCode JetFCCee::finalize() { 
+StatusCode CreateCaloJet::finalize() { 
   return GaudiAlgorithm::finalize(); 
 }
 

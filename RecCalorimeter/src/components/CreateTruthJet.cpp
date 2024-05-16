@@ -1,4 +1,4 @@
-#include "TruthJetFCCee.h"
+#include "CreateTruthJet.h"
 
 // std
 #include <vector>
@@ -6,9 +6,9 @@
 
 
 
-DECLARE_COMPONENT(TruthJetFCCee)
+DECLARE_COMPONENT(CreateTruthJet)
 
-TruthJetFCCee::TruthJetFCCee(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
   declareProperty("MCParticleInput", m_inputParticles, "Handle for input particle collection");
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
@@ -18,13 +18,17 @@ TruthJetFCCee::TruthJetFCCee(const std::string& name, ISvcLocator* svcLoc) : Gau
 
 
 
-StatusCode TruthJetFCCee::initialize() {
+StatusCode CreateTruthJet::initialize() {
   if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
+    error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   return StatusCode::SUCCESS;
 }
 
-StatusCode TruthJetFCCee::execute() {
+StatusCode CreateTruthJet::execute() {
   // Create output collections
   auto* edmJets = m_jetCollection.createAndPut();
 
@@ -35,7 +39,7 @@ StatusCode TruthJetFCCee::execute() {
 
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
-  for(auto cluster: *inParticles){
+  for(auto particle: *inParticles){
     if(cluster.isCreatedInSimulation()) continue;
     if(cluster.getGeneratorStatus() != 1) continue;
     // TODO: decide if muons should be included in the truth jet clustering
@@ -77,6 +81,6 @@ StatusCode TruthJetFCCee::execute() {
 }
 
 
-StatusCode TruthJetFCCee::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CreateTruthJet::finalize() { return GaudiAlgorithm::finalize(); }
 
 

@@ -4,9 +4,9 @@
 
 # ONNX DEPENDENCIES
 # includes
-include_directories(${ONNXRUNTIME_INCLUDE_DIRS} ${FASTJET_INCLUDE_DIRS})
+include_directories(${ONNXRUNTIME_INCLUDE_DIRS})
 # libs
-link_directories(${ONNXRUNTIME_LIBRARY_DIRS} ${FASTJET_LIBRARIES})
+link_directories(${ONNXRUNTIME_LIBRARY_DIRS})
 
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecFCCeeCalorimeterPlugins
@@ -23,7 +23,6 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       ROOT::Core
                       ROOT::Hist
 		      ${ONNXRUNTIME_LIBRARY}
-          ${FASTJET_LIBRARIES}
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets

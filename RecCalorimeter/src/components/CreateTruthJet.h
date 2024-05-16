@@ -1,5 +1,5 @@
-#ifndef RECFCCEECALORIMETER_TRUTHJETFCCEE_H
-#define RECFCCEECALORIMETER_TRUTHJETFCCEE_H
+#ifndef RECCALORIMETER_CREATETRUTHJET_H
+#define RECCALORIMETER_CREATETRUTHJET_H
 
 // std
 #include <cstdint>
@@ -37,14 +37,14 @@ class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
 
 
 
-/** @class TruthJetFCCee k4RecCalorimeter/RecFCCeeCalorimeter/src/components/TruthJetFCCee.h
+/** @class CreateTruthJet k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateTruthJet.h
  *
  *  @author Jennifer Roloff
  */
 
-class TruthJetFCCee : public GaudiAlgorithm {
+class CreateTruthJet : public GaudiAlgorithm {
 public:
-  TruthJetFCCee(const std::string& name, ISvcLocator* svcLoc);
+  CreateTruthJet(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
@@ -74,4 +74,4 @@ private:
 
 
 };
-#endif /* RECFCCEECALORIMETER_TRUTHJETFCCEE_H */
+#endif /* RECCALORIMETER_CREATETRUTHJET_H */

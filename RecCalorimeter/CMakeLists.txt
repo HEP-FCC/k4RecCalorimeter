@@ -17,6 +17,7 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       ROOT::Hist
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
+                      ${FASTJET_LIBRARIES}
                       )
 
 install(TARGETS k4RecCalorimeterPlugins
@@ -25,6 +26,8 @@ install(TARGETS k4RecCalorimeterPlugins
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
   COMPONENT dev)
 
+include_directories(${FASTJET_INCLUDE_DIRS})
+link_directories(${FASTJET_LIBRARIES})
 
 include(CTest)
 
