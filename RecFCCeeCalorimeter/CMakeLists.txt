@@ -7,6 +7,11 @@
 include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
 # libs
 link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
+# New versions of ONNXRuntime add directories to include
+# through the target onnxruntime::onnxruntime
+if(onnxruntime_FOUND)
+  set(ONNXRUNTIME_LIBRARY onnxruntime::onnxruntime)
+endif()
 
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecFCCeeCalorimeterPlugins

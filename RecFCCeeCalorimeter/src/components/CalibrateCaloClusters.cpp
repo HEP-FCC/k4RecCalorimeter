@@ -241,7 +241,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   debug() << "Input Node Name/Shape (" << m_input_names.size() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
   {
-    m_input_names.emplace_back(m_ortSession->GetInputName(i, allocator));
+    m_input_names.insert(m_input_names.end(), m_ortSession->GetInputNames().begin(), m_ortSession->GetInputNames().end());
     m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_input_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
@@ -263,7 +263,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   debug() << "Output Node Name/Shape (" << m_output_names.size() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
   {
-    m_output_names.emplace_back(m_ortSession->GetOutputName(i, allocator));
+    m_output_names.insert(m_output_names.end(), m_ortSession->GetOutputNames().begin(), m_ortSession->GetOutputNames().end());
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_output_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++)
