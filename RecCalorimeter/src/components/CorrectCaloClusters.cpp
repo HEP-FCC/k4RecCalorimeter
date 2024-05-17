@@ -78,8 +78,12 @@ StatusCode CorrectCaloClusters::initialize() {
     return StatusCode::FAILURE;
   }
   if (m_upstreamCorr) {
-    if (m_upstreamFormulas.empty() || m_upstreamParams.empty()){ 
-      error() << "Upstream correction is turned on, but upstreamFormulas or upstreamParams vector is empty, exiting!" << endmsg;
+    if (m_upstreamFormulas.empty()){
+      error() << "Upstream correction is turned on, but upstreamFormulas vector is empty, exiting!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+    if (m_upstreamParams.empty()){
+      error() << "Upstream correction is turned on, but upstreamParams vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_systemIDs.size() != m_upstreamFormulas.size()) {
@@ -92,8 +96,12 @@ StatusCode CorrectCaloClusters::initialize() {
     }
   }
   if (m_downstreamCorr) { 
-    if (m_downstreamFormulas.empty() || m_downstreamParams.empty()){ 
-      error() << "Downstream correction is turned on, but downstreamFormulas or downstreamParams vector is empty, exiting!" << endmsg;
+    if (m_downstreamFormulas.empty()){
+      error() << "Downstream correction is turned on, but downstreamFormulas vector is empty, exiting!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+    if (m_downstreamParams.empty()){
+      error() << "Downstream correction is turned on, but downstreamParams vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_systemIDs.size() != m_downstreamFormulas.size()) {
@@ -109,21 +117,25 @@ StatusCode CorrectCaloClusters::initialize() {
     // number of benchmark parameters is 6 
     size_t nBenchmarkParams = 6; 
     // check that all benchmark parameters and functions are not empty and have the correct size
-    if (m_benchmarkFormulas.empty() || m_benchmarkParametrization.empty()){ 
-      error() << "Benchmark correction is turned on, but benchmarkFormulas or benchmarkParametrization vector is empty, exiting!" << endmsg;
+    if (m_benchmarkFormulas.empty()){
+      error() << "Benchmark correction is turned on, but benchmarkFormulas vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_benchmarkFormulas.size() != m_benchmarkParametrization.size()) {
+    if (m_benchmarkParametrization.empty()){
+      error() << "Benchmark correction is turned on, but benchmarkParametrization vector is empty, exiting!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+    if (m_benchmarkFormulas.size() != m_benchmarkParametrization.size()){
       error() <<  "Sizes of benchmarkFormulas vector and benchmarkParametrization vector does not match, exiting! " << m_benchmarkFormulas.size() << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_benchmarkParamsApprox.size() != nBenchmarkParams){
-        error() <<  "The benchmarkParamsApprox vector does not have the proper size, the size should be 6." << endmsg;
+        error() <<  "The benchmarkParamsApprox vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
         return StatusCode::FAILURE;
       }
     if (m_benchmarkEneSwitch<0.){
-      if (m_benchmarkFormulas[0].size() != m_benchmarkParamsApprox.size()){
-        error() <<  "A single formula parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] vector does not have the proper size, the size should be 6." << endmsg;
+      if (m_benchmarkFormulas[0].size() != nBenchmarkParams){
+        error() <<  "A single formula parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
         return StatusCode::FAILURE;
       }
     }
@@ -132,8 +144,12 @@ StatusCode CorrectCaloClusters::initialize() {
         error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas vector does not have the proper size, the size should be 2." << endmsg;
         return StatusCode::FAILURE;
       }
-      if (m_benchmarkFormulas[0].size() != m_benchmarkParamsApprox.size() || m_benchmarkFormulas[1].size() != m_benchmarkParamsApprox.size()){
-        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] or benchmarkFormulas[1] vector does not have the proper size, the size should be 6." << endmsg;
+      if (m_benchmarkFormulas[0].size() != nBenchmarkParams){
+        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
+        return StatusCode::FAILURE;
+      }
+      if (m_benchmarkFormulas[1].size() != nBenchmarkParams){
+        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas[1] vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
         return StatusCode::FAILURE;
       }
     }
