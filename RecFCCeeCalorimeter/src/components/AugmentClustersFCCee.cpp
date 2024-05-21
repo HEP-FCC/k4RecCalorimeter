@@ -82,7 +82,7 @@ StatusCode AugmentClustersFCCee::initialize()
 
   // retrieve systemID_EMB (which is 4 now) from constantAsDouble("DetID_ECAL_Barrel")
   systemID_EMB = m_geoSvc->getDetector()->constantAsDouble("DetID_ECAL_Barrel");
-  std::cout << "systemID_EMB is " << systemID_EMB << std::endl;
+  //std::cout << "systemID_EMB is " << systemID_EMB << std::endl;
 
   // retrieve some information from the segmentation for later use
   // - number of modules/phi bins => needed to account for module/phi periodicity
@@ -648,14 +648,14 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
         // do pi0/photon shape var only for EMB
         if (m_do_pi0_photon_shapeVar && systemID == systemID_EMB) {
-          double w_theta = sqrt(fabs(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
+          double w_theta = sqrt(fabs(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
           if (std::isnan(w_theta))    w_theta = 0.;
-          //if (w_theta > 40)    w_theta = 40;
+          if (w_theta > 40)    w_theta = 40;
           width_theta[layer+startPositionToFill] = w_theta;
 
-          double w_module = sqrt(fabs(module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
+          double w_module = sqrt(fabs(module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
           if (std::isnan(w_module))    w_module = 0.;
-          //if (w_module > 40)    w_module = 40;
+          if (w_module > 40)    w_module = 40;
           width_module[layer+startPositionToFill] = w_module;
 
           double Ratio_E = (E_cell_Max[layer+startPositionToFill] - E_cell_secMax[layer+startPositionToFill]) /
@@ -664,8 +664,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           Ratio_E_max_2ndmax[layer+startPositionToFill] = Ratio_E;
           Delta_E_2ndmax_min[layer+startPositionToFill] = E_cell_secMax[layer+startPositionToFill] - E_cell_Min[layer+startPositionToFill];
 
-          //std::cout << layer << " " << Ratio_E << " " << Delta_E_2ndmax_min[layer+startPositionToFill] << std::endl;
-  
           double Ratio_E_vs_phi = (E_cell_vs_phi_Max[layer+startPositionToFill] - E_cell_vs_phi_secMax[layer+startPositionToFill]) /
                                   (E_cell_vs_phi_Max[layer+startPositionToFill] + E_cell_vs_phi_secMax[layer+startPositionToFill]);
           if (E_cell_vs_phi_Max[layer+startPositionToFill] + E_cell_vs_phi_secMax[layer+startPositionToFill] == 0.)    Ratio_E = 1.;
