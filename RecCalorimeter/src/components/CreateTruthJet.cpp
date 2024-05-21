@@ -8,14 +8,11 @@
 
 DECLARE_COMPONENT(CreateTruthJet)
 
-//CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
 CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
                     KeyValue("InputCollection", "MCParticles"),
                     KeyValue("OutputCollection", "TruthJets")) {
-  //declareProperty("MCParticleInput", m_inputParticles, "Handle for input particle collection");
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
-  //declareProperty("JetOutput", m_jetCollection, "Handle for output jet collection");
   declareProperty("MinPt", m_minPt, "Minimum pT for saved jets");
 }
 
@@ -31,14 +28,8 @@ StatusCode CreateTruthJet::initialize() {
 }
 
 colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
-
-//StatusCode CreateTruthJet::execute() {
-  // Create output collections
-  //auto* edmJets = m_jetCollection.createAndPut();
   edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
 
-
-  //const edm4hep::MCParticleCollection *inParticles = m_inputParticles.get();
 
   fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap.at(m_jetAlg), m_jetRadius);
 
@@ -81,9 +72,7 @@ colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
     edmJets.push_back(jet);
   }
 
-
   return edmJets;
-  //return StatusCode::SUCCESS;
 }
 
 
