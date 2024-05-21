@@ -2,11 +2,9 @@
 #define RECCALORIMETER_CREATETRUTHJET_H
 
 // std
-#include <cstdint>
 #include <map>
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiAlg/Transformer.h"
 #include "k4FWCore/BaseClass.h"
@@ -39,7 +37,7 @@ class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
 
 
 
-/** @class CreateTruthJet k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateTruthJet.h
+/** @class CreateTruthJet k4RecCalorimeter/RecCalorimeter/src/components/CreateTruthJet.h
  *
  *  @author Jennifer Roloff
  */
@@ -55,9 +53,6 @@ public:
   StatusCode initialize() override;
 
 private:
-  //mutable DataHandle<edm4hep::MCParticleCollection> m_inputParticles {
-  //  "MCParticles", Gaudi::DataHandle::Reader, this
-  //};
 
   std::map<std::string, fastjet::JetAlgorithm> m_jetAlgMap = {
                         {"kt",                    fastjet::JetAlgorithm::kt_algorithm},
@@ -67,8 +62,6 @@ private:
                         {"ee_kt",                 fastjet::JetAlgorithm::ee_kt_algorithm},
                         {"ee_genkt",              fastjet::JetAlgorithm::ee_genkt_algorithm},
   };
-
-  //DataHandle<edm4hep::ReconstructedParticleCollection> m_jetCollection{"truthJets", Gaudi::DataHandle::Writer, this};
 
   double m_minPt = 10;
   double m_jetRadius = 0.4;
