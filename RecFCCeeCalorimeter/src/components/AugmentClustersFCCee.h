@@ -71,7 +71,7 @@ private:
   /// Name of the detectors (for the metadata)  
   Gaudi::Property<std::vector<std::string>> m_detectorNames{
       this, "systemNames", {"EMB"}, "Names of the detectors, corresponding to systemIDs"};
-  /// systemID of EMB, should be retrieved from: mydetector.constantAsDouble("DetID_ECAL_Barrel")
+  /// systemID of EMB, should be retrieved from mydetector.constantAsDouble("DetID_ECAL_Barrel")
   int systemID_EMB;
   /// Numbers of layers of the detectors
   Gaudi::Property<std::vector<size_t>> m_numLayers{
