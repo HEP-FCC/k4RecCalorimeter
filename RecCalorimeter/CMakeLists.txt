@@ -31,6 +31,17 @@ link_directories(${FASTJET_LIBRARIES})
 
 include(CTest)
 
+add_test(NAME FCC_createJets
+  COMMAND k4run RecCalorimeter/tests/options/runJetReco.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+add_test(NAME FCC_createTruthJets
+  COMMAND k4run RecCalorimeter/tests/options/runTruthJetReco.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
 #
 #gaudi_add_test(genJetClustering

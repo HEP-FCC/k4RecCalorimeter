@@ -8,18 +8,20 @@
 
 DECLARE_COMPONENT(CreateTruthJet)
 
-CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
-  declareProperty("MCParticleInput", m_inputParticles, "Handle for input particle collection");
+//CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
+                    KeyValue("InputCollection", "MCParticles"),
+                    KeyValue("OutputCollection", "TruthJets")) {
+  //declareProperty("MCParticleInput", m_inputParticles, "Handle for input particle collection");
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
-  declareProperty("JetOutput", m_jetCollection, "Handle for output jet collection");
+  //declareProperty("JetOutput", m_jetCollection, "Handle for output jet collection");
   declareProperty("MinPt", m_minPt, "Minimum pT for saved jets");
 }
 
 
 
 StatusCode CreateTruthJet::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
   if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
     error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
     return StatusCode::FAILURE;
@@ -28,23 +30,27 @@ StatusCode CreateTruthJet::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateTruthJet::execute() {
+colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
+
+//StatusCode CreateTruthJet::execute() {
   // Create output collections
-  auto* edmJets = m_jetCollection.createAndPut();
+  //auto* edmJets = m_jetCollection.createAndPut();
+  edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
 
-  const edm4hep::MCParticleCollection *inParticles = m_inputParticles.get();
 
-  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap[m_jetAlg], m_jetRadius);
+  //const edm4hep::MCParticleCollection *inParticles = m_inputParticles.get();
+
+  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap.at(m_jetAlg), m_jetRadius);
 
 
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
-  for(auto particle: *inParticles){
-    if(cluster.isCreatedInSimulation()) continue;
-    if(cluster.getGeneratorStatus() != 1) continue;
+  for(auto particle: input){
+    if(particle.isCreatedInSimulation()) continue;
+    if(particle.getGeneratorStatus() != 1) continue;
     // TODO: decide if muons should be included in the truth jet clustering
-    //if(std::abs(cluster.getPDG()) == 13) continue; // No muons
-    fastjet::PseudoJet clusterPJ(cluster.getMomentum().x, cluster.getMomentum().y, cluster.getMomentum().z, cluster.getEnergy());
+    //if(std::abs(particle.getPDG()) == 13) continue; // No muons
+    fastjet::PseudoJet clusterPJ(particle.getMomentum().x, particle.getMomentum().y, particle.getMomentum().z, particle.getEnergy());
     clusterPJ.set_user_info(new ClusterInfo(i));
     clustersPJ.push_back(clusterPJ);
     i++;
@@ -67,20 +73,18 @@ StatusCode CreateTruthJet::execute() {
       jetInput.setMass(constit.m());
 
       int index = constit.user_info<ClusterInfo>().index();
-      jetInput.setPDG((*inParticles)[index].getPDG());
+      jetInput.setPDG((input)[index].getPDG());
 
-      //jet.addToParticles((*inParticles)[index]);
       jet.addToParticles(jetInput);
     }
 
-    edmJets->push_back(jet);
+    edmJets.push_back(jet);
   }
 
 
-  return StatusCode::SUCCESS;
+  return edmJets;
+  //return StatusCode::SUCCESS;
 }
 
-
-StatusCode CreateTruthJet::finalize() { return GaudiAlgorithm::finalize(); }
 
 

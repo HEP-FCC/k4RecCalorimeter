@@ -8,6 +8,8 @@
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 #include "GaudiKernel/ToolHandle.h"
+#include "GaudiAlg/Transformer.h"
+#include "k4FWCore/BaseClass.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
@@ -42,20 +44,20 @@ class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
  *  @author Jennifer Roloff
  */
 
-class CreateTruthJet : public GaudiAlgorithm {
+using colltype_in  = edm4hep::MCParticleCollection;
+using colltype_out = edm4hep::ReconstructedParticleCollection;
+
+class CreateTruthJet : public Gaudi::Functional::Transformer <colltype_out(const colltype_in&), BaseClass_t>  {
 public:
   CreateTruthJet(const std::string& name, ISvcLocator* svcLoc);
+  colltype_out operator()(const colltype_in& input) const override;
 
-  StatusCode initialize();
-
-  StatusCode execute();
-
-  StatusCode finalize();
+  StatusCode initialize() override;
 
 private:
-  mutable DataHandle<edm4hep::MCParticleCollection> m_inputParticles {
-    "MCParticles", Gaudi::DataHandle::Reader, this
-  };
+  //mutable DataHandle<edm4hep::MCParticleCollection> m_inputParticles {
+  //  "MCParticles", Gaudi::DataHandle::Reader, this
+  //};
 
   std::map<std::string, fastjet::JetAlgorithm> m_jetAlgMap = {
                         {"kt",                    fastjet::JetAlgorithm::kt_algorithm},
@@ -66,7 +68,7 @@ private:
                         {"ee_genkt",              fastjet::JetAlgorithm::ee_genkt_algorithm},
   };
 
-  DataHandle<edm4hep::ReconstructedParticleCollection> m_jetCollection{"truthJets", Gaudi::DataHandle::Writer, this};
+  //DataHandle<edm4hep::ReconstructedParticleCollection> m_jetCollection{"truthJets", Gaudi::DataHandle::Writer, this};
 
   double m_minPt = 10;
   double m_jetRadius = 0.4;

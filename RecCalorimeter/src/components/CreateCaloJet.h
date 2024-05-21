@@ -7,12 +7,17 @@
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
+#include "GaudiAlg/Transformer.h"
+#include "k4FWCore/BaseClass.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 
 //EDM4Hep
 #include "edm4hep/ReconstructedParticleCollection.h"
+
+// EDM4hep
+#include "edm4hep/ClusterCollection.h"
 
 
 //Fastjet
@@ -24,7 +29,6 @@ namespace edm4hep {
   class ClusterCollection;
   class ReconstructedParticleCollection;
 }
-
 
 
 // Attach information to pseudojets to be able to map the cluster
@@ -44,27 +48,26 @@ class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
  *  @author Jennifer Roloff
  */
 
-class CreateCaloJet : public GaudiAlgorithm {
+
+using colltype_in  = edm4hep::ClusterCollection;
+using colltype_out = edm4hep::ReconstructedParticleCollection;
+
+class CreateCaloJet : public Gaudi::Functional::Transformer <colltype_out(const colltype_in&), BaseClass_t>  {
 public:
   CreateCaloJet(const std::string& name, ISvcLocator* svcLoc);
+  colltype_out operator()(const colltype_in& input) const override;
 
-  StatusCode initialize();
-
-  StatusCode execute();
-
-  StatusCode finalize();
+  StatusCode initialize() override;
 
 private:
 
-  DataHandle<edm4hep::ClusterCollection> m_inputClusters {"CorrectedCaloClusters", Gaudi::DataHandle::Reader, this};
-  DataHandle<edm4hep::ReconstructedParticleCollection> m_jetCollection{"jets", Gaudi::DataHandle::Writer, this};
 
   double m_minPt = 10;
   double m_jetRadius = 0.4;
   std::string m_jetAlg = "antikt";
 
   // Map between jet algorithm names and the actual jet clustering algorithm
-  std::map<std::string, fastjet::JetAlgorithm> m_jetAlgMap = {
+  const std::map<const std::string, const fastjet::JetAlgorithm> m_jetAlgMap = {
                         {"kt",                    fastjet::JetAlgorithm::kt_algorithm},
                         {"cambridge",             fastjet::JetAlgorithm::cambridge_algorithm},
                         {"antikt",                fastjet::JetAlgorithm::antikt_algorithm},

@@ -9,9 +9,10 @@
 
 DECLARE_COMPONENT(CreateCaloJet)
 
-CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
-  declareProperty("ClusterInput", m_inputClusters, "Handle for input cluster collection");
-  declareProperty("JetOutput", m_jetCollection, "Handle for output jet collection");
+//CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Functional::Transformer(name, svcLoc,
+CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
+                    KeyValue("InputCollection", "CorrectedCaloClusters"),
+                    KeyValue("OutputCollection", "Jets")) {
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
   declareProperty("MinPt", m_minPt, "Minimum pT for saved jets");
@@ -19,8 +20,6 @@ CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Gau
 
 
 StatusCode CreateCaloJet::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
-
   if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
     error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
     return StatusCode::FAILURE;
@@ -29,22 +28,18 @@ StatusCode CreateCaloJet::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloJet::execute() {
-  // Create output collections
-  auto* edmJets = m_jetCollection.createAndPut();
+colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
+  edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
 
 
-  // TODO: Make it possible to use multiple input types (PFCs, clusters, etc)
-  // Retrieve input clusters
-  const edm4hep::ClusterCollection *inClusters = m_inputClusters.get();
-
-  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap[m_jetAlg], m_jetRadius);
+  const fastjet::JetAlgorithm jetAlg = m_jetAlgMap.at(m_jetAlg);
+  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( jetAlg, m_jetRadius);
 
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
 
   // Need to convert cluster position in space to the momentum
-  for(auto cluster: *inClusters){
+  for(auto cluster: input){
     const edm4hep::Vector3f position = cluster.getPosition();
     float x = position.x;
     float y = position.y;
@@ -78,17 +73,13 @@ StatusCode CreateCaloJet::execute() {
     std::vector<fastjet::PseudoJet> constits = cjet.constituents();
     for(auto constit : constits){
       int index = constit.user_info<ClusterInfo>().index();
-      jet.addToClusters((*inClusters)[index]);
+      jet.addToClusters((input)[index]);
     }
-    edmJets->push_back(jet);
+    edmJets.push_back(jet);
   }
 
-  return StatusCode::SUCCESS;
-}
-
-
-StatusCode CreateCaloJet::finalize() { 
-  return GaudiAlgorithm::finalize(); 
+  return edmJets;
+ // return StatusCode::SUCCESS;
 }
 
 
