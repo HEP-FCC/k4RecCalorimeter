@@ -37,10 +37,6 @@ colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
   for(auto particle: input){
-    if(particle.isCreatedInSimulation()) continue;
-    if(particle.getGeneratorStatus() != 1) continue;
-    // TODO: decide if muons should be included in the truth jet clustering
-    //if(std::abs(particle.getPDG()) == 13) continue; // No muons
     fastjet::PseudoJet clusterPJ(particle.getMomentum().x, particle.getMomentum().y, particle.getMomentum().z, particle.getEnergy());
     clusterPJ.set_user_info(new ClusterInfo(i));
     clustersPJ.push_back(clusterPJ);
