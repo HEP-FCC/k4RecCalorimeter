@@ -20,8 +20,8 @@ CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : T
 
 StatusCode CreateTruthJet::initialize() {
   clusterer = new ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
+  return clusterer->initialize();
 
-  return StatusCode::SUCCESS;
 }
 
 colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{

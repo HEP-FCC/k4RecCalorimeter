@@ -23,7 +23,7 @@ StatusCode CreateCaloJet::initialize() {
   clusterer = new ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
 
 
-  return StatusCode::SUCCESS;
+  return clusterer->initialize();
 }
 
 colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{

@@ -7,6 +7,8 @@
 /*
 // Gaudi
 #include "GaudiKernel/ToolHandle.h"
+#include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/StatusCode.h"
 #include "GaudiAlg/Transformer.h"
 #include "k4FWCore/BaseClass.h"
 
@@ -18,6 +20,16 @@
 */
 
 #include "fastjet/JetDefinition.hh"
+
+
+// Gaudi
+#include "GaudiAlg/GaudiAlgorithm.h"
+
+
+// EDM4hep
+#include "edm4hep/ClusterCollection.h"
+
+
 
 
 class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
@@ -37,9 +49,8 @@ class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
 
 class ClusterJet {
 public:
-  ClusterJet(std::string jetAlg, double jetRadius, double minPt);
-
-  //StatusCode initialize();
+  ClusterJet(std::string jetAlg, double jetRadius, int clustering = 0, double minPt = 0, int clusterArgs = 0);
+  StatusCode initialize();
 
   std::vector<fastjet::PseudoJet> cluster(const   std::vector<fastjet::PseudoJet> clustersPJ) const;
 
@@ -57,8 +68,10 @@ private:
   };
 
   std::string m_jetAlg = "antikt";
-  double m_minPt = 10;
   double m_jetRadius = 0.4;
+  int m_clustering = 0; // Inclusive clustering by default
+  double m_minPt = 10; // Only relevant for inclusive clustering
+  int m_njets = 0; // Only relevant for exclusive clustering
 
 
 };

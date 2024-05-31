@@ -4,21 +4,38 @@
 #include <vector>
 #include <math.h>
 
-ClusterJet::ClusterJet(std::string jetAlg, double jetRadius, double minPt): m_jetAlg(jetAlg), m_jetRadius(jetRadius), m_minPt(minPt){
+ClusterJet::ClusterJet(std::string jetAlg, double jetRadius, int clustering, double minPt, int njets): m_jetAlg(jetAlg), m_jetRadius(jetRadius), m_clustering(clustering), m_minPt(minPt), m_njets(njets){
 }
 
 
-std::vector<fastjet::PseudoJet> ClusterJet::cluster(const   std::vector<fastjet::PseudoJet> clustersPJ) const{
+StatusCode ClusterJet::initialize(){
   if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
-    //error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
-    //return StatusCode::FAILURE;
-    return std::vector <fastjet::PseudoJet>();
+    std::cout << "ERROR: " << " is not in the list of supported jet algorithms" << std::endl;;
+    return StatusCode::FAILURE;
   }
-  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap.at(m_jetAlg), m_jetRadius);
-  fastjet::ClusterSequence clustSeq(clustersPJ, *jetDef);
-  std::vector <fastjet::PseudoJet> inclusiveJets = fastjet::sorted_by_pt(clustSeq.inclusive_jets(m_minPt));
+  if(m_clustering > 1){
+    std::cout << "ERROR: " << "Clustering of " << m_clustering << " is currently not supported" << std::endl;;
+    return StatusCode::FAILURE;
+  }
+  return StatusCode::SUCCESS;
+}
 
-  return inclusiveJets;
+std::vector<fastjet::PseudoJet> ClusterJet::cluster(const   std::vector<fastjet::PseudoJet> clustersPJ) const{
+  std::vector <fastjet::PseudoJet> jets;
+
+
+  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap.at(m_jetAlg), m_jetRadius, m_clustering);
+  fastjet::ClusterSequence clustSeq(clustersPJ, *jetDef);
+
+  // Note: initialize has already checked if m_clustering has the right range
+  if(m_clustering == 0){
+    jets = fastjet::sorted_by_pt(clustSeq.inclusive_jets(m_minPt));
+  }
+  else if(m_clustering == 1){
+    jets = fastjet::sorted_by_pt(clustSeq.exclusive_jets(m_njets));
+  }
+
+  return jets;
 
 }
 
