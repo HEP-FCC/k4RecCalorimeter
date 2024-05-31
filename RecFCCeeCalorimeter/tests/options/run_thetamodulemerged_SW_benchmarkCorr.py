@@ -6,7 +6,6 @@ from Configurables import CaloTowerToolFCCee
 from Configurables import CreateCaloClustersSlidingWindowFCCee
 from Configurables import CorrectCaloClusters
 from Configurables import CalibrateCaloClusters
-from Configurables import AugmentClustersFCCee
 from Configurables import CreateEmptyCaloCellsCollection
 from Configurables import CreateCaloCellPositionsFCCee
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
@@ -25,8 +24,8 @@ from Configurables import GeoSvc
 from Configurables import HepMCToEDMConverter
 from Configurables import GenAlg
 from Configurables import FCCDataSvc
-from Configurables import RewriteBitfield
 from Gaudi.Configuration import INFO
+# from Gaudi.Configuration import *
 
 import os
 
@@ -37,7 +36,7 @@ from math import cos, sin, tan
 use_pythia = False
 addNoise = False
 dumpGDML = False
-runHCal = False
+runHCal = True
 # for big productions, save significant space removing hits and cells
 # however, hits and cluster cells might be wanted for small productions for detailed event displays
 # also, cluster cells are needed for the MVA training
@@ -45,15 +44,9 @@ saveHits = False
 saveCells = False
 saveClusterCells = False
 
-# clustering
-doClustering = True
-# NOTE: since topoclustering requires root files with noise and neighbours that are
-# not in the release, topoclusters are disabled
 # cluster energy corrections
 # simple parametrisations of up/downstream losses
-applyUpDownstreamCorrections = True
-# calculate cluster energy and barycenter per layer and save it as extra parameters
-addShapeParameters = True
+applyUpDownstreamBenchmarkCorrections = True
 
 # Input for simulations (momentum is expected in GeV!)
 # Parameters for the particle gun simulations, dummy if use_pythia is set
@@ -69,10 +62,10 @@ Nevts = 10
 
 # particle momentum and direction
 # momentum = 100  # in GeV
-momentum = 50  # in GeV
+momentum = 100  # in GeV
 # momentum = 10  # in GeV
-thetaMin = 45  # degrees
-thetaMax = 135  # degrees
+thetaMin = 69.  # degrees
+thetaMax = 69.  # degrees
 # thetaMin = 89
 # thetaMax = 91
 # thetaMin = 90  # degrees
@@ -89,7 +82,7 @@ origTheta = halfpi
 origPhi = 0.0
 
 # particle type: 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
-pdgCode = 11
+pdgCode = 211
 # pdgCode = 22
 # pdgCode = 111
 # pdgCode = 211
@@ -165,7 +158,7 @@ geoservice = GeoSvc("GeoSvc")
 path_to_detector = os.environ.get("K4GEO", "")
 print(path_to_detector)
 detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
+    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v02/ALLEGRO_o1_v02.xml'
 ]
 # prefix all xmls with path_to_detector
 geoservice.detectors = [
@@ -291,7 +284,7 @@ geantsim = SimG4Alg("SimG4Alg",
 # Digitization (Merging hits into cells, EM scale calibration)
 # EM scale calibration (sampling fraction)
 calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel",
-                                        samplingFraction=[0.3775596654349802] * 1 + [0.13400227700041234] * 1 + [0.14390509963164044] * 1 + [0.14998482026270935] * 1 + [0.15457673722531148] * 1 + [0.15928098152159675] * 1 + [0.1635367867767212] * 1 + [0.16801070646031507] * 1 + [0.1713409944779989] * 1 + [0.17580195406064622] * 1 + [0.17966699467772812] * 1,
+                                        samplingFraction=[0.3864252122990472] * 1 + [0.13597644835735828] * 1 + [0.14520427829645913] * 1 + [0.1510076084632846] * 1 + [0.1552347580991012] * 1 + [0.159694330729184] * 1 + [0.1632954482794191] * 1 + [0.16720711037339814] * 1 + [0.17047749048884808] * 1 + [0.17461698117974286] * 1 + [0.1798984163980135] * 1 + [0.17920355117405806] * 1,
                                         readoutName=ecalBarrelReadoutName,
                                         layerFieldName="layer")
 
@@ -299,7 +292,7 @@ calibEcalEndcap = CalibrateCaloHitsTool(
     "CalibrateECalEndcap", invSamplingFraction="4.27")
 if runHCal:
     calibHcells = CalibrateCaloHitsTool(
-        "CalibrateHCal", invSamplingFraction="31.4")
+        "CalibrateHCal", invSamplingFraction="30.4")
     calibHcalEndcap = CalibrateCaloHitsTool(
         "CalibrateHCalEndcap", invSamplingFraction="31.7")
 
@@ -403,7 +396,7 @@ if runHCal:
                                             cells=hcalBarrelCellsName,
                                             OutputLevel=INFO)
 
-    # 2 - attach positions to the cells
+   # 2 - attach positions to the cells (cell positions needed for RedoSegmentation!)
     from Configurables import CellPositionsHCalBarrelPhiThetaSegTool
     cellPositionHcalBarrelTool = CellPositionsHCalBarrelPhiThetaSegTool(
         "CellPositionsHCalBarrel",
@@ -420,20 +413,34 @@ if runHCal:
     createHcalBarrelPositionedCells.positionedHits.Path = hcalBarrelPositionedCellsName
 
     # 3 - compute new cellID of cells based on new readout - removing row information
+    # We use a RedoSegmentation. Using a RewriteBitField with removeIds=["row"],
+    # wont work because there are tiles with same layer/theta/phi but different row
+    # as a consequence there will be multiple cells with same cellID in the output collection
+    # and this will screw up the SW clustering
     hcalBarrelCellsName2 = "HCalBarrelCells2"
-    rewriteHCalBarrel = RewriteBitfield("RewriteHCalBarrel",
-                                        # old bitfield (readout)
-                                        oldReadoutName=hcalBarrelReadoutName,
-                                        # specify which fields are going to be deleted
-                                        removeIds=["row"],
-                                        # new bitfield (readout), with new segmentation
-                                        newReadoutName=hcalBarrelReadoutName2,
-                                        debugPrint=10,
-                                        OutputLevel=INFO)
-    # clusters are needed, with deposit position and cellID in bits
-    rewriteHCalBarrel.inhits.Path = hcalBarrelCellsName
-    rewriteHCalBarrel.outhits.Path = hcalBarrelCellsName2
 
+    # first we create new hits with the readout without the row information
+    # and then merge them into new cells
+    rewriteHCalBarrel = RedoSegmentation("ReSegmentationHcal",
+                                         # old bitfield (readout)
+                                         oldReadoutName=hcalBarrelReadoutName,
+                                         # specify which fields are going to be altered (deleted/rewritten)
+                                         oldSegmentationIds=["row", "theta", "phi"],
+                                         # new bitfield (readout), with new segmentation (merged modules and theta cells)
+                                         newReadoutName=hcalBarrelReadoutName2,
+                                         OutputLevel=INFO,
+                                         debugPrint=200,
+                                         inhits=hcalBarrelPositionedCellsName,
+                                         outhits="HCalBarrelCellsWithoutRow")
+
+    createHcalBarrelCells2 = CreateCaloCells("CreateHCalBarrelCells2",
+                                             doCellCalibration=False,
+                                             addCellNoise=False,
+                                             filterCellNoise=False,
+                                             OutputLevel=INFO,
+                                             hits=rewriteHCalBarrel.outhits.Path,
+                                             cells=hcalBarrelCellsName2)
+    
     # 4 - attach positions to the new cells
     from Configurables import CellPositionsHCalBarrelPhiThetaSegTool
     hcalBarrelPositionedCellsName2 = "HCalBarrelPositionedCells2"
@@ -449,6 +456,7 @@ if runHCal:
     createHcalBarrelPositionedCells2.positionsTool = cellPositionHcalBarrelTool2
     createHcalBarrelPositionedCells2.hits.Path = hcalBarrelCellsName2
     createHcalBarrelPositionedCells2.positionedHits.Path = hcalBarrelPositionedCellsName2
+
 
     # createHcalEndcapCells = CreateCaloCells("CreateHcalEndcapCaloCells",
     #                                    doCellCalibration=True,
@@ -471,37 +479,40 @@ else:
 createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
 createemptycells.cells.Path = "emptyCaloCells"
 
-# Produce sliding window clusters (ECAL only)
+# Produce sliding window clusters (ECAL+HCAL)
 towers = CaloTowerToolFCCee("towers",
-                            deltaThetaTower=4 * 0.009817477/4, deltaPhiTower=2 * 2 * pi / 1536.,
+                            #deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
+                            deltaThetaTower= 0.022180,
+                            deltaPhiTower=2 * pi / 256.,
+                            max_layer=25,
                             ecalBarrelReadoutName=ecalBarrelReadoutName,
-                            ecalEndcapReadoutName=ecalEndcapReadoutName,
+                            ecalEndcapReadoutName="",
                             ecalFwdReadoutName="",
-                            hcalBarrelReadoutName="",
+                            hcalBarrelReadoutName=hcalBarrelReadoutName2,
                             hcalExtBarrelReadoutName="",
                             hcalEndcapReadoutName="",
                             hcalFwdReadoutName="",
                             OutputLevel=INFO)
 towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-towers.ecalEndcapCells.Path = "ECalEndcapCells"
+towers.ecalEndcapCells.Path = "emptyCaloCells"
 towers.ecalFwdCells.Path = "emptyCaloCells"
 
-towers.hcalBarrelCells.Path = "emptyCaloCells"
+towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
 towers.hcalExtBarrelCells.Path = "emptyCaloCells"
 towers.hcalEndcapCells.Path = "emptyCaloCells"
 towers.hcalFwdCells.Path = "emptyCaloCells"
 
-# Cluster variables
-windT = 9
-windP = 17
-posT = 5
-posP = 11
-dupT = 7
-dupP = 13
-finT = 9
-finP = 17
+# Cluster variables (not optimized)
+windT = 18
+windP = 34
+posT = 10
+posP = 22
+dupT = 14
+dupP = 26
+finT = 18
+finP = 34
 # Minimal energy to create a cluster in GeV (FCC-ee detectors have to reconstruct low energy particles)
-threshold = 0.040
+threshold = 0.5
 
 createClusters = CreateCaloClustersSlidingWindowFCCee("CreateClusters",
                                                       towerTool=towers,
@@ -520,37 +531,31 @@ createClusters.clusterCells.Path = "CaloClusterCells"
 correctCaloClusters = CorrectCaloClusters("correctCaloClusters",
                                           inClusters=createClusters.clusters.Path,
                                           outClusters="Corrected" + createClusters.clusters.Path,
-                                          systemIDs=[4],
-                                          numLayers=[11],
-                                          firstLayerIDs=[0],
-                                          lastLayerIDs=[10],
-                                          readoutNames=[ecalBarrelReadoutName],
+                                          systemIDs=[4,8],
+                                          numLayers=[12,13],
+                                          firstLayerIDs=[0,0],
+                                          lastLayerIDs=[11,12],
+                                          readoutNames=[ecalBarrelReadoutName,hcalBarrelReadoutName2],
                                           # do not split the following line or it will break scripts that update the values of the corrections
-                                          upstreamParameters = [[0.025582045561310333, -0.9524128168665387, -53.10089405478649, 1.283851527438571, -295.30650178662637, -284.8945817377308]],
-                                          upstreamFormulas=[
-                                              ['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])']],
+                                          upstreamParameters = [[0.03900891447361534, -4.322941016402328, -139.1811369546787, 0.498342628339746, -3.3545078429754813, -13.99996971344221],[]],
+                                          upstreamFormulas=[['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])'],[]],
                                           # do not split the following line or it will break scripts that update the values of the corrections
-                                          downstreamParameters = [[0.0018280333929494054, 0.004932212590963076, 0.8409676097173655, -1.2676690014715288, 0.005347798049886769, 4.161741293789687]],
-                                          downstreamFormulas=[
-                                              ['[0]+[1]*x', '[0]+[1]/sqrt(x)', '[0]+[1]/x']],
+                                          downstreamParameters = [[-0.0027661744480442195, 0.006059143775380306, 0.9788596364251927, -1.4951749409378743, -0.08491999337012696, 16.017621428757778],[]],
+                                          downstreamFormulas=[['[0]+[1]*x', '[0]+[1]/sqrt(x)', '[0]+[1]/x'],[]],
+                                          ## Approximate parameters for the first energy estimate obtained from the benchmark calib for 100 GeV pion
+                                          benchmarkParamsApprox = [1.22, 1, 1.04, -0.0019, 25.69, 0.],
+                                          ## below parameters and formulas for two functions with ene switch at 9~GeV, the constant term is set to zero 
+                                          #benchmarkParametrization = [[1.0109, 2.4768, 1., 1.0837, -5.278, -1.9938, 0.0006, -0.2715, 45.29, -5674.31, 126.04, 0.],[2.0432, 0.2902, -0.0709, 0.004, 1., 1.2099, -432.2, 13.73, -0.0023, -0.2572, 1.99, -0.968, 0.259, -0.0152, 0.]], 
+                                          #benchmarkFormulas = [['[0]+[1]/sqrt(x)', '[0]', '[0]+[1]/(x+[2])', '[0]+[1]/x', '[0]+[1]/(x+[2])', '[0]'],['[0]+[1]*x+[2]*x*x+[3]*x*x*x',  '[0]',  '[0]+[1]/(x+[2])**2', '[0]+[1]/x', '[0]+[1]*x+[2]*x*x+[3]*x*x*x', '[0]']],
+                                          ## below parameters and formulas for one function (redireved in Nov 2023)
+                                          benchmarkParametrization = [[2.04, 1.0626, 1., -3.5, 1.0182, -0.26, 0.0004, 45.9, -5906.11, -129.27, 0.],[]],
+                                          benchmarkFormulas = [['[0]/sqrt(x)+[1]', '[0]', '[0]/x+[1]', '[0]/x+[1]', '[0]+[1]/(x-[2])', '[0]'],[]],
+                                          benchmarkEneSwitch = -1.,
+                                          upstreamCorr = False,
+                                          downstreamCorr = False, 
+                                          benchmarkCorr = True, 
                                           OutputLevel=INFO
                                           )
-
-augmentCaloClusters = AugmentClustersFCCee("augmentCaloClusters",
-                                           inClusters=createClusters.clusters.Path,
-                                           outClusters="Augmented" + createClusters.clusters.Path,
-                                           systemIDs=[4],
-                                           systemNames=["EMB"],
-                                           numLayers=[11],
-                                           readoutNames=[ecalBarrelReadoutName],
-                                           layerFieldNames=["layer"],
-                                           thetaRecalcWeights=[
-                                               # [-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]  # -1 : use linear weights
-                                               [-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]  # -1 : use linear weights
-                                           ],
-                                           OutputLevel=INFO
-                                           )
-
 
 # Output
 out = PodioOutput("out",
@@ -567,8 +572,9 @@ if not saveClusterCells:
     out.outputCommands.append("drop *ClusterCells*")
 if not saveHits:
     out.outputCommands.append("drop ECal*Hits*")
+    out.outputCommands.append("drop HCal*Hits*")
 
-out.filename = "./output_evts_" + str(Nevts) + "_pdg_" + str(pdgCode) + "_" + str(momentum) + "_GeV" + "_ThetaMinMax_" + str(thetaMin) + "_" + str(
+out.filename = "./output_evts_" + str(Nevts) + "_pdg_" + str(pdgCode) + "_pMin_" + str(momentum) + "_GeV" + "_ThetaMinMax_" + str(thetaMin) + "_" + str(
     thetaMax) + "_PhiMinMax_" + str(phiMin) + "_" + str(phiMax) + "_MagneticField_" + str(magneticField) + "_Noise" + str(addNoise) + ".root"
 
 # CPU information
@@ -609,25 +615,20 @@ if runHCal:
         createHcalBarrelCells,
         createHcalBarrelPositionedCells,
         rewriteHCalBarrel,
+        createHcalBarrelCells2,
         createHcalBarrelPositionedCells2,
         # createHcalEndcapCells
     ]
 
-if doClustering:
+TopAlg += [
+    createemptycells,
+    createClusters,
+]
+
+if applyUpDownstreamBenchmarkCorrections:
     TopAlg += [
-        createemptycells,
-        createClusters,
+        correctCaloClusters,
     ]
-
-    if applyUpDownstreamCorrections:
-        TopAlg += [
-            correctCaloClusters,
-        ]
-
-    if addShapeParameters:
-        TopAlg += [
-            augmentCaloClusters,
-        ]
 
 TopAlg += [
     out
