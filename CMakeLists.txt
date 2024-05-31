@@ -30,6 +30,9 @@ find_package(DD4hep)
 find_package(k4geo)
 find_package(ONNXRuntime)
 find_package(FastJet)
+# New versions of ONNRuntime package provide onnxruntime-Config.cmake
+# and use the name onnxruntime
+find_package(onnxruntime)
 #---------------------------------------------------------------
 
 
