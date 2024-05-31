@@ -19,21 +19,12 @@ CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : T
 
 
 StatusCode CreateTruthJet::initialize() {
-  if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
-    error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
-    return StatusCode::FAILURE;
-  }
+  clusterer = new ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
 
   return StatusCode::SUCCESS;
 }
 
 colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
-  edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
-
-
-  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( m_jetAlgMap.at(m_jetAlg), m_jetRadius);
-
-
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
   for(auto particle: input){
@@ -43,9 +34,11 @@ colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
     i++;
   }
 
+  std::vector<fastjet::PseudoJet> inclusiveJets = clusterer->cluster(clustersPJ);
+  
 
-  fastjet::ClusterSequence clustSeq(clustersPJ, *jetDef);
-  std::vector <fastjet::PseudoJet> inclusiveJets = fastjet::sorted_by_pt(clustSeq.inclusive_jets(m_minPt));
+  edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
+
   for(auto cjet : inclusiveJets){
     edm4hep::MutableReconstructedParticle jet;
     jet.setMomentum(edm4hep::Vector3f(cjet.px(), cjet.py(), cjet.pz()));

@@ -1,9 +1,10 @@
-#ifndef RECCALORIMETER_CREATETRUTHJET_H
-#define RECCALORIMETER_CREATETRUTHJET_H
+#ifndef RECCALORIMETER_CLUSTERJET_H
+#define RECCALORIMETER_CLUSTERJET_H
 
 // std
 #include <map>
 
+/*
 // Gaudi
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiAlg/Transformer.h"
@@ -14,35 +15,37 @@
 
 #include "edm4hep/ReconstructedParticleCollection.h"
 #include "edm4hep/MCParticleCollection.h"
+*/
 
-#include "ClusterJet.h"
-
-
-
-// Datamodel
-namespace edm4hep {
-class MCParticleCollection;
-class ReconstructedParticleCollection;
-}
+#include "fastjet/JetDefinition.hh"
 
 
+class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
+ public:
+ ClusterInfo(const int & index) : _index(index){}
+  int index() const{ return _index; }
+ protected:
+  int _index;
+};
 
-/** @class CreateTruthJet k4RecCalorimeter/RecCalorimeter/src/components/CreateTruthJet.h
+
+
+/** @class ClusterJet k4RecCalorimeter/RecCalorimeter/src/components/ClusterJet.h
  *
  *  @author Jennifer Roloff
  */
 
-using colltype_in  = edm4hep::MCParticleCollection;
-using colltype_out = edm4hep::ReconstructedParticleCollection;
-
-class CreateTruthJet : public Gaudi::Functional::Transformer <colltype_out(const colltype_in&), BaseClass_t>  {
+class ClusterJet {
 public:
-  CreateTruthJet(const std::string& name, ISvcLocator* svcLoc);
-  colltype_out operator()(const colltype_in& input) const override final;
+  ClusterJet(std::string jetAlg, double jetRadius, double minPt);
 
-  StatusCode initialize() override final;
+  //StatusCode initialize();
+
+  std::vector<fastjet::PseudoJet> cluster(const   std::vector<fastjet::PseudoJet> clustersPJ) const;
 
 private:
+
+ 
 
   std::map<std::string, fastjet::JetAlgorithm> m_jetAlgMap = {
                         {"kt",                    fastjet::JetAlgorithm::kt_algorithm},
@@ -53,11 +56,11 @@ private:
                         {"ee_genkt",              fastjet::JetAlgorithm::ee_genkt_algorithm},
   };
 
+  std::string m_jetAlg = "antikt";
   double m_minPt = 10;
   double m_jetRadius = 0.4;
-  std::string m_jetAlg = "antikt";
-  ClusterJet* clusterer;
 
 
 };
-#endif /* RECCALORIMETER_CREATETRUTHJET_H */
+
+#endif /* RECCALORIMETER_CLUSTERJET_H */

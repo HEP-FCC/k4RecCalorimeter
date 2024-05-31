@@ -20,21 +20,13 @@ CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Tra
 
 
 StatusCode CreateCaloJet::initialize() {
-  if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
-    error() << m_jetAlg << " is not in the list of supported jet algorithms" << endmsg;
-    return StatusCode::FAILURE;
-  }
+  clusterer = new ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
+
 
   return StatusCode::SUCCESS;
 }
 
 colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
-  edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
-
-
-  const fastjet::JetAlgorithm jetAlg = m_jetAlgMap.at(m_jetAlg);
-  fastjet::JetDefinition* jetDef = new fastjet::JetDefinition( jetAlg, m_jetRadius);
-
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
 
@@ -59,9 +51,10 @@ colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
   }
 
 
-  fastjet::ClusterSequence clustSeq(clustersPJ, *jetDef);
-  std::vector <fastjet::PseudoJet> inclusiveJets = fastjet::sorted_by_pt(clustSeq.inclusive_jets(m_minPt));
+  std::vector<fastjet::PseudoJet> inclusiveJets = clusterer->cluster(clustersPJ);
 
+
+  edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
   //Add a reconstructed particle for each jet
   for(auto cjet : inclusiveJets){
     edm4hep::MutableReconstructedParticle jet;
@@ -79,7 +72,6 @@ colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
   }
 
   return edmJets;
- // return StatusCode::SUCCESS;
 }
 
 

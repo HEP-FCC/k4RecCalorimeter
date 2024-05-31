@@ -2,7 +2,6 @@
 #define RECCALORIMETER_CREATECALOJET_H
 
 // std
-//#include <cstdint>
 #include <map>
 
 // Gaudi
@@ -20,8 +19,8 @@
 #include "edm4hep/ClusterCollection.h"
 
 
-//Fastjet
-#include "fastjet/JetDefinition.hh"
+#include "ClusterJet.h"
+
 
 
 // Datamodel
@@ -29,18 +28,6 @@ namespace edm4hep {
   class ClusterCollection;
   class ReconstructedParticleCollection;
 }
-
-
-// Attach information to pseudojets to be able to map the cluster
-// index to the pseudojet
-class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
- public:
- ClusterInfo(const int & index) : _index(index){}
-  int index() const{ return _index; }
- protected:
-  int _index;
-};
-
 
 
 /** @class CreateCaloJet k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateCaloJet.h
@@ -75,6 +62,8 @@ private:
                         {"ee_kt",                 fastjet::JetAlgorithm::ee_kt_algorithm},
                         {"ee_genkt",              fastjet::JetAlgorithm::ee_genkt_algorithm},
   };
+
+  ClusterJet* clusterer;
 
 
 };

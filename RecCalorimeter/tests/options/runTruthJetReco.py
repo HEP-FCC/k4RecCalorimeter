@@ -98,10 +98,6 @@ ApplicationMgr().TopAlg += [filterMCParticles]
 createJets = CreateTruthJet("createTruthJets",
                                               InputCollection="FilteredGenParticles",
                                               OutputCollection = "TruthJets")
-#                                              JetAlg = "antikt",
-#                                              JetRadius = 0.4,
-#                                              OutputLevel=INFO
-#                                              )
 
 
 ApplicationMgr().TopAlg += [createJets]
