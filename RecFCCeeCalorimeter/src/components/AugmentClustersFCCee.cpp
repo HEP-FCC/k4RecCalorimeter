@@ -666,7 +666,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
           double Ratio_E_vs_phi = (E_cell_vs_phi_Max[layer+startPositionToFill] - E_cell_vs_phi_secMax[layer+startPositionToFill]) /
                                   (E_cell_vs_phi_Max[layer+startPositionToFill] + E_cell_vs_phi_secMax[layer+startPositionToFill]);
-          if (E_cell_vs_phi_Max[layer+startPositionToFill] + E_cell_vs_phi_secMax[layer+startPositionToFill] == 0.)    Ratio_E = 1.;
+          if (E_cell_vs_phi_Max[layer+startPositionToFill] + E_cell_vs_phi_secMax[layer+startPositionToFill] == 0.)    Ratio_E_vs_phi = 1.;
           Ratio_E_max_2ndmax_vs_phi[layer+startPositionToFill] = Ratio_E_vs_phi;
           Delta_E_2ndmax_min_vs_phi[layer+startPositionToFill] = E_cell_vs_phi_secMax[layer+startPositionToFill] - E_cell_vs_phi_Min[layer+startPositionToFill];
 
