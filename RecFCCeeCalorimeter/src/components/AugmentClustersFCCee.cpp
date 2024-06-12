@@ -67,8 +67,9 @@ StatusCode AugmentClustersFCCee::initialize()
   }
 
   // initialise the list of metadata for the clusters
-  // append to the metadata of the input clusters
-  std::vector<std::string> showerShapeDecorations = m_inShapeParameterHandle.get();
+  // append to the metadata of the input clusters (if any)
+  std::vector<std::string> emptyVector;
+  std::vector<std::string> showerShapeDecorations = m_inShapeParameterHandle.get(emptyVector);
   for (size_t k = 0; k < m_detectorNames.size(); k++)
   {
     const char *detector = m_detectorNames[k].c_str();
@@ -91,8 +92,6 @@ StatusCode AugmentClustersFCCee::finalize()
 
 StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &evtCtx) const
 {
-
-
   // get the input collection with clusters
   const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
 
