@@ -82,7 +82,6 @@ StatusCode AugmentClustersFCCee::initialize()
 
   // retrieve systemID_EMB (which is 4 now) from constantAsDouble("DetID_ECAL_Barrel")
   systemID_EMB = m_geoSvc->getDetector()->constantAsDouble("DetID_ECAL_Barrel");
-  //std::cout << "systemID_EMB is " << systemID_EMB << std::endl;
 
   // retrieve some information from the segmentation for later use
   // - number of modules/phi bins => needed to account for module/phi periodicity
@@ -438,7 +437,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         auto result = MergeSumAndSort(vec_theta_cell_layer[layer+startPositionToFill], vec_E_cell_layer[layer+startPositionToFill]);
 
         // fill the zero energy cells in 1D theta-E profile
-        for (int i = result.first.front(); i <= result.first.back(); ++i) {
+        for (int i = result.first.front(); i <= result.first.back(); i += nMergedThetaCells[layer+startPositionToFill]) {
           if (std::find(result.first.begin(), result.first.end(), i) == result.first.end()) {
             auto it = std::lower_bound(result.first.begin(), result.first.end(), i);
             int idx = it - result.first.begin();
@@ -451,10 +450,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         // loop over theta IDs to find the local E maxima
         for (size_t i = 0; i < theta_E_pair[layer+startPositionToFill].second.size(); i ++) {
           //std::cout << i << " " << theta_E_pair[layer+startPositionToFill].first[i] << " " << theta_E_pair[layer+startPositionToFill].second[i] << std::endl;
-          // discard the first and last cell in theta
-          // if (i == 0 || i == (theta_E_pair[layer+startPositionToFill].second.size()-1)) continue;
-          // local max: E_cell is greater than the 2 neighbors
-          // note: this is not checking that there are holes (cells without energy...)
           if (
             (i == 0 && theta_E_pair[layer+startPositionToFill].second[i] > theta_E_pair[layer+startPositionToFill].second[i+1]) ||
             (i == theta_E_pair[layer+startPositionToFill].second.size()-1 && theta_E_pair[layer+startPositionToFill].second[i] > theta_E_pair[layer+startPositionToFill].second[i-1]) ||
@@ -518,20 +513,17 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
     startPositionToFill = 0;
     for (size_t k = 0; k < m_readoutNames.size(); k++) {
+      if (!m_do_pi0_photon_shapeVar)    break;
+      if (m_systemIDs[k] != systemID_EMB)    continue;    // do pi0/photon shape var only for EMB
       if (k > 0)    startPositionToFill += m_numLayers[k - 1];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
-        //// in case there's no cell in this layer (sometimes in layer 0)
-        //if (vec_E_cell_layer[layer+startPositionToFill].empty()) {
-        //  vec_E_cell_layer[layer+startPositionToFill].push_back(0.);
-        //  vec_module_cell_layer[layer+startPositionToFill].push_back(0);
-        //}
         // this should be done with some care because it sorts modules in ascending order, but if the cluster is
         // near the 1536..0 transition, then the cells will be arranged in a non physically contiguous way
         auto result_2 = MergeSumAndSort(vec_module_cell_layer[layer+startPositionToFill], vec_E_cell_layer[layer+startPositionToFill]);
 
         // fill the zero energy cells in 1D module-E profile
-        for (int i = result_2.first.front(); i <= result_2.first.back(); ++i) {
+        for (int i = result_2.first.front(); i <= result_2.first.back(); i += nMergedModules[layer+startPositionToFill]) {
           if (std::find(result_2.first.begin(), result_2.first.end(), i) == result_2.first.end()) {
             auto it = std::lower_bound(result_2.first.begin(), result_2.first.end(), i);
             int idx = it - result_2.first.begin();
@@ -544,11 +536,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         // loop over module IDs to find the local E maxima
         for (size_t i = 0; i < module_E_pair[layer+startPositionToFill].second.size(); i ++) {
           //std::cout << i << " " << module_E_pair[layer+startPositionToFill].first[i] << " " << module_E_pair[layer+startPositionToFill].second[i] << std::endl;
-          // discard the first and last cell in theta
-          // if (i == 0 || i == (theta_E_pair[layer+startPositionToFill].second.size()-1)) continue;
-          // local max: E_cell is greater than the 2 neighbors
-          // note: this is not checking that there are holes (cells without energy...)
-          // also, take care for clusters near 1536->0 module transition
           if (
             (i == 0 && module_E_pair[layer+startPositionToFill].second[i] > module_E_pair[layer+startPositionToFill].second[i+1]) ||
             (i == module_E_pair[layer+startPositionToFill].second.size()-1 && module_E_pair[layer+startPositionToFill].second[i] > module_E_pair[layer+startPositionToFill].second[i-1]) ||
