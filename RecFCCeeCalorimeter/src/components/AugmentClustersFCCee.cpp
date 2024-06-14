@@ -556,7 +556,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           E_cell_vs_phi_secMax_module[layer+startPositionToFill] = 0;
           E_cell_vs_phi_Min[layer+startPositionToFill] = 0.;
         }
-        else if (local_E_Max[layer+startPositionToFill].size() < 2) {
+        else if (local_E_Max_vs_phi[layer+startPositionToFill].size() < 2) {
           E_cell_vs_phi_Max[layer+startPositionToFill] = local_E_Max_vs_phi[layer+startPositionToFill][0];
           E_cell_vs_phi_secMax[layer+startPositionToFill] = 0.;
           E_cell_vs_phi_Max_module[layer+startPositionToFill] = local_E_Max_vs_phi_module[layer+startPositionToFill][0];
