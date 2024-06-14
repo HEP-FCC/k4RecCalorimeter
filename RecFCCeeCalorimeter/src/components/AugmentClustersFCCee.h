@@ -80,7 +80,7 @@ private:
   Gaudi::Property<std::vector<std::vector<double>>> m_thetaRecalcLayerWeights{
       this,
       "thetaRecalcWeights",
-      {{-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0}},
+      {{-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0}},
       "Weights for each detector layer for theta position log-weighting. If negative use linear weight."};
   /// Name of the detector readouts, corresponding to system IDs in m_systemIDs
   Gaudi::Property<std::vector<std::string>> m_readoutNames{
