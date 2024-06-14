@@ -80,7 +80,7 @@ StatusCode AugmentClustersFCCee::initialize()
     return StatusCode::FAILURE;
   }
 
-  // retrieve systemID_EMB (which is 4 now) from constantAsDouble("DetID_ECAL_Barrel")
+  // retrieve systemID of EMB from "DetID_ECAL_Barrel"
   systemID_EMB = m_geoSvc->getDetector()->constantAsDouble("DetID_ECAL_Barrel");
 
   // retrieve some information from the segmentation for later use
@@ -290,6 +290,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     debug() << "Cluster is near phi=pi : " << isClusterPhiNearPi << endmsg;
 
     bool isResetModuleID = false;
+    // near the 1535..0 transition, reset module ID
     if (module_id_Max - module_id_Min > nModules[0] * .9)    isResetModuleID = true;
 
     // calculate the theta positions with log(E) weighting in each layer
@@ -336,6 +337,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     std::vector<double> width_theta_7Bin(numLayersTotal, 0.);
     std::vector<double> width_theta_9Bin(numLayersTotal, 0.);
 
+    // E_fr_side_N, (E around maxE +- N bins) / (E around maxE +- 1 bins) - 1.
     std::vector<double> E_fr_side_pm2(numLayersTotal, 0.);
     std::vector<double> E_fr_side_pm3(numLayersTotal, 0.);
     std::vector<double> E_fr_side_pm4(numLayersTotal, 0.);
@@ -348,8 +350,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     std::vector<double> Ratio_E_max_2ndmax_vs_phi(numLayersTotal, 0.);
     // (E2ndmax - Emin) where Emin is the energy with minimum energy in the module range defined by 1st and 2nd (local) max
     std::vector<double> Delta_E_2ndmax_min_vs_phi(numLayersTotal, 0.);
-    // energy of cell with 2nd largest local maximum E (added to investigate Eratio with max and 2nd local max in 2D window - can be dropped)
-    //std::vector<double> secondmaxCellEnergyInLayer(numLayersTotal, 0.);
 
     // loop over each system/readout
     startPositionToFill = 0;
@@ -391,7 +391,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           phi += TMath::TwoPi();
         }
         if (systemID == systemID_EMB && isResetModuleID && module_id > nModules[k]/2) {
-          module_id -= nModules[k];  // transition of module ID
+          module_id -= nModules[k];  // transition near 1535..0, reset the module ID
         }
 
         if (m_thetaRecalcLayerWeights[k][layer]<0)
@@ -407,7 +407,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           vec_E_cell_layer[layer+startPositionToFill].push_back(eCell);
           vec_theta_cell_layer[layer+startPositionToFill].push_back(theta_id);
           vec_module_cell_layer[layer+startPositionToFill].push_back(module_id);
-          // sum them for width calculation
+          // sum them for width in theta/module calculation
           theta2_E_layer[layer+startPositionToFill] += theta_id * theta_id * eCell;
           theta_E_layer[layer+startPositionToFill] += theta_id * eCell;
           module2_E_layer[layer+startPositionToFill] += module_id * module_id * eCell;
@@ -459,7 +459,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
            ) {
             local_E_Max[layer+startPositionToFill].push_back(theta_E_pair[layer+startPositionToFill].second[i]);
             local_E_Max_theta[layer+startPositionToFill].push_back(theta_E_pair[layer+startPositionToFill].first[i]);
-            //std::cout << "LOCAL MAX FOUND" << std::endl;
           }
         }  // end of loop over theta IDs
 
@@ -506,7 +505,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
     }
 
     // local maxima of E vs phi (could be more than one) and the corresponding module
-    // note that code should be modified to handle periodicity of module/phi (and tested on particles in the direction of the 1536..0 module transition)
     std::vector<std::pair<std::vector<int>, std::vector<double>>> module_E_pair;
     std::vector<std::vector<double>> local_E_Max_vs_phi(numLayersTotal, std::vector<double>());
     std::vector<std::vector<int>> local_E_Max_vs_phi_module(numLayersTotal, std::vector<int>());
@@ -518,10 +516,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
       if (k > 0)    startPositionToFill += m_numLayers[k - 1];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
-        // this should be done with some care because it sorts modules in ascending order, but if the cluster is
-        // near the 1536..0 transition, then the cells will be arranged in a non physically contiguous way
         auto result_2 = MergeSumAndSort(vec_module_cell_layer[layer+startPositionToFill], vec_E_cell_layer[layer+startPositionToFill]);
-
         // fill the zero energy cells in 1D module-E profile
         for (int i = result_2.first.front(); i <= result_2.first.back(); i += nMergedModules[layer+startPositionToFill]) {
           if (std::find(result_2.first.begin(), result_2.first.end(), i) == result_2.first.end()) {
@@ -545,7 +540,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
            ) {
             local_E_Max_vs_phi[layer+startPositionToFill].push_back(module_E_pair[layer+startPositionToFill].second[i]);
             local_E_Max_vs_phi_module[layer+startPositionToFill].push_back(module_E_pair[layer+startPositionToFill].first[i]);
-            //std::cout << "LOCAL MAX FOUND" << std::endl;
           }
         }  // end of loop over module IDs
 
@@ -591,7 +585,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         if (E_cell_vs_phi_Min[layer+startPositionToFill] > 1e12)  E_cell_vs_phi_Min[layer+startPositionToFill] = 0.;  // check E_cell_Min
       }  // end of loop over layers
     }
-
 
     // save energy and theta/phi positions per layer in shape parameters
     startPositionToFill = 0;
@@ -797,7 +790,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             E_fr_side_pm3[layer+startPositionToFill] = 0.;
             E_fr_side_pm4[layer+startPositionToFill] = 0.;
           }
-
           newCluster.addToShapeParameters(maxCellEnergyInLayer[layer+startPositionToFill]);
           newCluster.addToShapeParameters(width_theta[layer+startPositionToFill]);
           newCluster.addToShapeParameters(width_module[layer+startPositionToFill]);
@@ -815,10 +807,9 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         }
       }  // end of loop over layers
     }  // end of loop over system/readout
-
     newCluster.addToShapeParameters(p4cl.M());
     newCluster.addToShapeParameters(nCells);
-
   }  // end of loop over clusters
+
   return StatusCode::SUCCESS;
 }
