@@ -97,8 +97,7 @@ StatusCode CalibrateCaloClusters::initialize()
   }
 
   // read from the metadata the names of the shape parameters in the input clusters and append the total raw energy to the output
-  std::vector<std::string> emptyVector;
-  std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get(emptyVector);
+  std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get({});
   shapeParameters.push_back("rawE");
   m_outShapeParameterHandle.put(shapeParameters);
 
