@@ -35,7 +35,7 @@ StatusCode CreateCaloCellPositionsFCCee::initialize() {
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
-  std::string hitsEncoding = m_hitsCellIDEncoding.get({});
+  std::string hitsEncoding = m_hitsCellIDEncoding.get("");
   if (hitsEncoding == "") {
     warning() << "Missing cellID encoding for input collection" << endmsg;
   }
