@@ -67,12 +67,12 @@ private:
       this, "systemNames", {"EMB"}, "Names of the detectors, corresponding to systemIDs"};
   /// Numbers of layers of the detectors
   Gaudi::Property<std::vector<size_t>> m_numLayers{
-      this, "numLayers", {12}, "Numbers of layers of the systems"};
+      this, "numLayers", {11}, "Numbers of layers of the systems"};
   /// Weights for each detector layer for theta position log-weighting
   Gaudi::Property<std::vector<std::vector<double>>> m_thetaRecalcLayerWeights{
       this,
       "thetaRecalcWeights",
-      {{-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0}},
+      {{-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0}},
       "Weights for each detector layer for theta position log-weighting. If negative use linear weight."};
   /// Name of the detector readouts, corresponding to system IDs in m_systemIDs
   Gaudi::Property<std::vector<std::string>> m_readoutNames{
