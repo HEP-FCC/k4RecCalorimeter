@@ -67,7 +67,12 @@ StatusCode CreateCaloCells::initialize() {
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
-  m_cellsCellIDEncoding.put(m_hitsCellIDEncoding.get());
+  auto hitsEncoding = m_hitsCellIDEncoding.get_optional();
+  if (!hitsEncoding.has_value()) {
+    error () << "Missing cellID encoding for input collection" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  m_cellsCellIDEncoding.put(hitsEncoding.value());
 
   return StatusCode::SUCCESS;
 }
