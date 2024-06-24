@@ -284,20 +284,6 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
     }
     debug() << m_output_shapes[m_output_shapes.size() - 1] << endmsg;
   }
-      
-  // the output should be two, the label (0/1) and the
-  // tensor with the probabilities for each label
-  // the first dimension of the tensors is the number of clusters
-  // for which we want to run the inference simultaneously (-1 = dynamic)
-  // we will do it for one cluster at a time
-  //if (m_input_shapes.size() != 2 ||
-  //    m_output_shapes.size() != 1 ||
-  //     m_input_shapes[1] != (m_numLayersTotal + 1) ||
-  //    m_output_shapes[0] != 1)
-  //{
-  //  error() << "The input or output shapes in the mva model file do not match the expected architecture" << endmsg;
-  //  return StatusCode::FAILURE;
-  //}
 
   debug() << "PhotonID config files read out successfully" << endmsg;
   
@@ -335,9 +321,6 @@ StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *in
     std::vector<Ort::Value> input_tensors;
     input_tensors.emplace_back(vec_to_tensor<float>(mvaInputs, m_input_shapes));
 
-    // double-check the dimensions of the input tensor
-    // assert(input_tensors[0].IsTensor() && input_tensors[0].GetTensorTypeAndShapeInfo().GetShape() == m_input_shapes);
-
     // pass data through model
     try
     {
@@ -354,8 +337,8 @@ StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *in
       debug() << output_tensors[1].GetTensorTypeAndShapeInfo().GetShape() << endmsg;
       float *outputData = output_tensors[1].GetTensorMutableData<float>();
       for (int i=0; i<2; i++)
-	debug() << i << " " << outputData[i] << endmsg;
-      score = outputData[0];
+	      debug() << i << " " << outputData[i] << endmsg;
+      score = outputData[1];
     }
     catch (const Ort::Exception &exception)
     {
