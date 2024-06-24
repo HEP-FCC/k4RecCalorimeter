@@ -56,11 +56,11 @@ private:
   /// Handle for the cluster shape metadata to read and to write
   MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
     m_inClusters,
-    edm4hep::shapeParameterNames,
+    edm4hep::labels::ShapeParameterNames,
     Gaudi::DataHandle::Reader};
   MetaDataHandle<std::vector<std::string>> m_showerShapeHandle{
     m_outClusters,
-    edm4hep::shapeParameterNames,
+    edm4hep::labels::ShapeParameterNames,
     Gaudi::DataHandle::Writer};
 
   /// Pointer to the geometry service
