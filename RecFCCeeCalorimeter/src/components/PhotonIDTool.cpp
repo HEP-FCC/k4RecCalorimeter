@@ -99,10 +99,8 @@ StatusCode PhotonIDTool::initialize()
   return StatusCode::SUCCESS;
 }
 
-StatusCode PhotonIDTool::execute(const EventContext& evtCtx) const
+StatusCode PhotonIDTool::execute([[maybe_unused]] const EventContext &evtCtx) const
 {
-  (void) evtCtx;  // event context not used
-
   verbose() << "-------------------------------------------" << endmsg;
 
   // Get the input collection with clusters
