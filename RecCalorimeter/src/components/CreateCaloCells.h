@@ -119,9 +119,8 @@ private:
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
-  /// Maps of cell IDs (corresponding to DD4hep IDs) on (1) final energies to be used for clustering, (2) energy desposits from EM shower hits and (3) transfer of signals due to crosstalk
+  /// Maps of cell IDs (corresponding to DD4hep IDs) on (1) final energies to be used for clustering, (2) transfer of signals due to crosstalk
   std::unordered_map<uint64_t, double> m_cellsMap;
-  std::unordered_map<uint64_t, double> m_HitCellsMap;
   std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
 };
 

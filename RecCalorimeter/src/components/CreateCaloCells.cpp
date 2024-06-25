@@ -90,7 +90,7 @@ StatusCode CreateCaloCells::execute() {
     m_cellsMap.clear();
   }
 
-  m_HitCellsMap.clear();
+  std::unordered_map<uint64_t, double> HitCellsMap;
 
   // 1. Merge energy deposits into cells
   // If running with noise map already was prepared. Otherwise it is being
@@ -98,14 +98,14 @@ StatusCode CreateCaloCells::execute() {
   for (const auto& hit : *hits) {
     verbose() << "CellID : " << hit.getCellID() << endmsg;
     if(m_addCrosstalk) { // Crosstalk only applies to energy deposits caused by EM shower hits. Therefore, cell noise needs to be excluded.
-      m_HitCellsMap[hit.getCellID()] += hit.getEnergy();
+      HitCellsMap[hit.getCellID()] += hit.getEnergy();
     }
     m_cellsMap[hit.getCellID()] += hit.getEnergy();
   }
   if(m_addCrosstalk) {
     m_CrosstalkCellsMap.clear();
     // loop over cells that get actual EM shower hits
-    for (const auto& this_cell : m_HitCellsMap) {
+    for (const auto& this_cell : HitCellsMap) {
       uint64_t this_cellId=this_cell.first;
       auto vec_neighbours = m_crosstalksTool->getNeighbours(this_cellId); // a vector of neighbour IDs
       auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
