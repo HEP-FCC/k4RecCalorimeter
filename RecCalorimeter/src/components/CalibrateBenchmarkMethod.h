@@ -64,6 +64,8 @@ private:
   ServiceHandle<ITHistSvc> m_histSvc;
 
   double chiSquareFitBarrel(const Double_t *par) const;
+  void registerHistogram(const std::string& path, TH1F*& histogramName);
+  void runMinimization(int n_param, const std::vector<double>& variable, const std::vector<double>& steps, const std::vector<int>& fixedParameters) const;
 
   /// Handle for electromagnetic barrel cells (input collection)
   DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
@@ -79,8 +81,8 @@ private:
   TH1F* m_parameters; 
 
   /// vectors to store the energy in each ECal/HCal layer 
-  std::vector<double> m_energyInECalLayer;
-  std::vector<double> m_energyInHCalLayer;
+  std::vector<double> m_energyInLayerECal;
+  std::vector<double> m_energyInLayerHCal;
 
 
   /// Maximum energy for the x-axis range
@@ -90,21 +92,28 @@ private:
   Gaudi::Property<size_t> m_numLayersECal{this, "numLayersECal", 12, "Number of ECal layers"};
   Gaudi::Property<size_t> m_numLayersHCal{this, "numLayersHCal", 13, "Number of HCal layers"};
 
-  /// ID of the first HCal layer
+  /// ID of the first ECal/HCal layer
+  Gaudi::Property<uint> m_firstLayerECal{this, "firstLayerECal", 0, "ID of first ECal layer"};
   Gaudi::Property<uint> m_firstLayerHCal{this, "firstLayerHCal", 0, "ID of first HCal layer"};
 
   /// Names of the detector readouts, corresponding to system IDs
   Gaudi::Property<std::vector<std::string>> m_readoutNames {this, "readoutNames", {"ECalBarrelReadout","HCalBarrelReadout"},"Names of the detector readout, corresponding to systemId"};
-  Gaudi::Property<std::vector<uint>> m_SystemID {this, "systemID", {4,8},"systemId"};
-  Gaudi::Property<uint> m_ECalSystemID{this, "ECalSystemID", 4, "ID of ECal system"};
-  Gaudi::Property<uint> m_HCalSystemID{this, "HCalSystemID", 8, "ID of the HCal system"};
+  Gaudi::Property<std::vector<uint>> m_systemID {this, "systemID", {4,8},"systemId"};
+  Gaudi::Property<uint> m_systemIDECal{this, "ECalSystemID", 4, "ID of ECal system"};
+  Gaudi::Property<uint> m_systemIDHCal{this, "HCalSystemID", 8, "ID of the HCal system"};
 
   /// vectors containing the energy deposits to be used for minimization
-  std::vector<double> m_vecEgenerated;
-  std::vector<double> m_vecEinECaltotal;
-  std::vector<double> m_vecEinHCaltotal;
-  std::vector<double> m_vecEinHCalfirstLayer;
-  std::vector<double> m_vecEinECallastLayer;
+  std::vector<double> m_vecGeneratedEnergy;
+  std::vector<double> m_vecTotalEnergyinECal;
+  std::vector<double> m_vecTotalEnergyinHCal;
+  std::vector<double> m_vecEnergyInFirstLayerECal; 
+  std::vector<double> m_vecEnergyInLastLayerECal;
+  std::vector<double> m_vecEnergyInFirstLayerHCal;
+
+  // benchmark parameters which should be fixed
+  // p[1] because HCal is already calibrated to HAD scale
+  // p[5] is the constant term and was not bringing large improvement, hence not minimized for the moment (might be tried again in the future)  
+  Gaudi::Property<std::vector<int>> m_fixedParameters = {this, "fixedParameters", {1,5},"Fixed parameters that will not be minimized"};
 
 };
 #endif /* RECCALORIMETER_CALIBRATEBENCHMARKMETHOD_H */

@@ -281,6 +281,7 @@ from Configurables import CorrectCaloClusters
 correctCaloClusters = CorrectCaloClusters("correctCaloClusters")
 correctCaloClusters.inClusters = createClusters.clusters.Path
 correctCaloClusters.outClusters = "Corrected"+createClusters.clusters.Path
+correctCaloClusters.systemIDs = [4]
 correctCaloClusters.numLayers = [12]
 correctCaloClusters.firstLayerIDs = [0]
 correctCaloClusters.lastLayerIDs = [11]

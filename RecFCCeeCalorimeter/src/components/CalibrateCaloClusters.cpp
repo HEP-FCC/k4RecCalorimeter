@@ -97,7 +97,7 @@ StatusCode CalibrateCaloClusters::initialize()
   }
 
   // read from the metadata the names of the shape parameters in the input clusters and append the total raw energy to the output
-  std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get();
+  std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get({});
   shapeParameters.push_back("rawE");
   m_outShapeParameterHandle.put(shapeParameters);
 
@@ -241,7 +241,10 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   debug() << "Input Node Name/Shape (" << m_input_names.size() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
   {
-    m_input_names.emplace_back(m_ortSession->GetInputName(i, allocator));
+    // for old ONNX runtime version
+    // m_input_names.emplace_back(m_ortSession->GetInputName(i, allocator));
+    // for new runtime version
+    m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).get());
     m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_input_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
@@ -263,7 +266,10 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   debug() << "Output Node Name/Shape (" << m_output_names.size() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
   {
-    m_output_names.emplace_back(m_ortSession->GetOutputName(i, allocator));
+    // for old ONNX runtime version
+    // m_output_names.emplace_back(m_ortSession->GetOutputName(i, allocator));
+    // for new runtime version
+    m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).get());
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_output_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++)

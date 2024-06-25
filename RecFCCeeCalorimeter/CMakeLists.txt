@@ -7,6 +7,11 @@
 include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
 # libs
 link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
+# New versions of ONNXRuntime add directories to include
+# through the target onnxruntime::onnxruntime
+if(onnxruntime_FOUND)
+  set(ONNXRUNTIME_LIBRARY onnxruntime::onnxruntime)
+endif()
 
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecFCCeeCalorimeterPlugins
@@ -69,3 +74,9 @@ add_test(NAME FCCeeLAr_xtalkNeighbours
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_xtalkNeighbours)
+
+add_test(NAME FCCeeLAr_benchmarkCorrection
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/run_thetamodulemerged_SW_benchmarkCorr.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_benchmarkCorrection)
