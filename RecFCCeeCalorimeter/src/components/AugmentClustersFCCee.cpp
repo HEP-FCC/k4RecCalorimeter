@@ -628,8 +628,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
         // do pi0/photon shape var only for EMB
         if (m_do_pi0_photon_shapeVar && systemID == systemID_EMB) {
-          double w_theta = sqrt(fabs(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)));
-          if (std::isnan(w_theta))    w_theta = 0.;
+          double w_theta = (sumEnLayer[layer+startPositionToFill] > 0.) ? sqrt(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)) : 0. ;
           if (w_theta > 40)    w_theta = 40;
           width_theta[layer+startPositionToFill] = w_theta;
 
