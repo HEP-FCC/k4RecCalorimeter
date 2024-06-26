@@ -170,11 +170,9 @@ void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {
   tmpPair = retrievePhiThetaExtrema(m_ecalBarrelSegmentation, m_ecalBarrelSegmentationType);
   listPhiMax.push_back(tmpPair.first);
   listThetaMax.push_back(tmpPair.second);
-  debug() << "phi and theta max from barrel: " << tmpPair.first << " " << tmpPair.second << endmsg;
   tmpPair = retrievePhiThetaExtrema(m_ecalEndcapSegmentation, m_ecalEndcapSegmentationType);
   listPhiMax.push_back(tmpPair.first);
   listThetaMax.push_back(tmpPair.second);
-  debug() << "phi and theta max from endcap: " << tmpPair.first << " " << tmpPair.second << endmsg;
   tmpPair = retrievePhiThetaExtrema(m_ecalFwdSegmentation, m_ecalFwdSegmentationType);
   listPhiMax.push_back(tmpPair.first);
   listThetaMax.push_back(tmpPair.second);
@@ -193,7 +191,6 @@ void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {
   // Maximum theta & phi of the calorimeter system
   m_phiMax = *std::max_element(listPhiMax.begin(), listPhiMax.end());
   m_thetaMax = *std::max_element(listThetaMax.begin(), listThetaMax.end());
-  debug() << "Detector limits: phiMax " << m_phiMax << " thetaMax " << m_thetaMax << endmsg;
 
   // very small number (epsilon) substructed from the edges to ensure correct division
   float epsilon = 0.0001;
@@ -362,13 +359,13 @@ void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
       aTowers[iTheta][phiNeighbour(iPhi)] +=
 	//        cell.getEnergy() * sin(segmentation->theta(cell.getCellID()));
 	cell.getEnergy() * sin(cellTheta);
-      debug() << "Should I fill the tower? cellPhi, iPhi, phiNeighbour = " << fillTowersCells << " " << cellPhi << " " << iPhi << " " << phiNeighbour(iPhi) << endmsg;
+
       if (fillTowersCells) {
         m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))].push_back(cell.clone());
 	int ncells = m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))].size();
 
-	//        if ( ncells > 5)
-	verbose() << "NUM CELLs IN TOWER : " << ncells << endmsg;
+	if ( ncells > 5)
+	  verbose() << "NUM CELLs IN TOWER : " << ncells << endmsg;
       }
     }
   }
