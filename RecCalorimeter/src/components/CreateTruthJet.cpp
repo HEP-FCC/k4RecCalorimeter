@@ -19,7 +19,7 @@ CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : T
 
 
 StatusCode CreateTruthJet::initialize() {
-  clusterer = new ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
+  clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
   return clusterer->initialize();
 
 }
@@ -29,7 +29,7 @@ colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
   int i=0;
   for(auto particle: input){
     fastjet::PseudoJet clusterPJ(particle.getMomentum().x, particle.getMomentum().y, particle.getMomentum().z, particle.getEnergy());
-    clusterPJ.set_user_info(new ClusterInfo(i));
+    clusterPJ.set_user_info(new k4::recCalo::ClusterInfo(i));
     clustersPJ.push_back(clusterPJ);
     i++;
   }
@@ -52,8 +52,9 @@ colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
       jetInput.setEnergy(constit.e());
       jetInput.setMass(constit.m());
 
-      int index = constit.user_info<ClusterInfo>().index();
-      jetInput.setPDG((input)[index].getPDG());
+      int index = constit.user_info<k4::recCalo::ClusterInfo>().index();
+      // This function is not available in all versions, so I am leaving it commented for now
+      //jetInput.setPDG((input)[index].getPDG());
 
       jet.addToParticles(jetInput);
     }

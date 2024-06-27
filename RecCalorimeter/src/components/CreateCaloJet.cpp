@@ -20,7 +20,7 @@ CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Tra
 
 
 StatusCode CreateCaloJet::initialize() {
-  clusterer = new ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
+  clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
 
 
   return clusterer->initialize();
@@ -45,7 +45,7 @@ colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
     fastjet::PseudoJet clusterPJ;
     clusterPJ.reset_momentum_PtYPhiM(pT, eta, phi, 0);
     // Attach the cluster index to the pseudojet
-    clusterPJ.set_user_info(new ClusterInfo(i));
+    clusterPJ.set_user_info(new k4::recCalo::ClusterInfo(i));
     clustersPJ.push_back(clusterPJ);
     i++;
   }
@@ -65,7 +65,7 @@ colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
     // Also add the clusters that were used to make the jets
     std::vector<fastjet::PseudoJet> constits = cjet.constituents();
     for(auto constit : constits){
-      int index = constit.user_info<ClusterInfo>().index();
+      int index = constit.user_info<k4::recCalo::ClusterInfo>().index();
       jet.addToClusters((input)[index]);
     }
     edmJets.push_back(jet);

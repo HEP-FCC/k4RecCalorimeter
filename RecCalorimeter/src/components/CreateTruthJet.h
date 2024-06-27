@@ -56,7 +56,7 @@ private:
   double m_minPt = 10;
   double m_jetRadius = 0.4;
   std::string m_jetAlg = "antikt";
-  ClusterJet* clusterer;
+  k4::recCalo::ClusterJet* clusterer;
 
 
 };

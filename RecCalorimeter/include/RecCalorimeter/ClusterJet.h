@@ -1,5 +1,7 @@
-#ifndef RECCALORIMETER_CLUSTERJET_H
-#define RECCALORIMETER_CLUSTERJET_H
+//#ifndef RECCALORIMETER_CLUSTERJET_H
+//#define RECCALORIMETER_CLUSTERJET_H
+#ifndef k4RecCalorimeterPlugins_CLUSTERJET_H
+#define k4RecCalorimeterPlugins_CLUSTERJET_H
 
 // std
 #include <map>
@@ -30,7 +32,7 @@
 #include "edm4hep/ClusterCollection.h"
 
 
-
+namespace k4::recCalo{
 
 class ClusterInfo : public fastjet::PseudoJet::UserInfoBase{
  public:
@@ -76,4 +78,5 @@ private:
 
 };
 
+}
 #endif /* RECCALORIMETER_CLUSTERJET_H */

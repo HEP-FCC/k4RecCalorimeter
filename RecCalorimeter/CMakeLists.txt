@@ -3,9 +3,10 @@
 ################################################################################
 
 
-file(GLOB _module_sources src/components/*.cpp)
+file(GLOB _module_sources src/components/*.cpp )
+
 gaudi_add_module(k4RecCalorimeterPlugins
-                 SOURCES ${_module_sources}
+                 SOURCES ${_module_sources} 
                  LINK k4FWCore::k4FWCore
                       k4FWCore::k4Interface
                       Gaudi::GaudiAlgLib
@@ -26,7 +27,9 @@ install(TARGETS k4RecCalorimeterPlugins
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
   COMPONENT dev)
 
-include_directories(${FASTJET_INCLUDE_DIRS})
+
+
+include_directories(${FASTJET_INCLUDE_DIRS} include/RecCalorimeter)
 link_directories(${FASTJET_LIBRARIES})
 
 include(CTest)

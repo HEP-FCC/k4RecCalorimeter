@@ -1,8 +1,12 @@
+//#include "k4RecCalorimeterPlugins/ClusterJet.h"
+//#include "include/RecCalorimeter/ClusterJet.h"
 #include "ClusterJet.h"
 
 // std
 #include <vector>
 #include <math.h>
+
+namespace k4::recCalo{
 
 ClusterJet::ClusterJet(std::string jetAlg, double jetRadius, int clustering, double minPt, int njets): m_jetAlg(jetAlg), m_jetRadius(jetRadius), m_clustering(clustering), m_minPt(minPt), m_njets(njets){
 }
@@ -40,4 +44,5 @@ std::vector<fastjet::PseudoJet> ClusterJet::cluster(const   std::vector<fastjet:
 }
 
 
+}
 

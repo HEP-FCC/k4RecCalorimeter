@@ -63,7 +63,7 @@ private:
                         {"ee_genkt",              fastjet::JetAlgorithm::ee_genkt_algorithm},
   };
 
-  ClusterJet* clusterer;
+  k4::recCalo::ClusterJet* clusterer;
 
 
 };
