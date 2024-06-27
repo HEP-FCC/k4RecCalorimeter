@@ -101,7 +101,6 @@ private:
   // the ONNX runtime session for running the inference,
   // the environment, and the input and output shapes and names
   Ort::Experimental::Session* m_ortSession = nullptr;
-  // Ort::Session* m_ortSession = nullptr;
   Ort::Env* m_ortEnv = nullptr;
   std::vector<std::int64_t> m_input_shapes;
   std::vector<std::int64_t> m_output_shapes;
@@ -109,8 +108,8 @@ private:
   std::vector<std::string> m_output_names;
   std::vector<std::string> m_internal_input_names;
   
-  // the indices of the shapeParameters containing the inputs to the model
-  std::vector<unsigned short int> m_inputPositionsInShapeParameters;
+  // the indices of the shapeParameters containing the inputs to the model (-1 if not found)
+  std::vector<short int> m_inputPositionsInShapeParameters;
 };
 
 #endif /* RECFCCEECALORIMETER_PHOTONIDTOOL_H */

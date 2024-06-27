@@ -19,7 +19,7 @@ Ort::Value vec_to_tensor(std::vector<T> &data, const std::vector<std::int64_t> &
 }
 
 PhotonIDTool::PhotonIDTool(const std::string &name,
-			   ISvcLocator *svcLoc)
+                           ISvcLocator *svcLoc)
     : Gaudi::Algorithm(name, svcLoc)
 {
   declareProperty("inClusters", m_inClusters, "Input cluster collection");
@@ -62,32 +62,32 @@ StatusCode PhotonIDTool::initialize()
       // otherwise, we will use the energy of the cluster object
       auto it = std::find(shapeParameters.begin(), shapeParameters.end(), "rawE");
       if (it != shapeParameters.end())
-	{
-	  int position = std::distance(shapeParameters.begin(), it);
-	  m_inputPositionsInShapeParameters.push_back(position);
-	  info() << "Feature " << feature << " found in position " << position << " of shapeParameters" << endmsg;
-	}
+      {
+        int position = std::distance(shapeParameters.begin(), it);
+        m_inputPositionsInShapeParameters.push_back(position);
+        info() << "Feature " << feature << " found in position " << position << " of shapeParameters" << endmsg;
+      }
       else {
-	m_inputPositionsInShapeParameters.push_back(-1);
+        m_inputPositionsInShapeParameters.push_back(-1);
       }
     }
     else {
-      // for the other features, check if they are in the shape paramaters
+      // for the other features, check if they are in the shape parameters
       auto it = std::find(shapeParameters.begin(), shapeParameters.end(), feature);
       if (it != shapeParameters.end())
-	{
-	  int position = std::distance(shapeParameters.begin(), it);
-	  m_inputPositionsInShapeParameters.push_back(position);
-	  info() << "Feature " << feature << " found in position " << position << " of shapeParameters" << endmsg;
-	}
+      {
+        int position = std::distance(shapeParameters.begin(), it);
+        m_inputPositionsInShapeParameters.push_back(position);
+        info() << "Feature " << feature << " found in position " << position << " of shapeParameters" << endmsg;
+      }
       else
-	{
-	  // at least one of the inputs of the MVA was not found in the shapeParameters
-	  // so we can stop checking the others 
-	  m_inputPositionsInShapeParameters.clear();
-	  error() << "Feature " << feature << " not found, aborting..." << endmsg;
-	  return StatusCode::FAILURE;
-	}
+      {
+        // at least one of the inputs of the MVA was not found in the shapeParameters
+        // so we can stop checking the others
+        m_inputPositionsInShapeParameters.clear();
+        error() << "Feature " << feature << " not found, aborting..." << endmsg;
+        return StatusCode::FAILURE;
+      }
     }
   }
     
@@ -156,7 +156,7 @@ edm4hep::ClusterCollection *PhotonIDTool::initializeOutputClusters(
 }
 
 StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
-				      const std::string& mvaModelFileName)
+                                      const std::string& mvaModelFileName)
 {
   // 1. read the file with the list of input features
   // TODO: figure how to save BDT to ONNX such that input is
@@ -289,7 +289,7 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
 }
 
 StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *inClusters,
-					    edm4hep::ClusterCollection *outClusters) const
+                                            edm4hep::ClusterCollection *outClusters) const
 {
   size_t numShapeVars = m_internal_input_names.size();
   std::vector<float> mvaInputs(numShapeVars);
@@ -301,9 +301,9 @@ StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *in
     for (unsigned int i = 0; i < m_inputPositionsInShapeParameters.size(); i++) {  
       int position = m_inputPositionsInShapeParameters[i];
       if (position == -1)
-	mvaInputs[i] = (inClusters->at(j)).getEnergy();
+        mvaInputs[i] = (inClusters->at(j)).getEnergy();
       else
-	mvaInputs[i] = (inClusters->at(j)).getShapeParameters(position);
+        mvaInputs[i] = (inClusters->at(j)).getShapeParameters(position);
     }
     
     // print the values of the input features
@@ -328,14 +328,14 @@ StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *in
                                                                  Ort::RunOptions{nullptr});
 
       // double-check the dimensions of the output tensors
-      // NOTE: the number of output tensors is equal to the number of output nodes specifed in the Run() call
+      // NOTE: the number of output tensors is equal to the number of output nodes specified in the Run() call
       // assert(output_tensors.size() == output_names.size() && output_tensors[0].IsTensor());
       // the probabilities are in the 2nd entry of the output
       debug() << output_tensors.size() << endmsg;
       debug() << output_tensors[1].GetTensorTypeAndShapeInfo().GetShape() << endmsg;
       float *outputData = output_tensors[1].GetTensorMutableData<float>();
       for (int i=0; i<2; i++)
-	      debug() << i << " " << outputData[i] << endmsg;
+        debug() << i << " " << outputData[i] << endmsg;
       score = outputData[1];
     }
     catch (const Ort::Exception &exception)
