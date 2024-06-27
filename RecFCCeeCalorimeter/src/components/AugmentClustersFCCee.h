@@ -94,6 +94,8 @@ private:
       this, "moduleFieldNames", {"module"}, "Identifiers of module, corresponding to systemIDs"};
   Gaudi::Property<bool> m_do_pi0_photon_shapeVar{
       this, "do_pi0_photon_shapeVar", false, "Calculate shape variables for pi0/photon separation: E_ratio, Delta_E etc."};
+  Gaudi::Property<bool> m_do_widthTheta_logE_weights{
+      this, "do_widthTheta_logE_weights", false, "Calculate width in theta using logE weights in shape variables"};
 
   // the number of grouped theta and phi cells
   std::vector<int> nMergedThetaCells;

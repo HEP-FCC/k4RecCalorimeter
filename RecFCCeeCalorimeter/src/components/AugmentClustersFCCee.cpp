@@ -379,7 +379,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         int module_id = decoder->get(cID, moduleField);
 
         double eCell = cell->getEnergy();
-        double weightLog = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(eCell / sumEnLayer[layer]));  // layer+startPositionToFill ?
+        double weightLog = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(eCell / sumEnLayer[layer+startPositionToFill]));
         TVector3 v = TVector3(cell->getPosition().x, cell->getPosition().y, cell->getPosition().z);
         double theta = v.Theta();
         double phi = v.Phi();
@@ -408,8 +408,13 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           vec_theta_cell_layer[layer+startPositionToFill].push_back(theta_id);
           vec_module_cell_layer[layer+startPositionToFill].push_back(module_id);
           // sum them for width in theta/module calculation
-          theta2_E_layer[layer+startPositionToFill] += theta_id * theta_id * eCell;
-          theta_E_layer[layer+startPositionToFill] += theta_id * eCell;
+	  if (m_do_widthTheta_logE_weights) {
+            theta2_E_layer[layer+startPositionToFill] += theta_id * theta_id * weightLog;
+            theta_E_layer[layer+startPositionToFill] += theta_id * weightLog;
+          } else {
+            theta2_E_layer[layer+startPositionToFill] += theta_id * theta_id * eCell;
+            theta_E_layer[layer+startPositionToFill] += theta_id * eCell;
+          }
           module2_E_layer[layer+startPositionToFill] += module_id * module_id * eCell;
           module_E_layer[layer+startPositionToFill] += module_id * eCell;
         }
@@ -628,8 +633,13 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
         // do pi0/photon shape var only for EMB
         if (m_do_pi0_photon_shapeVar && systemID == systemID_EMB) {
-          double w_theta = (sumEnLayer[layer+startPositionToFill] > 0.) ? sqrt(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)) : 0. ;
-          width_theta[layer+startPositionToFill] = w_theta;
+	  double w_theta;
+          if (m_do_widthTheta_logE_weights) {
+            w_theta = (sumWeightLayer[layer+startPositionToFill] != 0.) ? sqrt(theta2_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill], 2)) : 0. ;
+          } else {
+            w_theta = (sumEnLayer[layer+startPositionToFill] > 0.) ? sqrt(theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)) : 0. ;
+	  }
+	  width_theta[layer+startPositionToFill] = w_theta;
 
           double w_module = (sumEnLayer[layer+startPositionToFill] > 0.) ? sqrt(module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2)) : 0. ;
           width_module[layer+startPositionToFill] = w_module;
