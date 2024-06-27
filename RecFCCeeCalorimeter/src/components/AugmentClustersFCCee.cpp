@@ -131,7 +131,7 @@ StatusCode AugmentClustersFCCee::initialize()
       showerShapeDecorations.push_back(Form("phi_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("maxcell_E_%s_layer_%d", detector, layer));
       // pi0/photon shape var only calculated in EMB
-      if (m_do_pi0_photon_shapeVar && m_systemIDs[k] == systemID_EMB) {
+      if (m_do_photon_shapeVar && m_systemIDs[k] == systemID_EMB) {
         showerShapeDecorations.push_back(Form("width_theta_%s_layer_%d", detector, layer));
         showerShapeDecorations.push_back(Form("width_module_%s_layer_%d", detector, layer));
         showerShapeDecorations.push_back(Form("Ratio_E_max_2ndmax_%s_layer_%d", detector, layer));
@@ -402,7 +402,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         sumPhiLayer[layer+startPositionToFill] += (eCell * phi);
 
         // do pi0/photon shape var only for EMB
-        if (m_do_pi0_photon_shapeVar && systemID == systemID_EMB) {
+        if (m_do_photon_shapeVar && systemID == systemID_EMB) {
           // E, theta_id, and module_id of cells in layer
           vec_E_cell_layer[layer+startPositionToFill].push_back(eCell);
           vec_theta_cell_layer[layer+startPositionToFill].push_back(theta_id);
@@ -428,7 +428,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
     startPositionToFill = 0;
     for (size_t k = 0; k < m_readoutNames.size(); k++) {
-      if (!m_do_pi0_photon_shapeVar)    break;
+      if (!m_do_photon_shapeVar)    break;
       if (m_systemIDs[k] != systemID_EMB)    continue;    // do pi0/photon shape var only for EMB
       if (k > 0)    startPositionToFill += m_numLayers[k - 1];
       // loop over layers
@@ -516,7 +516,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
     startPositionToFill = 0;
     for (size_t k = 0; k < m_readoutNames.size(); k++) {
-      if (!m_do_pi0_photon_shapeVar)    break;
+      if (!m_do_photon_shapeVar)    break;
       if (m_systemIDs[k] != systemID_EMB)    continue;    // do pi0/photon shape var only for EMB
       if (k > 0)    startPositionToFill += m_numLayers[k - 1];
       // loop over layers
@@ -632,7 +632,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         newCluster.addToShapeParameters(sumPhiLayer[layer+startPositionToFill]);
 
         // do pi0/photon shape var only for EMB
-        if (m_do_pi0_photon_shapeVar && systemID == systemID_EMB) {
+        if (m_do_photon_shapeVar && systemID == systemID_EMB) {
 	  double w_theta;
           if (m_do_widthTheta_logE_weights) {
             w_theta = (sumWeightLayer[layer+startPositionToFill] != 0.) ? sqrt(theta2_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill], 2)) : 0. ;
@@ -664,6 +664,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             double theta2_E_3Bin = 0.;
             double theta_E_3Bin = 0.;
             double sum_E_3Bin = 0.;
+            double sum_weightLog_3Bin = 0.;
 
             double E_m2 = 0.;
             double E_p2 = 0.;
@@ -672,6 +673,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             double theta2_E_5Bin = 0.;
             double theta_E_5Bin = 0.;
             double sum_E_5Bin = 0.;
+            double sum_weightLog_5Bin = 0.;
 
             double E_m3 = 0.;
             double E_p3 = 0.;
@@ -680,6 +682,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             double theta2_E_7Bin = 0.;
             double theta_E_7Bin = 0.;
             double sum_E_7Bin = 0.;
+            double sum_weightLog_7Bin = 0.;
 
             double E_m4 = 0.;
             double E_p4 = 0.;
@@ -688,6 +691,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             double theta2_E_9Bin = 0.;
             double theta_E_9Bin = 0.;
             double sum_E_9Bin = 0.;
+            double sum_weightLog_9Bin = 0.;
 
             auto it_1 = std::find(theta_E_pair[layer+startPositionToFill].second.begin(), theta_E_pair[layer+startPositionToFill].second.end(), E_cell_Max[layer+startPositionToFill]);
             int ind_1 = std::distance(theta_E_pair[layer+startPositionToFill].second.begin(), it_1);
@@ -752,34 +756,71 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
               theta_p4 = 0;
             }
 
+            double weightLog_E_max = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_cell_Max[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_m1 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_m1 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_m2 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_m2 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_m3 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_m3 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_m4 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_m4 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_p1 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_p1 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_p2 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_p2 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_p3 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_p3 / sumEnLayer[layer+startPositionToFill]));
+            double weightLog_p4 = std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_p4 / sumEnLayer[layer+startPositionToFill]));
+
             sum_E_3Bin = E_m1 + E_cell_Max[layer+startPositionToFill] + E_p1;
             sum_E_5Bin = sum_E_3Bin + E_m2 + E_p2;
             sum_E_7Bin = sum_E_5Bin + E_m3 + E_p3;
             sum_E_9Bin = sum_E_7Bin + E_m4 + E_p4;
+            sum_weightLog_3Bin = weightLog_E_max + weightLog_m1 + weightLog_p1;
+            sum_weightLog_5Bin = sum_weightLog_3Bin + weightLog_m2 + weightLog_p2;
+            sum_weightLog_7Bin = sum_weightLog_5Bin + weightLog_m3 + weightLog_p3;
+            sum_weightLog_9Bin = sum_weightLog_7Bin + weightLog_m4 + weightLog_p4;
 
-            theta2_E_3Bin = theta_m1 * theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * theta_p1 * E_p1;
-            theta_E_3Bin = theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * E_p1;
-            theta2_E_5Bin = theta2_E_3Bin + theta_m2 * theta_m2 * E_m2 + theta_p2 * theta_p2 * E_p2;
-            theta_E_5Bin = theta_E_3Bin + theta_m2 * E_m2 + theta_p2 * E_p2;
-            theta2_E_7Bin = theta2_E_5Bin + theta_m3 * theta_m3 * E_m3 + theta_p3 * theta_p3 * E_p3;
-            theta_E_7Bin = theta_E_5Bin + theta_m3 * E_m3 + theta_p3 * E_p3;
-            theta2_E_9Bin = theta2_E_7Bin + theta_m4 * theta_m4 * E_m4 + theta_p4 * theta_p4 * E_p4;
-            theta_E_9Bin = theta_E_7Bin + theta_m4 * E_m4 + theta_p4 * E_p4;
+            if (m_do_widthTheta_logE_weights) {
+              theta2_E_3Bin = theta_m1 * theta_m1 * weightLog_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max_theta[layer+startPositionToFill] * weightLog_E_max + theta_p1 * theta_p1 * weightLog_p1;
+              theta_E_3Bin = theta_m1 * weightLog_m1 + E_cell_Max_theta[layer+startPositionToFill] * weightLog_E_max + theta_p1 * weightLog_p1;
+              theta2_E_5Bin = theta2_E_3Bin + theta_m2 * theta_m2 * weightLog_m2 + theta_p2 * theta_p2 * weightLog_p2;
+              theta_E_5Bin = theta_E_3Bin + theta_m2 * weightLog_m2 + theta_p2 * weightLog_p2;
+              theta2_E_7Bin = theta2_E_5Bin + theta_m3 * theta_m3 * weightLog_m3 + theta_p3 * theta_p3 * weightLog_p3;
+              theta_E_7Bin = theta_E_5Bin + theta_m3 * weightLog_m3 + theta_p3 * weightLog_p3;
+              theta2_E_9Bin = theta2_E_7Bin + theta_m4 * theta_m4 * weightLog_m4 + theta_p4 * theta_p4 * weightLog_p4;
+              theta_E_9Bin = theta_E_7Bin + theta_m4 * weightLog_m4 + theta_p4 * weightLog_p4;
+            } else {
+              theta2_E_3Bin = theta_m1 * theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * theta_p1 * E_p1;
+              theta_E_3Bin = theta_m1 * E_m1 + E_cell_Max_theta[layer+startPositionToFill] * E_cell_Max[layer+startPositionToFill] + theta_p1 * E_p1;
+              theta2_E_5Bin = theta2_E_3Bin + theta_m2 * theta_m2 * E_m2 + theta_p2 * theta_p2 * E_p2;
+              theta_E_5Bin = theta_E_3Bin + theta_m2 * E_m2 + theta_p2 * E_p2;
+              theta2_E_7Bin = theta2_E_5Bin + theta_m3 * theta_m3 * E_m3 + theta_p3 * theta_p3 * E_p3;
+              theta_E_7Bin = theta_E_5Bin + theta_m3 * E_m3 + theta_p3 * E_p3;
+              theta2_E_9Bin = theta2_E_7Bin + theta_m4 * theta_m4 * E_m4 + theta_p4 * theta_p4 * E_p4;
+              theta_E_9Bin = theta_E_7Bin + theta_m4 * E_m4 + theta_p4 * E_p4;
+            }
 
-            double _w_theta_3Bin = sqrt(theta2_E_3Bin / sum_E_3Bin - std::pow(theta_E_3Bin / sum_E_3Bin, 2));
-            double _w_theta_5Bin = sqrt(theta2_E_5Bin / sum_E_5Bin - std::pow(theta_E_5Bin / sum_E_5Bin, 2));
-            double _w_theta_7Bin = sqrt(theta2_E_7Bin / sum_E_7Bin - std::pow(theta_E_7Bin / sum_E_7Bin, 2));
-            double _w_theta_9Bin = sqrt(theta2_E_9Bin / sum_E_9Bin - std::pow(theta_E_9Bin / sum_E_9Bin, 2));
-
-            width_theta_3Bin[layer+startPositionToFill] = (sum_E_3Bin > 0.) ? _w_theta_3Bin : 0. ;
-            width_theta_5Bin[layer+startPositionToFill] = (sum_E_5Bin > 0.) ? _w_theta_5Bin : 0. ;
-            width_theta_7Bin[layer+startPositionToFill] = (sum_E_7Bin > 0.) ? _w_theta_7Bin : 0. ;
-            width_theta_9Bin[layer+startPositionToFill] = (sum_E_9Bin > 0.) ? _w_theta_9Bin : 0. ;
-
+            double _w_theta_3Bin;
+            double _w_theta_5Bin;
+            double _w_theta_7Bin;
+            double _w_theta_9Bin;
+            if (m_do_widthTheta_logE_weights) {
+              _w_theta_3Bin = sqrt(theta2_E_3Bin / sum_weightLog_3Bin - std::pow(theta_E_3Bin / sum_weightLog_3Bin, 2));
+              _w_theta_5Bin = sqrt(theta2_E_5Bin / sum_weightLog_5Bin - std::pow(theta_E_5Bin / sum_weightLog_5Bin, 2));
+              _w_theta_7Bin = sqrt(theta2_E_7Bin / sum_weightLog_7Bin - std::pow(theta_E_7Bin / sum_weightLog_7Bin, 2));
+              _w_theta_9Bin = sqrt(theta2_E_9Bin / sum_weightLog_9Bin - std::pow(theta_E_9Bin / sum_weightLog_9Bin, 2));
+              width_theta_3Bin[layer+startPositionToFill] = (sum_weightLog_3Bin > 0.) ? _w_theta_3Bin : 0. ;
+              width_theta_5Bin[layer+startPositionToFill] = (sum_weightLog_5Bin > 0.) ? _w_theta_5Bin : 0. ;
+              width_theta_7Bin[layer+startPositionToFill] = (sum_weightLog_7Bin > 0.) ? _w_theta_7Bin : 0. ;
+              width_theta_9Bin[layer+startPositionToFill] = (sum_weightLog_9Bin > 0.) ? _w_theta_9Bin : 0. ;
+            } else {
+              _w_theta_3Bin = sqrt(theta2_E_3Bin / sum_E_3Bin - std::pow(theta_E_3Bin / sum_E_3Bin, 2));
+              _w_theta_5Bin = sqrt(theta2_E_5Bin / sum_E_5Bin - std::pow(theta_E_5Bin / sum_E_5Bin, 2));
+              _w_theta_7Bin = sqrt(theta2_E_7Bin / sum_E_7Bin - std::pow(theta_E_7Bin / sum_E_7Bin, 2));
+              _w_theta_9Bin = sqrt(theta2_E_9Bin / sum_E_9Bin - std::pow(theta_E_9Bin / sum_E_9Bin, 2));
+              width_theta_3Bin[layer+startPositionToFill] = (sum_E_3Bin > 0.) ? _w_theta_3Bin : 0. ;
+              width_theta_5Bin[layer+startPositionToFill] = (sum_E_5Bin > 0.) ? _w_theta_5Bin : 0. ;
+              width_theta_7Bin[layer+startPositionToFill] = (sum_E_7Bin > 0.) ? _w_theta_7Bin : 0. ;
+              width_theta_9Bin[layer+startPositionToFill] = (sum_E_9Bin > 0.) ? _w_theta_9Bin : 0. ;
+            }
             E_fr_side_pm2[layer+startPositionToFill] = (sum_E_3Bin > 0.) ? (sum_E_5Bin / sum_E_3Bin - 1.) : 0. ;
             E_fr_side_pm3[layer+startPositionToFill] = (sum_E_3Bin > 0.) ? (sum_E_7Bin / sum_E_3Bin - 1.) : 0. ;
             E_fr_side_pm4[layer+startPositionToFill] = (sum_E_3Bin > 0.) ? (sum_E_9Bin / sum_E_3Bin - 1.) : 0. ;
-
           } else {
             width_theta_3Bin[layer+startPositionToFill] = 0.;
             width_theta_5Bin[layer+startPositionToFill] = 0.;
