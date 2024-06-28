@@ -6,6 +6,11 @@
 
 #include <fstream>
 
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
+
+
 DECLARE_COMPONENT(PhotonIDTool)
 
 // convert vector data with given shape into ONNX runtime tensor
@@ -159,44 +164,48 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
                                       const std::string& mvaModelFileName)
 {
   // 1. read the file with the list of input features
-  // TODO: figure how to save BDT to ONNX such that input is
-  // the list of input features with their names, rather
-  // than single tensor "X"
+  // Open the JSON file
   std::ifstream file(mvaInputsFileName);
   if (!file.is_open()) {
     error() << "Error opening file: " << mvaInputsFileName << endmsg;
     return StatusCode::FAILURE;
   }
-  
-  std::string line;
-  if (std::getline(file, line)) {
-    // Remove square brackets
-    line.erase(line.begin());
-    line.erase(line.end() - 1);
 
-    // Replace double quotes with single quotes to simplify parsing
-    std::replace(line.begin(), line.end(), '"', '\'');
-
-    std::istringstream iss(line);
-    std::string token;
-    while (std::getline(iss, token, ',')) {
-      // Remove single quotes and leading/trailing whitespaces
-      token.erase(std::remove(token.begin(), token.end(), '\''), token.end());
-      token.erase(token.begin(), std::find_if(token.begin(), token.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-      token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), token.end());
-      m_internal_input_names.push_back(token);
-    }
-  }
-  else {
-    error() << "Could not read text from file: " << mvaInputsFileName << endmsg;
-    return StatusCode::FAILURE;
-  }
-  debug() << "Variables needed for the photon ID MVA:" << endmsg;
-  for (const auto &str : m_internal_input_names) {
-    debug() << str << endmsg;
-  }
+  // Parse the JSON file
+  json j;
+  file >> j;
   file.close();
-  
+
+  // Access the data and print to screen
+  info() << "Using the following photon-ID training:" << endmsg;
+  info() << "   Timestamp: " << j["timeStamp"] << endmsg;
+  info() << "   Training tool used: " << j["trainingTool"] << endmsg;
+  info() << "   Input cluster collection: " << j["clusterCollection"] << endmsg;
+  m_internal_input_names = j["shapeParameters"].get<std::vector<std::string>>();
+  info() << "   Input shape parameters:" << endmsg;
+  for (const auto &str : m_internal_input_names) {
+    info() << "      " << str << endmsg;
+  }
+  info() << "   Training parameters:" << endmsg;
+  for (const auto &param : j["trainingParameters"].items()) {
+    std::string key = param.key();
+    std::string value;
+    if (param.value().is_string()) {
+      value = param.value().get<std::string>();
+    }
+    else if (param.value().is_number()) {
+      value = std::to_string(param.value().get<double>());
+    }
+    else if (param.value().is_null()) {
+      value = "null";
+    }
+    else {
+      value = "invalid";
+    }
+    info() << "      " << key << " : " << value << endmsg;
+  }
+
+
   // 2. - read the file with the MVA model and setup the ONNX runtime  
   // set ONNX logging level based on output level of this alg
   OrtLoggingLevel loggingLevel = ORT_LOGGING_LEVEL_WARNING;
