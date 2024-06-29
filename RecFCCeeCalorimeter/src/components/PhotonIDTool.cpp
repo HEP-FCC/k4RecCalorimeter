@@ -173,36 +173,94 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
 
   // Parse the JSON file
   json j;
-  file >> j;
+  try {
+    file >> j;
+  } catch (const nlohmann::json::exception& e) {
+    error() << "Error parsing JSON: " << e.what() << endmsg;
+    return StatusCode::FAILURE;
+  }
   file.close();
 
   // Access the data and print to screen
+  std::string timeStamp;
+  if (!j.contains("timeStamp")) {
+    error() << "Error: timeStamp key not found in JSON" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  else {
+    timeStamp = j["timeStamp"];
+  }
+
+  std::string clusterCollection;
+  if (!j.contains("clusterCollection")) {
+    error() << "Error: clusterCollection key not found in JSON" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  else {
+    clusterCollection = j["clusterCollection"];
+  }
+
+  std::string trainingTool;
+  if (!j.contains("trainingTool")) {
+    error() << "Error: trainingTool key not found in JSON" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  else {
+    trainingTool = j["trainingTool"];
+  }
+
   info() << "Using the following photon-ID training:" << endmsg;
-  info() << "   Timestamp: " << j["timeStamp"] << endmsg;
-  info() << "   Training tool used: " << j["trainingTool"] << endmsg;
-  info() << "   Input cluster collection: " << j["clusterCollection"] << endmsg;
-  m_internal_input_names = j["shapeParameters"].get<std::vector<std::string>>();
+  info() << "   Timestamp: " << timeStamp << endmsg;
+  info() << "   Training tool used: " << trainingTool << endmsg;
+  info() << "   Input cluster collection: " << clusterCollection << endmsg;
+  if (!j.contains("shapeParameters")) {
+    error() << "Error: shapeParameters key not found in JSON" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  else {
+    try {
+      const auto& shape_params = j["shapeParameters"];
+      if (!shape_params.is_array()) {
+	throw std::runtime_error("shapeParameters is not an array");
+      }
+      for (const auto& param : shape_params) {
+	if (!param.is_string()) {
+	  throw std::runtime_error("shapeParameters contains non-string values");
+	}
+	m_internal_input_names.push_back(param.get<std::string>());
+      }
+    } catch (const std::exception& e) {
+      error() << "Error: " << e.what() << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
   info() << "   Input shape parameters:" << endmsg;
   for (const auto &str : m_internal_input_names) {
     info() << "      " << str << endmsg;
   }
-  info() << "   Training parameters:" << endmsg;
-  for (const auto &param : j["trainingParameters"].items()) {
-    std::string key = param.key();
-    std::string value;
-    if (param.value().is_string()) {
-      value = param.value().get<std::string>();
+  if (!j.contains("trainingParameters")) {
+    error() << "Error: trainingParameters key not found in JSON" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  else {
+    info() << "   Training parameters:" << endmsg;
+    for (const auto &param : j["trainingParameters"].items()) {
+      std::string key = param.key();
+      std::string value;
+      if (param.value().is_string()) {
+	value = param.value().get<std::string>();
+      }
+      else if (param.value().is_number()) {
+	value = std::to_string(param.value().get<double>());
+      }
+      else if (param.value().is_null()) {
+	value = "null";
+      }
+      else {
+	value = "invalid";
+      }
+      info() << "      " << key << " : " << value << endmsg;
     }
-    else if (param.value().is_number()) {
-      value = std::to_string(param.value().get<double>());
-    }
-    else if (param.value().is_null()) {
-      value = "null";
-    }
-    else {
-      value = "invalid";
-    }
-    info() << "      " << key << " : " << value << endmsg;
   }
 
 
