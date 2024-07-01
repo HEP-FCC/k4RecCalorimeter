@@ -4,7 +4,6 @@
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
 
-
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
