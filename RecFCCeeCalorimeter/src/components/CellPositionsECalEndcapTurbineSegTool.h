@@ -38,6 +38,7 @@ class Segmentation;
  */
 
 class CellPositionsECalEndcapTurbineSegTool : public AlgTool, virtual public ICellPositionsTool {
+
 public:
   CellPositionsECalEndcapTurbineSegTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CellPositionsECalEndcapTurbineSegTool() = default;
