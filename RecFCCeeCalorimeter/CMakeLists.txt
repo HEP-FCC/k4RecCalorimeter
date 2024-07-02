@@ -27,7 +27,8 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       DD4hep::DDG4
                       ROOT::Core
                       ROOT::Hist
-		      ${ONNXRUNTIME_LIBRARY}
+                      ${ONNXRUNTIME_LIBRARY}
+                      nlohmann_json::nlohmann_json
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
