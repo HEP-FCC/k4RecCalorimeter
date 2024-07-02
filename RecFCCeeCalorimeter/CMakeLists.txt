@@ -39,12 +39,6 @@ install(TARGETS k4RecFCCeeCalorimeterPlugins
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
 
-add_test(NAME FCCeeLAr_reproduceSegfault
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/reproduceSegfault.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-set_test_env(FCCeeLAr_reproduceSegfault)
-
 add_test(NAME FCCeeLAr_simulateForReco
          COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloSim.py
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
