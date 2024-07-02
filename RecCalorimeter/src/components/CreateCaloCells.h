@@ -7,6 +7,7 @@
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseCaloCellsTool.h"
+#include "k4Interface/ICaloReadCrosstalkMap.h"
 
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
@@ -58,6 +59,9 @@ public:
   StatusCode finalize();
 
 private:
+
+  /// Handle for the calorimeter cells crosstalk tool
+  ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
   ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
@@ -65,6 +69,8 @@ private:
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
+  /// Add crosstalk to cells?
+  Gaudi::Property<bool> m_addCrosstalk{this, "addCrosstalk", true, "Add crosstalk effect?"};
   /// Calibrate to EM scale?
   Gaudi::Property<bool> m_doCellCalibration{this, "doCellCalibration", true, "Calibrate to EM scale?"};
   /// Add noise to cells?
@@ -113,8 +119,9 @@ private:
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
-  /// Map of cell IDs (corresponding to DD4hep IDs) and energy
+  /// Maps of cell IDs (corresponding to DD4hep IDs) on (1) final energies to be used for clustering, (2) transfer of signals due to crosstalk
   std::unordered_map<uint64_t, double> m_cellsMap;
+  std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */
