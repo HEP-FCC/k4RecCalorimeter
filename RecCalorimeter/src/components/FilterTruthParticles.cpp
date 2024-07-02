@@ -36,16 +36,7 @@ colltype_out  FilterTruthParticles::operator()(const colltype_in& input) const{
     if(particlePJ.pt() < m_minPt) continue;
 
     edm4hep::MutableMCParticle filteredParticle = particle.clone();
-    /*
-    edm4hep::MutableMCParticle filteredParticle = edm4hep::MutableMCParticle(particle);
-    filteredParticle.setPDG(particle.getPDG());
-    filteredParticle.setGeneratorStatus(particle.getGeneratorStatus());
-    filteredParticle.setSimulatorStatus(particle.getSimulatorStatus());
-    filteredParticle.setCharge(particle.getCharge());
-    filteredParticle.setTime(particle.getTime());
-    filteredParticle.setMass(particle.getMass());
     filteredParticles.push_back(filteredParticle);
-    */
   }
 
 

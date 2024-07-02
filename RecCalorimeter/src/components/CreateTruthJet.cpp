@@ -14,17 +14,18 @@ CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : T
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
   declareProperty("MinPt", m_minPt, "Minimum pT for saved jets");
+  declareProperty("isExclusiveClustering", m_isExclusive, "1 if exclusive, 0 if inclusive");
 }
 
 
 
 StatusCode CreateTruthJet::initialize() {
-  clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
+  clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_isExclusive, m_minPt);
   return clusterer->initialize();
 
 }
 
-colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
+edm4hep::ReconstructedParticleCollection  CreateTruthJet::operator()(const edm4hep::MCParticleCollection& input) const{
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
   for(auto particle: input){
@@ -54,7 +55,7 @@ colltype_out  CreateTruthJet::operator()(const colltype_in& input) const{
 
       int index = constit.user_info<k4::recCalo::ClusterInfo>().index();
       // This function is not available in all versions, so I am leaving it commented for now
-      //jetInput.setPDG((input)[index].getPDG());
+      jetInput.setPDG((input)[index].getPDG());
 
       jet.addToParticles(jetInput);
     }

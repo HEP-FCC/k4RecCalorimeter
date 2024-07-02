@@ -1,32 +1,15 @@
-//#ifndef RECCALORIMETER_CLUSTERJET_H
-//#define RECCALORIMETER_CLUSTERJET_H
-#ifndef k4RecCalorimeterPlugins_CLUSTERJET_H
-#define k4RecCalorimeterPlugins_CLUSTERJET_H
+#ifndef RECCALORIMETER_CLUSTERJET_H
+#define RECCALORIMETER_CLUSTERJET_H
+//#ifndef k4RecCalorimeterPlugins_CLUSTERJET_H
+//#define k4RecCalorimeterPlugins_CLUSTERJET_H
 
 // std
 #include <map>
 
-/*
-// Gaudi
-#include "GaudiKernel/ToolHandle.h"
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/StatusCode.h"
-#include "GaudiAlg/Transformer.h"
-#include "k4FWCore/BaseClass.h"
-
-// k4FWCore
-#include "k4FWCore/DataHandle.h"
-
-#include "edm4hep/ReconstructedParticleCollection.h"
-#include "edm4hep/MCParticleCollection.h"
-*/
-
-#include "fastjet/JetDefinition.hh"
-
-
 // Gaudi
 #include "GaudiAlg/GaudiAlgorithm.h"
 
+#include "fastjet/JetDefinition.hh"
 
 // EDM4hep
 #include "edm4hep/ClusterCollection.h"
@@ -53,8 +36,9 @@ class ClusterJet {
 public:
   ClusterJet(std::string jetAlg, double jetRadius, int clustering = 0, double minPt = 0, int clusterArgs = 0);
   StatusCode initialize();
+  ~ClusterJet(){if(m_clustSeq) delete m_clustSeq;}
 
-  std::vector<fastjet::PseudoJet> cluster(const   std::vector<fastjet::PseudoJet> clustersPJ) const;
+  std::vector<fastjet::PseudoJet> cluster(const   std::vector<fastjet::PseudoJet> clustersPJ);
 
 private:
 
@@ -75,6 +59,7 @@ private:
   double m_minPt = 10; // Only relevant for inclusive clustering
   int m_njets = 0; // Only relevant for exclusive clustering
 
+  fastjet::ClusterSequence* m_clustSeq;
 
 };
 

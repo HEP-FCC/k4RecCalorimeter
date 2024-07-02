@@ -9,24 +9,25 @@
 
 DECLARE_COMPONENT(CreateCaloJet)
 
-//CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Functional::Transformer(name, svcLoc,
 CreateCaloJet::CreateCaloJet(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
                     KeyValue("InputCollection", "CorrectedCaloClusters"),
                     KeyValue("OutputCollection", "Jets")) {
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
   declareProperty("MinPt", m_minPt, "Minimum pT for saved jets");
+  declareProperty("isExclusiveClustering", m_isExclusive, "1 if exclusive, 0 if inclusive");
+
 }
 
 
 StatusCode CreateCaloJet::initialize() {
-  clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_minPt);
+  clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_isExclusive, m_minPt);
 
 
   return clusterer->initialize();
 }
 
-colltype_out  CreateCaloJet::operator()(const colltype_in& input) const{
+edm4hep::ReconstructedParticleCollection  CreateCaloJet::operator()(const edm4hep::ClusterCollection& input) const{
   std::vector<fastjet::PseudoJet> clustersPJ;
   int i=0;
 
