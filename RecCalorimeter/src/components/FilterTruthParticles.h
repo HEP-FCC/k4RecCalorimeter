@@ -14,7 +14,15 @@
 
 /** @class FilterTruthParticles k4RecCalorimeter/RecCalorimeter/src/components/FilterTruthParticles.h
  *
+ *  Tool to filter truth particles based on their status code. 
+ *  Only detector stable particles are stored in a new MCParticleCollection.
+ *  This can provide inputs to truth jet clustering.
+ *
+ *  MinPt: the minimum pT of particles that are stored
+ *  SaveMuons: 1 if muons should be included in the collection, 0 otherwise.
+ *
  *  @author Jennifer Roloff
+ *  @date 2024-7
  */
 
 

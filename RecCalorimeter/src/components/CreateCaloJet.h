@@ -30,7 +30,16 @@
 
 /** @class CreateCaloJet k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateCaloJet.h
  *
+ *  Tool for reconstructing jets from calorimeter clusters.
+ *  It takes as input a ClusterCollection, and it outputs a ReconstructedParticleCollection with the jets.
+ *  
+ *  JetAlg: A string corresponding to the jet algorithm for clustering
+ *  JetRadius: The radius of the jets being clustered
+ *  MinPt: The pT threshold below which jets are ignored
+ *  isExclusiveClustering: 1 if jets should use an exclusive clustering, 0 otherwise
+ *
  *  @author Jennifer Roloff
+ *  @date 2024-7
  */
 
 
