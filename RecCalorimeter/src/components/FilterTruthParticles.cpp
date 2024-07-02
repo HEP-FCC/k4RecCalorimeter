@@ -32,8 +32,8 @@ colltype_out  FilterTruthParticles::operator()(const colltype_in& input) const{
     if(m_useMuons && std::abs(particle.getPDG()) == 13) continue; 
 
     // We may want to impose a minimum pT requirement
-    fastjet::PseudoJet particlePJ(particle.getMomentum().x, particle.getMomentum().y, particle.getMomentum().z, particle.getEnergy());
-    if(particlePJ.pt() < m_minPt) continue;
+    double input_particle_pt = std::sqrt(particle.getMomentum().x * particle.getMomentum().x + particle.getMomentum().y * particle.getMomentum().y);
+    if(input_particle_pt < m_minPt) continue;
 
     edm4hep::MutableMCParticle filteredParticle = particle.clone();
     filteredParticles.push_back(filteredParticle);
