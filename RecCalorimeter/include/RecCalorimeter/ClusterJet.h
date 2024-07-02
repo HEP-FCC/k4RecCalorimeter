@@ -1,7 +1,5 @@
 #ifndef RECCALORIMETER_CLUSTERJET_H
 #define RECCALORIMETER_CLUSTERJET_H
-//#ifndef k4RecCalorimeterPlugins_CLUSTERJET_H
-//#define k4RecCalorimeterPlugins_CLUSTERJET_H
 
 // std
 #include <map>
