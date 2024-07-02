@@ -5,7 +5,6 @@
 #include <math.h>
 
 
-
 DECLARE_COMPONENT(FilterTruthParticles)
 
 FilterTruthParticles::FilterTruthParticles(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
@@ -18,7 +17,7 @@ FilterTruthParticles::FilterTruthParticles(const std::string& name, ISvcLocator*
 
 
 
-colltype_out  FilterTruthParticles::operator()(const colltype_in& input) const{
+edm4hep::MCParticleCollection  FilterTruthParticles::operator()(const edm4hep::MCParticleCollection& input) const{
 
   edm4hep::MCParticleCollection filteredParticles = edm4hep::MCParticleCollection();
 

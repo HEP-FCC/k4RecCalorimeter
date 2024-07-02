@@ -1,5 +1,3 @@
-//#include "k4RecCalorimeterPlugins/ClusterJet.h"
-//#include "include/RecCalorimeter/ClusterJet.h"
 #include "ClusterJet.h"
 
 // std

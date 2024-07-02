@@ -12,25 +12,16 @@
 #include "fastjet/JetDefinition.hh"
 
 
-
-// Datamodel
-namespace edm4hep {
-class MCParticleCollection;
-}
-
-
 /** @class FilterTruthParticles k4RecCalorimeter/RecCalorimeter/src/components/FilterTruthParticles.h
  *
  *  @author Jennifer Roloff
  */
 
-using colltype_in  = edm4hep::MCParticleCollection;
-using colltype_out = edm4hep::MCParticleCollection;
 
-class FilterTruthParticles : public Gaudi::Functional::Transformer <colltype_out(const colltype_in&), BaseClass_t>  {
+class FilterTruthParticles : public Gaudi::Functional::Transformer <edm4hep::MCParticleCollection(const edm4hep::MCParticleCollection&), BaseClass_t>  {
 public:
   FilterTruthParticles(const std::string& name, ISvcLocator* svcLoc);
-  colltype_out operator()(const colltype_in& input) const override;
+  edm4hep::MCParticleCollection operator()(const edm4hep::MCParticleCollection& input) const override;
 
 
 private:
