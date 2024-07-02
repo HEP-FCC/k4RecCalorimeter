@@ -7,6 +7,7 @@
 // k4geo
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
+#include "detectorSegmentations/FCCSWEndcapTurbine_k4geo.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
@@ -109,7 +110,7 @@ public:
 
 private:
   /// Type of the segmentation
-  enum class SegmentationType {kWrong, kModuleTheta, kMulti, kPhiTheta};
+  enum class SegmentationType {kWrong, kModuleTheta, kMulti, kPhiTheta, kEndcapTurbine};
   /**  Correct way to access the neighbour of the phi tower, taking into account
    * the full coverage in phi.
    *   Full coverage means that first tower in phi, with ID = 0 is a direct
@@ -124,7 +125,6 @@ private:
    *   @param[in] aSegmentation Segmentation of the calorimeter
    */
   void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
-                       dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType,
                        bool fillTowersCells);
   /**  Check if the readout name exists. If so, it returns the segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
