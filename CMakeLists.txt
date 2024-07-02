@@ -29,6 +29,7 @@ find_package(EDM4HEP 0.10.1) # implicit: Podio
 find_package(DD4hep)
 find_package(k4geo)
 find_package(ONNXRuntime)
+find_package(FastJet)
 # New versions of ONNRuntime package provide onnxruntime-Config.cmake
 # and use the name onnxruntime
 find_package(onnxruntime)
@@ -62,9 +63,6 @@ endfunction()
 add_subdirectory(RecCalorimeter)
 add_subdirectory(RecFCChhCalorimeter)
 add_subdirectory(RecFCCeeCalorimeter)
-
-
-
 
 
 install(EXPORT ${PROJECT_NAME}Targets
