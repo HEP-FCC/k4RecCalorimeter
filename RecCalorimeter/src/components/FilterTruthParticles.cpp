@@ -28,7 +28,7 @@ edm4hep::MCParticleCollection  FilterTruthParticles::operator()(const edm4hep::M
     if(particle.getGeneratorStatus() != 1) continue;
 
     // Sometimes we want to ignore muons for jet reconstruction
-    if(m_useMuons && std::abs(particle.getPDG()) == 13) continue; 
+    if(!m_useMuons && std::abs(particle.getPDG()) == 13) continue; 
 
     // We may want to impose a minimum pT requirement
     double input_particle_pt = std::sqrt(particle.getMomentum().x * particle.getMomentum().x + particle.getMomentum().y * particle.getMomentum().y);

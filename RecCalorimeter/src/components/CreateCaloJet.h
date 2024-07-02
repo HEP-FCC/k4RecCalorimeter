@@ -21,13 +21,6 @@
 
 
 
-//// Datamodel
-//namespace edm4hep {
-//  class ClusterCollection;
-//  class ReconstructedParticleCollection;
-//}
-
-
 /** @class CreateCaloJet k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateCaloJet.h
  *
  *  Tool for reconstructing jets from calorimeter clusters.

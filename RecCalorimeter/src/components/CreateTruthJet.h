@@ -15,19 +15,10 @@
 #include "ClusterJet.h"
 
 
-
-// Datamodel
-//namespace edm4hep {
-//class MCParticleCollection;
-//class ReconstructedParticleCollection;
-//}
-
-
-
 /** @class CreateTruthJet k4RecCalorimeter/RecCalorimeter/src/components/CreateTruthJet.h
  *
- *  Tool for reconstructing jets from calorimeter clusters.
- *  It takes as input a ClusterCollection, and it outputs a ReconstructedParticleCollection with the jets.
+ *  Tool for reconstructing jets from truth particles.
+ *  It takes as input an MCParticleCollection, and it outputs a ReconstructedParticleCollection with the jets.
  *
  *  JetAlg: A string corresponding to the jet algorithm for clustering
  *  JetRadius: The radius of the jets being clustered
