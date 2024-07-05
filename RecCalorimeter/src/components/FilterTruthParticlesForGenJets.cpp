@@ -1,13 +1,13 @@
-#include "FilterTruthParticles.h"
+#include "FilterTruthParticlesForGenJets.h"
 
 // std
 #include <vector>
 #include <math.h>
 
 
-DECLARE_COMPONENT(FilterTruthParticles)
+DECLARE_COMPONENT(FilterTruthParticlesForGenJets)
 
-FilterTruthParticles::FilterTruthParticles(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
+FilterTruthParticlesForGenJets::FilterTruthParticlesForGenJets(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
                     KeyValue("InputCollection", "MCParticles"),
                     KeyValue("OutputCollection", "FilteredMCParticles")) {
 
@@ -17,7 +17,7 @@ FilterTruthParticles::FilterTruthParticles(const std::string& name, ISvcLocator*
 
 
 
-edm4hep::MCParticleCollection  FilterTruthParticles::operator()(const edm4hep::MCParticleCollection& input) const{
+edm4hep::MCParticleCollection  FilterTruthParticlesForGenJets::operator()(const edm4hep::MCParticleCollection& input) const{
 
   edm4hep::MCParticleCollection filteredParticles = edm4hep::MCParticleCollection();
 

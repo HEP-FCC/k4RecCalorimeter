@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_FILTERTRUTHPARTICLES_H
-#define RECCALORIMETER_FILTERTRUTHPARTICLES_H
+#ifndef RECCALORIMETER_FILTERTRUTHPARTICLESFORGENJETS_H
+#define RECCALORIMETER_FILTERTRUTHPARTICLESFORGENJETS_H
 
 
 // Gaudi
@@ -12,7 +12,7 @@
 #include "fastjet/JetDefinition.hh"
 
 
-/** @class FilterTruthParticles k4RecCalorimeter/RecCalorimeter/src/components/FilterTruthParticles.h
+/** @class FilterTruthParticlesForGenJets k4RecCalorimeter/RecCalorimeter/src/components/FilterTruthParticlesForGenJets.h
  *
  *  Tool to filter truth particles based on their status code. 
  *  Only detector stable particles are stored in a new MCParticleCollection.
@@ -26,9 +26,9 @@
  */
 
 
-class FilterTruthParticles : public Gaudi::Functional::Transformer <edm4hep::MCParticleCollection(const edm4hep::MCParticleCollection&), BaseClass_t>  {
+class FilterTruthParticlesForGenJets : public Gaudi::Functional::Transformer <edm4hep::MCParticleCollection(const edm4hep::MCParticleCollection&), BaseClass_t>  {
 public:
-  FilterTruthParticles(const std::string& name, ISvcLocator* svcLoc);
+  FilterTruthParticlesForGenJets(const std::string& name, ISvcLocator* svcLoc);
   edm4hep::MCParticleCollection operator()(const edm4hep::MCParticleCollection& input) const override;
 
 
