@@ -88,9 +88,9 @@ field.IntegratorStepper="ClassicalRK4"
 
 
 from Configurables import CreateTruthJet
-from Configurables import FilterTruthParticles
+from Configurables import FilterTruthParticlesForGenJets
 
-filterMCParticles = FilterTruthParticles("filterMCParticles",
+filterMCParticles = FilterTruthParticlesForGenJets("filterMCParticles",
                                               InputCollection="GenParticles",
                                               OutputCollection = "FilteredGenParticles")
 ApplicationMgr().TopAlg += [filterMCParticles]
