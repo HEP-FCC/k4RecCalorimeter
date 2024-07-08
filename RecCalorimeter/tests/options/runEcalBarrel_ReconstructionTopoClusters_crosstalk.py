@@ -1,225 +1,168 @@
+#
+# IMPORTS
+#
 from Configurables import ApplicationMgr
 from Configurables import EventCounter
 from Configurables import AuditorSvc, ChronoAuditor
+# Input/output
+from Configurables import k4DataSvc, PodioInput
 from Configurables import PodioOutput
+# Geometry
+from Configurables import GeoSvc
+# Create cells
+from Configurables import CreateCaloCells
 from Configurables import CreateEmptyCaloCellsCollection
+# Cell positioning tools
 from Configurables import CreateCaloCellPositionsFCCee
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
-from Configurables import CreateCaloCells
+# Redo segmentation for ECAL
+from Configurables import RedoSegmentation
+# Change HCAL segmentation
+from Configurables import RewriteBitfield
+# Apply sampling fraction corrections
 from Configurables import CalibrateCaloHitsTool
 from Configurables import CalibrateInLayersTool
-from Configurables import SimG4Alg
-from Configurables import SimG4PrimariesFromEdmTool
-from Configurables import SimG4SaveCalHits
-from Configurables import SimG4ConstantMagneticFieldTool
-from Configurables import SimG4Svc
-from Configurables import SimG4FullSimActions
-from Configurables import SimG4SaveParticleHistory
-from Configurables import GeoSvc
-from Configurables import HepMCToEDMConverter
-from Configurables import GenAlg
-from Configurables import FCCDataSvc
+# Up/down stream correction
+from Configurables import CorrectCaloClusters
+# SW clustering
+from Configurables import CaloTowerToolFCCee
+from Configurables import CreateCaloClustersSlidingWindowFCCee
+# Topo clustering
 from Configurables import CaloTopoClusterInputTool
 from Configurables import TopoCaloNeighbours
 from Configurables import TopoCaloNoisyCells
 from Configurables import CaloTopoClusterFCCee
-from Configurables import RewriteBitfield
+# Decorate clusters with shower shape parameters
+from Configurables import AugmentClustersFCCee
+# Read crosstalk map
 from Configurables import ReadCaloCrosstalkMap
-from Gaudi.Configuration import INFO
-# , VERBOSE, DEBUG
-# from Gaudi.Configuration import *
-
-import os
-
+# Logger
+from Gaudi.Configuration import INFO, VERBOSE, DEBUG
+# units and physical constants
 from GaudiKernel.SystemOfUnits import GeV, tesla, mm
 from GaudiKernel.PhysicalConstants import pi, halfpi, twopi
+# python libraries
+import os
 from math import cos, sin, tan
 
+#
+# SETTINGS
+#
+
+# - general settings
+#
+inputfile = "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/ALLEGRO_sim.root"
+Nevts = 50  # -1 means all events
+dumpGDML = False
+
+# - what to save in output file
+#
 # for big productions, save significant space removing hits and cells
 # however, hits and cluster cells might be wanted for small productions for detailed event displays
 # also, cluster cells are needed for the MVA training
-saveHits = False
-saveCells = False
+# saveHits = False
+# saveCells = False
+saveHits = True
+saveCells = True
 saveClusterCells = True
 doCrosstalk = True # switch on/off the crosstalk
 
-# Input for simulations (momentum is expected in GeV!)
-# Parameters for the particle gun simulations, dummy if use_pythia is set
-# to True
-# theta from 80 to 100 degrees corresponds to -0.17 < eta < 0.17
-# reminder: cell granularity in theta = 0.5625 degrees
-# (in strips: 0.5625/4=0.14)
+# ECAL barrel parameters for digitisation
+samplingFraction=[0.37586625991994105] * 1 + [0.13459486704309379] * 1 + [0.142660085165352] * 1 + [0.14768106642302886] * 1 + [0.15205230356024715] * 1 + [0.15593671843591686] * 1 + [0.15969313426201745] * 1 + [0.16334257010426537] * 1 + [0.16546584993953908] * 1 + [0.16930439771304764] * 1 + [0.1725913708958098] * 1
+upstreamParameters = [[0.025582045561310333, -0.9524128168665387, -53.10089405478649, 1.283851527438571, -295.30650178662637, -284.8945817377308]]
+downstreamParameters = [[0.0018280333929494054, 0.004932212590963076, 0.8409676097173655, -1.2676690014715288, 0.005347798049886769, 4.161741293789687]]
+    
+ecalBarrelLayers = len(samplingFraction)
+resegmentECalBarrel = False
 
-Nevts = 5
+# - parameters for clustering
+#
+doSWClustering = True
+doTopoClustering = True
 
-# particle momentum and direction
-momentum = 50  # in GeV
-thetaMin = 50  # degrees
-thetaMax = 130  # degrees
-phiMin = 0
-phiMax = twopi
+# calculate cluster energy and barycenter per layer and save it as extra parameters
+addShapeParameters = True
+ecalBarrelThetaWeights = [-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]  # to be recalculated for V03, separately for topo and calo clusters...
 
-# particle type: 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
-pdgCode = 11
+#
+# ALGORITHMS AND SERVICES SETUP
+#
 
-# Set to true if history from Geant4 decays is needed (e.g. to get the
-# photons from pi0)
-saveG4Hist = False
-if (pdgCode == 111):
-    saveG4Hist = True
+# Input: load the output of the SIM step
+evtsvc = k4DataSvc('EventDataSvc')
+evtsvc.input = inputfile
+input_reader = PodioInput('InputReader')
+podioevent = k4DataSvc("EventDataSvc")
 
-magneticField = False
-
-
-podioevent = FCCDataSvc("EventDataSvc")
-
-# Particle gun setup
-
-genAlg = GenAlg()
-from Configurables import MomentumRangeParticleGun
-pgun = MomentumRangeParticleGun("ParticleGun")
-pgun.PdgCodes = [pdgCode]
-pgun.MomentumMin = momentum * GeV
-pgun.MomentumMax = momentum * GeV
-pgun.PhiMin = phiMin
-pgun.PhiMax = phiMax
-pgun.ThetaMin = thetaMin * pi / 180.
-pgun.ThetaMax = thetaMax * pi / 180.
-genAlg.SignalProvider = pgun
-
-genAlg.hepmc.Path = "hepmc"
-
-# hepMC -> EDM converter
-hepmc_converter = HepMCToEDMConverter()
-hepmc_converter.hepmc.Path = "hepmc"
-genParticlesOutputName = "genParticles"
-hepmc_converter.GenParticles.Path = genParticlesOutputName
-hepmc_converter.hepmcStatusList = []
-hepmc_converter.OutputLevel = INFO
-
-# Simulation setup
 # Detector geometry
-geoservice = GeoSvc("GeoSvc")
-# if K4GEO is empty, this should use relative path to working directory
-path_to_detector = os.environ.get("K4GEO", "")
-print(path_to_detector)
-detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v02/ALLEGRO_o1_v02.xml'
-]
 # prefix all xmls with path_to_detector
+# if K4GEO is empty, this should use relative path to working directory
+geoservice = GeoSvc("GeoSvc")
+path_to_detector = os.environ.get("K4GEO", "")
+detectors_to_use = [
+    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
+]
 geoservice.detectors = [
     os.path.join(path_to_detector, _det) for _det in detectors_to_use
 ]
 geoservice.OutputLevel = INFO
 
-# Geant4 service
-# Configures the Geant simulation: geometry, physics list and user actions
-actions = SimG4FullSimActions()
+# GDML dump of detector model
+if dumpGDML:
+    from Configurables import GeoToGdmlDumpSvc
+    gdmldumpservice = GeoToGdmlDumpSvc("GeoToGdmlDumpSvc")
 
-if saveG4Hist:
-    actions.enableHistory = True
-    actions.energyCut = 1.0 * GeV
-    saveHistTool = SimG4SaveParticleHistory("saveHistory")
+# Digitisation (merging hits into cells, EM scale calibration via sampling fractions)
 
-geantservice = SimG4Svc(
-    "SimG4Svc",
-    detector='SimG4DD4hepDetector',
-    physicslist="SimG4FtfpBert",
-    actions=actions
-)
-
-# Fixed seed to have reproducible results, change it for each job if you
-# split one production into several jobs
-# Mind that if you leave Gaudi handle random seed and some job start within
-# the same second (very likely) you will have duplicates
-geantservice.randomNumbersFromGaudi = False
-geantservice.seedValue = 4242
-
-# Range cut
-geantservice.g4PreInitCommands += ["/run/setCut 0.1 mm"]
-
-# Magnetic field
-if magneticField == 1:
-    field = SimG4ConstantMagneticFieldTool(
-        "SimG4ConstantMagneticFieldTool",
-        FieldComponentZ=-2 * tesla,
-        FieldOn=True,
-        IntegratorStepper="ClassicalRK4"
-    )
-else:
-    field = SimG4ConstantMagneticFieldTool(
-        "SimG4ConstantMagneticFieldTool",
-        FieldOn=False
-    )
-
-# Geant4 algorithm
-# Translates EDM to G4Event, passes the event to G4, writes out outputs
-# via tools and a tool that saves the calorimeter hits
-
-# Detector readouts
-# ECAL
+# - ECAL readouts
 ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"
+ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"
+ecalEndcapReadoutName = "ECalEndcapPhiEta"
 
-# Configure saving of calorimeter hits
-ecalBarrelHitsName = "ECalBarrelPositionedHits"
-saveECalBarrelTool = SimG4SaveCalHits(
-    "saveECalBarrelHits",
-    readoutName=ecalBarrelReadoutName,
-    OutputLevel=INFO
-)
-saveECalBarrelTool.CaloHits.Path = ecalBarrelHitsName
+hcalBarrelReadoutName = ""
+hcalBarrelReadoutName2 = ""
+hcalEndcapReadoutName = ""
 
-# next, create the G4 algorithm, giving the list of names of tools ("XX/YY")
-particle_converter = SimG4PrimariesFromEdmTool("EdmConverter")
-particle_converter.GenParticles.Path = genParticlesOutputName
-
-outputTools = [
-    saveECalBarrelTool
-]
-
-if saveG4Hist:
-    outputTools += [saveHistTool]
-
-geantsim = SimG4Alg("SimG4Alg",
-                    outputs=outputTools,
-                    eventProvider=particle_converter,
-                    OutputLevel=INFO)
-
-# Digitization (Merging hits into cells, EM scale calibration)
-# EM scale calibration (sampling fraction)
+# - EM scale calibration (sampling fraction)
+#   * ECAL barrel
 calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel",
-                                        samplingFraction=[0.3864252122990472] * 1 + [0.13597644835735828] * 1 + [0.14520427829645913] * 1 + [0.1510076084632846] * 1 + [0.1552347580991012] * 1 + [0.159694330729184] * 1 + [0.1632954482794191] * 1 + [0.16720711037339814] * 1 + [0.17047749048884808] * 1 + [0.17461698117974286] * 1 + [0.1798984163980135] * 1 + [0.17920355117405806] * 1,
+                                        samplingFraction=samplingFraction,
                                         readoutName=ecalBarrelReadoutName,
                                         layerFieldName="layer")
+#   * ECAL endcap
+calibEcalEndcap = CalibrateCaloHitsTool(
+        "CalibrateECalEndcap", invSamplingFraction="4.27")  # FIXME: to be updated for ddsim
+
+# Create cells in ECal barrel (needed if one wants to apply cell calibration,
+# which is not performed by ddsim)
 
 # read the crosstalk map
 readCrosstalkMap = ReadCaloCrosstalkMap("ReadCrosstalkMap",
-                                       fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v02/neighbours_map_barrel_thetamodulemerged.root",
+                                       fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/xtalk_neighbours_map_ecalB_thetamodulemerged.root",
                                        OutputLevel=INFO)
 
-# merge hits into cells according to the detector segmentation
+# - merge hits into cells according to initial segmentation
 ecalBarrelCellsName = "ECalBarrelCells"
 createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
                                         doCellCalibration=True,
                                         calibTool=calibEcalBarrel,
-					crosstalksTool=readCrosstalkMap,
-					addCrosstalk=doCrosstalk,
+                                        crosstalksTool=readCrosstalkMap,
+                                        addCrosstalk=doCrosstalk,
                                         addCellNoise=False,
                                         filterCellNoise=False,
                                         addPosition=True,
                                         OutputLevel=INFO,
-                                        hits=ecalBarrelHitsName,
+                                        hits=ecalBarrelReadoutName,
                                         cells=ecalBarrelCellsName)
 
-# Add to Ecal barrel cells the position information
-# (good for physics, all coordinates set properly)
-
+# - add to Ecal barrel cells the position information
+#   (good for physics, all coordinates set properly)
 cellPositionEcalBarrelTool = CellPositionsECalBarrelModuleThetaSegTool(
     "CellPositionsECalBarrel",
     readoutName=ecalBarrelReadoutName,
     OutputLevel=INFO
 )
-ecalBarrelPositionedCellsName = "ECalBarrelPositionedCells"
+ecalBarrelPositionedCellsName = ecalBarrelReadoutName + "Positioned"
 createEcalBarrelPositionedCells = CreateCaloCellPositionsFCCee(
     "CreateECalBarrelPositionedCells",
     OutputLevel=INFO
@@ -228,113 +171,243 @@ createEcalBarrelPositionedCells.positionsTool = cellPositionEcalBarrelTool
 createEcalBarrelPositionedCells.hits.Path = ecalBarrelCellsName
 createEcalBarrelPositionedCells.positionedHits.Path = ecalBarrelPositionedCellsName
 
+# Create cells in ECal endcap (needed if one wants to apply cell calibration,
+# which is not performed by ddsim)
+createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells",
+                                        doCellCalibration=True,
+                                        calibTool=calibEcalEndcap,
+                                        addCellNoise=False,
+                                        filterCellNoise=False,
+                                        OutputLevel=INFO)
+createEcalEndcapCells.hits.Path = ecalEndcapReadoutName
+createEcalEndcapCells.cells.Path = "ECalEndcapCells"
+
+hcalBarrelCellsName = "emptyCaloCells"
+hcalBarrelPositionedCellsName = "emptyCaloCells"
+hcalBarrelCellsName2 = "emptyCaloCells"
+hcalBarrelPositionedCellsName2 = "emptyCaloCells"
+cellPositionHcalBarrelTool = None
+cellPositionHcalBarrelTool2 = None
+
 # Empty cells for parts of calorimeter not implemented yet
 createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
 createemptycells.cells.Path = "emptyCaloCells"
 
-# TOPO CLUSTERS PRODUCTION
-createTopoInput = CaloTopoClusterInputTool("CreateTopoInput",
-                                           ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                           ecalEndcapReadoutName="",
-                                           ecalFwdReadoutName="",
-                                           hcalBarrelReadoutName="",
-                                           hcalExtBarrelReadoutName="",
-                                           hcalEndcapReadoutName="",
-                                           hcalFwdReadoutName="",
+# Produce sliding window clusters
+if doSWClustering:
+    towers = CaloTowerToolFCCee("towers",
+                                deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
+                                ecalBarrelReadoutName=ecalBarrelReadoutName,
+                                ecalEndcapReadoutName=ecalEndcapReadoutName,
+                                ecalFwdReadoutName="",
+                                hcalBarrelReadoutName=hcalBarrelReadoutName2,
+                                hcalExtBarrelReadoutName="",
+                                hcalEndcapReadoutName="",
+                                hcalFwdReadoutName="",
+                                OutputLevel=INFO)
+    towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
+    towers.ecalEndcapCells.Path = "ECalEndcapCells"
+    towers.ecalFwdCells.Path = "emptyCaloCells"
+    towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
+    towers.hcalExtBarrelCells.Path = "emptyCaloCells"
+    towers.hcalEndcapCells.Path = "emptyCaloCells"
+    towers.hcalFwdCells.Path = "emptyCaloCells"
+
+    # Cluster variables
+    windT = 9
+    windP = 17
+    posT = 5
+    posP = 11
+    dupT = 7
+    dupP = 13
+    finT = 9
+    finP = 17
+    # Minimal energy to create a cluster in GeV (FCC-ee detectors have to reconstruct low energy particles)
+    threshold = 0.040
+
+    createClusters = CreateCaloClustersSlidingWindowFCCee("CreateClusters",
+                                                          towerTool=towers,
+                                                          nThetaWindow=windT, nPhiWindow=windP,
+                                                          nThetaPosition=posT, nPhiPosition=posP,
+                                                          nThetaDuplicates=dupT, nPhiDuplicates=dupP,
+                                                          nThetaFinal=finT, nPhiFinal=finP,
+                                                          energyThreshold=threshold,
+                                                          energySharingCorrection=False,
+                                                          attachCells=True,
+                                                          OutputLevel=INFO
+                                                          )
+    createClusters.clusters.Path = "CaloClusters"
+    createClusters.clusterCells.Path = "CaloClusterCells"
+
+    if addShapeParameters:
+        augmentCaloClusters = AugmentClustersFCCee("augmentCaloClusters",
+                                                   inClusters=createClusters.clusters.Path,
+                                                   outClusters="Augmented" + createClusters.clusters.Path,
+                                                   systemIDs=[4],
+                                                   systemNames=["EMB"],
+                                                   numLayers=[ecalBarrelLayers],
+                                                   readoutNames=[ecalBarrelReadoutName],
+                                                   layerFieldNames=["layer"],
+                                                   thetaRecalcWeights=[ecalBarrelThetaWeights],
+                                                   OutputLevel=INFO
+                                                   )
+ 
+if doTopoClustering:
+    # Produce topoclusters (ECAL only or ECAL+HCAL)
+    createTopoInput = CaloTopoClusterInputTool("CreateTopoInput",
+                                               ecalBarrelReadoutName=ecalBarrelReadoutName,
+                                               ecalEndcapReadoutName="",
+                                               ecalFwdReadoutName="",
+                                               hcalBarrelReadoutName=hcalBarrelReadoutName2,
+                                               hcalExtBarrelReadoutName="",
+                                               hcalEndcapReadoutName="",
+                                               hcalFwdReadoutName="",
+                                               OutputLevel=INFO)
+
+    createTopoInput.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
+    createTopoInput.ecalEndcapCells.Path = "emptyCaloCells"
+    createTopoInput.ecalFwdCells.Path = "emptyCaloCells"
+    createTopoInput.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
+    createTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
+    createTopoInput.hcalEndcapCells.Path = "emptyCaloCells"
+    createTopoInput.hcalFwdCells.Path = "emptyCaloCells"
+    cellPositionHcalBarrelNoSegTool = None
+    cellPositionHcalExtBarrelTool = None
+
+    neighboursMap = "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalB_thetamodulemerged.root"
+    noiseMap = "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged.root"
+
+    readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
+                                           fileName=neighboursMap,
                                            OutputLevel=INFO)
 
-createTopoInput.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-createTopoInput.ecalEndcapCells.Path = "emptyCaloCells"
-createTopoInput.ecalFwdCells.Path = "emptyCaloCells"
-createTopoInput.hcalBarrelCells.Path = "emptyCaloCells"
-createTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
-createTopoInput.hcalEndcapCells.Path = "emptyCaloCells"
-createTopoInput.hcalFwdCells.Path = "emptyCaloCells"
-cellPositionHcalBarrelNoSegTool = None
-cellPositionHcalExtBarrelTool = None
+    # Noise levels per cell
+    readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
+                                           fileName=noiseMap,
+                                           OutputLevel=INFO)
 
-neighboursMap = "/LAr_scripts/data/neighbours_map_barrel_thetamodulemerged.root"
-noiseMap = "/LAr_scripts/data/cellNoise_map_electronicsNoiseLevel_thetamodulemerged.root"
+    createTopoClusters = CaloTopoClusterFCCee("CreateTopoClusters",
+                                              TopoClusterInput=createTopoInput,
+                                              # expects neighbours map from cellid->vec < neighbourIds >
+                                              neigboursTool=readNeighboursMap,
+                                              # tool to get noise level per cellid
+                                              noiseTool=readNoisyCellsMap,
+                                              # cell positions tools for all sub - systems
+                                              positionsECalBarrelTool=cellPositionEcalBarrelTool,
+                                              positionsHCalBarrelTool=cellPositionHcalBarrelTool2,
+                                              # positionsHCalBarrelNoSegTool=cellPositionHcalBarrelNoSegTool,
+                                              # positionsHCalExtBarrelTool=cellPositionHcalExtBarrelTool,
+                                              # positionsHCalExtBarrelTool = HCalExtBcells,
+                                              # positionsEMECTool = EMECcells,
+                                              # positionsHECTool = HECcells,
+                                              # positionsEMFwdTool = ECalFwdcells,
+                                              # positionsHFwdTool = HCalFwdcells,
+                                              noSegmentationHCal=False,
+                                              seedSigma=4,
+                                              neighbourSigma=2,
+                                              lastNeighbourSigma=0,
+                                              OutputLevel=INFO)
+    createTopoClusters.clusters.Path = "CaloTopoClusters"
+    createTopoClusters.clusterCells.Path = "CaloTopoClusterCells"
 
-readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
-                                       fileName=os.environ['FCCBASEDIR'] + neighboursMap,
-                                       OutputLevel=INFO)
 
-# Noise levels per cell
-readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
-                                       fileName=os.environ['FCCBASEDIR'] + noiseMap,
-                                       OutputLevel=INFO)
-
-createTopoClusters = CaloTopoClusterFCCee("CreateTopoClusters",
-                                          TopoClusterInput=createTopoInput,
-                                          # expects neighbours map from cellid->vec < neighbourIds >
-                                          neigboursTool=readNeighboursMap,
-                                          # tool to get noise level per cellid
-                                          noiseTool=readNoisyCellsMap,
-                                          # cell positions tools for all sub - systems
-                                          positionsECalBarrelTool=cellPositionEcalBarrelTool,
-                                          positionsHCalBarrelTool=None,
-                                          # positionsHCalBarrelNoSegTool=cellPositionHcalBarrelNoSegTool,
-                                          # positionsHCalExtBarrelTool=cellPositionHcalExtBarrelTool,
-                                          # positionsHCalExtBarrelTool = HCalExtBcells,
-                                          # positionsEMECTool = EMECcells,
-                                          # positionsHECTool = HECcells,
-                                          # positionsEMFwdTool = ECalFwdcells,
-                                          # positionsHFwdTool = HCalFwdcells,
-                                          noSegmentationHCal=False,
-                                          seedSigma=4,
-                                          neighbourSigma=2,
-                                          lastNeighbourSigma=0,
-                                          OutputLevel=INFO)
-createTopoClusters.clusters.Path = "CaloTopoClusters"
-createTopoClusters.clusterCells.Path = "CaloTopoClusterCells"
-
+    # Correction below is for EM-only clusters
+    # Need something different for EM+HCAL
+    if addShapeParameters:
+        augmentCaloTopoClusters = AugmentClustersFCCee("augmentCaloTopoClusters",
+                                                       inClusters=createTopoClusters.clusters.Path,
+                                                       outClusters="Augmented" + createTopoClusters.clusters.Path,
+                                                       systemIDs=[4],
+                                                       systemNames=["EMB"],
+                                                       numLayers=[ecalBarrelLayers],
+                                                       readoutNames=[ecalBarrelReadoutName],
+                                                       layerFieldNames=["layer"],
+                                                       thetaRecalcWeights=[ecalBarrelThetaWeights],
+                                                       OutputLevel=INFO)
 # Output
 out = PodioOutput("out",
                   OutputLevel=INFO)
+out.filename = "ALLEGRO_sim_digi_reco.root"
 
-out.outputCommands = ["keep *"]
-#out.outputCommands = ["keep *", "drop HCal*", "drop emptyCaloCells"]
+# drop the unpositioned ECal barrel cells
+out.outputCommands = ["keep *", "drop HCal*", "drop emptyCaloCells", "drop ECalBarrelCells*"]
+out.outputCommands.append("drop %s" % ecalBarrelReadoutName)
+out.outputCommands.append("drop %s" % ecalBarrelReadoutName2)
+out.outputCommands.append("drop ECalBarrelCellsMerged")
 
-if not saveCells:
-    out.outputCommands.append("drop ECal*Cells*")
-if not saveClusterCells:
-    out.outputCommands.append("drop *ClusterCells*")
+# drop lumi, vertex, DCH, Muons (unless want to keep for event display)
+out.outputCommands.append("drop Lumi*")
+# out.outputCommands.append("drop Vertex*")
+# out.outputCommands.append("drop DriftChamber_simHits*")
+out.outputCommands.append("drop MuonTagger*")
+
+# drop hits/positioned cells/cluster cells if desired
 if not saveHits:
-    out.outputCommands.append("drop ECal*Hits*")
+    out.outputCommands.append("drop %s_contributions" % ecalBarrelReadoutName)
+    out.outputCommands.append("drop %s_contributions" % ecalBarrelReadoutName2)
+if not saveCells:
+    out.outputCommands.append("drop %s" % ecalBarrelPositionedCellsName)
+    out.outputCommands.append("drop %s" % ecalBarrelPositionedCellsName2)
 
-out.filename = "./output_test_EcalBarrel_crosstalk.root"
+if not saveClusterCells:
+    out.outputCommands.append("drop Calo*ClusterCells*")
 
 # CPU information
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-genAlg.AuditExecute = True
-hepmc_converter.AuditExecute = True
-geantsim.AuditExecute = True
-createEcalBarrelCells.AuditExecute = True
-createEcalBarrelPositionedCells.AuditExecute = True
-createTopoClusters.AuditExecute = True
 out.AuditExecute = True
 
+# Event counter
 event_counter = EventCounter('event_counter')
 event_counter.Frequency = 10
 
-ExtSvc = [geoservice, podioevent, geantservice, audsvc]
+# Configure list of external services
+ExtSvc = [geoservice, podioevent, audsvc]
+if dumpGDML:
+    ExtSvc += [gdmldumpservice]
 
+# Setup alg sequence
 TopAlg = [
     event_counter,
-    genAlg,
-    hepmc_converter,
-    geantsim,
+    input_reader,
     createEcalBarrelCells,
     createEcalBarrelPositionedCells,
+    createEcalEndcapCells
 ]
+createEcalBarrelCells.AuditExecute = True
+createEcalBarrelPositionedCells.AuditExecute = True
+createEcalEndcapCells.AuditExecute = True
 
-TopAlg += [
-    createemptycells,
-    createTopoClusters
-]
+if resegmentECalBarrel:
+    TopAlg += [
+        resegmentEcalBarrelTool,
+        createEcalBarrelCells2,
+        createEcalBarrelPositionedCells2,
+    ]
+    resegmentEcalBarrelTool.AuditExecute = True
+    createEcalBarrelCells2.AuditExecute = True
+    createEcalBarrelPositionedCells2.AuditExecute = True
+
+if doSWClustering or doTopoClustering:
+    TopAlg += [createemptycells]
+    createemptycells.AuditExecute = True
+    
+    if doSWClustering:
+        TopAlg += [createClusters]
+        createClusters.AuditExecute = True
+
+        if addShapeParameters:
+            TopAlg += [augmentCaloClusters]
+            augmentCaloClusters.AuditExecute = True
+
+    if doTopoClustering:
+        TopAlg += [createTopoClusters]
+        createTopoClusters.AuditExecute = True
+
+        if addShapeParameters:
+            TopAlg += [augmentCaloTopoClusters]
+            augmentCaloTopoClusters.AuditExecute = True
 
 TopAlg += [
     out
@@ -347,3 +420,4 @@ ApplicationMgr(
     ExtSvc=ExtSvc,
     StopOnSignal=True,
 )
+
