@@ -21,6 +21,7 @@ GaudiAlgorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
 
+  declareProperty("crosstalksTool", m_crosstalksTool, "Handle for the cell crosstalk tool");
   declareProperty("calibTool", m_calibTool, "Handle for tool to calibrate Geant4 energy to EM scale tool");
   declareProperty("noiseTool", m_noiseTool, "Handle for the calorimeter cells noise tool");
   declareProperty("geometryTool", m_geoTool, "Handle for the geometry tool");
@@ -37,6 +38,11 @@ StatusCode CreateCaloCells::initialize() {
   info() << "add position information to the cell : " << m_addPosition << endmsg;
 
   // Initialization of tools
+  // Cell crosstalk tool
+  if (!m_crosstalksTool.retrieve()) {
+    error() << "Unable to retrieve the cell crosstalk tool!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
   // Calibrate Geant4 energy to EM scale tool
   if (m_doCellCalibration) {
     if (!m_calibTool.retrieve()) {
@@ -89,12 +95,40 @@ StatusCode CreateCaloCells::execute() {
     m_cellsMap.clear();
   }
 
+  std::unordered_map<uint64_t, double> HitCellsMap;
+
   // 1. Merge energy deposits into cells
   // If running with noise map already was prepared. Otherwise it is being
   // created below
   for (const auto& hit : *hits) {
     verbose() << "CellID : " << hit.getCellID() << endmsg;
+    if(m_addCrosstalk) { // Crosstalk only applies to energy deposits caused by EM shower hits. Therefore, cell noise needs to be excluded.
+      HitCellsMap[hit.getCellID()] += hit.getEnergy();
+    }
     m_cellsMap[hit.getCellID()] += hit.getEnergy();
+  }
+  if(m_addCrosstalk) {
+    m_CrosstalkCellsMap.clear();
+    // loop over cells that get actual EM shower hits
+    for (const auto& this_cell : HitCellsMap) {
+      uint64_t this_cellId=this_cell.first;
+      auto vec_neighbours = m_crosstalksTool->getNeighbours(this_cellId); // a vector of neighbour IDs
+      auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
+      // loop over crosstalk neighbrous of the cell under study
+      for (unsigned int i_cell=0; i_cell<vec_neighbours.size(); i_cell++) {
+	// signal transfer = energy deposit brought by EM shower hits * crosstalk coefficient
+        double signal_transfer = this_cell.second * vec_crosstalks[i_cell];
+	// for the cell under study, record the signal transfer that will be subtracted from its final cell energy
+        m_CrosstalkCellsMap[this_cellId] -= signal_transfer;
+	// for the crosstalk neighbour, record the signal transfer that will be added to its final cell energy
+        m_CrosstalkCellsMap[vec_neighbours[i_cell]] += signal_transfer;
+      }
+    }
+
+    for (const auto& this_cell : m_CrosstalkCellsMap) {
+      m_cellsMap[this_cell.first] += this_cell.second;
+    }
+    
   }
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
