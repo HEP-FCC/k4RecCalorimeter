@@ -11,6 +11,8 @@
 
 #include "edm4hep/ReconstructedParticleCollection.h"
 #include "edm4hep/MCParticleCollection.h"
+#include "edm4hep/MCRecoParticleAssociation.h"
+#include "edm4hep/MCRecoParticleAssociationCollection.h"
 
 #include "ClusterJet.h"
 
@@ -24,6 +26,7 @@
  *  JetRadius: The radius of the jets being clustered
  *  MinPt: The pT threshold below which jets are ignored
  *  isExclusiveClustering: 1 if jets should use an exclusive clustering, 0 otherwise
+ *  outputAssociation: Name of the output association collection to link jets to their constituents
  *
 
  *  @author Jennifer Roloff
@@ -40,8 +43,11 @@ public:
 
 private:
 
+ 
+  mutable DataHandle<edm4hep::MCRecoParticleAssociationCollection> m_outputAssocCollection{"MCRecoParticleAssociation",
+                                                                                           Gaudi::DataHandle::Writer, this};
 
-  double m_minPt = 10;
+  double m_minPt = 1;
   double m_jetRadius = 0.4;
   std::string m_jetAlg = "antikt";
   int m_isExclusive = 0;
