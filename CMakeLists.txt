@@ -29,9 +29,6 @@ find_package(k4FWCore) # implicit: Gaudi
 find_package(DD4hep)
 find_package(k4geo)
 find_package(ONNXRuntime)
-
-# need to use our own FindFastJet.cmake
-#set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(FastJet)
 # New versions of ONNRuntime package provide onnxruntime-Config.cmake
 # and use the name onnxruntime
@@ -67,9 +64,6 @@ add_subdirectory(EDM4hep)
 add_subdirectory(RecCalorimeter)
 add_subdirectory(RecFCChhCalorimeter)
 add_subdirectory(RecFCCeeCalorimeter)
-
-
-
 
 
 install(EXPORT ${PROJECT_NAME}Targets
