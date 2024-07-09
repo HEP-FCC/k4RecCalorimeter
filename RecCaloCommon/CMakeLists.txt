@@ -4,8 +4,8 @@
 
 file(GLOB _sources src/*.cpp )
 
-include_directories(${FASTJET_INCLUDE_DIRS})
-link_directories(${FASTJET_LIBRARIES})
+# include_directories(${FASTJET_INCLUDE_DIRS})
+# link_directories(${FASTJET_LIBRARIES})
 
 gaudi_add_library(RecCaloCommon
                   SOURCES ${_sources}
@@ -13,6 +13,9 @@ gaudi_add_library(RecCaloCommon
                        EDM4HEP::edm4hep
                        ${FASTJET_LIBRARIES}
 )
+
+target_include_directories(RecCaloCommon PUBLIC ${FASTJET_INCLUDE_DIRS})
+target_link_directories(RecCaloCommon PUBLIC ${FASTJET_LIBRARIES})
 
 install(TARGETS RecCaloCommon
         EXPORT k4RecCalorimeterTargets
