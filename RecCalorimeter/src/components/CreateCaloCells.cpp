@@ -120,11 +120,11 @@ StatusCode CreateCaloCells::execute() {
       auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
       // loop over crosstalk neighbours of the cell under study
       for (unsigned int i_cell=0; i_cell<vec_neighbours.size(); i_cell++) {
-	      // signal transfer = energy deposit brought by EM shower hits * crosstalk coefficient
+        // signal transfer = energy deposit brought by EM shower hits * crosstalk coefficient
         double signal_transfer = this_cell.second * vec_crosstalks[i_cell];
-	      // for the cell under study, record the signal transfer that will be subtracted from its final cell energy
+        // for the cell under study, record the signal transfer that will be subtracted from its final cell energy
         m_CrosstalkCellsMap[this_cellId] -= signal_transfer;
-	      // for the crosstalk neighbour, record the signal transfer that will be added to its final cell energy
+        // for the crosstalk neighbour, record the signal transfer that will be added to its final cell energy
         m_CrosstalkCellsMap[vec_neighbours[i_cell]] += signal_transfer;
       }
     }
