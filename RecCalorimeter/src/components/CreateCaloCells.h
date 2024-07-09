@@ -70,7 +70,7 @@ private:
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
   /// Add crosstalk to cells?
-  Gaudi::Property<bool> m_addCrosstalk{this, "addCrosstalk", true, "Add crosstalk effect?"};
+  Gaudi::Property<bool> m_addCrosstalk{this, "addCrosstalk", false, "Add crosstalk effect?"};
   /// Calibrate to EM scale?
   Gaudi::Property<bool> m_doCellCalibration{this, "doCellCalibration", true, "Calibrate to EM scale?"};
   /// Add noise to cells?
