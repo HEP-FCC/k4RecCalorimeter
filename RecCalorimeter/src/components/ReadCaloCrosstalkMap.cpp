@@ -13,6 +13,14 @@ ReadCaloCrosstalkMap::ReadCaloCrosstalkMap(const std::string& type, const std::s
 }
 
 StatusCode ReadCaloCrosstalkMap::initialize() {
+  // prevent to initialize the tool if not intended (input file path empty)
+  // otherwise things will crash if m_fileName is not available
+  // not a perfect solution but tools seems to not be meant to be optional
+  if (m_fileName == "") {
+    debug() << "Empty 'fileName' provided, it means cross-talk map is not needed, exitting ReadCaloCrosstalkMap initilization" << endmsg;
+    return StatusCode::SUCCESS;
+  }
+
   StatusCode sc = GaudiTool::initialize();
   info() <<"Loading crosstalk map..." << endmsg;
   if (sc.isFailure()) return sc;
