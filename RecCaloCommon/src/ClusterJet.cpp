@@ -1,4 +1,4 @@
-#include "ClusterJet.h"
+#include "RecCaloCommon/ClusterJet.h"
 
 // std
 #include <vector>

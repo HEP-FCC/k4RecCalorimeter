@@ -18,6 +18,7 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       ROOT::Hist
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
+                      RecCaloCommon
                       ${FASTJET_LIBRARIES}
                       )
 

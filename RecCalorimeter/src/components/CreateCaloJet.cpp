@@ -12,7 +12,8 @@
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/ReconstructedParticleCollection.h"
 
-#include "ClusterJet.h"
+// k4RecCalorimeter
+#include "RecCaloCommon/ClusterJet.h"
 
 /** @class CreateCaloJet
  * k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateCaloJet.h

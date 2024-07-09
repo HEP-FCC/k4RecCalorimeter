@@ -15,7 +15,8 @@
 #include "edm4hep/MCRecoParticleAssociationCollection.h"
 #include <tuple>
 
-#include "ClusterJet.h"
+// k4RecCalorimeter
+#include "RecCaloCommon/ClusterJet.h"
 
 
 /** @class CreateTruthJet k4RecCalorimeter/RecCalorimeter/src/components/CreateTruthJet.h
