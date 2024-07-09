@@ -31,7 +31,7 @@ class IGeoSvc;
  *  Tube geometry with PhiEta segmentation expected.
  *
  *  Flow of the program:
- *  1/ Merge Geant4 energy deposits with same cellID
+ *  1/ Merge Geant4 energy deposits with same cellID and emulate cross-talk
  *  2/ Calibrate to electromagnetic scale (if calibration switched on)
  *  3/ Add random noise to each cell (if noise switched on)
  *  4/ Filter cells and remove those with energy below threshold (if noise +
