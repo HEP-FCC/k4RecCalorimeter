@@ -6,14 +6,19 @@
 
 DECLARE_COMPONENT(CreateTruthJet)
 
-CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
-                    KeyValue("InputCollection", "MCParticles"),
-                    KeyValue("OutputCollection", "TruthJets")) {
+CreateTruthJet::CreateTruthJet(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc,
+                    {
+                      KeyValue("InputCollection", "MCParticles")
+                    }
+                    ,
+                    {
+                      KeyValue("OutputCollectionJets", "TruthJets") ,
+                      KeyValue("OutputCollectionAssociation", "TruthJetParticleAssociations")
+                    }) {
   declareProperty("JetAlg", m_jetAlg, "Name of jet clustering algorithm");
   declareProperty("JetRadius", m_jetRadius, "Jet clustering radius");
   declareProperty("MinPt", m_minPt, "Minimum pT for saved jets");
   declareProperty("isExclusiveClustering", m_isExclusive, "1 if exclusive, 0 if inclusive");
-  declareProperty("outputAssociation", m_outputAssocCollection, "TruthJetParticleAssociation");
 }
 
 
@@ -24,9 +29,10 @@ StatusCode CreateTruthJet::initialize() {
 
 }
 
-edm4hep::ReconstructedParticleCollection  CreateTruthJet::operator()(const edm4hep::MCParticleCollection& input) const{
+std::tuple<edm4hep::ReconstructedParticleCollection, edm4hep::MCRecoParticleAssociationCollection>  CreateTruthJet::operator()(const edm4hep::MCParticleCollection& input) const {
+
   std::vector<fastjet::PseudoJet> clustersPJ;
-  auto& assoc    = *(m_outputAssocCollection.createAndPut());
+  
   int i=0;
   for(auto particle: input){
     fastjet::PseudoJet clusterPJ(particle.getMomentum().x, particle.getMomentum().y, particle.getMomentum().z, particle.getEnergy());
@@ -39,6 +45,7 @@ edm4hep::ReconstructedParticleCollection  CreateTruthJet::operator()(const edm4h
   
 
   edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
+  edm4hep::MCRecoParticleAssociationCollection assoc    = edm4hep::MCRecoParticleAssociationCollection();
 
   for(auto cjet : inclusiveJets){
     edm4hep::MutableReconstructedParticle jet;
@@ -60,7 +67,7 @@ edm4hep::ReconstructedParticleCollection  CreateTruthJet::operator()(const edm4h
     edmJets.push_back(jet);
   }
 
-  return edmJets;
+  return std::make_tuple(std::move(edmJets), std::move(assoc));
 }
 
 
