@@ -279,13 +279,14 @@ ApplicationMgr().TopAlg += [out]
 
 from Configurables import CreateCaloJet
 
-createJets = CreateCaloJet("createJets",
-                                              InputCollection=createClusters.clusters.Path,
-                                              OutputCollection = "Jets")
-#                                              JetAlg = "antikt",
-#                                              JetRadius = 0.4,
-#                                              OutputLevel=INFO
-#                                              )
+createJets = CreateCaloJet(
+    "createJets",
+    InputClusterCollection=[createClusters.clusters.Path],
+    OutputJetCollection=["Jets"],
+    # JetAlg="antikt",
+    # JetRadius=0.4,
+    # OutputLevel=INFO
+)
 
 
 ApplicationMgr().TopAlg += [createJets]
