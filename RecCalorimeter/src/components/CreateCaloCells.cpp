@@ -98,23 +98,24 @@ StatusCode CreateCaloCells::execute() {
     m_cellsMap.clear();
   }
 
-  std::unordered_map<uint64_t, double> HitCellsMapForXtalk;
 
-  // 1. Merge energy deposits into cells and emulate cross-talk
+  // 1. Merge energy deposits into cells
   // If running with noise map already was prepared. Otherwise it is being
   // created below
   for (const auto& hit : *hits) {
     verbose() << "CellID : " << hit.getCellID() << endmsg;
-    if(m_addCrosstalk) { // Crosstalk only applies to energy deposits caused by EM shower hits. Therefore, cell noise needs to be excluded.
-      HitCellsMapForXtalk[hit.getCellID()] += hit.getEnergy();
-    }
     m_cellsMap[hit.getCellID()] += hit.getEnergy();
   }
+  debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
+
+  // 2. Emulate cross-talk (if asked)
   if(m_addCrosstalk) {
-    m_CrosstalkCellsMap.clear();
-    // loop over cells that get actual EM shower hits
-    for (const auto& this_cell : HitCellsMapForXtalk) {
-      uint64_t this_cellId=this_cell.first;
+    // Derive the cross-talk contributions without affecting yet the nominal energy
+    // (one has to emulate crosstalk based on cells free from any cross-talk contributions)
+    m_CrosstalkCellsMap.clear(); // this is a temporary map to hold energy exchange due to cross-talk, without affecting yet the nominal energy
+    // loop over cells with nominal energies
+    for (const auto& this_cell : m_cellsMap) {
+      uint64_t this_cellId = this_cell.first;
       auto vec_neighbours = m_crosstalksTool->getNeighbours(this_cellId); // a vector of neighbour IDs
       auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
       // loop over crosstalk neighbours of the cell under study
@@ -128,29 +129,29 @@ StatusCode CreateCaloCells::execute() {
       }
     }
 
+    // apply the cross-talk contributions on the nominal cell-energy map
     for (const auto& this_cell : m_CrosstalkCellsMap) {
       m_cellsMap[this_cell.first] += this_cell.second;
     }
     
   }
-  debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
-  // 2. Calibrate simulation energy to EM scale
+  // 3. Calibrate simulation energy to EM scale
   if (m_doCellCalibration) {
     m_calibTool->calibrate(m_cellsMap);
   }
 
-  // 3. Add noise to all cells
+  // 4. Add noise to all cells
   if (m_addCellNoise) {
     m_noiseTool->addRandomCellNoise(m_cellsMap);
   }
 
-  // 4. Filter cells
+  // 5. Filter cells
   if (m_filterCellNoise) {
     m_noiseTool->filterCellNoise(m_cellsMap);
   }
 
-  // 5. Copy information to CaloHitCollection
+  // 6. Copy information to CaloHitCollection
   edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
   for (const auto& cell : m_cellsMap) {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {

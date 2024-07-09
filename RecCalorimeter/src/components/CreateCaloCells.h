@@ -31,15 +31,18 @@ class IGeoSvc;
  *  Tube geometry with PhiEta segmentation expected.
  *
  *  Flow of the program:
- *  1/ Merge Geant4 energy deposits with same cellID and emulate cross-talk
- *  2/ Calibrate to electromagnetic scale (if calibration switched on)
- *  3/ Add random noise to each cell (if noise switched on)
- *  4/ Filter cells and remove those with energy below threshold (if noise +
+ *  1/ Merge Geant4 energy deposits with same cellID
+ *  2/ Emulate cross-talk (if switched on)
+ *  3/ Calibrate to electromagnetic scale (if calibration switched on)
+ *  4/ Add random noise to each cell (if noise switched on)
+ *  5/ Filter cells and remove those with energy below threshold (if noise +
  * filtering switched on)
  *
  *  Tools called:
  *    - CalibrateCaloHitsTool
  *    - NoiseCaloCellsTool
+ *    - CaloReadCrosstalkMap
+ *    - CalorimeterTool (for geometry)
  *
  *  @author Jana Faltova
  *  @author Anna Zaborowska
@@ -119,8 +122,9 @@ private:
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
-  /// Maps of cell IDs (corresponding to DD4hep IDs) on (1) final energies to be used for clustering, (2) transfer of signals due to crosstalk
+  /// Maps of cell IDs (corresponding to DD4hep IDs) on final energies to be used for clustering
   std::unordered_map<uint64_t, double> m_cellsMap;
+  /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
   std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
 };
 
