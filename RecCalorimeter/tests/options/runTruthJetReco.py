@@ -93,14 +93,15 @@ from Configurables import FilterTruthParticlesForGenJets
 filterMCParticles = FilterTruthParticlesForGenJets(
     "filterMCParticles",
     InputMCParticleCollection=["GenParticles"],
-    OutputMCParticleCollection=["FilteredGenParticles"])
+    OutputMCParticleCollection=["FilteredGenParticles"]
+)
 ApplicationMgr().TopAlg += [filterMCParticles]
 
 createJets = CreateTruthJet(
     "createTruthJets",
     InputMCParticleCollection=["FilteredGenParticles"],
     OutputJetCollection=["TruthJets"],
-    OutputAssociationsCollection=["MCParticleJetAssociations"]
+    OutputAssociationsCollection=["TruthJetsAssociations"],
     MinPt=5
 )
 ApplicationMgr().TopAlg += [createJets]
