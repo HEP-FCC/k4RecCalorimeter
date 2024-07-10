@@ -25,7 +25,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(ROOT COMPONENTS RIO Tree)
 find_package(Gaudi)
 find_package(k4FWCore) # implicit: Gaudi
-find_package(EDM4HEP 0.10.1) # implicit: Podio
+find_package(EDM4HEP) # implicit: Podio
 find_package(DD4hep)
 find_package(k4geo)
 find_package(ONNXRuntime)
@@ -73,4 +73,3 @@ install(EXPORT ${PROJECT_NAME}Targets
   )
 
 gaudi_install(CMAKE cmake/${PROJECT_NAME}Config.cmake)
-

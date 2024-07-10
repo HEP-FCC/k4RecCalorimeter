@@ -57,7 +57,7 @@ applyUpDownstreamBenchmarkCorrections = True
 # (in strips: 0.5625/4=0.14)
 
 # Nevts = 20000
-Nevts = 10
+Nevts = 2
 # Nevts = 1
 # Nevts=1000
 
