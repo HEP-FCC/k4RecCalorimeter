@@ -24,3 +24,10 @@ jobs:
       with:
         build_type: ${{ matrix.build_type }}
         image: ${{ matrix.image }}
+    - run: |
+       echo $PATH
+       echo
+       echo $LD_LIBRARY_PATH
+       echo $ROOT_INCLUDE_PATH
+       echo $CPATH
+       echo $PYTHONPATH
