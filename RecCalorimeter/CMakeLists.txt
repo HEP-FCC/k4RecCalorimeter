@@ -2,11 +2,7 @@
 # Package: RecCalorimeter
 ################################################################################
 
-
 file(GLOB _module_sources src/components/*.cpp )
-
-# include_directories(${FASTJET_INCLUDE_DIRS})
-# link_directories(${FASTJET_LIBRARIES})
 
 gaudi_add_module(k4RecCalorimeterPlugins
                  SOURCES ${_module_sources}

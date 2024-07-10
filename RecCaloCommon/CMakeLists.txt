@@ -11,11 +11,6 @@ gaudi_add_library(RecCaloCommon
                        ${FASTJET_LIBRARIES}
 )
 
-message(STATUS "FastJet include directories:\n${FASTJET_INCLUDE_DIRS}")
-message(STATUS "FastJet libraries:\n${FASTJET_LIBRARIES}")
-message(STATUS "FastJet library:\n${FASTJET_LIBRARY}")
-message(STATUS "FastJet library directories:\n${FASTJET_LIBRARY_DIRS}")
-
 target_include_directories(RecCaloCommon PUBLIC ${FASTJET_INCLUDE_DIRS})
 target_link_directories(RecCaloCommon PUBLIC ${FASTJET_LIBRARY_DIRS})
 
