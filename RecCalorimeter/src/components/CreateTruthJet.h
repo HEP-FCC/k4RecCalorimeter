@@ -13,6 +13,7 @@
 #include "edm4hep/MCParticleCollection.h"
 #include "edm4hep/MCRecoParticleAssociation.h"
 #include "edm4hep/MCRecoParticleAssociationCollection.h"
+#include <tuple>
 
 #include "ClusterJet.h"
 
@@ -20,7 +21,8 @@
 /** @class CreateTruthJet k4RecCalorimeter/RecCalorimeter/src/components/CreateTruthJet.h
  *
  *  Tool for reconstructing jets from truth particles.
- *  It takes as input an MCParticleCollection, and it outputs a ReconstructedParticleCollection with the jets.
+ *  It takes as input an MCParticleCollection, and it outputs a ReconstructedParticleCollection with the jets and 
+ *  a MCRecoParticleAssociationCollection with the links between the jets and the truth particles.
  *
  *  JetAlg: A string corresponding to the jet algorithm for clustering
  *  JetRadius: The radius of the jets being clustered
@@ -34,18 +36,15 @@
  */
 
 
-class CreateTruthJet : public Gaudi::Functional::Transformer <edm4hep::ReconstructedParticleCollection(const edm4hep::MCParticleCollection&), BaseClass_t>  {
+struct CreateTruthJet final : Gaudi::Functional::MultiTransformer<std::tuple< edm4hep::ReconstructedParticleCollection, edm4hep::MCRecoParticleAssociationCollection> (const edm4hep::MCParticleCollection&), BaseClass_t>  {
+
 public:
   CreateTruthJet(const std::string& name, ISvcLocator* svcLoc);
-  edm4hep::ReconstructedParticleCollection operator()(const edm4hep::MCParticleCollection& input) const override final;
+  std::tuple< edm4hep::ReconstructedParticleCollection, edm4hep::MCRecoParticleAssociationCollection> operator()(const edm4hep::MCParticleCollection& input) const override;
 
   StatusCode initialize() override final;
 
 private:
-
- 
-  mutable DataHandle<edm4hep::MCRecoParticleAssociationCollection> m_outputAssocCollection{"MCRecoParticleAssociation",
-                                                                                           Gaudi::DataHandle::Writer, this};
 
   double m_minPt = 1;
   double m_jetRadius = 0.4;

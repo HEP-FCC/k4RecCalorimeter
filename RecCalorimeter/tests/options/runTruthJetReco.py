@@ -22,8 +22,8 @@ guntool.ThetaMin = 45 * constants.pi / 180.
 guntool.ThetaMax = 135 * constants.pi / 180.
 guntool.PhiMin = 0.
 guntool.PhiMax = 2. * constants.pi
-guntool.MomentumMin = 1. *units.GeV
-guntool.MomentumMax = 1. *units.GeV
+guntool.MomentumMin = 10. *units.GeV
+guntool.MomentumMax = 10. *units.GeV
 guntool.PdgCodes = [11] # 11 electron, 13 muon, 22 photon, 111 pi0, 211 pi+
 
 from Configurables import GenAlg
@@ -97,7 +97,9 @@ ApplicationMgr().TopAlg += [filterMCParticles]
 
 createJets = CreateTruthJet("createTruthJets",
                                               InputCollection="FilteredGenParticles",
-                                              OutputCollection = "TruthJets")
+                                              OutputCollectionJets = "TruthJets",
+                                              OutputCollectionAssociation = "TruthJetsAssociations",
+                                              MinPt = 5)
 
 
 ApplicationMgr().TopAlg += [createJets]
