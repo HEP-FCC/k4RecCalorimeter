@@ -73,3 +73,10 @@ install(EXPORT ${PROJECT_NAME}Targets
   )
 
 gaudi_install(CMAKE cmake/${PROJECT_NAME}Config.cmake)
+
+
+message(STATUS "PATH:\n${PATH}\n")
+message(STATUS "LD_LIBRARY_PATH:\n${LD_LIBRARY_PATH}\n")
+message(STATUS "ROOT_INCLUDE_PATH:\n${ROOT_INCLUDE_PATH}\n")
+message(STATUS "CPATH:\n${CPATH}\n")
+message(STATUS "PYTHONPATH:\n${PYTHONPATH}\n")
