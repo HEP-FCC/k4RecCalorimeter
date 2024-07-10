@@ -4,14 +4,10 @@
 
 file(GLOB _sources src/*.cpp )
 
-# include_directories(${FASTJET_INCLUDE_DIRS})
-# link_directories(${FASTJET_LIBRARIES})
-
 gaudi_add_library(RecCaloCommon
                   SOURCES ${_sources}
                   LINK Gaudi::GaudiKernel
                        EDM4HEP::edm4hep
-                       ${FASTJET_LIBRARIES}
 )
 
 message(STATUS "FastJet include directories:\n${FASTJET_INCLUDE_DIRS}")
