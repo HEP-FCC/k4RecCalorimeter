@@ -2,11 +2,10 @@
 # Package: RecCalorimeter
 ################################################################################
 
-
 file(GLOB _module_sources src/components/*.cpp )
 
 gaudi_add_module(k4RecCalorimeterPlugins
-                 SOURCES ${_module_sources} 
+                 SOURCES ${_module_sources}
                  LINK k4FWCore::k4FWCore
                       k4FWCore::k4Interface
                       Gaudi::GaudiAlgLib
@@ -18,6 +17,7 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       ROOT::Hist
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
+                      RecCaloCommon
                       ${FASTJET_LIBRARIES}
                       )
 
@@ -27,10 +27,8 @@ install(TARGETS k4RecCalorimeterPlugins
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
   COMPONENT dev)
 
-
-
-include_directories(${FASTJET_INCLUDE_DIRS} include/RecCalorimeter)
-link_directories(${FASTJET_LIBRARIES})
+target_include_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_INCLUDE_DIRS})
+target_link_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_LIBRARY_DIRS})
 
 include(CTest)
 
