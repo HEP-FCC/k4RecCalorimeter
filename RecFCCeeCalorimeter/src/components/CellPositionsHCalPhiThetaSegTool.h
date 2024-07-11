@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_CellPositionsHCalBarrelPhiThetaSegTool_H
-#define RECCALORIMETER_CellPositionsHCalBarrelPhiThetaSegTool_H
+#ifndef RECCALORIMETER_CellPositionsHCalPhiThetaSegTool_H
+#define RECCALORIMETER_CellPositionsHCalPhiThetaSegTool_H
 
 // Gaudi
 #include "GaudiAlg/GaudiTool.h"
@@ -18,6 +18,7 @@
 #include "DD4hep/Readout.h"
 #include "DD4hep/Volumes.h"
 #include "DDSegmentation/Segmentation.h"
+#include <DDRec/DetectorData.h>
 
 // ROOT
 #include "TGeoManager.h"
@@ -33,10 +34,10 @@ class Segmentation;
  *
  */
 
-class CellPositionsHCalBarrelPhiThetaSegTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsHCalPhiThetaSegTool : public GaudiTool, virtual public ICellPositionsTool {
 public:
-  CellPositionsHCalBarrelPhiThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
-  ~CellPositionsHCalBarrelPhiThetaSegTool() = default;
+  CellPositionsHCalPhiThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
+  ~CellPositionsHCalPhiThetaSegTool() = default;
 
   virtual StatusCode initialize() final;
 
@@ -48,16 +49,24 @@ public:
 
   virtual int layerId(const uint64_t& aCellId) final;
 
+  virtual std::vector<double> calculateLayerRadii(unsigned int startIndex, unsigned int endIndex); 
+  virtual std::vector<double> calculateLayerRadiiBarrel(); 
+  virtual std::vector<double> calculateLayerRadiiEndcap(); 
+
 private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
-  /// Name of the electromagnetic calorimeter readout
+  /// Name of the calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "HCalBarrelReadout"};
-  /// segmentation for FCCee cell dimensions: 4x50mm, 6x100mm, 3x200mm
-  /// GM: risky to put the numbers here... better to get them from the geometry in memory...
-  Gaudi::Property<std::vector<double>> m_radii{this, "radii", {283.55, 288.55, 293.55, 298.55, 306.05, 316.05, 326.05, 336.05, 346.05, 356.05, 371.05, 391.05, 411.05}};
+  /// Name of the calorimeter 
+  Gaudi::Property<std::string> m_detectorName{this, "detectorName", "HCalBarrel"};
+
+  std::vector<double> m_radii;
   dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* m_segmentation;
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   dd4hep::VolumeManager m_volman;
+  // layer radii calculated on the flight from the geometry 
+  const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>* m_layersRetrieved;
+  Gaudi::Property<std::vector<int>> m_numLayersHCalThreeParts{this, "numLayersHCalThreeParts", {6,9,22}};
 };
-#endif /* RECCALORIMETER_CellPositionsHCalBarrelPhiThetaSegTool_H */
+#endif /* RECCALORIMETER_CellPositionsHCalPhiThetaSegTool_H */
