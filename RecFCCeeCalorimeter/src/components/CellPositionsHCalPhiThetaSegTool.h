@@ -30,7 +30,7 @@ class Segmentation;
 }
 }
 
-/** @class CellPositionsHCalBarrelPhiThetaSegTool
+/** @class CellPositionsHCalPhiThetaSegTool
  *
  */
 
