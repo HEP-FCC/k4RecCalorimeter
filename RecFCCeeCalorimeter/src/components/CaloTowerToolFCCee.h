@@ -122,7 +122,7 @@ private:
   /**  This is where the cell info is filled into towers
    *   @param[in] aTowers Calorimeter towers.
    *   @param[in] aCells Calorimeter cells collection.
-   *   @param[in] aSegmentation Segmentation of the calorimeter
+   *   @param[in] fillTowerCells If true, make a list of the cells in each tower
    */
   void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
                        bool fillTowersCells);

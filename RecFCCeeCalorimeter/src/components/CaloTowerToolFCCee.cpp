@@ -197,6 +197,7 @@ void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {
   // Maximum theta & phi of the calorimeter system
   m_phiMax = *std::max_element(listPhiMax.begin(), listPhiMax.end());
   m_thetaMax = *std::max_element(listThetaMax.begin(), listThetaMax.end());
+  debug() << "Detector limits: phiMax " << m_phiMax << " thetaMax " << m_thetaMax << endmsg;
 
   // very small number (epsilon) substructed from the edges to ensure correct division
   float epsilon = 0.0001;
@@ -296,7 +297,6 @@ uint CaloTowerToolFCCee::idTheta(float aTheta) const {
 // aPhi Position of the calorimeter cell in phi
 uint CaloTowerToolFCCee::idPhi(float aPhi) const {
   uint id = floor((aPhi + m_phiMax) / m_deltaPhiTower);
-  // uint id = floor(aPhi / m_deltaPhiTower);
   return id;
 }
 
@@ -350,7 +350,6 @@ void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
       iTheta = idTheta(cellTheta);
       iPhi = idPhi(cellPhi);
       aTowers[iTheta][phiNeighbour(iPhi)] +=
-	//        cell.getEnergy() * sin(segmentation->theta(cell.getCellID()));
 	cell.getEnergy() * sin(cellTheta);
 
       if (fillTowersCells) {
