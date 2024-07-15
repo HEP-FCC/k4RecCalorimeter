@@ -1,41 +1,44 @@
 #include "RecCaloCommon/ClusterJet.h"
 
+// std
+#include <iostream>
+
 namespace k4::recCalo {
 
-ClusterJet::ClusterJet(std::string jetAlg, double jetRadius,
+ClusterJet::ClusterJet(const std::string &jetAlg, double jetRadius,
                        int isExclusiveClustering, double minPt, int njets)
     : m_jetAlg(jetAlg), m_jetRadius(jetRadius),
       m_isExclusiveClustering(isExclusiveClustering), m_minPt(minPt),
-      m_njets(njets) {
-  m_clustSeq = nullptr;
-}
+      m_njets(njets) {}
 
-StatusCode ClusterJet::initialize() {
+bool ClusterJet::initialize() {
   if (m_jetAlgMap.find(m_jetAlg) == m_jetAlgMap.end()) {
     std::cout << "ERROR: "
               << " is not in the list of supported jet algorithms" << std::endl;
-    ;
-    return StatusCode::FAILURE;
+    return false;
   }
+
+  m_jetDef = new fastjet::JetDefinition(m_jetAlgMap.at(m_jetAlg), m_jetRadius);
+
   if (m_isExclusiveClustering > 1) {
     std::cout << "ERROR: "
               << "Clustering of " << m_isExclusiveClustering
               << " is currently not supported" << std::endl;
     ;
-    return StatusCode::FAILURE;
+    return false;
   }
-  return StatusCode::SUCCESS;
+
+  return true;
 }
 
 std::vector<fastjet::PseudoJet>
-ClusterJet::cluster(const std::vector<fastjet::PseudoJet> clustersPJ) {
+ClusterJet::cluster(const std::vector<fastjet::PseudoJet> &clustersPJ) {
+  // Deleting cluster sequence from previous event
+  delete m_clustSeq;
+
   std::vector<fastjet::PseudoJet> jets;
 
-  fastjet::JetDefinition *jetDef =
-      new fastjet::JetDefinition(m_jetAlgMap.at(m_jetAlg), m_jetRadius);
-  if (m_clustSeq)
-    delete m_clustSeq;
-  m_clustSeq = new fastjet::ClusterSequence(clustersPJ, *jetDef);
+  m_clustSeq = new fastjet::ClusterSequence(clustersPJ, *m_jetDef);
 
   // Note: initialize has already checked if m_isExclusiveClustering has the
   // right range

@@ -1,5 +1,6 @@
 // Gaudi
 #include "Gaudi/Property.h"
+#include <GaudiKernel/StatusCode.h>
 
 // k4FWCore
 #include "k4FWCore/Transformer.h"
@@ -49,10 +50,14 @@ struct CreateTruthJet final
              KeyValues("OutputAssociationsCollection",
                        {"TruthJetParticleAssociations"})}) {}
 
-  StatusCode initialize() {
-    clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius,
-                                            m_isExclusive, m_minPt);
-    return clusterer->initialize();
+  StatusCode initialize() override {
+    m_clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius,
+                                              m_isExclusive, m_minPt);
+    if (!m_clusterer->initialize()) {
+      return StatusCode::FAILURE;
+    }
+
+    return StatusCode::SUCCESS;
   }
 
   std::tuple<edm4hep::ReconstructedParticleCollection,
@@ -71,7 +76,7 @@ struct CreateTruthJet final
     }
 
     std::vector<fastjet::PseudoJet> inclusiveJets =
-        clusterer->cluster(clustersPJ);
+        m_clusterer->cluster(clustersPJ);
 
     auto edmJets = edm4hep::ReconstructedParticleCollection();
     auto assoc = edm4hep::MCRecoParticleAssociationCollection();
@@ -99,8 +104,13 @@ struct CreateTruthJet final
     return std::make_tuple(std::move(edmJets), std::move(assoc));
   }
 
-  private:
+  StatusCode finalize() override {
+    delete m_clusterer;
 
+    return StatusCode::SUCCESS;
+  }
+
+private:
   Gaudi::Property<std::string> m_jetAlg{this, "JetAlg", "antikt",
                                         "Name of jet clustering algorithm"};
   Gaudi::Property<double> m_jetRadius{this, "JetRadius", 0.4,
@@ -109,7 +119,7 @@ struct CreateTruthJet final
                                   "Minimum pT for saved jets"};
   Gaudi::Property<bool> m_isExclusive{this, "isExclusiveClustering", false,
                                       "true if exclusive, false if inclusive"};
-  k4::recCalo::ClusterJet *clusterer;
+  k4::recCalo::ClusterJet *m_clusterer = nullptr;
 };
 
 DECLARE_COMPONENT(CreateTruthJet)
