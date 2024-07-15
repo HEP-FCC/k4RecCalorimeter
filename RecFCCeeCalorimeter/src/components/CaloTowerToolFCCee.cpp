@@ -283,7 +283,6 @@ uint CaloTowerToolFCCee::idTheta(float aTheta) const {
 // aPhi Position of the calorimeter cell in phi
 uint CaloTowerToolFCCee::idPhi(float aPhi) const {
   uint id = floor((aPhi + m_phiMax) / m_deltaPhiTower);
-  // uint id = floor(aPhi / m_deltaPhiTower);
   return id;
 }
 
