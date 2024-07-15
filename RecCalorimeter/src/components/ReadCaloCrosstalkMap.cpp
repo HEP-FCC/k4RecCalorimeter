@@ -1,5 +1,6 @@
 #include "ReadCaloCrosstalkMap.h"
 
+#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -21,17 +22,35 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
     return StatusCode::SUCCESS;
   }
 
-  StatusCode sc = GaudiTool::initialize();
-  info() <<"Loading crosstalk map..." << endmsg;
-  if (sc.isFailure()) return sc;
-  std::unique_ptr<TFile> file(TFile::Open(m_fileName.value().c_str(),"READ"));
+  {
+    StatusCode sc = GaudiTool::initialize();
+    info() << "Loading crosstalk map..." << endmsg;
+    if (sc.isFailure()) return sc;
+  }
+
+  // Check if crosstalk file exists
+  if (gSystem->AccessPathName(m_fileName.value().c_str())) {
+    error() << "Provided file with the crosstalk map not found!" << endmsg;
+    error() << "File path: " << m_fileName.value() << endmsg;
+    return StatusCode::FAILURE;
+  }
+  std::unique_ptr<TFile> xtalkFile(TFile::Open(m_fileName.value().c_str(), "READ"));
+  if (xtalkFile->IsZombie()) {
+    error() << "Unable to read the file with the crosstalk map!" << endmsg;
+    error() << "File path: " << m_fileName.value() << endmsg;
+    return StatusCode::FAILURE;
+  } else {
+    info() << "Using the following file with the crosstalk map: "
+           << m_fileName.value() << endmsg;
+  }
+
   TTree* tree = nullptr;
-  file->GetObject("crosstalk_neighbours",tree);
+  xtalkFile->GetObject("crosstalk_neighbours", tree);
   ULong64_t read_cellId;
-  std::vector<uint64_t>  *read_neighbours=0;
-  std::vector<double> *read_crosstalks=0;
-  
-  tree->SetBranchAddress("cellId",&read_cellId);
+  std::vector<uint64_t>* read_neighbours = nullptr;
+  std::vector<double>* read_crosstalks = nullptr;
+
+  tree->SetBranchAddress("cellId", &read_cellId);
   tree->SetBranchAddress("list_crosstalk_neighbours", &read_neighbours);
   tree->SetBranchAddress("list_crosstalks", &read_crosstalks);
   for (uint i = 0; i < tree->GetEntries(); i++) {
@@ -39,14 +58,17 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
       m_mapNeighbours.insert(std::pair<uint64_t, std::vector<uint64_t>>(read_cellId, *read_neighbours));
       m_mapCrosstalks.insert(std::pair<uint64_t, std::vector<double>>(read_cellId, *read_crosstalks));
   }
-  
-  info() <<"Crosstalk input: " << m_fileName.value().c_str() << endmsg;
-  info() << "Total number of cells = " << tree->GetEntries() << ", Size of crosstalk neighbours = " << m_mapNeighbours.size() << ", Size of coefficients = " << m_mapCrosstalks.size() << endmsg;
+
+  info() << "Crosstalk input: " << m_fileName.value().c_str() << endmsg;
+  info() << "Total number of cells = " << tree->GetEntries()
+         << ", Size of crosstalk neighbours = " << m_mapNeighbours.size()
+         << ", Size of coefficients = " << m_mapCrosstalks.size() << endmsg;
   delete tree;
   delete read_neighbours;
   delete read_crosstalks;
-  file->Close();
-  return sc;
+  xtalkFile->Close();
+
+  return StatusCode::SUCCESS;
 }
 
 StatusCode ReadCaloCrosstalkMap::finalize() { return GaudiTool::finalize(); }

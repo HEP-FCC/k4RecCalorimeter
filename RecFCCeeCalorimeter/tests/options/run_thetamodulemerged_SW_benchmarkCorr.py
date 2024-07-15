@@ -63,7 +63,7 @@ Nevts = 2
 
 # particle momentum and direction
 # momentum = 100  # in GeV
-momentum = 100  # in GeV
+momentum = 10.  # in GeV
 # momentum = 10  # in GeV
 thetaMin = 69.  # degrees
 thetaMax = 69.  # degrees
@@ -159,7 +159,7 @@ geoservice = GeoSvc("GeoSvc")
 path_to_detector = os.environ.get("K4GEO", "")
 print(path_to_detector)
 detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v02/ALLEGRO_o1_v02.xml'
+    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
 ]
 # prefix all xmls with path_to_detector
 geoservice.detectors = [

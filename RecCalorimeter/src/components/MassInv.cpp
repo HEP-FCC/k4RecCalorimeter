@@ -21,6 +21,7 @@
 #include "edm4hep/MCParticleCollection.h"
 
 // ROOT
+#include "TSystem.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
 #include "TFitResult.h"
@@ -807,17 +808,24 @@ StatusCode MassInv::execute() {
 StatusCode MassInv::finalize() { return GaudiAlgorithm::finalize(); }
 
 StatusCode MassInv::initNoiseFromFile() {
-  // check if file exists
+  // Check if file exists
   if (m_noiseFileName.empty()) {
-    error() << "Name of the file with noise values not set" << endmsg;
+    error() << "Name of the file with the noise values not provided!" << endmsg;
     return StatusCode::FAILURE;
   }
-  std::unique_ptr<TFile> file(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
-  if (file->IsZombie()) {
-    error() << "Couldn't open the file with noise constants" << endmsg;
+  if (gSystem->AccessPathName(m_noiseFileName.value().c_str())) {
+    error() << "Provided file with the noise values not found!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
+    return StatusCode::FAILURE;
+  }
+  std::unique_ptr<TFile> inFile(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
+  if (inFile->IsZombie()) {
+    error() << "Unable to open the file with the noise values!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Opening the file with noise constants: " << m_noiseFileName << endmsg;
+    info() << "Using the following file with the noise constants: "
+           << m_noiseFileName.value() << endmsg;
   }
 
   std::string pileupParamHistoName;
@@ -825,7 +833,7 @@ StatusCode MassInv::initNoiseFromFile() {
   for (unsigned i = 0; i < 2; i++) {
     pileupParamHistoName = m_pileupHistoName + std::to_string(i);
     debug() << "Getting histogram with a name " << pileupParamHistoName << endmsg;
-    m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(file->Get(pileupParamHistoName.c_str())));
+    m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupParamHistoName.c_str())));
     if (m_histoPileupConst.at(i).GetNbinsX() < 1) {
       error() << "Histogram  " << pileupParamHistoName
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;

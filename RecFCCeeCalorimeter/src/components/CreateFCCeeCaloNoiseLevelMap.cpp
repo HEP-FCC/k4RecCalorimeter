@@ -5,6 +5,7 @@
 #include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 
+#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 
@@ -239,8 +240,16 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
     }
   }
 
-  std::unique_ptr<TFile> file(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
-  file->cd();
+  // Check if output directory exists
+  std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
+  if (!gSystem->OpenDirectory(outDirPath.c_str())) {
+    error() << "Output directory \"" << outDirPath
+            << "\" does not exists! Please create it." << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  std::unique_ptr<TFile> outFile(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
+  outFile->cd();
   TTree tree("noisyCells", "Tree with map of noise per cell");
   uint64_t saveCellId;
   double saveNoiseLevel;
@@ -255,8 +264,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
     saveNoiseOffset = item.second.second;
     tree.Fill();
   }
-  file->Write();
-  file->Close();
+  outFile->Write();
+  outFile->Close();
 
   return StatusCode::SUCCESS;
 }
