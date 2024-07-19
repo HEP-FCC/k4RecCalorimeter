@@ -87,7 +87,7 @@ private:
    *  @param[in] aNumCells Number of cells in a cluster
     *  @return Width of the Gaussian distribution of noise per cluster
    */
-  double getNoiseConstantPerCluster(double aEta, uint numCells);
+  double getNoiseRMSPerCluster(double aEta, uint numCells);
   /// Handle for clusters (input collection)
   DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)

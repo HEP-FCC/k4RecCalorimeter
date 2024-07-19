@@ -545,9 +545,9 @@ StatusCode MassInv::execute() {
     uint numCells = newCluster.hits_size();
     double noise = 0;
     if (m_constPileupNoise == 0) {
-      noise = getNoiseConstantPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
-      verbose() << " NUM CELLS = " << numCells << "   cluster noise const = " << getNoiseConstantPerCluster(newEta, numCells)
-                << " scaled to PU " << m_mu<< "  = " << getNoiseConstantPerCluster(newEta, numCells)* std::sqrt(static_cast<int>(m_mu)) << endmsg;
+      noise = getNoiseRMSPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
+      verbose() << " NUM CELLS = " << numCells << "   cluster noise RMS = " << getNoiseRMSPerCluster(newEta, numCells)
+                << " scaled to PU " << m_mu<< "  = " << noise << endmsg;
     } else {
       noise = m_constPileupNoise * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
     }
@@ -849,7 +849,7 @@ StatusCode MassInv::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double MassInv::getNoiseConstantPerCluster(double aEta, uint aNumCells) {
+double MassInv::getNoiseRMSPerCluster(double aEta, uint aNumCells) {
   double param0 = 0.;
   double param1 = 0.;
 
