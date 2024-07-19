@@ -50,7 +50,7 @@ public:
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise RMS from the histogram
-  double getNoiseRMSPerCell(int64_t aCellID);
+  double getNoiseRMSPerCell(uint64_t aCellID);
 
 private:
   /// Handle for tool to get cell positions

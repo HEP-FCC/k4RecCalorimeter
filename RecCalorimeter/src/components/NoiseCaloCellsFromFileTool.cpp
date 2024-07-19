@@ -177,14 +177,14 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(int64_t aCellId) {
+double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = m_segmentationPhiEta;
   if (segmentation == nullptr) {
     segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti->subsegmentation(aCellId));
   }
 
-  double elecNoise = 0.;
-  double pileupNoise = 0.;
+  double elecNoiseRMS = 0.;
+  double pileupNoiseRMS = 0.;
 
   double cellEta;
   if (m_useSeg)
@@ -200,9 +200,9 @@ double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(int64_t aCellId) {
     int ibin = m_histoElecNoiseRMS.at(index).FindFixBin(fabs(cellEta));
     // Check that there are not more layers than the constants are provided for
     if (cellLayer < m_histoElecNoiseRMS.size()) {
-      elecNoise = m_histoElecNoiseRMS.at(cellLayer).GetBinContent(ibin);
+      elecNoiseRMS = m_histoElecNoiseRMS.at(cellLayer).GetBinContent(ibin);
       if (m_addPileup) {
-        pileupNoise = m_histoPileupNoiseRMS.at(cellLayer).GetBinContent(ibin);
+        pileupNoiseRMS = m_histoPileupNoiseRMS.at(cellLayer).GetBinContent(ibin);
       }
     } else {
       error()
@@ -214,17 +214,17 @@ double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(int64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoise = 0;
+  double totalNoiseRMS = 0;
   if (m_addPileup) {
-    totalNoise = sqrt(elecNoise*elecNoise + pileupNoise*pileupNoise) * m_scaleFactor;
+    totalNoiseRMS = sqrt(elecNoiseRMS*elecNoiseRMS + pileupNoiseRMS*pileupNoiseRMS) * m_scaleFactor;
   }
   else { // avoid useless math operations if no pileup
-    totalNoise = elecNoise * m_scaleFactor;
+    totalNoiseRMS = elecNoiseRMS * m_scaleFactor;
   }
 
-  if (totalNoise < 1e-6) {
-    warning() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
+  if (totalNoiseRMS < 1e-6) {
+    warning() << "Zero noise RMS: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoiseRMS << endmsg;
   }
 
-  return totalNoise;
+  return totalNoiseRMS;
 }

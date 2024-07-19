@@ -131,7 +131,7 @@ StatusCode ReadNoiseVsThetaFromFileTool::initNoiseFromFile() {
                 << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
         return StatusCode::FAILURE;
       }
-      if (m_setNoiseOffset == true){
+      if (m_setNoiseOffset){
         pileupNoiseOffsetLayerHistoName = m_pileupNoiseOffsetHistoName + std::to_string(i + 1);
         debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
         m_histoPileupNoiseOffset.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
