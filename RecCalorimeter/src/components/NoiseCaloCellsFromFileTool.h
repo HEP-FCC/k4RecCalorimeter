@@ -49,8 +49,8 @@ public:
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
-  /// Find the appropriate noise constant from the histogram
-  double getNoiseConstantPerCell(int64_t aCellID);
+  /// Find the appropriate noise RMS from the histogram
+  double getNoiseRMSPerCell(int64_t aCellID);
 
 private:
   /// Handle for tool to get cell positions
@@ -84,10 +84,10 @@ private:
       this, "useAbsInFilter", false, "Cell filtering condition becomes: drop cell if abs(Ecell) < filterThreshold*m_cellNoise"};
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
-  /// Histograms with pileup constants (index in array - radial layer)
-  std::vector<TH1F> m_histoPileupConst;
-  /// Histograms with electronics noise constants (index in array - radial layer)
-  std::vector<TH1F> m_histoElecNoiseConst;
+  /// Histograms with pileup RMS (index in array - radial layer)
+  std::vector<TH1F> m_histoPileupNoiseRMS;
+  /// Histograms with electronics noise RMS (index in array - radial layer)
+  std::vector<TH1F> m_histoElecNoiseRMS;
 
   /// Random Number Service
   IRndmGenSvc* m_randSvc;
