@@ -19,7 +19,7 @@ class TH1F;
 
 /** @class ReadNoiseVsThetaFromFileTool
  *
- *  Tool to read the stored noise constant per cell in the calorimeters
+ *  Tool to read the stored noise constants per cell in the calorimeters
  *  Access noise constants from TH1F histogram (noise vs. theta)
  *  Cell positioning can be done via segmentation or via a cell 
  *  positioning tool
@@ -41,7 +41,7 @@ public:
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise constant from the histogram
-  double getNoiseConstantPerCell(uint64_t aCellID);
+  double getNoiseRMSPerCell(uint64_t aCellID);
   double getNoiseOffsetPerCell(uint64_t aCellID);
 
 private:
@@ -65,7 +65,7 @@ private:
   Gaudi::Property<std::string> m_activeFieldName{this, "activeFieldName", "active_layer",
                                                  "Name of active layers for sampling calorimeter"};
   /// Name of pileup histogram
-  Gaudi::Property<std::string> m_pileupHistoName{this, "pileupHistoName", "h_pileup_layer", "Name of pileup histogram"};
+  Gaudi::Property<std::string> m_pileupNoiseHistoName{this, "pileupHistoName", "h_pileup_layer", "Name of pileup histogram"};
   /// Name of electronics noise histogram
   Gaudi::Property<std::string> m_elecNoiseHistoName{this, "elecNoiseHistoName", "h_elecNoise_layer",
                                                     "Name of electronics noise histogram"};
@@ -73,17 +73,17 @@ private:
   Gaudi::Property<std::string> m_elecNoiseOffsetHistoName{this, "elecNoiseOffsetHistoName", "h_mean_pileup_layer",
                                                     "Name of electronics noise offset histogram"};
   /// Name of pileup offset histogram
-  Gaudi::Property<std::string> m_pileupOffsetHistoName{this, "pileupOffsetHistoName", "h_pileup_layer", "Name of pileup offset histogram"};
+  Gaudi::Property<std::string> m_pileupNoiseOffsetHistoName{this, "pileupOffsetHistoName", "h_pileup_layer", "Name of pileup offset histogram"};
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
   /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
   Gaudi::Property<float> m_scaleFactor{this, "scaleFactor", 1, "Factor to apply to the noise values"};
   /// Histograms with pileup constants (index in array - radial layer)
-  std::vector<TH1F> m_histoPileupConst;
+  std::vector<TH1F> m_histoPileupNoiseRMS;
   /// Histograms with electronics noise constants (index in array - radial layer)
-  std::vector<TH1F> m_histoElecNoiseConst;
+  std::vector<TH1F> m_histoElecNoiseRMS;
   /// Histograms with pileup offset (index in array - radial layer)
-  std::vector<TH1F> m_histoPileupOffset;
+  std::vector<TH1F> m_histoPileupNoiseOffset;
   /// Histograms with electronics noise offset (index in array - radial layer)
   std::vector<TH1F> m_histoElecNoiseOffset;
   /// Pointer to the geometry service

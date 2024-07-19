@@ -100,14 +100,14 @@ StatusCode ReadNoiseVsThetaFromFileTool::initNoiseFromFile() {
            << m_noiseFileName << endmsg;
   }
 
-  std::string elecNoiseLayerHistoName, pileupLayerHistoName;
-  std::string elecNoiseOffsetLayerHistoName, pileupOffsetLayerHistoName;
+  std::string elecNoiseLayerHistoName, pileupNoiseLayerHistoName;
+  std::string elecNoiseOffsetLayerHistoName, pileupNoiseOffsetLayerHistoName;
   // Read the histograms with electronics noise and pileup from the file
   for (unsigned i = 0; i < m_numRadialLayers; i++) {
     elecNoiseLayerHistoName = m_elecNoiseHistoName + std::to_string(i + 1);
     debug() << "Getting histogram with a name " << elecNoiseLayerHistoName << endmsg;
-    m_histoElecNoiseConst.push_back(*dynamic_cast<TH1F*>(inFile->Get(elecNoiseLayerHistoName.c_str())));
-    if (m_histoElecNoiseConst.at(i).GetNbinsX() < 1) {
+    m_histoElecNoiseRMS.push_back(*dynamic_cast<TH1F*>(inFile->Get(elecNoiseLayerHistoName.c_str())));
+    if (m_histoElecNoiseRMS.at(i).GetNbinsX() < 1) {
       error() << "Histogram  " << elecNoiseLayerHistoName
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
       return StatusCode::FAILURE;
@@ -123,20 +123,20 @@ StatusCode ReadNoiseVsThetaFromFileTool::initNoiseFromFile() {
       }
     }
     if (m_addPileup) {
-      pileupLayerHistoName = m_pileupHistoName + std::to_string(i + 1);
-      debug() << "Getting histogram with a name " << pileupLayerHistoName << endmsg;
-      m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupLayerHistoName.c_str())));
-      if (m_histoPileupConst.at(i).GetNbinsX() < 1) {
-        error() << "Histogram  " << pileupLayerHistoName
+      pileupNoiseLayerHistoName = m_pileupNoiseHistoName + std::to_string(i + 1);
+      debug() << "Getting histogram with a name " << pileupNoiseLayerHistoName << endmsg;
+      m_histoPileupNoiseRMS.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupNoiseLayerHistoName.c_str())));
+      if (m_histoPileupNoiseRMS.at(i).GetNbinsX() < 1) {
+        error() << "Histogram  " << pileupNoiseLayerHistoName
                 << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
         return StatusCode::FAILURE;
       }
       if (m_setNoiseOffset == true){
-        pileupOffsetLayerHistoName = m_pileupOffsetHistoName + std::to_string(i + 1);
-        debug() << "Getting histogram with a name " << pileupOffsetLayerHistoName << endmsg;
-        m_histoPileupOffset.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupOffsetLayerHistoName.c_str())));
+        pileupNoiseOffsetLayerHistoName = m_pileupNoiseOffsetHistoName + std::to_string(i + 1);
+        debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
+        m_histoPileupNoiseOffset.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
         if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
-          error() << "Histogram  " << pileupOffsetLayerHistoName
+          error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
                   << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
           return StatusCode::FAILURE;
         }
@@ -144,12 +144,12 @@ StatusCode ReadNoiseVsThetaFromFileTool::initNoiseFromFile() {
     }
   }
   // Check if we have same number of histograms (all layers) for pileup and electronics noise
-  if (m_histoElecNoiseConst.size() == 0 ) {
+  if (m_histoElecNoiseRMS.size() == 0) {
     error() << "No histograms with noise found!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
   if (m_addPileup) {
-    if (m_histoElecNoiseConst.size() != m_histoPileupConst.size()) {
+    if (m_histoElecNoiseRMS.size() != m_histoPileupNoiseRMS.size()) {
       error() << "Missing histograms! Different number of histograms for electronics noise and pileup!!!!" << endmsg;
       return StatusCode::FAILURE;
     }
@@ -158,7 +158,7 @@ StatusCode ReadNoiseVsThetaFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double ReadNoiseVsThetaFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
+double ReadNoiseVsThetaFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
 
   double elecNoise = 0.;
   double pileupNoise = 0.;
@@ -181,18 +181,18 @@ double ReadNoiseVsThetaFromFileTool::getNoiseConstantPerCell(uint64_t aCellId) {
   // All histograms have same binning, all bins with same size
   // Using the histogram in the first layer to get the bin size
   unsigned index = 0;
-  if (m_histoElecNoiseConst.size() != 0) {
-    int Nbins = m_histoElecNoiseConst.at(index).GetNbinsX();
-    int ibin = m_histoElecNoiseConst.at(index).FindBin(cellTheta);
+  if (m_histoElecNoiseRMS.size() != 0) {
+    int Nbins = m_histoElecNoiseRMS.at(index).GetNbinsX();
+    int ibin = m_histoElecNoiseRMS.at(index).FindBin(cellTheta);
     if (ibin > Nbins) {
       error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins << endmsg;
       ibin = Nbins;
     }
     // Check that there are not more layers than the constants are provided for
-    if (cellLayer < m_histoElecNoiseConst.size()) {
-      elecNoise = m_histoElecNoiseConst.at(cellLayer).GetBinContent(ibin);
+    if (cellLayer < m_histoElecNoiseRMS.size()) {
+      elecNoise = m_histoElecNoiseRMS.at(cellLayer).GetBinContent(ibin);
       if (m_addPileup) {
-        pileupNoise = m_histoPileupConst.at(cellLayer).GetBinContent(ibin);
+        pileupNoise = m_histoPileupNoiseRMS.at(cellLayer).GetBinContent(ibin);
       }
     } else {
       error()
@@ -247,7 +247,7 @@ double ReadNoiseVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
     if (cellLayer < m_histoElecNoiseOffset.size()) {
       elecNoise = m_histoElecNoiseOffset.at(cellLayer).GetBinContent(ibin);
       if (m_addPileup) {
-        pileupNoise = m_histoPileupOffset.at(cellLayer).GetBinContent(ibin);
+        pileupNoise = m_histoPileupNoiseOffset.at(cellLayer).GetBinContent(ibin);
       }
     } else {
       error()
