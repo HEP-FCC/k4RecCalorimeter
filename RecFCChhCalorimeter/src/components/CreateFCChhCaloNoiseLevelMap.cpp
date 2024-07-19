@@ -90,16 +90,16 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
 	  decoder->set(cellId, "phi", iphi);
 	  decoder->set(cellId, "eta", ieta + numCells[2]);  // start from the minimum existing eta cell in this layer
 	  uint64_t id = cellId;
-	  double noise = 0.;
+	  double noiseRMS = 0.;
 	  double noiseOffset = 0.;
 	  if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId){
-	    noise = m_hcalBarrelNoiseTool->getNoiseConstantPerCell(id);
+	    noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
 	    noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
 	  } else if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId){
-	    noise = m_ecalBarrelNoiseTool->getNoiseConstantPerCell(id);
+	    noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
             noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
 	  }
-          map.insert( std::pair<uint64_t, std::pair<double, double> >(id, std::make_pair(noise, noiseOffset) ) );
+          map.insert( std::pair<uint64_t, std::pair<double, double> >(id, std::make_pair(noiseRMS, noiseOffset) ) );
         }
       }
     }
@@ -190,10 +190,10 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
 	  decoder->set(cID, m_activeFieldNamesNested[1], iphi);
 	  decoder->set(cID, m_activeFieldNamesNested[2], iz);
 	  
-	  double noise = m_hcalBarrelNoiseTool->getNoiseConstantPerCell(cID);
+	  double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(cID);
 	  double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(cID);
 	  
-	  map.insert( std::pair<uint64_t, std::pair<double, double> >(cID, std::make_pair(noise, noiseOffset) ) );
+	  map.insert( std::pair<uint64_t, std::pair<double, double> >(cID, std::make_pair(noiseRMS, noiseOffset) ) );
         }
       }
     }
