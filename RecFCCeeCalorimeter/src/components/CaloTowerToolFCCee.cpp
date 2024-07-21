@@ -43,6 +43,70 @@ StatusCode CaloTowerToolFCCee::initialize() {
     return StatusCode::FAILURE;
   }
 
+    std::vector<double> listPhiMax;
+  std::vector<double> listThetaMax;
+  listPhiMax.reserve(7);
+  listThetaMax.reserve(7);
+
+  std::pair<double, double> tmpPair;
+  tmpPair = retrievePhiThetaExtrema(m_ecalBarrelReadoutName);
+  m_ecalBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_ecalBarrelSegmentationOK) {
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  tmpPair = retrievePhiThetaExtrema(m_ecalEndcapReadoutName);
+  m_ecalEndcapSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_ecalEndcapSegmentationOK) {  
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  tmpPair = retrievePhiThetaExtrema(m_ecalFwdReadoutName);
+  m_ecalFwdSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_ecalFwdSegmentationOK) {
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  tmpPair = retrievePhiThetaExtrema(m_hcalBarrelReadoutName);
+  m_hcalBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_hcalBarrelSegmentationOK) {
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  tmpPair = retrievePhiThetaExtrema(m_hcalExtBarrelReadoutName);
+  m_hcalExtBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_hcalExtBarrelSegmentationOK) {
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  tmpPair = retrievePhiThetaExtrema(m_hcalEndcapReadoutName);
+  m_hcalEndcapSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_hcalEndcapSegmentationOK) {
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  tmpPair = retrievePhiThetaExtrema(m_hcalFwdReadoutName);
+  m_hcalFwdSegmentationOK = tmpPair.first > -1 ? true : false;
+  if (m_hcalFwdSegmentationOK) {
+    listPhiMax.push_back(tmpPair.first);
+    listThetaMax.push_back(tmpPair.second);
+  }
+  // Maximum theta & phi of the calorimeter system
+  m_phiMax = *std::max_element(listPhiMax.begin(), listPhiMax.end());
+  m_thetaMax = *std::max_element(listThetaMax.begin(), listThetaMax.end());
+  debug() << "Detector limits: phiMax " << m_phiMax << " thetaMax " << m_thetaMax << endmsg;
+
+  // very small number (epsilon) substructed from the edges to ensure correct division
+  float epsilon = 0.0001;
+  // number of phi bins
+  m_nPhiTower = ceil(2 * (m_phiMax - epsilon) / m_deltaPhiTower);
+  // number of theta bins
+  m_nThetaTower = ceil(2 * (fabs(m_thetaMax - M_PI/2.) - epsilon) / m_deltaThetaTower);
+  debug() << "Towers: thetaMax " << m_thetaMax << ", deltaThetaTower " << m_deltaThetaTower << ", nThetaTower " << m_nThetaTower
+          << endmsg;
+  debug() << "Towers: phiMax " << m_phiMax << ", deltaPhiTower " << m_deltaPhiTower << ", nPhiTower " << m_nPhiTower
+          << endmsg;
+
   return StatusCode::SUCCESS;
 }
 
@@ -126,69 +190,6 @@ std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(Gaudi::Pro
 }
 
 void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {
-  std::vector<double> listPhiMax;
-  std::vector<double> listThetaMax;
-  listPhiMax.reserve(7);
-  listThetaMax.reserve(7);
-
-  std::pair<double, double> tmpPair;
-  tmpPair = retrievePhiThetaExtrema(m_ecalBarrelReadoutName);
-  m_ecalBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_ecalBarrelSegmentationOK) {
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  tmpPair = retrievePhiThetaExtrema(m_ecalEndcapReadoutName);
-  m_ecalEndcapSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_ecalEndcapSegmentationOK) {  
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  tmpPair = retrievePhiThetaExtrema(m_ecalFwdReadoutName);
-  m_ecalFwdSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_ecalFwdSegmentationOK) {
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  tmpPair = retrievePhiThetaExtrema(m_hcalBarrelReadoutName);
-  m_hcalBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalBarrelSegmentationOK) {
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  tmpPair = retrievePhiThetaExtrema(m_hcalExtBarrelReadoutName);
-  m_hcalExtBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalExtBarrelSegmentationOK) {
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  tmpPair = retrievePhiThetaExtrema(m_hcalEndcapReadoutName);
-  m_hcalEndcapSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalEndcapSegmentationOK) {
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  tmpPair = retrievePhiThetaExtrema(m_hcalFwdReadoutName);
-  m_hcalFwdSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalFwdSegmentationOK) {
-    listPhiMax.push_back(tmpPair.first);
-    listThetaMax.push_back(tmpPair.second);
-  }
-  // Maximum theta & phi of the calorimeter system
-  m_phiMax = *std::max_element(listPhiMax.begin(), listPhiMax.end());
-  m_thetaMax = *std::max_element(listThetaMax.begin(), listThetaMax.end());
-  debug() << "Detector limits: phiMax " << m_phiMax << " thetaMax " << m_thetaMax << endmsg;
-
-  // very small number (epsilon) substructed from the edges to ensure correct division
-  float epsilon = 0.0001;
-  // number of phi bins
-  m_nPhiTower = ceil(2 * (m_phiMax - epsilon) / m_deltaPhiTower);
-  // number of theta bins
-  m_nThetaTower = ceil(2 * (fabs(m_thetaMax - M_PI/2.) - epsilon) / m_deltaThetaTower);
-  debug() << "Towers: thetaMax " << m_thetaMax << ", deltaThetaTower " << m_deltaThetaTower << ", nThetaTower " << m_nThetaTower
-          << endmsg;
-  debug() << "Towers: phiMax " << m_phiMax << ", deltaPhiTower " << m_deltaPhiTower << ", nPhiTower " << m_nPhiTower
-          << endmsg;
 
   nTheta = m_nThetaTower;
   nPhi = m_nPhiTower;
