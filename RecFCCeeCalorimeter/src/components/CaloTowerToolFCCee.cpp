@@ -104,6 +104,7 @@ StatusCode CaloTowerToolFCCee::finalize() {
 }
 
 StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName, std::pair<double, double> &phiThetaPair) {
+
   double phiMax = -1;
   double thetaMax = -1;
 
