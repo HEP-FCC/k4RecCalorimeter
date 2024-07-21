@@ -4,18 +4,12 @@
 // from Gaudi
 #include "GaudiAlg/GaudiTool.h"
 
-// k4geo
-#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
-#include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
-#include "detectorSegmentations/FCCSWEndcapTurbine_k4geo.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
 class IGeoSvc;
 
-// dd4hep
-#include "DDSegmentation/MultiSegmentation.h"
 
 namespace dd4hep {
 namespace DDSegmentation {
@@ -126,10 +120,13 @@ private:
    */
   void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
                        bool fillTowersCells);
-  /**  Check if the readout name exists. If so, it returns the segmentation.
+  /**  Find the maximum phi, theta covered by a readout
+   *   @param[in] aReadoutName Readout name to be checked for maximum phi, theta
+   */
+  std::pair<double, double> retrievePhiThetaExtrema(Gaudi::Property<std::string> aReadoutName);
+ /**  Check if the readout name exists. If so, it returns the segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
    */
-  std::pair<double, double> retrievePhiThetaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType);
   std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> retrieveSegmentation(std::string aReadoutName);
   /// Handle for electromagnetic barrel cells (input collection)
   DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
@@ -168,20 +165,6 @@ private:
   /// Name of the hcal forward calorimeter readout
   Gaudi::Property<std::string> m_hcalFwdReadoutName{this, "hcalFwdReadoutName", "",
                                                     "name of the hcal fwd readout"};
-  /// ModuleTheta segmentation of the electromagnetic barrel (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_ecalBarrelSegmentation;
-  /// ModuleTheta?? segmentation of the ecal endcap calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_ecalEndcapSegmentation;
-  /// ModuleTheta?? segmentation of the ecal forward calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_ecalFwdSegmentation;
-  /// ModuleTheta?? segmentation of the hadronic barrel (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalBarrelSegmentation;
-  /// ModuleTheta?? segmentation of the hadronic extended barrel (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalExtBarrelSegmentation;
-  /// ModuleTheta?? segmentation of the hcal endcap calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalEndcapSegmentation;
-  /// ModuleTheta?? segmentation of the hcal forward calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalFwdSegmentation;
   /// Type of segmentation of the electromagnetic barrel
   SegmentationType m_ecalBarrelSegmentationType;
   /// Type of segmentation of the ecal endcap calorimeter
@@ -198,6 +181,15 @@ private:
   SegmentationType m_hcalFwdSegmentationType;
   /// decoder: only for barrel
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+  // Set of bools to record whether a proper segmentation was found
+  bool m_ecalBarrelSegmentationOK;
+  bool m_ecalEndcapSegmentationOK;
+  bool m_ecalFwdSegmentationOK;
+  bool m_hcalBarrelSegmentationOK;
+  bool m_hcalExtBarrelSegmentationOK;
+  bool m_hcalEndcapSegmentationOK;
+  bool m_hcalFwdSegmentationOK;
+  
   /// Maximum theta of detector
   float m_thetaMax;
   /// Maximum phi of the detector
