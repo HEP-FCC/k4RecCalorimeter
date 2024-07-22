@@ -43,51 +43,37 @@ StatusCode CaloTowerToolFCCee::initialize() {
     return StatusCode::FAILURE;
   }
 
-    std::vector<double> listPhiMax;
+  std::vector<double> listPhiMax;
   std::vector<double> listThetaMax;
   listPhiMax.reserve(7);
   listThetaMax.reserve(7);
 
   std::pair<double, double> tmpPair;
-  tmpPair = retrievePhiThetaExtrema(m_ecalBarrelReadoutName);
-  m_ecalBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_ecalBarrelSegmentationOK) {
+  if (retrievePhiThetaExtrema(m_ecalBarrelReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
-  tmpPair = retrievePhiThetaExtrema(m_ecalEndcapReadoutName);
-  m_ecalEndcapSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_ecalEndcapSegmentationOK) {  
+  if (retrievePhiThetaExtrema(m_ecalEndcapReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
-  tmpPair = retrievePhiThetaExtrema(m_ecalFwdReadoutName);
-  m_ecalFwdSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_ecalFwdSegmentationOK) {
+  if (retrievePhiThetaExtrema(m_ecalFwdReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
-  tmpPair = retrievePhiThetaExtrema(m_hcalBarrelReadoutName);
-  m_hcalBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalBarrelSegmentationOK) {
+  if (retrievePhiThetaExtrema(m_hcalBarrelReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
-  tmpPair = retrievePhiThetaExtrema(m_hcalExtBarrelReadoutName);
-  m_hcalExtBarrelSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalExtBarrelSegmentationOK) {
+  if (retrievePhiThetaExtrema(m_hcalExtBarrelReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
-  tmpPair = retrievePhiThetaExtrema(m_hcalEndcapReadoutName);
-  m_hcalEndcapSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalEndcapSegmentationOK) {
+  if (retrievePhiThetaExtrema(m_hcalEndcapReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
-  tmpPair = retrievePhiThetaExtrema(m_hcalFwdReadoutName);
-  m_hcalFwdSegmentationOK = tmpPair.first > -1 ? true : false;
-  if (m_hcalFwdSegmentationOK) {
+  if (retrievePhiThetaExtrema(m_hcalFwdReadoutName, tmpPair) == StatusCode::SUCCESS) {
     listPhiMax.push_back(tmpPair.first);
     listThetaMax.push_back(tmpPair.second);
   }
@@ -117,28 +103,28 @@ StatusCode CaloTowerToolFCCee::finalize() {
   return GaudiTool::finalize();
 }
 
-std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(Gaudi::Property<std::string> aReadoutName) {
+StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName, std::pair<double, double> &phiThetaPair) {
   double phiMax = -1;
   double thetaMax = -1;
 
   
   // check if readout exists & retrieve Module-Theta segmentation
   // if readout does not exist, reconstruction without this calorimeter part will be performed
-  std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> tmpPair;
 
+  std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> tmpPair;
   tmpPair = retrieveSegmentation(aReadoutName);
   dd4hep::DDSegmentation::Segmentation* aSegmentation = tmpPair.first;
   SegmentationType aType= tmpPair.second;
   if (aSegmentation != nullptr && aType == SegmentationType::kWrong) {
     error() << "Wrong type of segmentation" << endmsg;
-    return std::make_pair(-1,-1);
+    return StatusCode::FAILURE;
   }
   if (m_useHalfTower) {
     m_decoder = m_geoSvc->getDetector()->readout(aReadoutName).idSpec().decoder();
   }
   
   if (aSegmentation != nullptr) {
-
+    
     switch (aType) {
     case SegmentationType::kModuleTheta: {
       
@@ -177,16 +163,18 @@ std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(Gaudi::Pro
       info() << "== Retrieving WRONG segmentation" << endmsg;
       phiMax = -1;
       thetaMax = -1;
-      break;
+      return StatusCode::FAILURE;
     }
     default: {
       error() << " Unsupported segmentation" << endmsg;
       phiMax = -1;
       thetaMax = -1;
+      return StatusCode::FAILURE;
     }
     }
   }
-  return std::make_pair(phiMax, thetaMax);
+  phiThetaPair = std::make_pair(phiMax, thetaMax);
+  return StatusCode::SUCCESS;
 }
 
 void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {
@@ -205,7 +193,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* ecalBarrelCells = m_ecalBarrelCells.get();
   debug() << "Input Ecal barrel cell collection size: " << ecalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_ecalBarrelSegmentationOK) {
+  if (ecalBarrelCells->size() >0) {
     CellsIntoTowers(aTowers, ecalBarrelCells, fillTowersCells);
     totalNumberOfCells += ecalBarrelCells->size();
   }
@@ -214,7 +202,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* ecalEndcapCells = m_ecalEndcapCells.get();
   debug() << "Input Ecal endcap cell collection size: " << ecalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_ecalEndcapSegmentationOK) {
+  if (ecalEndcapCells->size() > 0) {
     CellsIntoTowers(aTowers, ecalEndcapCells, fillTowersCells);
     totalNumberOfCells += ecalEndcapCells->size();
   }
@@ -223,7 +211,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* ecalFwdCells = m_ecalFwdCells.get();
   debug() << "Input Ecal forward cell collection size: " << ecalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_ecalFwdSegmentationOK) {
+  if (ecalFwdCells->size() > 0) {
     CellsIntoTowers(aTowers, ecalFwdCells, fillTowersCells);
     totalNumberOfCells += ecalFwdCells->size();
   }
@@ -232,7 +220,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* hcalBarrelCells = m_hcalBarrelCells.get();
   debug() << "Input hadronic barrel cell collection size: " << hcalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_hcalBarrelSegmentationOK) {
+  if (hcalBarrelCells->size()>0) {
     CellsIntoTowers(aTowers, hcalBarrelCells, fillTowersCells);
     totalNumberOfCells += hcalBarrelCells->size();
   }
@@ -241,7 +229,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* hcalExtBarrelCells = m_hcalExtBarrelCells.get();
   debug() << "Input hadronic extended barrel cell collection size: " << hcalExtBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_hcalExtBarrelSegmentationOK) {
+  if (hcalExtBarrelCells->size() >0) {
     CellsIntoTowers(aTowers, hcalExtBarrelCells, fillTowersCells);
     totalNumberOfCells += hcalExtBarrelCells->size();
   }
@@ -250,7 +238,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* hcalEndcapCells = m_hcalEndcapCells.get();
   debug() << "Input Hcal endcap cell collection size: " << hcalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_hcalEndcapSegmentationOK) {
+  if (hcalEndcapCells->size() > 0) {
     CellsIntoTowers(aTowers, hcalEndcapCells,  fillTowersCells);
     totalNumberOfCells += hcalEndcapCells->size();
   }
@@ -259,7 +247,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* hcalFwdCells = m_hcalFwdCells.get();
   debug() << "Input Hcal forward cell collection size: " << hcalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (m_hcalFwdSegmentationOK) {
+  if (hcalFwdCells->size()>0) {
     CellsIntoTowers(aTowers, hcalFwdCells, fillTowersCells);
     totalNumberOfCells += hcalFwdCells->size();
   }
