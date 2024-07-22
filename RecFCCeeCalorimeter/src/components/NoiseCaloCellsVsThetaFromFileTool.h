@@ -67,7 +67,7 @@ private:
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
                                     "Add pileup contribution to the electronics noise? (only if read from file)"};
   /// Read noise offset from histograms in files or not (if false, offset is set to 0)
-  Gaudi::Property<bool> m_setNoiseOffset{this, "setNoiseOffset", true, "Set a noise offset per cell"};
+  Gaudi::Property<bool> m_setNoiseOffset{this, "setNoiseOffset", false, "Set a noise offset per cell"};
   /// Name of the file with noise constants
   Gaudi::Property<std::string> m_noiseFileName{this, "noiseFileName", "", "Name of the file with noise constants"};
   /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV

@@ -53,6 +53,9 @@ private:
   /// effective seed thresholds in topo-clustering of 7.5 and 11.5MeV in LAr and TileCal
   Gaudi::Property<std::vector<double>> m_detectorsNoiseRMS{this, "detectorsNoiseRMS", {0.0075/4, 0.0075/4, 0.0115/4, 0.0115/4, 0.0115/4, 0.0075/4, 0.0075/4}, "Cell noise RMS in GeV"}; 
 
+  /// Set noise offset or not (false by default)
+  Gaudi::Property<bool> m_setNoiseOffset{this, "setNoiseOffset", false, "Set a noise offset per cell"};
+
   /// Cell noise offset in GeV. 0 by default
   Gaudi::Property<std::vector<double>> m_detectorsNoiseOffset{this, "detectorsNoiseOffset", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, "Cell noise offset in GeV"};
 

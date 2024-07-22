@@ -19,16 +19,16 @@ ConstNoiseTool::ConstNoiseTool(const std::string& type, const std::string& name,
 StatusCode ConstNoiseTool::initialize() {
 
   // check that sizes of m_detectors and m_detectorNoiseRMS and m_detectorNoiseOffset are the same
-  if (m_detectorsNoiseRMS.size() != m_detectors.size())
-    {
-      error() << "Sizes of the detectors vector and detectorsNoiseRMS vector do not match, exiting!" << endmsg;
-      return StatusCode::FAILURE;
-    }
-  if (m_detectorsNoiseOffset.size() != m_detectors.size())
-    {
+  if (m_detectorsNoiseRMS.size() != m_detectors.size()) {
+    error() << "Sizes of the detectors vector and detectorsNoiseRMS vector do not match, exiting!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (m_setNoiseOffset) {
+    if (m_detectorsNoiseOffset.size() != m_detectors.size()) {
       error() << "Sizes of the detectors vector and detectorsNoiseOffset vector do not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
+  }
 
   // Get GeoSvc
   m_geoSvc = service("GeoSvc");
@@ -44,9 +44,13 @@ StatusCode ConstNoiseTool::initialize() {
     try {
       int detID = m_geoSvc->getDetector()->constant<int>(detName);
       m_systemNoiseRMSMap.emplace(detID, m_detectorsNoiseRMS[iDet]);
-      m_systemNoiseOffsetMap.emplace(detID, m_detectorsNoiseOffset[iDet]);
-      debug() << "Set noise RMS and offset for detector " << detName << " (ID=" << detID << ") to: "
-	      << m_detectorsNoiseRMS[iDet] << " , " << m_detectorsNoiseOffset[iDet] << endmsg;
+      debug() << "Set noise RMS for detector " << detName << " (ID=" << detID << ") to: "
+	      << m_detectorsNoiseRMS[iDet] << endmsg;
+      if (m_setNoiseOffset) {
+	m_systemNoiseOffsetMap.emplace(detID, m_detectorsNoiseOffset[iDet]);
+	debug() << "Set noise offset for detector " << detName << " (ID=" << detID << ") to: "
+	        << m_detectorsNoiseOffset[iDet] << endmsg;
+      }
     } catch (const std::exception& e) {
       error() << "Error: detector with name " << detName << " not found, exception raised: " << e.what() << endmsg;
       return StatusCode::FAILURE;
@@ -79,6 +83,10 @@ double ConstNoiseTool::getNoiseRMSPerCell(uint64_t aCellId) {
 }
 
 double ConstNoiseTool::getNoiseOffsetPerCell(uint64_t aCellId) {
+
+  if (!m_setNoiseOffset) {
+    return 0.;
+  }
 
   double noiseOffset = 0.;
   // Get cells global coordinate "system"
