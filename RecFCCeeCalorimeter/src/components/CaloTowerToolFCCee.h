@@ -2,12 +2,7 @@
 #define RECFCCEECALORIMETER_CALOTOWERTOOLFCCEE_H
 
 // from Gaudi
-<<<<<<< HEAD
 #include "GaudiKernel/AlgTool.h"
-=======
-#include "GaudiAlg/GaudiTool.h"
-
->>>>>>> d704807 (Remove segmentation members)
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
