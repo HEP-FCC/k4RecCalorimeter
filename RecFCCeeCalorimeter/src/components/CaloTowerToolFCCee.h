@@ -122,8 +122,9 @@ private:
                        bool fillTowersCells);
   /**  Find the maximum phi, theta covered by a readout
    *   @param[in] aReadoutName Readout name to be checked for maximum phi, theta
+   *   @param[out] phiThetaPair  Values of the maximum phi and theta 
    */
-  std::pair<double, double> retrievePhiThetaExtrema(Gaudi::Property<std::string> aReadoutName);
+  StatusCode retrievePhiThetaExtrema(std::string aReadoutName, std::pair<double, double> &phiThetaPair);
  /**  Check if the readout name exists. If so, it returns the segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
    */
@@ -181,14 +182,6 @@ private:
   SegmentationType m_hcalFwdSegmentationType;
   /// decoder: only for barrel
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
-  // Set of bools to record whether a proper segmentation was found
-  bool m_ecalBarrelSegmentationOK;
-  bool m_ecalEndcapSegmentationOK;
-  bool m_ecalFwdSegmentationOK;
-  bool m_hcalBarrelSegmentationOK;
-  bool m_hcalExtBarrelSegmentationOK;
-  bool m_hcalEndcapSegmentationOK;
-  bool m_hcalFwdSegmentationOK;
   
   /// Maximum theta of detector
   float m_thetaMax;
