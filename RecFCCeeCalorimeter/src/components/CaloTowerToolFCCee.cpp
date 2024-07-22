@@ -112,7 +112,7 @@ StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName
   
   // check if readout exists & retrieve Module-Theta segmentation
   // if readout does not exist, reconstruction without this calorimeter part will be performed
-  
+
   std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> tmpPair;
   tmpPair = retrieveSegmentation(aReadoutName);
   dd4hep::DDSegmentation::Segmentation* aSegmentation = tmpPair.first;
@@ -228,7 +228,6 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   debug() << "Input Ecal forward cell collection size: " << ecalFwdCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (ecalFwdCells->size() > 0) {
-
     CellsIntoTowers(aTowers, ecalFwdCells, fillTowersCells);
     totalNumberOfCells += ecalFwdCells->size();
   }
