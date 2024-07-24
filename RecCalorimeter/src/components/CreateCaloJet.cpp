@@ -1,12 +1,9 @@
 // Gaudi
 #include "Gaudi/Property.h"
+#include <GaudiKernel/StatusCode.h>
 
 // k4FWCore
 #include "k4FWCore/Transformer.h"
-
-// std
-#include <math.h>
-#include <vector>
 
 // EDM4hep
 #include "edm4hep/ClusterCollection.h"
@@ -14,6 +11,11 @@
 
 // k4RecCalorimeter
 #include "RecCaloCommon/ClusterJet.h"
+
+// std
+#include <math.h>
+#include <string>
+#include <vector>
 
 /** @class CreateCaloJet
  * k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CreateCaloJet.h
@@ -41,11 +43,15 @@ struct CreateCaloJet final
             {KeyValues("InputClusterCollection", {"CorrectedCaloClusters"})},
             {KeyValues("OutputJetCollection", {"Jets"})}) {}
 
-  StatusCode initialize() {
-    clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius,
-                                            m_isExclusive, m_minPt);
+  StatusCode initialize() override {
+    m_clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius,
+                                              m_isExclusive, m_minPt);
 
-    return clusterer->initialize();
+    if (!m_clusterer->initialize()) {
+      return StatusCode::FAILURE;
+    }
+
+    return StatusCode::SUCCESS;
   }
 
   edm4hep::ReconstructedParticleCollection
@@ -75,7 +81,7 @@ struct CreateCaloJet final
     }
 
     std::vector<fastjet::PseudoJet> inclusiveJets =
-        clusterer->cluster(clustersPJ);
+        m_clusterer->cluster(clustersPJ);
 
     edm4hep::ReconstructedParticleCollection edmJets =
         edm4hep::ReconstructedParticleCollection();
@@ -98,6 +104,12 @@ struct CreateCaloJet final
     return edmJets;
   }
 
+  StatusCode finalize() override {
+    delete m_clusterer;
+
+    return StatusCode::SUCCESS;
+  }
+
 private:
   Gaudi::Property<std::string> m_jetAlg{this, "JetAlg", "antikt",
                                         "Name of jet clustering algorithm"};
@@ -108,7 +120,7 @@ private:
   Gaudi::Property<int> m_isExclusive{this, "IsExclusiveClustering", 0,
                                      "1 if exclusive, 0 if inclusive"};
 
-  k4::recCalo::ClusterJet *clusterer;
+  k4::recCalo::ClusterJet *m_clusterer = nullptr;
 };
 
 DECLARE_COMPONENT(CreateCaloJet)

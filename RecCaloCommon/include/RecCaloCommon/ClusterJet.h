@@ -3,25 +3,23 @@
 
 // std
 #include <map>
+#include <string>
 #include <vector>
 
-// Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
-
+// FastJet
+#include "fastjet/ClusterSequence.hh"
 #include "fastjet/JetDefinition.hh"
-
-// EDM4hep
-#include "edm4hep/ClusterCollection.h"
+#include "fastjet/PseudoJet.hh"
 
 namespace k4::recCalo {
 
 class ClusterInfo : public fastjet::PseudoJet::UserInfoBase {
 public:
-  ClusterInfo(const int &index) : _index(index) {}
+  explicit ClusterInfo(const int &index) : _index(index) {}
   int index() const { return _index; }
 
 protected:
-  int _index;
+  int _index = 0;
 };
 
 /** @class ClusterJet
@@ -46,17 +44,17 @@ protected:
 
 class ClusterJet {
 public:
-  ClusterJet(std::string jetAlg, double jetRadius,
+  ClusterJet(const std::string &jetAlg, double jetRadius,
              int isExclusiveClustering = 0, double minPt = 0,
              int clusterArgs = 0);
-  StatusCode initialize();
+  bool initialize();
   ~ClusterJet() {
-    if (m_clustSeq)
-      delete m_clustSeq;
+    delete m_jetDef;
+    delete m_clustSeq;
   }
 
   std::vector<fastjet::PseudoJet>
-  cluster(const std::vector<fastjet::PseudoJet> clustersPJ);
+  cluster(const std::vector<fastjet::PseudoJet> &clustersPJ);
 
 private:
   std::map<std::string, fastjet::JetAlgorithm> m_jetAlgMap = {
@@ -74,7 +72,8 @@ private:
   double m_minPt = 10;             // Only relevant for inclusive clustering
   int m_njets = 0;                 // Only relevant for exclusive clustering
 
-  fastjet::ClusterSequence *m_clustSeq;
+  fastjet::JetDefinition *m_jetDef = nullptr;
+  fastjet::ClusterSequence *m_clustSeq = nullptr;
 };
 
 } /* namespace k4::recCalo */
