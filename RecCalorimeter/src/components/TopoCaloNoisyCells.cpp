@@ -1,7 +1,8 @@
 #include "TopoCaloNoisyCells.h"
 
-#include "TBranch.h"
+#include "TSystem.h"
 #include "TFile.h"
+#include "TBranch.h"
 #include "TTree.h"
 
 DECLARE_COMPONENT(TopoCaloNoisyCells)
@@ -12,11 +13,33 @@ TopoCaloNoisyCells::TopoCaloNoisyCells(const std::string& type, const std::strin
 }
 
 StatusCode TopoCaloNoisyCells::initialize() {
-  StatusCode sc = GaudiTool::initialize();
-  if (sc.isFailure()) return sc;
-  std::unique_ptr<TFile> file(TFile::Open(m_fileName.value().c_str(), "READ"));
+  {
+    StatusCode sc = GaudiTool::initialize();
+    if (sc.isFailure()) return sc;
+  }
+
+  // Check if file exists
+  if (m_fileName.empty()) {
+    error() << "Name of the file with the noisy cells not provided!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (gSystem->AccessPathName(m_fileName.value().c_str())) {
+    error() << "Provided file with the noisy cells not found!" << endmsg;
+    error() << "File path: " << m_fileName.value() << endmsg;
+    return StatusCode::FAILURE;
+  }
+  std::unique_ptr<TFile> inFile(TFile::Open(m_fileName.value().c_str(), "READ"));
+  if (inFile->IsZombie()) {
+    error() << "Unable to open the file with the noisy cells!" << endmsg;
+    error() << "File path: " << m_fileName.value() << endmsg;
+    return StatusCode::FAILURE;
+  } else {
+    info() << "Using the following file with the noisy cells: "
+           << m_fileName.value() << endmsg;
+  }
+
   TTree* tree = nullptr;
-  file->GetObject("noisyCells", tree);
+  inFile->GetObject("noisyCells", tree);
   ULong64_t readCellId;
   double readNoisyCells;
   double readNoisyCellsOffset;
@@ -28,8 +51,9 @@ StatusCode TopoCaloNoisyCells::initialize() {
     m_map.insert(std::pair<uint64_t, std::pair<double, double>>(readCellId, std::make_pair(readNoisyCells, readNoisyCellsOffset)));
   }
   delete tree;
-  file->Close();
-  return sc;
+  inFile->Close();
+
+  return StatusCode::SUCCESS;
 }
 
 StatusCode TopoCaloNoisyCells::finalize() { return GaudiTool::finalize(); }

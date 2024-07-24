@@ -2,8 +2,8 @@
 # Package: RecCalorimeter
 ################################################################################
 
+file(GLOB _module_sources src/components/*.cpp )
 
-file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecCalorimeterPlugins
                  SOURCES ${_module_sources}
                  LINK k4FWCore::k4FWCore
@@ -17,6 +17,8 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       ROOT::Hist
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
+                      RecCaloCommon
+                      ${FASTJET_LIBRARIES}
                       )
 
 install(TARGETS k4RecCalorimeterPlugins
@@ -25,8 +27,22 @@ install(TARGETS k4RecCalorimeterPlugins
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
   COMPONENT dev)
 
+target_include_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_INCLUDE_DIRS})
+target_link_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_LIBRARY_DIRS})
 
 include(CTest)
+
+add_test(NAME FCC_createJets
+  COMMAND k4run RecCalorimeter/tests/options/runJetReco.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCC_createJets)
+
+add_test(NAME FCC_createTruthJets
+  COMMAND k4run RecCalorimeter/tests/options/runTruthJetReco.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCC_createTruthJets)
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
 #

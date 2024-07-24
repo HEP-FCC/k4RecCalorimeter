@@ -10,6 +10,7 @@
 #include "DD4hep/Detector.h"
 
 // ROOT
+#include "TSystem.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
@@ -116,17 +117,24 @@ StatusCode NoiseCaloCellsFromFileTool::finalize() {
 }
 
 StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
-  // check if file exists
+  // Check if file exists
   if (m_noiseFileName.empty()) {
-    error() << "Name of the file with noise values not set" << endmsg;
+    error() << "Name of the file with the noise values not provided!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (gSystem->AccessPathName(m_noiseFileName.value().c_str())) {
+    error() << "Provided file with the noise values not found!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   }
   std::unique_ptr<TFile> noiseFile(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
   if (noiseFile->IsZombie()) {
-    error() << "Couldn't open the file with noise constants" << endmsg;
+    error() << "Unable to open the file with the noise values!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Opening the file with noise constants: " << m_noiseFileName << endmsg;
+    info() << "Using the following file with noise values: "
+           << m_noiseFileName.value() << endmsg;
   }
 
   std::string elecNoiseLayerHistoName, pileupLayerHistoName;

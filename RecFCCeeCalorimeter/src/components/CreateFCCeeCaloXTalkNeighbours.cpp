@@ -13,6 +13,7 @@
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 
 // ROOT
+#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 
@@ -123,9 +124,9 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
         debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
         debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
         debug() << "Number of segmentation cells in (module,theta): " << numCells << endmsg;
-	extrema_layer.emplace_back(extrema);
+        extrema_layer.emplace_back(extrema);
       }
-      
+
       for (unsigned int ilayer = 0; ilayer < m_activeVolumesNumbersSegmented[iSys]; ilayer++)
       {
         dd4hep::DDSegmentation::CellID volumeId = 0;
@@ -194,8 +195,16 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
   }
   //debug() << "cells with neighbours across Calo boundaries: " << count << endmsg;
 
-  std::unique_ptr<TFile> file(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
-  file->cd();
+  // Check if output directory exists
+  std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
+  if (!gSystem->OpenDirectory(outDirPath.c_str())) {
+    error() << "Output directory \"" << outDirPath
+            << "\" does not exists! Please create it." << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  std::unique_ptr<TFile> outFile(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
+  outFile->cd();
   TTree tree("crosstalk_neighbours", "Tree with map of neighbours");
   uint64_t saveCellId;
   std::vector<uint64_t> saveNeighbours;
@@ -247,8 +256,8 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize()
     count_map++;
     if(!count_map%1000) std::cout<<"Number of cells: "<<count_map<<std::endl;
   }
-  file->Write();
-  file->Close();
+  outFile->Write();
+  outFile->Close();
 
   return StatusCode::SUCCESS;
 }

@@ -4,6 +4,7 @@
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
+#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 
@@ -29,7 +30,7 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
     return StatusCode::FAILURE;
   }
   std::unordered_map<uint64_t, std::vector<uint64_t>> map;
- 
+
   // will be used for volume connecting
   int eCalLastLayer;
   std::pair<int, int> extremaECalLastLayerPhi;
@@ -51,7 +52,7 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
   //////////////////////////////////
   /// SEGMENTED ETA-PHI VOLUMES  ///
   //////////////////////////////////
-  
+
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
@@ -121,9 +122,9 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
 	// for layer 0 of HCal barrel,  will be used for volume connecting
 	if (ilayer == 0){	
 	  extremaHCalFirstLayerPhi = std::make_pair(0, numCells[0] - 1);
-	  extremaHCalFirstLayerEta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);	
+	  extremaHCalFirstLayerEta = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
 	  extrema[2] = std::make_pair(numCells[2], numCells[1] + numCells[2] - 1);
-	} 
+	}
       }
       debug() << "Number of segmentation cells in (phi,eta): " << numCells << endmsg;
       // Loop over segmenation cells
@@ -442,8 +443,16 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
   }
   debug() << "cells with neighbours across Calo boundaries: " << count << endmsg;
 
-  std::unique_ptr<TFile> file(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
-  file->cd();
+  // Check if output directory exists
+  std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
+  if (!gSystem->OpenDirectory(outDirPath.c_str())) {
+    error() << "Output directory \"" << outDirPath
+            << "\" does not exists! Please create it." << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  std::unique_ptr<TFile> outFile(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
+  outFile->cd();
   TTree tree("neighbours", "Tree with map of neighbours");
   uint64_t saveCellId;
   std::vector<uint64_t> saveNeighbours;
@@ -454,8 +463,8 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
     saveNeighbours = item.second;
     tree.Fill();
   }
-  file->Write();
-  file->Close();
+  outFile->Write();
+  outFile->Close();
 
   return StatusCode::SUCCESS;
 }

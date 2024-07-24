@@ -25,10 +25,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(ROOT COMPONENTS RIO Tree)
 find_package(Gaudi)
 find_package(k4FWCore) # implicit: Gaudi
-find_package(EDM4HEP 0.10.1) # implicit: Podio
+find_package(EDM4HEP) # implicit: Podio
 find_package(DD4hep)
 find_package(k4geo)
 find_package(ONNXRuntime)
+find_package(FastJet)
 # New versions of ONNRuntime package provide onnxruntime-Config.cmake
 # and use the name onnxruntime
 find_package(onnxruntime)
@@ -59,12 +60,10 @@ function(set_test_env _testname)
 endfunction()
 
 
+add_subdirectory(RecCaloCommon)
 add_subdirectory(RecCalorimeter)
 add_subdirectory(RecFCChhCalorimeter)
 add_subdirectory(RecFCCeeCalorimeter)
-
-
-
 
 
 install(EXPORT ${PROJECT_NAME}Targets
@@ -74,4 +73,3 @@ install(EXPORT ${PROJECT_NAME}Targets
   )
 
 gaudi_install(CMAKE cmake/${PROJECT_NAME}Config.cmake)
-
