@@ -635,12 +635,13 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         if (m_do_photon_shapeVar && systemID == systemID_EMB) {
           if (m_do_widthTheta_logE_weights) {
             double w_theta2 = theta2_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill], 2);
-            // Correct very small but negative values caused by computational precision
-            if (w_theta2 < 0. && w_theta2 > -1e-9) {
-              warning() << "w_theta2 in theta width calculation is negative: " << w_theta2 << ", setting it to 0." << endmsg;
-              w_theta2 = 0. ;
+            // Very small but negative values caused by computational precision are allowed,
+            // otherwise crash.
+            if (w_theta2 < -1e-9) {
+              error() << "w_theta2 in theta width calculation is negative: " << w_theta2 << endmsg;
+              return StatusCode::FAILURE;
             }
-            width_theta[layer+startPositionToFill] = (sumWeightLayer[layer+startPositionToFill] > 0.) ? std::sqrt(w_theta2) : 0. ;
+            width_theta[layer+startPositionToFill] = (sumWeightLayer[layer+startPositionToFill] > 0.) ? std::sqrt(std::fabs(w_theta2)) : 0. ;
           } else {
             double w_theta2 = theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
             // Correct very small but negative values caused by computational precision
