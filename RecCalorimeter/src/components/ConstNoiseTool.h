@@ -44,9 +44,8 @@ private:
   std::map<uint,double> m_systemNoiseRMSMap;
   std::map<uint,double> m_systemNoiseOffsetMap;
 
-  /// List of subdetector names (I think it is better to pass the names and retrieve the IDs in the C++)
-  /// Gaudi::Property<std::vector<int> m_detectorIDs{this, "systemIDs", {5, 6, 7, 8, 9, 10, 11}, "systemIDs of the calorimeters"};
-  Gaudi::Property<std::vector<std::string>> m_detectors{this, "detectors", {"ECAL_Barrel", "ECAL_Endcap", "HCal_Endcap", "HCalBarrel", "HCalExtBarrel", "ECalFwd", "HCalFwd"}, "names of the calorimeters"};
+  /// List of subdetector names (they must match what is defined in DectDimension)
+ Gaudi::Property<std::vector<std::string>> m_detectors{this, "detectors", {"ECAL_Barrel", "ECAL_Endcap", "HCal_Endcap", "HCalBarrel", "HCalExtBarrel", "ECalFwd", "HCalFwd"}, "names of the calorimeters"};
   
   /// Cell noise RMS (=1Sigma threshold) in GeV
   /// default values estimates for the LAr and TileCal from ATLAS Barrel: ATL-LARG-PUB-2008_002
