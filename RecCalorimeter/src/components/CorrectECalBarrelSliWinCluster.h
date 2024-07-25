@@ -81,12 +81,12 @@ private:
    *  @return Status code if retriving histograms was successful
    */
   StatusCode initNoiseFromFile();
-  /** Find the appropriate noise constant from the histogram
+  /** Find the appropriate noise RMS from the histogram
    *  @param[in] aEta Pseudorapidity value of the centre of the cluster
    *  @param[in] aNumCells Number of cells in a cluster
-    *  @return Width of the Gaussian distribution of noise per cluster
+   *  @return Width of the Gaussian distribution of noise per cluster
    */
-  double getNoiseConstantPerCluster(double aEta, uint numCells);
+  double getNoiseRMSPerCluster(double aEta, uint numCells);
   /// Handle for clusters (input collection)
   DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
@@ -171,8 +171,8 @@ private:
                                                  "Name of pileup histogram"};
   /// Pile-up scenario for pileup noise scaling (with sqrt(mu))
   Gaudi::Property<int> m_mu{this, "mu", 1000, "Pileup scenario"};
-  /// Histograms with pileup constants (index in array - parameter number: 0 or 1)
-  std::vector<TH1F> m_histoPileupConst;
+  /// Histograms with pileup RMS (index in array - parameter number: 0 or 1)
+  std::vector<TH1F> m_histoPileupNoiseRMS;
   /// Values of eta corresponding to the upstream correction parameters
   Gaudi::Property<std::vector<double>> m_etaValues{this, "etaValues", {0}, "Eta values"};
   /// Borders of the eta bins for the upstream correction (middle between eta values)

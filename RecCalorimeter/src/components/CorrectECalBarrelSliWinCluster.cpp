@@ -367,9 +367,9 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
     uint numCells = newCluster.hits_size();
     double noise = 0;
     if (m_constPileupNoise == 0) {
-      noise = getNoiseConstantPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
-      verbose() << " NUM CELLS = " << numCells << "   cluster noise const = " << getNoiseConstantPerCluster(newEta, numCells)
-                << " scaled to PU " << m_mu<< "  = " << getNoiseConstantPerCluster(newEta, numCells)* std::sqrt(static_cast<int>(m_mu)) << endmsg;
+      noise = getNoiseRMSPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
+      verbose() << " NUM CELLS = " << numCells << "   cluster noise const = " << getNoiseRMSPerCluster(newEta, numCells)
+                << " scaled to PU " << m_mu<< "  = " << getNoiseRMSPerCluster(newEta, numCells)* std::sqrt(static_cast<int>(m_mu)) << endmsg;
     } else {
       noise = m_constPileupNoise * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
     }
@@ -456,8 +456,8 @@ StatusCode CorrectECalBarrelSliWinCluster::initNoiseFromFile() {
   for (unsigned i = 0; i < 2; i++) {
     pileupParamHistoName = m_pileupHistoName + std::to_string(i);
     debug() << "Getting histogram with a name " << pileupParamHistoName << endmsg;
-    m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupParamHistoName.c_str())));
-    if (m_histoPileupConst.at(i).GetNbinsX() < 1) {
+    m_histoPileupNoiseRMS.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupParamHistoName.c_str())));
+    if (m_histoPileupNoiseRMS.at(i).GetNbinsX() < 1) {
       error() << "Histogram  " << pileupParamHistoName
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
       return StatusCode::FAILURE;
@@ -465,27 +465,27 @@ StatusCode CorrectECalBarrelSliWinCluster::initNoiseFromFile() {
   }
 
   // Check if we have same number of histograms (all layers) for pileup and electronics noise
-  if (m_histoPileupConst.size() == 0) {
+  if (m_histoPileupNoiseRMS.size() == 0) {
     error() << "No histograms with noise found!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
   return StatusCode::SUCCESS;
 }
 
-double CorrectECalBarrelSliWinCluster::getNoiseConstantPerCluster(double aEta, uint aNumCells) {
+double CorrectECalBarrelSliWinCluster::getNoiseRMSPerCluster(double aEta, uint aNumCells) {
   double param0 = 0.;
   double param1 = 0.;
 
   // All histograms have same binning, all bins with same size
   // Using the histogram of the first parameter to get the bin size
   unsigned index = 0;
-  if (m_histoPileupConst.size() != 0) {
-    int Nbins = m_histoPileupConst.at(index).GetNbinsX();
+  if (m_histoPileupNoiseRMS.size() != 0) {
+    int Nbins = m_histoPileupNoiseRMS.at(index).GetNbinsX();
     double deltaEtaBin =
-        (m_histoPileupConst.at(index).GetBinLowEdge(Nbins) + m_histoPileupConst.at(index).GetBinWidth(Nbins) -
-         m_histoPileupConst.at(index).GetBinLowEdge(1)) /
+        (m_histoPileupNoiseRMS.at(index).GetBinLowEdge(Nbins) + m_histoPileupNoiseRMS.at(index).GetBinWidth(Nbins) -
+         m_histoPileupNoiseRMS.at(index).GetBinLowEdge(1)) /
         Nbins;
-    double etaFirtsBin = m_histoPileupConst.at(index).GetBinLowEdge(1);
+    double etaFirtsBin = m_histoPileupNoiseRMS.at(index).GetBinLowEdge(1);
     // find the eta bin for the cell
     int ibin = floor((fabs(aEta) - etaFirtsBin) / deltaEtaBin) + 1;
     verbose() << "Current eta = " << aEta << " bin = " << ibin << endmsg;
@@ -494,8 +494,8 @@ double CorrectECalBarrelSliWinCluster::getNoiseConstantPerCluster(double aEta, u
               << endmsg;
       ibin = Nbins;
     }
-    param0 = m_histoPileupConst.at(0).GetBinContent(ibin);
-    param1 = m_histoPileupConst.at(1).GetBinContent(ibin);
+    param0 = m_histoPileupNoiseRMS.at(0).GetBinContent(ibin);
+    param1 = m_histoPileupNoiseRMS.at(1).GetBinContent(ibin);
     verbose() << "p0 = " << param0 << " param1 = " << param1 << endmsg;
   } else {
     debug() << "No histograms with noise constants!!!!! " << endmsg;
