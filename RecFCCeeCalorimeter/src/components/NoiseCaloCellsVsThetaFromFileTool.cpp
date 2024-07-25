@@ -195,8 +195,8 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
 
   // All histograms have same binning, all bins with same size
   // Using the histogram in the first layer to get the bin size
-  unsigned index = 0;
   if (m_histoElecNoiseRMS.size() != 0) {
+    unsigned index = 0;
     int ibin = m_histoElecNoiseRMS.at(index).FindBin(cellTheta);
     // Check that there are not more layers than the constants are provided for
     if (cellLayer < m_histoElecNoiseRMS.size()) {
@@ -243,8 +243,8 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId
 
   // All histograms have same binning, all bins with same size
   // Using the histogram in the first layer to get the bin size
-  unsigned index = 0;
   if (m_histoElecNoiseOffset.size() != 0) {
+    unsigned index = 0;
     int Nbins = m_histoElecNoiseOffset.at(index).GetNbinsX();
     int ibin = m_histoElecNoiseOffset.at(index).FindBin(cellTheta);
     if (ibin > Nbins) {

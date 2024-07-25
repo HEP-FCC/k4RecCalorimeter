@@ -234,11 +234,7 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
   // Total noise: electronics noise + pileup
   double totalNoiseOffset = sqrt(elecNoiseOffset*elecNoiseOffset + pileupNoiseOffset*pileupNoiseOffset) * m_scaleFactor; // shouldnt the offset be summed linearly?
-
-  // No warning: offset is usually zero or close
-  //if (totalNoiseOffset < 1e-6) {
-  //  warning() << "Zero noise offset: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoiseOffset << endmsg;
-  //}
+  // No warning is printed if offset is zero because that is the usual scenario
 
   return totalNoiseOffset;
 }
