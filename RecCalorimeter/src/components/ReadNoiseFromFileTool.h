@@ -41,7 +41,7 @@ public:
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise constant from the histogram
-  double getNoiseConstantPerCell(uint64_t aCellID);
+  double getNoiseRMSPerCell(uint64_t aCellID);
   double getNoiseOffsetPerCell(uint64_t aCellID);
 
 private:
@@ -75,10 +75,10 @@ private:
   /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
   Gaudi::Property<float> m_scaleFactor{this, "scaleFactor", 1, "Factor to apply to the noise values"};
 
-  /// Histograms with pileup constants (index in array - radial layer)
-  std::vector<TH1F> m_histoPileupConst;
-  /// Histograms with electronics noise constants (index in array - radial layer)
-  std::vector<TH1F> m_histoElecNoiseConst;
+  /// Histograms with pileup RMS (index in array - radial layer)
+  std::vector<TH1F> m_histoPileupNoiseRMS;
+  /// Histograms with electronics noise RMS (index in array - radial layer)
+  std::vector<TH1F> m_histoElecNoiseRMS;
 
   /// Histograms with pileup offset (index in array - radial layer)
   std::vector<TH1F> m_histoPileupOffset;

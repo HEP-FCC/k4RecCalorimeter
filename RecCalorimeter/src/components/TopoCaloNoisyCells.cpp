@@ -44,7 +44,7 @@ StatusCode TopoCaloNoisyCells::initialize() {
   double readNoisyCells;
   double readNoisyCellsOffset;
   tree->SetBranchAddress("cellId", &readCellId);
-  tree->SetBranchAddress("noiseLevel", &readNoisyCells);
+  tree->SetBranchAddress("noiseLevel", &readNoisyCells); // would be better to call branch noiseRMS rather than noiseLevel
   tree->SetBranchAddress("noiseOffset", &readNoisyCellsOffset);
   for (uint i = 0; i < tree->GetEntries(); i++) {
     tree->GetEntry(i);
