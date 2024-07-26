@@ -413,6 +413,23 @@ createEcalEndcapPositionedCells.positionsTool = cellPositionEcalEndcapTool
 createEcalEndcapPositionedCells.hits.Path = ecalEndcapCellsName
 createEcalEndcapPositionedCells.positionedHits.Path = ecalEndcapPositionedCellsName
 
+# Add to Ecal endcap cells the position information
+# (good for physics, all coordinates set properly)
+# not yet merged!!
+ cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
+    "CellPositionsECalEndcap",
+    readoutName=ecalEndcapReadoutName,
+     OutputLevel=INFO
+)
+ecalEndcapPositionedCellsName = "ECalEndcapPositionedCells"
+createEcalEndcapPositionedCells = CreateCaloCellPositionsFCCee(
+    "CreateECalEndcapPositionedCells",
+    OutputLevel=INFO
+)
+createEcalEndcapPositionedCells.positionsTool = cellPositionEcalEndcapTool
+createEcalEndcapPositionedCells.hits.Path = ecalEndcapCellsName
+createEcalEndcapPositionedCells.positionedHits.Path = ecalEndcapPositionedCellsName
+
 if runHCal:
     # Create cells in HCal
     # 1 - merge hits into cells with the default readout
