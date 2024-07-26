@@ -9,6 +9,7 @@ from Configurables import CalibrateCaloClusters
 from Configurables import CreateEmptyCaloCellsCollection
 from Configurables import CreateCaloCellPositionsFCCee
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
+from Configurables import CellPositionsECalEndcapTurbineSegTool
 from Configurables import RedoSegmentation
 from Configurables import CreateCaloCells
 from Configurables import CalibrateCaloHitsTool
@@ -219,7 +220,7 @@ else:
 # ECAL
 ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"
 ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"
-ecalEndcapReadoutName = "ECalEndcapPhiEta"
+ecalEndcapReadoutName = "ECalEndcapTurbine"
 # HCAL
 if runHCal:
     hcalBarrelReadoutName = "HCalBarrelReadout"
@@ -288,8 +289,14 @@ calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel",
                                         readoutName=ecalBarrelReadoutName,
                                         layerFieldName="layer")
 
-calibEcalEndcap = CalibrateCaloHitsTool(
-    "CalibrateECalEndcap", invSamplingFraction="4.27")
+#calibEcalEndcap = CalibrateCaloHitsTool(
+#    "CalibrateECalEndcap", invSamplingFraction="4.27")
+calibEcalEndcap = CalibrateInLayersTool("CalibrateECalEndcap",
+                                        samplingFraction = [0.16419] * 1 + [0.192898] * 1 + [0.18783] * 1 + [0.193203] * 1 + [0.193928] * 1 + [0.192286] * 1 + [0.199959] * 1 + [0.200153] * 1 + [0.212635] * 1 + [0.180345] * 1 + [0.18488] * 1 + [0.194762] * 1 + [0.197775] * 1 + [0.200504] * 1 + [0.205555] * 1 + [0.203601] * 1 + [0.210877] * 1 + [0.208376] * 1 + [0.216345] * 1 + [0.201452] * 1 + [0.202134] * 1 + [0.207566] * 1 + [0.208152] * 1 + [0.209889] * 1 + [0.211743] * 1 + [0.213188] * 1 + [0.215864] * 1 + [0.22972] * 1 + [0.192515] * 1 + [0.0103233] * 1,
+                                        readoutName=ecalEndcapReadoutName,
+                                        layerFieldName="layer")
+
+
 if runHCal:
     calibHcells = CalibrateCaloHitsTool(
         "CalibrateHCal", invSamplingFraction="30.4")
@@ -381,6 +388,23 @@ createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells",
                                         OutputLevel=INFO)
 createEcalEndcapCells.hits.Path = "ECalEndcapHits"
 createEcalEndcapCells.cells.Path = "ECalEndcapCells"
+
+# Add to Ecal endcap cells the position information
+# (good for physics, all coordinates set properly)
+# not yet merged!!
+ cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
+    "CellPositionsECalEndcap",
+    readoutName=ecalEndcapReadoutName,
+     OutputLevel=INFO
+)
+ecalEndcapPositionedCellsName = "ECalEndcapPositionedCells"
+createEcalEndcapPositionedCells = CreateCaloCellPositionsFCCee(
+    "CreateECalEndcapPositionedCells",
+    OutputLevel=INFO
+)
+createEcalEndcapPositionedCells.positionsTool = cellPositionEcalEndcapTool
+createEcalEndcapPositionedCells.hits.Path = ecalEndcapCellsName
+createEcalEndcapPositionedCells.positionedHits.Path = ecalEndcapPositionedCellsName
 
 if runHCal:
     # Create cells in HCal
@@ -486,7 +510,7 @@ towers = CaloTowerToolFCCee("towers",
                             deltaPhiTower=2 * pi / 256.,
                             max_layer=25,
                             ecalBarrelReadoutName=ecalBarrelReadoutName,
-                            ecalEndcapReadoutName="",
+                            ecalEndcapReadoutName=ecalEndcapReadoutName,
                             ecalFwdReadoutName="",
                             hcalBarrelReadoutName=hcalBarrelReadoutName2,
                             hcalExtBarrelReadoutName="",
@@ -494,7 +518,7 @@ towers = CaloTowerToolFCCee("towers",
                             hcalFwdReadoutName="",
                             OutputLevel=INFO)
 towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-towers.ecalEndcapCells.Path = "emptyCaloCells"
+towers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
 towers.ecalFwdCells.Path = "emptyCaloCells"
 
 towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
@@ -607,7 +631,8 @@ TopAlg = [
     resegmentEcalBarrel,
     createEcalBarrelCells2,
     createEcalBarrelPositionedCells2,
-    createEcalEndcapCells
+    createEcalEndcapCells,
+    createEcalEndcapPositionedCells,
 ]
 
 if runHCal:
