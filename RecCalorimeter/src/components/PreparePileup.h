@@ -11,7 +11,7 @@ class IGeoSvc;
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // EDM4HEP
@@ -43,14 +43,14 @@ class ITHistSvc;
  *
  */
 
-class PreparePileup : public GaudiAlgorithm {
+class PreparePileup : public Gaudi::Algorithm {
 
 public:
   PreparePileup(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -74,7 +74,7 @@ private:
   int m_nPhiTower;
 
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
 
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   std::unordered_map<uint64_t, double> m_cellsMap;

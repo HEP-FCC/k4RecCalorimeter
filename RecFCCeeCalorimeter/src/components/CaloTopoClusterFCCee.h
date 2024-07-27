@@ -7,7 +7,7 @@
 #include <map>
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // k4FWCore
@@ -47,7 +47,7 @@ class Segmentation;
  *  @author Coralie Neubueser
  */
 
-class CaloTopoClusterFCCee : public GaudiAlgorithm {
+class CaloTopoClusterFCCee : public Gaudi::Algorithm {
 public:
   CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc);
 
@@ -93,15 +93,15 @@ public:
                       std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
 		      bool aAllowClusterMerge);
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
 private:
   // Cluster collection
-  DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"calo/clusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"calo/clusters", Gaudi::DataHandle::Writer, this};
   // Cluster cells in collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool

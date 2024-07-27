@@ -8,7 +8,7 @@ class IRndmGenSvc;
 class ITHistSvc;
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/RndmGenerators.h"
 
@@ -57,14 +57,14 @@ class BitFieldCoder;
  *
  */
 
-class CorrectECalBarrelSliWinCluster : public GaudiAlgorithm {
+class CorrectECalBarrelSliWinCluster : public Gaudi::Algorithm {
 
 public:
   CorrectECalBarrelSliWinCluster(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -88,13 +88,13 @@ private:
    */
   double getNoiseRMSPerCluster(double aEta, uint numCells);
   /// Handle for clusters (input collection)
-  DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
-  DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Handle for the genvertices to read vertex position information
-  DataHandle<edm4hep::VertexCollection> m_vertex{"vertices", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::VertexCollection> m_vertex{"vertices", Gaudi::DataHandle::Reader, this};
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
   /// Pointer to the geometry service

@@ -5,7 +5,7 @@
 #include "k4FWCore/DataHandle.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // edm4hep
@@ -27,20 +27,20 @@ class IGeoSvc;
  *
  */
 
-class CreateEmptyCaloCellsCollection : public GaudiAlgorithm {
+class CreateEmptyCaloCellsCollection : public Gaudi::Algorithm {
 
 public:
   CreateEmptyCaloCellsCollection(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
 private:
   /// Handle for the calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_caloCells{"cells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_caloCells{"cells", Gaudi::DataHandle::Writer, this};
 };
 
 #endif /* RECCALORIMETER_CREATEEMPTYCALOCELLSCOLLECTION_H */

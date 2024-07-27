@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CALIBRATEBENCHMARKMETHOD_H
 
 // GAUDI
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
@@ -39,7 +39,7 @@ class ITHistSvc;
  *  @author Michaela Mlynarikova
  */
 
-class CalibrateBenchmarkMethod : public GaudiAlgorithm {
+class CalibrateBenchmarkMethod : public Gaudi::Algorithm {
 public:
   explicit CalibrateBenchmarkMethod(const std::string&, ISvcLocator*);
   virtual ~CalibrateBenchmarkMethod();
@@ -50,7 +50,7 @@ public:
   /**  Fills the histograms.
    *   @return status code
    */
-  virtual StatusCode execute() final;
+  virtual StatusCode execute(const EventContext&) const final;
   /**  Finalize.
    *   @return status code
    */
@@ -68,9 +68,9 @@ private:
   void runMinimization(int n_param, const std::vector<double>& variable, const std::vector<double>& steps, const std::vector<int>& fixedParameters) const;
 
   /// Handle for electromagnetic barrel cells (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
 
   /// Histogram of total deposited energy in the calorimeters 
   TH1F* m_totalEnergyECal;

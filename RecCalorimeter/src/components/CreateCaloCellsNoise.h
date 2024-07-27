@@ -8,7 +8,7 @@
 #include "k4Interface/INoiseCaloCellsTool.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // EDM4HEP
@@ -46,14 +46,14 @@ class IGeoSvc;
  *
  */
 
-class CreateCaloCellsNoise : public GaudiAlgorithm {
+class CreateCaloCellsNoise : public Gaudi::Algorithm {
 
 public:
   CreateCaloCellsNoise(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -76,9 +76,9 @@ private:
   Gaudi::Property<bool> m_addPosition{this, "addPosition", false, "Add position information to the cells?"};
 
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
   /// Handle for calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes

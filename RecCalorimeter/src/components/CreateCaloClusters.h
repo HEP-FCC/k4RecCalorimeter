@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CREATECALOCLUSTERS_H
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/ITHistSvc.h"
 
@@ -46,14 +46,14 @@ class TH1F;
  *
  */
 
-class CreateCaloClusters : public GaudiAlgorithm {
+class CreateCaloClusters : public Gaudi::Algorithm {
 
 public:
   CreateCaloClusters(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -66,11 +66,11 @@ private:
   /// Handle for calo clusters (input collection)
   DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (input collection)
-  DataHandle<edm4hep::MCParticleCollection> m_genParticles{"calo/genParticles", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::MCParticleCollection> m_genParticles{"calo/genParticles", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
   // Handle for calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
 
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<ICellPositionsTool> m_cellPositionsECalTool{"CellPositionsECalBarrelTool", this};

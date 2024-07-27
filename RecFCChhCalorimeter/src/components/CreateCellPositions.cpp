@@ -12,14 +12,14 @@
 
 DECLARE_COMPONENT(CreateCellPositions)
 
-CreateCellPositions::CreateCellPositions(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CreateCellPositions::CreateCellPositions(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hit collection (input)");
   declareProperty("positionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
   declareProperty("positionedHits", m_positionedHits, "Output cell positions collection");
 }
 
 StatusCode CreateCellPositions::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
   if (!m_cellPositionsTool.retrieve()) {
     error() << "Unable to retrieve the cell positions tool!!!" << endmsg;
@@ -28,7 +28,7 @@ StatusCode CreateCellPositions::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCellPositions::execute() {
+StatusCode CreateCellPositions::execute(const EventContext&) const {
   // Get the input hit collection
   const auto* hits = m_hits.get();
   debug() << "Input hit collection size: " << hits->size() << endmsg;
@@ -41,4 +41,4 @@ StatusCode CreateCellPositions::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCellPositions::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CreateCellPositions::finalize() { return Gaudi::Algorithm::finalize(); }

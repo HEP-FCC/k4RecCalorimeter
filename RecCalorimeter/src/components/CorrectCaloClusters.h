@@ -5,7 +5,7 @@
 #include "k4FWCore/DataHandle.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/RndmGenerators.h"
@@ -59,14 +59,14 @@ namespace dd4hep {
  *  @author Juraj Smiesko, benchmark calibration added by Michaela Mlynarikova
  */
 
-class CorrectCaloClusters : public GaudiAlgorithm {
+class CorrectCaloClusters : public Gaudi::Algorithm {
 
 public:
   CorrectCaloClusters(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -163,11 +163,11 @@ private:
   double getClusterTheta(edm4hep::Cluster cluster);
 
   /// Handle for input calorimeter clusters collection
-  DataHandle<edm4hep::ClusterCollection> m_inClusters {
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {
     "inClusters", Gaudi::DataHandle::Reader, this
   };
   /// Handle for corrected (output) calorimeter clusters collection
-  DataHandle<edm4hep::ClusterCollection> m_outClusters {
+  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters {
     "outClusters", Gaudi::DataHandle::Writer, this
   };
 

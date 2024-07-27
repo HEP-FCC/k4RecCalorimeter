@@ -3,7 +3,7 @@
 
 // Gaudi
 #include "GaudiKernel/RndmGenerators.h"
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // Key4HEP
@@ -58,14 +58,14 @@ class BitFieldCoder;
  *
  */
 
-class MassInv : public GaudiAlgorithm {
+class MassInv : public Gaudi::Algorithm {
 
 public:
   MassInv(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -89,11 +89,11 @@ private:
    */
   double getNoiseRMSPerCluster(double aEta, uint numCells);
   /// Handle for clusters (input collection)
-  DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
-  DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
   /// Pointer to the geometry service

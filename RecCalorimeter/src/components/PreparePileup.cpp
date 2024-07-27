@@ -20,14 +20,14 @@
 
 DECLARE_COMPONENT(PreparePileup)
 
-PreparePileup::PreparePileup(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+PreparePileup::PreparePileup(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("geometryTool", m_geoTool, "Handle for the geometry tool");
   declareProperty("towerTool", m_towerTool, "Handle for the tower building tool");
 }
 
 StatusCode PreparePileup::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
 
   m_geoSvc = service("GeoSvc");
@@ -144,7 +144,7 @@ StatusCode PreparePileup::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode PreparePileup::execute() {
+StatusCode PreparePileup::execute(const EventContext&) const {
   // Get the input collection with Geant4 hits
   const edm4hep::CalorimeterHitCollection* hits = m_hits.get();
   debug() << "Input Hit collection size: " << hits->size() << endmsg;
@@ -274,5 +274,5 @@ StatusCode PreparePileup::finalize() {
     m_energyAllEventsVsAbsEta[layerId]->Fill(fabs(cellEta), cellEnergy);
   }
 
-  return GaudiAlgorithm::finalize();
+  return Gaudi::Algorithm::finalize();
 }

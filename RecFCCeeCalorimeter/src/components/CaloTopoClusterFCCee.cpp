@@ -24,7 +24,7 @@
 
 DECLARE_COMPONENT(CaloTopoClusterFCCee)
 
-CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("TopoClusterInput", m_inputTool, "Handle for input map of cells");
   declareProperty("noiseTool", m_noiseTool, "Handle for the cells noise tool");
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
@@ -45,7 +45,7 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
 }
 
 StatusCode CaloTopoClusterFCCee::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (Gaudi::Algorithm::initialize().isFailure()) return StatusCode::FAILURE;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
@@ -89,7 +89,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTopoClusterFCCee::execute() {
+StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   // Create output collections
   auto edmClusters = m_clusterCollection.createAndPut();
   auto edmClusterCells = m_clusterCellsCollection.createAndPut();
@@ -457,7 +457,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
   return addedNeighbourIds;
 }
 
-StatusCode CaloTopoClusterFCCee::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CaloTopoClusterFCCee::finalize() { return Gaudi::Algorithm::finalize(); }
 
 
 /**

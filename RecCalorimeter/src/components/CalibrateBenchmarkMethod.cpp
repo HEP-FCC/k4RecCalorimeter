@@ -26,7 +26,7 @@ DECLARE_COMPONENT(CalibrateBenchmarkMethod)
 
 
 CalibrateBenchmarkMethod::CalibrateBenchmarkMethod(const std::string& aName, ISvcLocator* aSvcLoc)
-    : GaudiAlgorithm(aName, aSvcLoc), 
+    : Gaudi::Algorithm(aName, aSvcLoc), 
     m_geoSvc("GeoSvc", aName), 
     m_histSvc("THistSvc", aName),
     m_totalEnergyECal(nullptr),
@@ -43,7 +43,7 @@ CalibrateBenchmarkMethod::~CalibrateBenchmarkMethod() {}
 
 
 StatusCode CalibrateBenchmarkMethod::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (Gaudi::Algorithm::initialize().isFailure()) return StatusCode::FAILURE;
 
   // Check geometry service
   if (!m_geoSvc) {
@@ -102,7 +102,7 @@ StatusCode CalibrateBenchmarkMethod::initialize() {
 }
 
 
-StatusCode CalibrateBenchmarkMethod::execute() {
+StatusCode CalibrateBenchmarkMethod::execute(const EventContext&) const {
   double totalEnergyInECal = 0.;
   double totalEnergyInHCal = 0.;
   double energyInFirstLayerECal = 0; 
@@ -253,7 +253,7 @@ StatusCode CalibrateBenchmarkMethod::finalize() {
 
   runMinimization(n_param, variable, steps, m_fixedParameters);
 
-  return GaudiAlgorithm::finalize();
+  return Gaudi::Algorithm::finalize();
 }
 
 void CalibrateBenchmarkMethod::registerHistogram(const std::string& path, TH1F*& histogramName) {

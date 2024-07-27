@@ -33,7 +33,7 @@ DECLARE_COMPONENT(CorrectCaloClusters)
 
 CorrectCaloClusters::CorrectCaloClusters(const std::string& name,
                                          ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc),
+    : Gaudi::Algorithm(name, svcLoc),
       m_geoSvc("GeoSvc", "CorrectCaloClusters") {
   declareProperty("inClusters", m_inClusters,
                   "Input cluster collection");
@@ -43,7 +43,7 @@ CorrectCaloClusters::CorrectCaloClusters(const std::string& name,
 
 StatusCode CorrectCaloClusters::initialize() {
   {
-    StatusCode sc = GaudiAlgorithm::initialize();
+    StatusCode sc = Gaudi::Algorithm::initialize();
     if (sc.isFailure()) {
       return sc;
     }
@@ -215,7 +215,7 @@ StatusCode CorrectCaloClusters::initialize() {
 }
 
 
-StatusCode CorrectCaloClusters::execute() {
+StatusCode CorrectCaloClusters::execute(const EventContext&) const {
   verbose() << "-------------------------------------------" << endmsg;
 
   // Get the input collection with clusters
@@ -276,7 +276,7 @@ StatusCode CorrectCaloClusters::execute() {
 
 StatusCode CorrectCaloClusters::finalize() {
 
-  return GaudiAlgorithm::finalize();
+  return Gaudi::Algorithm::finalize();
 }
 
 

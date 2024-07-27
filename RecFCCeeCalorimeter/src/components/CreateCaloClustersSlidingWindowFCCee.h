@@ -2,7 +2,7 @@
 #define RECFCCEECALORIMETER_CREATECALOCLUSTERSSLIDINGWINDOWFCCEE_H
 
 // GAUDI
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // k4FWCore
@@ -51,7 +51,7 @@ class ClusterCollection;
  *  @Modified by Tong Li, for Theta-Module Merged readouts in FCCee
  */
 
-class CreateCaloClustersSlidingWindowFCCee : public GaudiAlgorithm {
+class CreateCaloClustersSlidingWindowFCCee : public Gaudi::Algorithm {
 public:
   CreateCaloClustersSlidingWindowFCCee(const std::string& name, ISvcLocator* svcLoc);
   /**  Initialize.
@@ -62,7 +62,7 @@ public:
    *   Perform the sliding window algorithm and build clusters.
    *   @return status code
    */
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
   /**  Finalize.
    *   @return status code
    */
@@ -87,9 +87,9 @@ private:
    */
   unsigned int phiNeighbour(int aIPhi) const;
   /// Handle for calo clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
   /// Handle for calo cluster cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Handle for the tower building tool
   ToolHandle<ITowerToolThetaModule> m_towerTool;
   // calorimeter towers

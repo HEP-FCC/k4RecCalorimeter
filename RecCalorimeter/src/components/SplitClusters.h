@@ -12,7 +12,7 @@
 #include "DDSegmentation/Segmentation.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/ITHistSvc.h"
 
@@ -59,7 +59,7 @@ class TLorentzVector;
  *
  */
 
-class SplitClusters : public GaudiAlgorithm {
+class SplitClusters : public Gaudi::Algorithm {
 
 public:
   SplitClusters(const std::string& name, ISvcLocator* svcLoc);
@@ -84,7 +84,7 @@ public:
 			std::map<uint, TLorentzVector>& aClusterPositions
 			);
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -93,11 +93,11 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Handle for calo clusters (input collection)
-  DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
   // Handle for calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
   /// Handle for neighbours tool 
   ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 

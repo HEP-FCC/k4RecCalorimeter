@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CONESELECTION_H
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
@@ -24,14 +24,14 @@ class IGeoSvc;
  *
  */
 
-class ConeSelection : public GaudiAlgorithm {
+class ConeSelection : public Gaudi::Algorithm {
 
 public:
   ConeSelection(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -40,11 +40,11 @@ private:
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
 
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::MCParticleCollection> m_particles{"particles", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::MCParticleCollection> m_particles{"particles", Gaudi::DataHandle::Reader, this};
   /// Handle for calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer, this};
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   std::unordered_map<uint64_t, double> m_cellsMap;
 

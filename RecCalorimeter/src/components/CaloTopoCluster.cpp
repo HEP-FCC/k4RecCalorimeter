@@ -27,7 +27,7 @@
 
 DECLARE_COMPONENT(CaloTopoCluster)
 
-CaloTopoCluster::CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CaloTopoCluster::CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("TopoClusterInput", m_inputTool, "Handle for input map of cells");
   declareProperty("noiseTool", m_noiseTool, "Handle for the cells noise tool");
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
@@ -47,7 +47,7 @@ CaloTopoCluster::CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc) :
   declareProperty("clusterCells", m_clusterCellsCollection, "Handle for clusters (output collection)");
 }
 StatusCode CaloTopoCluster::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (Gaudi::Algorithm::initialize().isFailure()) return StatusCode::FAILURE;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
@@ -82,7 +82,7 @@ StatusCode CaloTopoCluster::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTopoCluster::execute() {
+StatusCode CaloTopoCluster::execute(const EventContext&) const {
   
   std::unordered_map<uint64_t, double> allCells;
   std::vector<std::pair<uint64_t, double>> firstSeeds;
@@ -396,4 +396,4 @@ CaloTopoCluster::searchForNeighbours(const uint64_t aCellId,
   return addedNeighbourIds;
 }
 
-StatusCode CaloTopoCluster::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CaloTopoCluster::finalize() { return Gaudi::Algorithm::finalize(); }
