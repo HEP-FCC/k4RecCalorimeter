@@ -220,7 +220,7 @@ else:
 # ECAL
 ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"
 ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"
-ecalEndcapReadoutName = "ECalEndcapPhiEta"
+ecalEndcapReadoutName = "ECalEndcapTurbine"
 # HCAL
 if runHCal:
     hcalBarrelReadoutName = "HCalBarrelReadout"

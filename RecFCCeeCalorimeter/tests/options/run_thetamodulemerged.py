@@ -70,7 +70,7 @@ Nevts = 2
 
 # particle momentum and direction
 # momentum = 100  # in GeV
-momentum = 50  # in GeV
+momentum = 10  # in GeV
 # momentum = 10  # in GeV
 thetaMin = 45  # degrees
 thetaMax = 135  # degrees
@@ -227,7 +227,7 @@ else:
 # ECAL
 ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"
 ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"
-ecalEndcapReadoutName = "ECalEndcapPhiEta"
+ecalEndcapReadoutName = "ECalEndcapTurbine"
 # HCAL
 if runHCal:
     hcalBarrelReadoutName = "HCalBarrelReadout"
