@@ -4,9 +4,9 @@
 
 # ONNX DEPENDENCIES
 # includes
-# include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
+include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
 # libs
-# link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
+link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
 # New versions of ONNXRuntime add directories to include
 # through the target onnxruntime::onnxruntime
 if(onnxruntime_FOUND)
