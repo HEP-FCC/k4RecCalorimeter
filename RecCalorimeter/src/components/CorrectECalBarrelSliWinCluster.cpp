@@ -472,7 +472,7 @@ StatusCode CorrectECalBarrelSliWinCluster::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double CorrectECalBarrelSliWinCluster::getNoiseRMSPerCluster(double aEta, uint aNumCells) {
+double CorrectECalBarrelSliWinCluster::getNoiseRMSPerCluster(double aEta, uint aNumCells) const {
   double param0 = 0.;
   double param1 = 0.;
 

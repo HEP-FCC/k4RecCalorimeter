@@ -86,7 +86,7 @@ private:
    *  @param[in] aNumCells Number of cells in a cluster
    *  @return Width of the Gaussian distribution of noise per cluster
    */
-  double getNoiseRMSPerCluster(double aEta, uint numCells);
+  double getNoiseRMSPerCluster(double aEta, uint numCells) const;
   /// Handle for clusters (input collection)
   mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
@@ -100,27 +100,27 @@ private:
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   /// Histogram of energy before any correction
-  TH1F* m_hEnergyPreAnyCorrections;
+  mutable TH1F* m_hEnergyPreAnyCorrections;
   /// Histogram of energy after all corrections
-  TH1F* m_hEnergyPostAllCorrections;
+  mutable TH1F* m_hEnergyPostAllCorrections;
   /// Histogram of energy after all corrections and scaled to restore response = 1
-  TH1F* m_hEnergyPostAllCorrectionsAndScaling;
+  mutable TH1F* m_hEnergyPostAllCorrectionsAndScaling;
   /// Ratio of energy in layers
-  TH1F* m_hEnergyFractionInLayers;
+  mutable TH1F* m_hEnergyFractionInLayers;
   /// Histogram of eta resolution
-  TH1F* m_hDiffEta;
-  TH1F* m_hDiffEtaResWeight;
-  TH1F* m_hDiffEtaResWeight2point;
+  mutable TH1F* m_hDiffEta;
+  mutable TH1F* m_hDiffEtaResWeight;
+  mutable TH1F* m_hDiffEtaResWeight2point;
   /// Histogram of eta resolution per layer
   std::vector<TH1F*> m_hDiffEtaLayer;
   /// Histogram of phi resolution
-  TH1F* m_hDiffPhi;
+  mutable TH1F* m_hDiffPhi;
   /// Histogram of eta
-  TH1F* m_hEta;
+  mutable TH1F* m_hEta;
   /// Histogram of phi
-  TH1F* m_hPhi;
+  mutable TH1F* m_hPhi;
   /// Number of cells inside cluster
-  TH1F* m_hNumCells;
+  mutable TH1F* m_hNumCells;
   /// Energy of the centre of energy distribution histograms
   Gaudi::Property<double> m_response{this, "response", 0.95, "Reconstructed energy (in the cluster) used for scaling"};
   /// Energy of the centre of energy distribution histograms
@@ -153,12 +153,12 @@ private:
   Gaudi::Property<std::vector<std::string>> m_readoutName{
       this, "readoutName", {"ECalBarrelPhiEta"}, "Names of the detector readout, corresponding to systemId"};
   /// map of system Id to segmentation, created based on m_readoutName and m_systemId
-  std::map<uint, dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*> m_segmentationPhiEta;
-  std::map<uint, dd4hep::DDSegmentation::MultiSegmentation*> m_segmentationMulti;
+  mutable std::map<uint, dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*> m_segmentationPhiEta;
+  mutable std::map<uint, dd4hep::DDSegmentation::MultiSegmentation*> m_segmentationMulti;
   /// map of system Id to decoder, created based on m_readoutName and m_systemId
-  std::map<uint, dd4hep::DDSegmentation::BitFieldCoder*> m_decoder;
+  mutable std::map<uint, dd4hep::DDSegmentation::BitFieldCoder*> m_decoder;
   /// Histogram of pileup noise added to energy of clusters
-  TH1F* m_hPileupEnergy;
+  mutable TH1F* m_hPileupEnergy;
   /// Random Number Service
   IRndmGenSvc* m_randSvc;
   /// Gaussian random number generator used for the generation of random noise hits
@@ -205,7 +205,7 @@ private:
   /// segmentation of detetor in phi (for number of bins in histograms)
   Gaudi::Property<double> m_dPhi{this, "dPhi", 2*M_PI/704, "Segmentation in phi"};
   /// Histogram of upstream energy added to energy of clusters
-  TH1F* m_hUpstreamEnergy;
+  mutable TH1F* m_hUpstreamEnergy;
   /// Size of the window in phi for the final cluster building, optimised for each layer  (in units of cell size)
   /// If empty use same size for each layer, as in *nPhiFinal*
   Gaudi::Property<std::vector<int>> m_nPhiFinal{this, "nPhiOptimFinal", {}};

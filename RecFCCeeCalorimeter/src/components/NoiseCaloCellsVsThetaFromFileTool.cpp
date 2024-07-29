@@ -19,7 +19,7 @@ DECLARE_COMPONENT(NoiseCaloCellsVsThetaFromFileTool)
 
 NoiseCaloCellsVsThetaFromFileTool::NoiseCaloCellsVsThetaFromFileTool(const std::string& type, const std::string& name,
                                                        const IInterface* parent)
-    : GaudiTool(type, name, parent), m_geoSvc("GeoSvc", name) {
+    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<INoiseCaloCellsTool>(this);
   declareInterface<INoiseConstTool>(this);
   declareProperty("cellPositionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
@@ -64,7 +64,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
 
   return sc;
@@ -88,7 +88,7 @@ void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::unordered_map<uint6
 }
 
 StatusCode NoiseCaloCellsVsThetaFromFileTool::finalize() {
-  StatusCode sc = GaudiTool::finalize();
+  StatusCode sc = AlgTool::finalize();
   return sc;
 }
 

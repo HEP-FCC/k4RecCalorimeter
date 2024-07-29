@@ -93,11 +93,11 @@ private:
   /// Handle for calo cluster cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Handle for the tower building tool
-  ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<ITowerTool> m_towerTool;
   // calorimeter towers
-  std::vector<std::vector<float>> m_towers;
+  mutable std::vector<std::vector<float>> m_towers;
   /// Vector of pre-clusters
-  std::vector<cluster> m_preClusters;
+  mutable std::vector<cluster> m_preClusters;
   /// number of towers in eta (calculated from m_deltaEtaTower and the eta size of the first layer)
   int m_nEtaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)

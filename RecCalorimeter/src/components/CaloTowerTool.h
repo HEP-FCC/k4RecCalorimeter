@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CALOTOWERTOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
@@ -48,7 +48,7 @@ class Cluster;
  *  @author Jana Faltova
  */
 
-class CaloTowerTool : public GaudiTool, virtual public ITowerTool {
+class CaloTowerTool : public AlgTool, virtual public ITowerTool {
 public:
   CaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~CaloTowerTool() = default;

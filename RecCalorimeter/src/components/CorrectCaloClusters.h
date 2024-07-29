@@ -78,7 +78,7 @@ private:
    *
    * @return                Pointer to the output cluster collection.
    */
-  edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters);
+  edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const;
 
   /**
    * Initialize vectors of upstream and downstream correction functions.
@@ -99,7 +99,7 @@ private:
    * @return                  Status code.
    */
   StatusCode applyUpstreamCorr(const edm4hep::ClusterCollection* inClusters,
-                               edm4hep::ClusterCollection* outClusters);
+                               edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Apply downstream correction to the output clusters.
@@ -110,7 +110,7 @@ private:
    * @return                  Status code.
    */
   StatusCode applyDownstreamCorr(const edm4hep::ClusterCollection* inClusters,
-                                 edm4hep::ClusterCollection* outClusters);
+                                 edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Apply benchmark correction to the output clusters.
@@ -121,7 +121,7 @@ private:
    * @return                  Status code.
    */
   StatusCode applyBenchmarkCorr(const edm4hep::ClusterCollection* inClusters,
-                                edm4hep::ClusterCollection* outClusters);
+                                edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Get sum of energy from cells in specified layer.
@@ -137,7 +137,7 @@ private:
   double getEnergyInLayer(edm4hep::Cluster cluster,
                           const std::string& readoutName,
                           int systemID,
-                          int layerID);
+                          int layerID) const;
 
   /**
    * Get sum of energy from cells in the whole calorimeter.
@@ -151,7 +151,7 @@ private:
    */
   double getTotalEnergy(edm4hep::Cluster cluster,
                         const std::string& readoutName,
-                        int systemID); 
+                        int systemID) const; 
 
   /**
    * Get the theta angle of the specified cluster.
@@ -160,7 +160,7 @@ private:
    *
    * @return              theta angle value.
    */
-  double getClusterTheta(edm4hep::Cluster cluster);
+  double getClusterTheta(edm4hep::Cluster cluster) const;
 
   /// Handle for input calorimeter clusters collection
   mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {

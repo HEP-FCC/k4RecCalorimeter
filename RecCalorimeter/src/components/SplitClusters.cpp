@@ -462,7 +462,7 @@ SplitClusters::searchForNeighbours(const uint64_t aCellId,
 				   std::map<uint64_t, uint>& aClusterOfCell,
 				   std::map<uint64_t, TLorentzVector> aCellPosition,
 				   std::map<uint, TLorentzVector>& aClusterPosition
-				   ){
+				   ) const {
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint> > addedNeighbourIds;
 

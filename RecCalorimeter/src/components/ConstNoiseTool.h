@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CONSTNOISETOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 class IRndmGenSvc;
 
 // DD4HEP
@@ -27,7 +27,7 @@ class IGeoSvc;
  *
  */
 
-class ConstNoiseTool : public GaudiTool, virtual public INoiseConstTool {
+class ConstNoiseTool : public AlgTool, virtual public INoiseConstTool {
 public:
   ConstNoiseTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~ConstNoiseTool() = default;

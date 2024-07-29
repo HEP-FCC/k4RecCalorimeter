@@ -2,7 +2,7 @@
 #define RECFCCEECALORIMETER_CALOTOWERTOOLFCCEE_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
@@ -45,7 +45,7 @@ class Cluster;
  *  @Modified by Tong Li, for Theta-Module Merged readouts in FCCee
  */
 
-class CaloTowerToolFCCee : public GaudiTool, virtual public ITowerToolThetaModule {
+class CaloTowerToolFCCee : public AlgTool, virtual public ITowerToolThetaModule {
 public:
   CaloTowerToolFCCee(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~CaloTowerToolFCCee() = default;

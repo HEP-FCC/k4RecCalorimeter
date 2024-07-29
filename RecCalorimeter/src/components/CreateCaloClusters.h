@@ -64,7 +64,7 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Handle for calo clusters (input collection)
-  DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (input collection)
   mutable DataHandle<edm4hep::MCParticleCollection> m_genParticles{"calo/genParticles", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (output collection)
@@ -81,22 +81,22 @@ private:
   
   const char *types[2] = {"EM", "HAD"};
 
-  TH1F* m_energyScale;
-  TH1F* m_benchmark;
-  TH1F* m_fractionEMcluster;
-  TH2F* m_energyScaleVsClusterEnergy;
-  TH1F* m_totEnergy;
-  TH1F* m_totCalibEnergy;
-  TH1F* m_totBenchmarkEnergy;
-  TH1F* m_clusterEnergy;
-  TH1F* m_sharedClusterEnergy;
-  TH1F* m_clusterEnergyCalibrated;
-  TH1F* m_clusterEnergyBenchmark;
-  TH1F* m_nCluster;
-  TH1F* m_nCluster_1GeV;
-  TH1F* m_nCluster_halfTrueEnergy;
-  TH1F* m_energyCalibCluster_1GeV;
-  TH1F* m_energyCalibCluster_halfTrueEnergy;
+  mutable TH1F* m_energyScale;
+  mutable TH1F* m_benchmark;
+  mutable TH1F* m_fractionEMcluster;
+  mutable TH2F* m_energyScaleVsClusterEnergy;
+  mutable TH1F* m_totEnergy;
+  mutable TH1F* m_totCalibEnergy;
+  mutable TH1F* m_totBenchmarkEnergy;
+  mutable TH1F* m_clusterEnergy;
+  mutable TH1F* m_sharedClusterEnergy;
+  mutable TH1F* m_clusterEnergyCalibrated;
+  mutable TH1F* m_clusterEnergyBenchmark;
+  mutable TH1F* m_nCluster;
+  mutable TH1F* m_nCluster_1GeV;
+  mutable TH1F* m_nCluster_halfTrueEnergy;
+  mutable TH1F* m_energyCalibCluster_1GeV;
+  mutable TH1F* m_energyCalibCluster_halfTrueEnergy;
 
   /// bool if calibration is applied
   bool m_doCalibration =  true;

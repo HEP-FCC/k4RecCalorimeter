@@ -59,7 +59,7 @@ public:
    *   @param[in] aSeeds, the vector of seed cell ids anf their energy to build proto-clusters.
    */
   virtual void findingSeeds(const std::unordered_map<uint64_t, double>& aCells, int aNumSigma,
-                            std::vector<std::pair<uint64_t, double>>& aSeeds);
+                            std::vector<std::pair<uint64_t, double>>& aSeeds) const;
 
   /** Building proto-clusters from the found seeds.
    * First the function initialises a cluster in the preClusterCollection for the seed cells,
@@ -74,7 +74,7 @@ public:
                                     int aLastNumSigma,
                                     std::vector<std::pair<uint64_t, double>>& aSeeds,
                                     const std::unordered_map<uint64_t, double>& aCells,
-                                    std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection);
+                                    std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection) const;
 
   /** Search for neighbours and add them to preClusterCollection
    * The 
@@ -91,7 +91,7 @@ public:
   searchForNeighbours(const uint64_t aCellId, uint& aClusterID, int aNumSigma, const std::unordered_map<uint64_t, double>& aCells,
                       std::map<uint64_t, uint>& aClusterOfCell,
                       std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
-		      bool aAllowClusterMerge);
+		      bool aAllowClusterMerge) const;
 
   StatusCode execute(const EventContext&) const;
 
@@ -105,11 +105,11 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool
-  ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
+  mutable ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
   /// Handle for the cells noise tool
-  ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
+  mutable ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
-  ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
+  mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel
@@ -148,9 +148,9 @@ private:
 
   // minimum noise and offset per barrel ECal layer
   // this serves as a very small cache for fast lookups and avoid looking into the huge map for most of the cells.
-  std::vector<double> m_min_offset;
-  std::vector<double> m_min_noise;
+  mutable std::vector<double> m_min_offset;
+  mutable std::vector<double> m_min_noise;
 
-  void createCache(const std::unordered_map<uint64_t, double>& aCells);
+  void createCache(const std::unordered_map<uint64_t, double>& aCells) const;
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */

@@ -59,9 +59,9 @@ public:
 
 private:
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
-  ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
+  mutable ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
-  ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
+  mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
@@ -111,7 +111,7 @@ private:
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
-  std::unordered_map<uint64_t, double> m_cellsMap;
+  mutable std::unordered_map<uint64_t, double> m_cellsMap;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */

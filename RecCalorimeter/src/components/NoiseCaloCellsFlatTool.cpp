@@ -5,13 +5,13 @@ DECLARE_COMPONENT(NoiseCaloCellsFlatTool)
 
 NoiseCaloCellsFlatTool::NoiseCaloCellsFlatTool(const std::string& type, const std::string& name,
                                                const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<INoiseCaloCellsTool>(this);
 }
 
 StatusCode NoiseCaloCellsFlatTool::initialize() {
   {
-    StatusCode sc = GaudiTool::initialize();
+    StatusCode sc = AlgTool::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -49,4 +49,4 @@ void NoiseCaloCellsFlatTool::filterCellNoise(std::unordered_map<uint64_t, double
   }
 }
 
-StatusCode NoiseCaloCellsFlatTool::finalize() { return GaudiTool::finalize(); }
+StatusCode NoiseCaloCellsFlatTool::finalize() { return AlgTool::finalize(); }

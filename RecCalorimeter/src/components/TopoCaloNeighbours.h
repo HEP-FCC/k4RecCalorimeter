@@ -2,7 +2,7 @@
 #define RECCALORIMETER_TOPOCALONEIGHBOURS_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4Interface/ICaloReadNeighboursMap.h"
@@ -19,7 +19,7 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class TopoCaloNeighbours : public GaudiTool, virtual public ICaloReadNeighboursMap {
+class TopoCaloNeighbours : public AlgTool, virtual public ICaloReadNeighboursMap {
 public:
   TopoCaloNeighbours(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~TopoCaloNeighbours() = default;

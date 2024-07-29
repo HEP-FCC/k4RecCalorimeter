@@ -46,7 +46,7 @@ private:
   /// Handle for calo cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer, this};
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
-  std::unordered_map<uint64_t, double> m_cellsMap;
+  mutable std::unordered_map<uint64_t, double> m_cellsMap;
 
   Gaudi::Property<double> m_r{this, "radius", 0.4, "radius of selection cone"};
 };

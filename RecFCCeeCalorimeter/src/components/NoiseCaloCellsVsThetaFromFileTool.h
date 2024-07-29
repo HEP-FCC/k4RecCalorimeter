@@ -2,7 +2,7 @@
 #define RECFCCEECALORIMETER_NOISECALOCELLSVSTHETAFROMFILETOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
 
@@ -38,7 +38,7 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsVsThetaFromFileTool : public GaudiTool, virtual public INoiseCaloCellsTool, virtual public INoiseConstTool {
+class NoiseCaloCellsVsThetaFromFileTool : public AlgTool, virtual public INoiseCaloCellsTool, virtual public INoiseConstTool {
 public:
   NoiseCaloCellsVsThetaFromFileTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~NoiseCaloCellsVsThetaFromFileTool() = default;

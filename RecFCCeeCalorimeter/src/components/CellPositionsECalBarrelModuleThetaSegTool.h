@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CELLPOSITIONSECALBARRELMODULETHETASEGTOOL_H
 
 // GAUDI
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // k4FWCore
@@ -37,7 +37,7 @@ class Segmentation;
  *  @author Giovanni Marchiori
  */
 
-class CellPositionsECalBarrelModuleThetaSegTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsECalBarrelModuleThetaSegTool : public AlgTool, virtual public ICellPositionsTool {
 public:
   CellPositionsECalBarrelModuleThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CellPositionsECalBarrelModuleThetaSegTool() = default;

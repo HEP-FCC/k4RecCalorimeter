@@ -59,7 +59,7 @@ private:
   MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
 
   // Cache
-  std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
+  mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H */

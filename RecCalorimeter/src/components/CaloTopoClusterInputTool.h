@@ -1,7 +1,7 @@
 #ifndef RECCALORIMETER_CALOTOPOCLUSTERINPUTTOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
@@ -32,7 +32,7 @@ class Segmentation;
  *  @author Coralie Neubueser
  */
 
-class CaloTopoClusterInputTool : public GaudiTool, virtual public ITopoClusterInputTool {
+class CaloTopoClusterInputTool : public AlgTool, virtual public ITopoClusterInputTool {
 public:
   CaloTopoClusterInputTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~CaloTopoClusterInputTool() = default;

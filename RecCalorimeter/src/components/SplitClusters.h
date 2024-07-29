@@ -82,7 +82,7 @@ public:
 			std::map<uint64_t, uint>& aClusterOfCell,
                         std::map<uint64_t, TLorentzVector> aCellPosition,
 			std::map<uint, TLorentzVector>& aClusterPositions
-			);
+			) const;
 
   StatusCode execute(const EventContext&) const;
 
@@ -99,7 +99,7 @@ private:
   // Handle for calo cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer, this};
   /// Handle for neighbours tool 
-  ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
+  mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};

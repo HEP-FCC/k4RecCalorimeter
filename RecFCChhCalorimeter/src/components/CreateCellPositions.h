@@ -44,7 +44,7 @@ public:
 
 private:
   /// Handle for tool to get positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool;
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsTool;
   /// Input collection
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Output collection

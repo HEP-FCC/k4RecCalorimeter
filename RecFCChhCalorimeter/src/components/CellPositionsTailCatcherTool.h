@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CELLPOSITIONSTAILCATCHERTOOL_H
 
 // GAUDI
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
@@ -35,7 +35,7 @@ class Segmentation;
  *  @author Coralie Neubueser
 */
 
-class CellPositionsTailCatcherTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsTailCatcherTool : public AlgTool, virtual public ICellPositionsTool {
 public:
   CellPositionsTailCatcherTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CellPositionsTailCatcherTool() = default;

@@ -20,7 +20,7 @@
 DECLARE_COMPONENT(ReadNoiseFromFileTool)
 
 ReadNoiseFromFileTool::ReadNoiseFromFileTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<INoiseConstTool>(this);
 }
 
@@ -47,14 +47,14 @@ StatusCode ReadNoiseFromFileTool::initialize() {
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
 
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
 
   return sc;
 }
 
 StatusCode ReadNoiseFromFileTool::finalize() {
-  StatusCode sc = GaudiTool::finalize();
+  StatusCode sc = AlgTool::finalize();
   return sc;
 }
 

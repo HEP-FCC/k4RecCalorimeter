@@ -64,11 +64,11 @@ public:
 private:
 
   /// Handle for the calorimeter cells crosstalk tool
-  ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
+  mutable ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
-  ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
+  mutable ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
-  ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
+  mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
@@ -123,9 +123,9 @@ private:
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on final energies to be used for clustering
-  std::unordered_map<uint64_t, double> m_cellsMap;
+  mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
-  std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
+  mutable std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */

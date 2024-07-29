@@ -15,7 +15,7 @@
 DECLARE_COMPONENT(CaloTowerToolFCCee)
 
 CaloTowerToolFCCee::CaloTowerToolFCCee(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent), m_geoSvc("GeoSvc", name) {
+    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareProperty("ecalBarrelCells", m_ecalBarrelCells, "");
   declareProperty("ecalEndcapCells", m_ecalEndcapCells, "");
   declareProperty("ecalFwdCells", m_ecalFwdCells, "");
@@ -27,7 +27,7 @@ CaloTowerToolFCCee::CaloTowerToolFCCee(const std::string& type, const std::strin
 }
 
 StatusCode CaloTowerToolFCCee::initialize() {
-  if (GaudiTool::initialize().isFailure()) {
+  if (AlgTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
  
@@ -107,7 +107,7 @@ StatusCode CaloTowerToolFCCee::finalize() {
   for (auto& towerInMap : m_cellsInTowers) {
     towerInMap.second.clear();
   }
-  return GaudiTool::finalize();
+  return AlgTool::finalize();
 }
 
 std::pair<double, double> CaloTowerToolFCCee::retrievePhiThetaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {

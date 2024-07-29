@@ -2,7 +2,7 @@
 #define RECCALORIMETER_LAYEREDCALOTOWERTOOL_H
 
 // Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
@@ -51,7 +51,7 @@ class Segmentation;
  *  @author Jana Faltova
  */
 
-class LayeredCaloTowerTool : public GaudiTool, virtual public ITowerTool {
+class LayeredCaloTowerTool : public AlgTool, virtual public ITowerTool {
 public:
   LayeredCaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~LayeredCaloTowerTool() = default;

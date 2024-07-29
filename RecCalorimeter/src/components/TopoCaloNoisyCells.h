@@ -2,7 +2,7 @@
 #define RECCALORIMETER_TOPOCALONOISYCELLS_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4Interface/ICaloReadCellNoiseMap.h"
@@ -18,7 +18,7 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class TopoCaloNoisyCells : public GaudiTool, virtual public ICaloReadCellNoiseMap {
+class TopoCaloNoisyCells : public AlgTool, virtual public ICaloReadCellNoiseMap {
 public:
   TopoCaloNoisyCells(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~TopoCaloNoisyCells() = default;

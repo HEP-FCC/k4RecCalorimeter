@@ -9,12 +9,12 @@ DECLARE_COMPONENT(LayerPhiEtaCaloTool)
 
 LayerPhiEtaCaloTool::LayerPhiEtaCaloTool(const std::string& type, const std::string& name,
                                                  const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICalorimeterTool>(this);
 }
 
 StatusCode LayerPhiEtaCaloTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -33,7 +33,7 @@ StatusCode LayerPhiEtaCaloTool::initialize() {
   return sc;
 }
 
-StatusCode LayerPhiEtaCaloTool::finalize() { return GaudiTool::finalize(); }
+StatusCode LayerPhiEtaCaloTool::finalize() { return AlgTool::finalize(); }
 
 StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
   // Get the total number of active volumes in the geometry

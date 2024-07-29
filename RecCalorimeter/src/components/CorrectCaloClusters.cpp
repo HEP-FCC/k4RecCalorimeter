@@ -281,7 +281,7 @@ StatusCode CorrectCaloClusters::finalize() {
 
 
 edm4hep::ClusterCollection* CorrectCaloClusters::initializeOutputClusters(
-    const edm4hep::ClusterCollection* inClusters) {
+    const edm4hep::ClusterCollection* inClusters) const {
 
   edm4hep::ClusterCollection* outClusters = m_outClusters.createAndPut();
 
@@ -351,7 +351,7 @@ StatusCode CorrectCaloClusters::initializeCorrFunctions(std::vector<std::vector<
 
 
 StatusCode CorrectCaloClusters::applyUpstreamCorr(const edm4hep::ClusterCollection* inClusters,
-                                                  edm4hep::ClusterCollection* outClusters) {
+                                                  edm4hep::ClusterCollection* outClusters) const {
   for (size_t i = 0; i < m_readoutNames.size(); ++i) {
     for (size_t j = 0; j < inClusters->size(); ++j) {
       double energyInFirstLayer = getEnergyInLayer(inClusters->at(j),
@@ -388,7 +388,7 @@ StatusCode CorrectCaloClusters::applyUpstreamCorr(const edm4hep::ClusterCollecti
 
 
 StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollection* inClusters,
-                                                    edm4hep::ClusterCollection* outClusters) {
+                                                    edm4hep::ClusterCollection* outClusters) const {
   for (size_t i = 0; i < m_readoutNames.size(); ++i) {
     for (size_t j = 0; j < inClusters->size(); ++j) {
       double energyInLastLayer = getEnergyInLayer(inClusters->at(j),
@@ -424,7 +424,7 @@ StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollec
 }
 
 StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollection* inClusters,
-                                                    edm4hep::ClusterCollection* outClusters) {
+                                                    edm4hep::ClusterCollection* outClusters) const {
 
   const size_t numReadoutNames = m_readoutNames.size();
 
@@ -531,7 +531,7 @@ StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollect
 double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
                                              const std::string& readoutName,
                                              int systemID,
-                                             int layerID) {
+                                             int layerID) const {
   dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
   double energy = 0;
@@ -550,7 +550,7 @@ double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
 }
 
 
-double CorrectCaloClusters::getClusterTheta(edm4hep::Cluster cluster) {
+double CorrectCaloClusters::getClusterTheta(edm4hep::Cluster cluster) const {
   double rxy = std::sqrt(std::pow(cluster.getPosition().x, 2) + std::pow(cluster.getPosition().y, 2));
   double theta = ::fabs(std::atan2(rxy, cluster.getPosition().z));
   theta = 180 * theta / M_PI;
@@ -561,7 +561,7 @@ double CorrectCaloClusters::getClusterTheta(edm4hep::Cluster cluster) {
 
 double CorrectCaloClusters::getTotalEnergy(edm4hep::Cluster cluster,
                                            const std::string& readoutName,
-                                           int systemID) {
+                                           int systemID) const {
   dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
   double energy = 0;

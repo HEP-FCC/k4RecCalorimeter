@@ -9,13 +9,13 @@ DECLARE_COMPONENT(TopoCaloNeighbours)
 
 TopoCaloNeighbours::TopoCaloNeighbours(const std::string& type, const std::string& name,
                                        const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICaloReadNeighboursMap>(this);
 }
 
 StatusCode TopoCaloNeighbours::initialize() {
   {
-    StatusCode sc = GaudiTool::initialize();
+    StatusCode sc = AlgTool::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -66,7 +66,7 @@ StatusCode TopoCaloNeighbours::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode TopoCaloNeighbours::finalize() { return GaudiTool::finalize(); }
+StatusCode TopoCaloNeighbours::finalize() { return AlgTool::finalize(); }
 
 std::vector<uint64_t>& TopoCaloNeighbours::neighbours(uint64_t aCellId) {
   return m_map[aCellId];

@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CELLPOSITIONSHCALBARRELPHISEGTOOL_H
 
 // GAUDI
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
@@ -34,7 +34,7 @@ class Segmentation;
  *  @author Coralie Neubueser
  */
 
-class CellPositionsHCalBarrelPhiSegTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsHCalBarrelPhiSegTool : public AlgTool, virtual public ICellPositionsTool {
 public:
   CellPositionsHCalBarrelPhiSegTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CellPositionsHCalBarrelPhiSegTool() = default;
