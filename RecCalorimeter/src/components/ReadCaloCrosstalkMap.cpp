@@ -9,7 +9,7 @@ DECLARE_COMPONENT(ReadCaloCrosstalkMap)
 
 ReadCaloCrosstalkMap::ReadCaloCrosstalkMap(const std::string& type, const std::string& name,
                                                  const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICaloReadCrosstalkMap>(this);
 }
 
@@ -23,7 +23,7 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
   }
 
   {
-    StatusCode sc = GaudiTool::initialize();
+    StatusCode sc = AlgTool::initialize();
     info() << "Loading crosstalk map..." << endmsg;
     if (sc.isFailure()) return sc;
   }
@@ -71,7 +71,7 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode ReadCaloCrosstalkMap::finalize() { return GaudiTool::finalize(); }
+StatusCode ReadCaloCrosstalkMap::finalize() { return AlgTool::finalize(); }
 
 std::vector<uint64_t>& ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) {
   return m_mapNeighbours[aCellId];

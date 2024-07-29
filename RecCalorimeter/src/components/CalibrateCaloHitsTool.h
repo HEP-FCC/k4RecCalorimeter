@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CALIBRATECALOHITSTOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4Interface/ICalibrateCaloHitsTool.h"
@@ -21,7 +21,7 @@
  *  @date   2016-09
  */
 
-class CalibrateCaloHitsTool : public GaudiTool, virtual public ICalibrateCaloHitsTool {
+class CalibrateCaloHitsTool : public AlgTool, virtual public ICalibrateCaloHitsTool {
 public:
   CalibrateCaloHitsTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CalibrateCaloHitsTool() = default;

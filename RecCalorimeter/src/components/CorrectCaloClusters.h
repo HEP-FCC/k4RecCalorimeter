@@ -5,7 +5,7 @@
 #include "k4FWCore/DataHandle.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/RndmGenerators.h"
@@ -59,14 +59,14 @@ namespace dd4hep {
  *  @author Juraj Smiesko, benchmark calibration added by Michaela Mlynarikova
  */
 
-class CorrectCaloClusters : public GaudiAlgorithm {
+class CorrectCaloClusters : public Gaudi::Algorithm {
 
 public:
   CorrectCaloClusters(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -78,7 +78,7 @@ private:
    *
    * @return                Pointer to the output cluster collection.
    */
-  edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters);
+  edm4hep::ClusterCollection* initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const;
 
   /**
    * Initialize vectors of upstream and downstream correction functions.
@@ -99,7 +99,7 @@ private:
    * @return                  Status code.
    */
   StatusCode applyUpstreamCorr(const edm4hep::ClusterCollection* inClusters,
-                               edm4hep::ClusterCollection* outClusters);
+                               edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Apply downstream correction to the output clusters.
@@ -110,7 +110,7 @@ private:
    * @return                  Status code.
    */
   StatusCode applyDownstreamCorr(const edm4hep::ClusterCollection* inClusters,
-                                 edm4hep::ClusterCollection* outClusters);
+                                 edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Apply benchmark correction to the output clusters.
@@ -121,7 +121,7 @@ private:
    * @return                  Status code.
    */
   StatusCode applyBenchmarkCorr(const edm4hep::ClusterCollection* inClusters,
-                                edm4hep::ClusterCollection* outClusters);
+                                edm4hep::ClusterCollection* outClusters) const;
 
   /**
    * Get sum of energy from cells in specified layer.
@@ -137,7 +137,7 @@ private:
   double getEnergyInLayer(edm4hep::Cluster cluster,
                           const std::string& readoutName,
                           int systemID,
-                          int layerID);
+                          int layerID) const;
 
   /**
    * Get sum of energy from cells in the whole calorimeter.
@@ -151,7 +151,7 @@ private:
    */
   double getTotalEnergy(edm4hep::Cluster cluster,
                         const std::string& readoutName,
-                        int systemID); 
+                        int systemID) const; 
 
   /**
    * Get the theta angle of the specified cluster.
@@ -160,14 +160,14 @@ private:
    *
    * @return              theta angle value.
    */
-  double getClusterTheta(edm4hep::Cluster cluster);
+  double getClusterTheta(edm4hep::Cluster cluster) const;
 
   /// Handle for input calorimeter clusters collection
-  DataHandle<edm4hep::ClusterCollection> m_inClusters {
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {
     "inClusters", Gaudi::DataHandle::Reader, this
   };
   /// Handle for corrected (output) calorimeter clusters collection
-  DataHandle<edm4hep::ClusterCollection> m_outClusters {
+  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters {
     "outClusters", Gaudi::DataHandle::Writer, this
   };
 

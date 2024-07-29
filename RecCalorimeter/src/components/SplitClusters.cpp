@@ -23,7 +23,7 @@
 
 DECLARE_COMPONENT(SplitClusters)
 
-SplitClusters::SplitClusters(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+SplitClusters::SplitClusters(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("clusters", m_clusters, "Input clusters (input)");
   
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
@@ -40,7 +40,7 @@ SplitClusters::SplitClusters(const std::string& name, ISvcLocator* svcLoc) : Gau
 }
 
 StatusCode SplitClusters::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -76,7 +76,7 @@ StatusCode SplitClusters::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode SplitClusters::execute() {
+StatusCode SplitClusters::execute(const EventContext&) const {
   // Get the input collection with Geant4 hits
   const edm4hep::ClusterCollection* clusters = m_clusters.get();
   debug() << "Input Cluster collection size: " << clusters->size() << endmsg;
@@ -462,7 +462,7 @@ SplitClusters::searchForNeighbours(const uint64_t aCellId,
 				   std::map<uint64_t, uint>& aClusterOfCell,
 				   std::map<uint64_t, TLorentzVector> aCellPosition,
 				   std::map<uint, TLorentzVector>& aClusterPosition
-				   ){
+				   ) const {
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint> > addedNeighbourIds;
 
@@ -531,4 +531,4 @@ SplitClusters::searchForNeighbours(const uint64_t aCellId,
 
 StatusCode SplitClusters::finalize() { 
 
-return GaudiAlgorithm::finalize(); }
+return Gaudi::Algorithm::finalize(); }

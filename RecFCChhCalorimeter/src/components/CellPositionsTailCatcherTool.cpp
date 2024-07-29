@@ -7,12 +7,12 @@ DECLARE_COMPONENT(CellPositionsTailCatcherTool)
 CellPositionsTailCatcherTool::CellPositionsTailCatcherTool(const std::string& type,
                                                            const std::string& name,
                                                            const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsTailCatcherTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -94,4 +94,4 @@ dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const uint64_t& aCell
 
 int CellPositionsTailCatcherTool::layerId(const uint64_t& /*aCellId*/) { return 0; }
 
-StatusCode CellPositionsTailCatcherTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsTailCatcherTool::finalize() { return AlgTool::finalize(); }

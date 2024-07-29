@@ -8,7 +8,6 @@ gaudi_add_module(k4RecCalorimeterPlugins
                  SOURCES ${_module_sources}
                  LINK k4FWCore::k4FWCore
                       k4FWCore::k4Interface
-                      Gaudi::GaudiAlgLib
                       Gaudi::GaudiKernel
                       DD4hep::DDCore
                       DD4hep::DDG4

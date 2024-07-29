@@ -9,12 +9,12 @@ DECLARE_COMPONENT(CellPositionsECalBarrelModuleThetaSegTool)
 
 CellPositionsECalBarrelModuleThetaSegTool::CellPositionsECalBarrelModuleThetaSegTool(const std::string& type, const std::string& name,
 										     const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -143,4 +143,4 @@ int CellPositionsECalBarrelModuleThetaSegTool::layerId(const uint64_t& aCellId) 
   return layer;
 }
 
-StatusCode CellPositionsECalBarrelModuleThetaSegTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsECalBarrelModuleThetaSegTool::finalize() { return AlgTool::finalize(); }

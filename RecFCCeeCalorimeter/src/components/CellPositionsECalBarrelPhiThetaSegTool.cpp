@@ -7,12 +7,12 @@ DECLARE_COMPONENT(CellPositionsECalBarrelPhiThetaSegTool)
 
 CellPositionsECalBarrelPhiThetaSegTool::CellPositionsECalBarrelPhiThetaSegTool(const std::string& type, const std::string& name,
                                                          const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsECalBarrelPhiThetaSegTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -93,4 +93,4 @@ int CellPositionsECalBarrelPhiThetaSegTool::layerId(const uint64_t& aCellId) {
   return layer;
 }
 
-StatusCode CellPositionsECalBarrelPhiThetaSegTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsECalBarrelPhiThetaSegTool::finalize() { return AlgTool::finalize(); }

@@ -32,7 +32,7 @@
 DECLARE_COMPONENT(CorrectECalBarrelSliWinCluster)
 
 CorrectECalBarrelSliWinCluster::CorrectECalBarrelSliWinCluster(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc),
+    : Gaudi::Algorithm(name, svcLoc),
       m_histSvc("THistSvc", "CorrectECalBarrelSliWinCluster"),
       m_geoSvc("GeoSvc", "CorrectECalBarrelSliWinCluster"),
       m_hEnergyPreAnyCorrections(nullptr),
@@ -47,7 +47,7 @@ CorrectECalBarrelSliWinCluster::CorrectECalBarrelSliWinCluster(const std::string
 
 StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   {
-    StatusCode sc = GaudiAlgorithm::initialize();
+    StatusCode sc = Gaudi::Algorithm::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -214,7 +214,7 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CorrectECalBarrelSliWinCluster::execute() {
+StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
   // Get the input collection with clusters
   const edm4hep::ClusterCollection* inClusters = m_inClusters.get();
   edm4hep::ClusterCollection* correctedClusters = m_correctedClusters.createAndPut();
@@ -428,7 +428,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CorrectECalBarrelSliWinCluster::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CorrectECalBarrelSliWinCluster::finalize() { return Gaudi::Algorithm::finalize(); }
 
 StatusCode CorrectECalBarrelSliWinCluster::initNoiseFromFile() {
   // Check if file exists
@@ -472,7 +472,7 @@ StatusCode CorrectECalBarrelSliWinCluster::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double CorrectECalBarrelSliWinCluster::getNoiseRMSPerCluster(double aEta, uint aNumCells) {
+double CorrectECalBarrelSliWinCluster::getNoiseRMSPerCluster(double aEta, uint aNumCells) const {
   double param0 = 0.;
   double param1 = 0.;
 

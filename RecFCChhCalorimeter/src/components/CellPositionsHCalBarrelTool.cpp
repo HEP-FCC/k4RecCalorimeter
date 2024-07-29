@@ -6,12 +6,12 @@ DECLARE_COMPONENT(CellPositionsHCalBarrelTool)
 
 CellPositionsHCalBarrelTool::CellPositionsHCalBarrelTool(const std::string& type, const std::string& name,
                                                          const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsHCalBarrelTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -85,4 +85,4 @@ int CellPositionsHCalBarrelTool::layerId(const uint64_t& aCellId) {
   return layer;
 }
 
-StatusCode CellPositionsHCalBarrelTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsHCalBarrelTool::finalize() { return AlgTool::finalize(); }

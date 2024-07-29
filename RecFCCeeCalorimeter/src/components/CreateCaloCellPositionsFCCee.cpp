@@ -15,7 +15,7 @@
 DECLARE_COMPONENT(CreateCaloCellPositionsFCCee)
 
 CreateCaloCellPositionsFCCee::CreateCaloCellPositionsFCCee(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc) {
+    : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hit collection (input)");
   declareProperty("positionsTool", m_cellPositionsTool,
                   "Handle for tool to retrieve cell positions from");
@@ -25,7 +25,7 @@ CreateCaloCellPositionsFCCee::CreateCaloCellPositionsFCCee(const std::string& na
 
 StatusCode CreateCaloCellPositionsFCCee::initialize() {
   {
-    StatusCode sc = GaudiAlgorithm::initialize();
+    StatusCode sc = Gaudi::Algorithm::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -44,7 +44,7 @@ StatusCode CreateCaloCellPositionsFCCee::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCellPositionsFCCee::execute() {
+StatusCode CreateCaloCellPositionsFCCee::execute(const EventContext&) const {
   // Get the input hit collection
   const auto* hits = m_hits.get();
   debug() << "Input hit collection size: " << hits->size() << endmsg;
@@ -88,4 +88,4 @@ StatusCode CreateCaloCellPositionsFCCee::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCellPositionsFCCee::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CreateCaloCellPositionsFCCee::finalize() { return Gaudi::Algorithm::finalize(); }

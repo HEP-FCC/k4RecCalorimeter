@@ -18,7 +18,7 @@
 
 DECLARE_COMPONENT(ConeSelection)
 
-ConeSelection::ConeSelection(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+ConeSelection::ConeSelection(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("cells", m_cells, "The cells (input)");
   declareProperty("particles", m_particles, "The geant particles (input)");
   declareProperty("selCells", m_selCells, "The selected cells (output)");
@@ -36,13 +36,13 @@ StatusCode ConeSelection::initialize() {
   info() << "ConeSelection initialized" << endmsg;
   debug() << "Cone radius: " << m_r << endmsg;
  
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
 
   return StatusCode::SUCCESS;
 }
 
-StatusCode ConeSelection::execute() {
+StatusCode ConeSelection::execute(const EventContext&) const {
 
   m_cellsMap.clear();
 
@@ -89,4 +89,4 @@ StatusCode ConeSelection::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode ConeSelection::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode ConeSelection::finalize() { return Gaudi::Algorithm::finalize(); }

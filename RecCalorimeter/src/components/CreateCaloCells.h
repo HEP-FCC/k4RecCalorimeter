@@ -10,7 +10,7 @@
 #include "k4Interface/ICaloReadCrosstalkMap.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // edm4hep
@@ -50,25 +50,25 @@ class IGeoSvc;
  *
  */
 
-class CreateCaloCells : public GaudiAlgorithm {
+class CreateCaloCells : public Gaudi::Algorithm {
 
 public:
   CreateCaloCells(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
 private:
 
   /// Handle for the calorimeter cells crosstalk tool
-  ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
+  mutable ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
-  ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
+  mutable ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
-  ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
+  mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
@@ -85,11 +85,11 @@ private:
   Gaudi::Property<bool> m_addPosition{this, "addPosition", false, "Add position information to the cells?"};
 
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
   /// Handle for the cellID encoding string of the input collection
   MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
@@ -123,9 +123,9 @@ private:
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on final energies to be used for clustering
-  std::unordered_map<uint64_t, double> m_cellsMap;
+  mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
-  std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
+  mutable std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */

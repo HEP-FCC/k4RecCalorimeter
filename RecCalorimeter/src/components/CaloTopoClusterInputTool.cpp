@@ -14,7 +14,7 @@
 DECLARE_COMPONENT(CaloTopoClusterInputTool)
 
 CaloTopoClusterInputTool::CaloTopoClusterInputTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareProperty("ecalBarrelCells", m_ecalBarrelCells, "");
   declareProperty("ecalEndcapCells", m_ecalEndcapCells, "");
   declareProperty("ecalFwdCells", m_ecalFwdCells, "");
@@ -26,7 +26,7 @@ CaloTopoClusterInputTool::CaloTopoClusterInputTool(const std::string& type, cons
 }
 
 StatusCode CaloTopoClusterInputTool::initialize() {
-  if (GaudiTool::initialize().isFailure()) {
+  if (AlgTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
   m_geoSvc = service("GeoSvc");
@@ -39,7 +39,7 @@ StatusCode CaloTopoClusterInputTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTopoClusterInputTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CaloTopoClusterInputTool::finalize() { return AlgTool::finalize(); }
 
 StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, double>& aCells) {
   uint totalNumberOfCells = 0;

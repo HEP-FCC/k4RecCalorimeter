@@ -10,14 +10,14 @@
 DECLARE_COMPONENT(CreateCaloClustersSlidingWindowFCCee)
 
 CreateCaloClustersSlidingWindowFCCee::CreateCaloClustersSlidingWindowFCCee(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc) {
+    : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("clusters", m_clusters, "Handle for calo clusters (output collection)");
   declareProperty("clusterCells", m_clusterCells, "Handle for calo cluster cells (output collection)");
   declareProperty("towerTool", m_towerTool, "Handle for the tower building tool");
 }
 
 StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) {
+  if (Gaudi::Algorithm::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
   if (!m_towerTool.retrieve()) {
@@ -38,7 +38,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloClustersSlidingWindowFCCee::execute() {
+StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) const {
   // 1. Create calorimeter towers (calorimeter grid in theta phi, all layers merged)
   m_towers.assign(m_nThetaTower, std::vector<float>(m_nPhiTower, 0));
   // Create an output collection
@@ -312,7 +312,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloClustersSlidingWindowFCCee::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CreateCaloClustersSlidingWindowFCCee::finalize() { return Gaudi::Algorithm::finalize(); }
 
 unsigned int CreateCaloClustersSlidingWindowFCCee::phiNeighbour(int aIPhi) const {
   if (aIPhi < 0) {

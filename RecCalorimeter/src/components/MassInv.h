@@ -3,7 +3,7 @@
 
 // Gaudi
 #include "GaudiKernel/RndmGenerators.h"
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // Key4HEP
@@ -58,14 +58,14 @@ class BitFieldCoder;
  *
  */
 
-class MassInv : public GaudiAlgorithm {
+class MassInv : public Gaudi::Algorithm {
 
 public:
   MassInv(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -87,13 +87,13 @@ private:
    *  @param[in] aNumCells Number of cells in a cluster
     *  @return Width of the Gaussian distribution of noise per cluster
    */
-  double getNoiseRMSPerCluster(double aEta, uint numCells);
+  double getNoiseRMSPerCluster(double aEta, uint numCells) const;
   /// Handle for clusters (input collection)
-  DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
-  DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
   /// Pointer to the geometry service
@@ -186,10 +186,10 @@ private:
   Gaudi::Property<std::vector<std::string>> m_readoutName{
       this, "readoutName", {"ECalBarrelPhiEta"}, "Names of the detector readout, corresponding to systemId"};
   /// map of system Id to segmentation, created based on m_readoutName and m_systemId
-  std::map<uint, dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*> m_segmentationPhiEta;
-  std::map<uint, dd4hep::DDSegmentation::MultiSegmentation*> m_segmentationMulti;
+  mutable std::map<uint, dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*> m_segmentationPhiEta;
+  mutable std::map<uint, dd4hep::DDSegmentation::MultiSegmentation*> m_segmentationMulti;
   /// map of system Id to decoder, created based on m_readoutName and m_systemId
-  std::map<uint, dd4hep::DDSegmentation::BitFieldCoder*> m_decoder;
+  mutable std::map<uint, dd4hep::DDSegmentation::BitFieldCoder*> m_decoder;
   /// Histogram of pileup noise added to energy of clusters
   TH1F* m_hPileupEnergy;
   /// Random Number Service
@@ -263,9 +263,9 @@ private:
 
 // ISOLATION
   /// Handle for the tower building tool
-  ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<ITowerTool> m_towerTool;
   // calorimeter towers
-  std::vector<std::vector<float>> m_towers;
+  mutable std::vector<std::vector<float>> m_towers;
   /// number of towers in eta (calculated from m_deltaEtaTower and the eta size of the first layer)
   int m_nEtaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)

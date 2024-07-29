@@ -8,14 +8,14 @@ CellPositionsHCalBarrelPhiThetaSegTool::CellPositionsHCalBarrelPhiThetaSegTool(
     const std::string &type,
     const std::string &name,
     const IInterface *parent)
-    : GaudiTool(type, name, parent)
+    : AlgTool(type, name, parent)
 {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsHCalBarrelPhiThetaSegTool::initialize()
 {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure())
     return sc;
   m_geoSvc = service("GeoSvc");
@@ -102,4 +102,4 @@ int CellPositionsHCalBarrelPhiThetaSegTool::layerId(const uint64_t &aCellId)
   return layer;
 }
 
-StatusCode CellPositionsHCalBarrelPhiThetaSegTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsHCalBarrelPhiThetaSegTool::finalize() { return AlgTool::finalize(); }

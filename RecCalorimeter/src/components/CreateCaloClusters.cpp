@@ -22,7 +22,7 @@
 
 DECLARE_COMPONENT(CreateCaloClusters)
 
-CreateCaloClusters::CreateCaloClusters(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CreateCaloClusters::CreateCaloClusters(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("clusters", m_clusters, "Input clusters (input)");
   declareProperty("genParticles", m_genParticles, "Input gen particles (input)");
   declareProperty("outClusters", m_newClusters, "Output clusters (output)");
@@ -41,7 +41,7 @@ CreateCaloClusters::CreateCaloClusters(const std::string& name, ISvcLocator* svc
 }
 
 StatusCode CreateCaloClusters::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -143,7 +143,7 @@ StatusCode CreateCaloClusters::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloClusters::execute() {
+StatusCode CreateCaloClusters::execute(const EventContext&) const {
   // Get the input collection with Geant4 hits
   const edm4hep::ClusterCollection* clusters = m_clusters.get();
   debug() << "Input Cluster collection size: " << clusters->size() << endmsg;
@@ -358,4 +358,4 @@ StatusCode CreateCaloClusters::finalize() {
   m_clusterEnergyBenchmark->Scale(1/allCluster);
   m_energyScale->Scale(1/allCluster);
 
-return GaudiAlgorithm::finalize(); }
+return Gaudi::Algorithm::finalize(); }
