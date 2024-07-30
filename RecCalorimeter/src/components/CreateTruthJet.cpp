@@ -92,10 +92,9 @@ struct CreateTruthJet final
       for (auto constit : constits) {
         int index = constit.user_info<k4::recCalo::ClusterInfo>().index();
 
-        edm4hep::MutableMCRecoParticleAssociation association;
+        auto association = assoc.create();
         association.setRec(jet);
         association.setSim((input)[index]);
-        assoc.push_back(association);
       }
 
       edmJets.push_back(jet);
