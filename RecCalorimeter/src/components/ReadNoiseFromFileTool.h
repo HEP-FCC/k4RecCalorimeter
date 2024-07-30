@@ -2,7 +2,7 @@
 #define RECCALORIMETER_READNOISEFROMFILETOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // k4FWCore
@@ -29,7 +29,7 @@ class TH1F;
  *
  */
 
-class ReadNoiseFromFileTool : public GaudiTool, virtual public INoiseConstTool {
+class ReadNoiseFromFileTool : public AlgTool, virtual public INoiseConstTool {
 public:
   ReadNoiseFromFileTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~ReadNoiseFromFileTool() = default;

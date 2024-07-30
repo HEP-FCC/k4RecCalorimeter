@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CALOTOPOCLUSTER_H
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // k4FWCore
@@ -42,7 +42,7 @@ class Segmentation;
  *  @author Coralie Neubueser
  */
 
-class CaloTopoCluster : public GaudiAlgorithm {
+class CaloTopoCluster : public Gaudi::Algorithm {
 public:
   CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc);
 
@@ -54,7 +54,7 @@ public:
    *   @param[in] aSeeds, the vector of seed cell ids anf their energy to build proto-clusters.
    */
   virtual void findingSeeds(const std::unordered_map<uint64_t, double>& aCells, int aNumSigma,
-                            std::vector<std::pair<uint64_t, double>>& aSeeds);
+                            std::vector<std::pair<uint64_t, double>>& aSeeds) const;
 
   /** Building proto-clusters from the found seeds.
    * First the function initialises a cluster in the preClusterCollection for the seed cells,
@@ -69,7 +69,7 @@ public:
                                     int aLastNumSigma,
                                     std::vector<std::pair<uint64_t, double>>& aSeeds,
                                     const std::unordered_map<uint64_t, double>& aCells,
-                                    std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection);
+                                    std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection) const;
 
   /** Search for neighbours and add them to preClusterCollection
    * The 
@@ -86,41 +86,41 @@ public:
   searchForNeighbours(const uint64_t aCellId, uint& aClusterID, int aNumSigma, const std::unordered_map<uint64_t, double>& aCells,
                       std::map<uint64_t, uint>& aClusterOfCell,
                       std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
-		      bool aAllowClusterMerge);
+		      bool aAllowClusterMerge) const;
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
 private:
   // Cluster collection
-  DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"calo/clusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"calo/clusters", Gaudi::DataHandle::Writer, this};
   // Cluster cells in collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool
-  ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
+  mutable ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
   /// Handle for the cells noise tool
-  ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
+  mutable ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
-  ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
+  mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in HCal Barrel 
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsHECTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHECTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool", this};
 
   /// no segmentation used in HCal
   Gaudi::Property<bool> m_noSegmentationHCalUsed{this, "noSegmentationHCal", true, "HCal Barrel readout without DD4hep eta-phi segmentation used."};

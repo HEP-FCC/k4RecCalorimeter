@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CALIBRATEINLAYERSTOOL_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // k4FWCore
@@ -26,7 +26,7 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class CalibrateInLayersTool : public GaudiTool, virtual public ICalibrateCaloHitsTool {
+class CalibrateInLayersTool : public AlgTool, virtual public ICalibrateCaloHitsTool {
 public:
   CalibrateInLayersTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CalibrateInLayersTool() = default;

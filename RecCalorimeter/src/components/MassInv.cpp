@@ -30,7 +30,7 @@
 DECLARE_COMPONENT(MassInv)
 
 MassInv::MassInv(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc),
+    : Gaudi::Algorithm(name, svcLoc),
       m_histSvc("THistSvc", "MassInv"),
       m_geoSvc("GeoSvc", "MassInv"),
       m_hEnergyPreAnyCorrections(nullptr),
@@ -45,7 +45,7 @@ MassInv::MassInv(const std::string& name, ISvcLocator* svcLoc)
 
 StatusCode MassInv::initialize() {
   {
-    StatusCode sc = GaudiAlgorithm::initialize();
+    StatusCode sc = Gaudi::Algorithm::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -382,7 +382,7 @@ StatusCode MassInv::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode MassInv::execute() {
+StatusCode MassInv::execute(const EventContext&) const {
   // Get the input collection with clusters
   const edm4hep::ClusterCollection* inClusters = m_inClusters.get();
   edm4hep::ClusterCollection* correctedClusters = m_correctedClusters.createAndPut();
@@ -805,7 +805,7 @@ StatusCode MassInv::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode MassInv::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode MassInv::finalize() { return Gaudi::Algorithm::finalize(); }
 
 StatusCode MassInv::initNoiseFromFile() {
   // Check if file exists
@@ -849,7 +849,7 @@ StatusCode MassInv::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double MassInv::getNoiseRMSPerCluster(double aEta, uint aNumCells) {
+double MassInv::getNoiseRMSPerCluster(double aEta, uint aNumCells) const {
   double param0 = 0.;
   double param1 = 0.;
 

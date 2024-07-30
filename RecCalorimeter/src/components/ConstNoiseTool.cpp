@@ -12,7 +12,7 @@
 DECLARE_COMPONENT(ConstNoiseTool)
 
 ConstNoiseTool::ConstNoiseTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
    declareInterface<INoiseConstTool>(this);
 }
 
@@ -57,14 +57,14 @@ StatusCode ConstNoiseTool::initialize() {
     }
   }
 
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
 
   return sc;
 }
 
 StatusCode ConstNoiseTool::finalize() {
-  StatusCode sc = GaudiTool::finalize();
+  StatusCode sc = AlgTool::finalize();
   return sc;
 }
 

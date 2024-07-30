@@ -27,7 +27,7 @@
 
 DECLARE_COMPONENT(CaloTopoCluster)
 
-CaloTopoCluster::CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CaloTopoCluster::CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("TopoClusterInput", m_inputTool, "Handle for input map of cells");
   declareProperty("noiseTool", m_noiseTool, "Handle for the cells noise tool");
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
@@ -47,7 +47,7 @@ CaloTopoCluster::CaloTopoCluster(const std::string& name, ISvcLocator* svcLoc) :
   declareProperty("clusterCells", m_clusterCellsCollection, "Handle for clusters (output collection)");
 }
 StatusCode CaloTopoCluster::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (Gaudi::Algorithm::initialize().isFailure()) return StatusCode::FAILURE;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
@@ -82,7 +82,7 @@ StatusCode CaloTopoCluster::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTopoCluster::execute() {
+StatusCode CaloTopoCluster::execute(const EventContext&) const {
   
   std::unordered_map<uint64_t, double> allCells;
   std::vector<std::pair<uint64_t, double>> firstSeeds;
@@ -110,11 +110,11 @@ StatusCode CaloTopoCluster::execute() {
             });
 
   std::map<uint, std::vector<std::pair<uint64_t, int>>> preClusterCollection;
-  StatusCode sc = CaloTopoCluster::buildingProtoCluster(m_neighbourSigma,
-                                                        m_lastNeighbourSigma,
-                                                        firstSeeds,
-                                                        allCells,
-                                                        preClusterCollection);
+  StatusCode sc = buildingProtoCluster(m_neighbourSigma,
+                                       m_lastNeighbourSigma,
+                                       firstSeeds,
+                                       allCells,
+                                       preClusterCollection);
   if (sc.isFailure()) {
     error() << "Unable to build protocluster!" << endmsg;
     return sc;
@@ -223,7 +223,7 @@ StatusCode CaloTopoCluster::execute() {
 
 void CaloTopoCluster::findingSeeds(const std::unordered_map<uint64_t, double>& aCells,
                                    int aNumSigma,
-                                   std::vector<std::pair<uint64_t, double>>& aSeeds) {
+                                   std::vector<std::pair<uint64_t, double>>& aSeeds) const {
   for (const auto& cell : aCells) {
     // retrieve the noise const and offset assigned to cell
     double threshold = m_noiseTool->noiseOffset(cell.first) + ( m_noiseTool->noiseRMS(cell.first) * aNumSigma);
@@ -243,7 +243,7 @@ StatusCode CaloTopoCluster::buildingProtoCluster(
     int aLastNumSigma,
     std::vector<std::pair<uint64_t, double>>& aSeeds,
     const std::unordered_map<uint64_t, double>& aCells,
-    std::map<uint, std::vector< std::pair<uint64_t, int>>>& aPreClusterCollection) {
+    std::map<uint, std::vector< std::pair<uint64_t, int>>>& aPreClusterCollection) const {
   // Map of cellIDs to clusterIds
   std::map<uint64_t, uint> clusterOfCell;
 
@@ -309,7 +309,7 @@ CaloTopoCluster::searchForNeighbours(const uint64_t aCellId,
                                      const std::unordered_map<uint64_t, double>& aCells,
                                      std::map<uint64_t, uint>& aClusterOfCell,
                                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
-				     bool aAllowClusterMerge) {
+				     bool aAllowClusterMerge) const {
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint>> addedNeighbourIds;
   // Retrieve cellIDs of neighbours
@@ -396,4 +396,4 @@ CaloTopoCluster::searchForNeighbours(const uint64_t aCellId,
   return addedNeighbourIds;
 }
 
-StatusCode CaloTopoCluster::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CaloTopoCluster::finalize() { return Gaudi::Algorithm::finalize(); }

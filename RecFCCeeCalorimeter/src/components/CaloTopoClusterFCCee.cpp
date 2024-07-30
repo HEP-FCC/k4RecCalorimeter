@@ -24,7 +24,7 @@
 
 DECLARE_COMPONENT(CaloTopoClusterFCCee)
 
-CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("TopoClusterInput", m_inputTool, "Handle for input map of cells");
   declareProperty("noiseTool", m_noiseTool, "Handle for the cells noise tool");
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
@@ -45,7 +45,7 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
 }
 
 StatusCode CaloTopoClusterFCCee::initialize() {
-  if (GaudiAlgorithm::initialize().isFailure()) return StatusCode::FAILURE;
+  if (Gaudi::Algorithm::initialize().isFailure()) return StatusCode::FAILURE;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
@@ -89,7 +89,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTopoClusterFCCee::execute() {
+StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   // Create output collections
   auto edmClusters = m_clusterCollection.createAndPut();
   auto edmClusterCells = m_clusterCellsCollection.createAndPut();
@@ -125,10 +125,10 @@ StatusCode CaloTopoClusterFCCee::execute() {
             });
 
   std::map<uint, std::vector<std::pair<uint64_t, int>>> preClusterCollection;
-  StatusCode sc_buildProtoClusters = CaloTopoClusterFCCee::buildingProtoCluster(m_neighbourSigma,
-                                                                                m_lastNeighbourSigma,
-                                                                                firstSeeds, allCells,
-                                                                                preClusterCollection);
+  StatusCode sc_buildProtoClusters = buildingProtoCluster(m_neighbourSigma,
+                                                          m_lastNeighbourSigma,
+                                                          firstSeeds, allCells,
+                                                          preClusterCollection);
   if (sc_buildProtoClusters.isFailure()) {
     error() << "Unable to build the protoclusters!" << endmsg;
     return StatusCode::FAILURE;
@@ -243,7 +243,7 @@ StatusCode CaloTopoClusterFCCee::execute() {
 
 void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, double>& aCells,
                                         int aNumSigma,
-                                        std::vector<std::pair<uint64_t, double>>& aSeeds) {
+                                        std::vector<std::pair<uint64_t, double>>& aSeeds) const {
   for (const auto& cell : aCells) {
     // retrieve the noise const and offset assigned to cell
     // first try to use the cache
@@ -284,7 +284,7 @@ StatusCode CaloTopoClusterFCCee::buildingProtoCluster(
     int aLastNumSigma,
     std::vector<std::pair<uint64_t, double>>& aSeeds,
     const std::unordered_map<uint64_t, double>& aCells,
-    std::map<uint, std::vector< std::pair<uint64_t, int>>>& aPreClusterCollection) {
+    std::map<uint, std::vector< std::pair<uint64_t, int>>>& aPreClusterCollection) const {
   // Map of cellIDs to clusterIds
   std::map<uint64_t, uint> clusterOfCell;
 
@@ -352,7 +352,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
                                      const std::unordered_map<uint64_t, double>& aCells,
                                      std::map<uint64_t, uint>& aClusterOfCell,
                                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
-                                     bool aAllowClusterMerge) {
+                                     bool aAllowClusterMerge) const {
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint>> addedNeighbourIds;
   // Retrieve cellIDs of neighbours
@@ -457,14 +457,14 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
   return addedNeighbourIds;
 }
 
-StatusCode CaloTopoClusterFCCee::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CaloTopoClusterFCCee::finalize() { return Gaudi::Algorithm::finalize(); }
 
 
 /**
  * \brief Cache the minimum offset and noise per layer for faster lookups down
  * the chain.
  */
-void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double>& aCells) {
+void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double>& aCells) const {
   std::unordered_map<int, std::vector<double>> offsets;
   std::unordered_map<int, std::vector<double>> noises;
   std::unordered_set<int> layers;

@@ -2,7 +2,7 @@
 #define RECCALORIMETER_NOISECALOCELLSFLATTOOL_H
 
 // Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
 
@@ -22,7 +22,7 @@
  *  @date   2024-07
  */
 
-class NoiseCaloCellsFlatTool : public GaudiTool, virtual public INoiseCaloCellsTool {
+class NoiseCaloCellsFlatTool : public AlgTool, virtual public INoiseCaloCellsTool {
 public:
   NoiseCaloCellsFlatTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~NoiseCaloCellsFlatTool() = default;

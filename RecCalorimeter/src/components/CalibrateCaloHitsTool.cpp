@@ -3,12 +3,12 @@
 DECLARE_COMPONENT(CalibrateCaloHitsTool)
 
 CalibrateCaloHitsTool::CalibrateCaloHitsTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICalibrateCaloHitsTool>(this);
 }
 
 StatusCode CalibrateCaloHitsTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) {
     return sc;
   }
@@ -22,4 +22,4 @@ void CalibrateCaloHitsTool::calibrate(std::unordered_map<uint64_t, double>& aHit
                 [this](std::pair<const uint64_t, double>& p) { p.second *= m_invSamplingFraction; });
 }
 
-StatusCode CalibrateCaloHitsTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CalibrateCaloHitsTool::finalize() { return AlgTool::finalize(); }

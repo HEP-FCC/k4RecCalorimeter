@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CALIBRATEBENCHMARKMETHOD_H
 
 // GAUDI
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
@@ -39,7 +39,7 @@ class ITHistSvc;
  *  @author Michaela Mlynarikova
  */
 
-class CalibrateBenchmarkMethod : public GaudiAlgorithm {
+class CalibrateBenchmarkMethod : public Gaudi::Algorithm {
 public:
   explicit CalibrateBenchmarkMethod(const std::string&, ISvcLocator*);
   virtual ~CalibrateBenchmarkMethod();
@@ -50,7 +50,7 @@ public:
   /**  Fills the histograms.
    *   @return status code
    */
-  virtual StatusCode execute() final;
+  virtual StatusCode execute(const EventContext&) const final;
   /**  Finalize.
    *   @return status code
    */
@@ -68,9 +68,9 @@ private:
   void runMinimization(int n_param, const std::vector<double>& variable, const std::vector<double>& steps, const std::vector<int>& fixedParameters) const;
 
   /// Handle for electromagnetic barrel cells (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
 
   /// Histogram of total deposited energy in the calorimeters 
   TH1F* m_totalEnergyECal;
@@ -81,8 +81,8 @@ private:
   TH1F* m_parameters; 
 
   /// vectors to store the energy in each ECal/HCal layer 
-  std::vector<double> m_energyInLayerECal;
-  std::vector<double> m_energyInLayerHCal;
+  mutable std::vector<double> m_energyInLayerECal;
+  mutable std::vector<double> m_energyInLayerHCal;
 
 
   /// Maximum energy for the x-axis range
@@ -103,12 +103,12 @@ private:
   Gaudi::Property<uint> m_systemIDHCal{this, "HCalSystemID", 8, "ID of the HCal system"};
 
   /// vectors containing the energy deposits to be used for minimization
-  std::vector<double> m_vecGeneratedEnergy;
-  std::vector<double> m_vecTotalEnergyinECal;
-  std::vector<double> m_vecTotalEnergyinHCal;
-  std::vector<double> m_vecEnergyInFirstLayerECal; 
-  std::vector<double> m_vecEnergyInLastLayerECal;
-  std::vector<double> m_vecEnergyInFirstLayerHCal;
+  mutable std::vector<double> m_vecGeneratedEnergy;
+  mutable std::vector<double> m_vecTotalEnergyinECal;
+  mutable std::vector<double> m_vecTotalEnergyinHCal;
+  mutable std::vector<double> m_vecEnergyInFirstLayerECal; 
+  mutable std::vector<double> m_vecEnergyInLastLayerECal;
+  mutable std::vector<double> m_vecEnergyInFirstLayerHCal;
 
   // benchmark parameters which should be fixed
   // p[1] because HCal is already calibrated to HAD scale

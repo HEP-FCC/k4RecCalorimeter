@@ -2,7 +2,7 @@
 #define RECCALORIMETER_READCALOXTALKMAP_H
 
 // from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4Interface/ICaloReadCrosstalkMap.h"
@@ -18,7 +18,7 @@ class IGeoSvc;
  *  @author Zhibo Wu
  */
 
-class ReadCaloCrosstalkMap : public GaudiTool, virtual public ICaloReadCrosstalkMap {
+class ReadCaloCrosstalkMap : public AlgTool, virtual public ICaloReadCrosstalkMap {
 public:
   ReadCaloCrosstalkMap(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~ReadCaloCrosstalkMap() = default;

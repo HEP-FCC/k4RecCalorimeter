@@ -19,7 +19,7 @@
 DECLARE_COMPONENT(CreateCaloCellsNoise)
 
 CreateCaloCellsNoise::CreateCaloCellsNoise(const std::string& name, ISvcLocator* svcLoc) :
-GaudiAlgorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
+Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
 
@@ -29,7 +29,7 @@ GaudiAlgorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
 }
 
 StatusCode CreateCaloCellsNoise::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
 
   info() << "CreateCaloCellsNoise initialized" << endmsg;
@@ -70,7 +70,7 @@ StatusCode CreateCaloCellsNoise::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCellsNoise::execute() {
+StatusCode CreateCaloCellsNoise::execute(const EventContext&) const {
   // Get the input collection with Geant4 hits
   const edm4hep::CalorimeterHitCollection* hits = m_hits.get();
   debug() << "Input Hit collection size: " << hits->size() << endmsg;
@@ -131,4 +131,4 @@ StatusCode CreateCaloCellsNoise::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCellsNoise::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CreateCaloCellsNoise::finalize() { return Gaudi::Algorithm::finalize(); }

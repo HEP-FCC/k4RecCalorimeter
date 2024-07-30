@@ -2,7 +2,7 @@
 #define RECCALORIMETER_TUBELAYERPHIETACALOTOOL_H
 
 // Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4Interface/ICalorimeterTool.h"
@@ -18,7 +18,7 @@ class IGeoSvc;
  *  @author Anna Zaborowska, Coralie Neubueser
  */
 
-class LayerPhiEtaCaloTool : public GaudiTool, virtual public ICalorimeterTool {
+class LayerPhiEtaCaloTool : public AlgTool, virtual public ICalorimeterTool {
 public:
   LayerPhiEtaCaloTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~LayerPhiEtaCaloTool() = default;

@@ -8,12 +8,12 @@
 DECLARE_COMPONENT(NestedVolumesCaloTool)
 
 NestedVolumesCaloTool::NestedVolumesCaloTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent), m_geoSvc("GeoSvc", name) {
+    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<ICalorimeterTool>(this);
 }
 
 StatusCode NestedVolumesCaloTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   
   if (!m_geoSvc) {
@@ -30,7 +30,7 @@ StatusCode NestedVolumesCaloTool::initialize() {
   return sc;
 }
 
-StatusCode NestedVolumesCaloTool::finalize() { return GaudiTool::finalize(); }
+StatusCode NestedVolumesCaloTool::finalize() { return AlgTool::finalize(); }
 
 StatusCode NestedVolumesCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
   // Take readout bitfield decoder from GeoSvc

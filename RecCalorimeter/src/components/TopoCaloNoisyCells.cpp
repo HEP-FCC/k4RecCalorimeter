@@ -8,13 +8,13 @@
 DECLARE_COMPONENT(TopoCaloNoisyCells)
 
 TopoCaloNoisyCells::TopoCaloNoisyCells(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICaloReadCellNoiseMap>(this);
 }
 
 StatusCode TopoCaloNoisyCells::initialize() {
   {
-    StatusCode sc = GaudiTool::initialize();
+    StatusCode sc = AlgTool::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -56,7 +56,7 @@ StatusCode TopoCaloNoisyCells::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode TopoCaloNoisyCells::finalize() { return GaudiTool::finalize(); }
+StatusCode TopoCaloNoisyCells::finalize() { return AlgTool::finalize(); }
 
 double TopoCaloNoisyCells::noiseRMS(uint64_t aCellId) { return m_map[aCellId].first; }
 double TopoCaloNoisyCells::noiseOffset(uint64_t aCellId) { return m_map[aCellId].second; }

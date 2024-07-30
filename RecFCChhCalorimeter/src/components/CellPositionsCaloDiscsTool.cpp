@@ -6,12 +6,12 @@ DECLARE_COMPONENT(CellPositionsCaloDiscsTool)
 
 CellPositionsCaloDiscsTool::CellPositionsCaloDiscsTool(const std::string& type, const std::string& name,
                                                        const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsCaloDiscsTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -92,4 +92,4 @@ dd4hep::DDSegmentation::CellID cID = aCellId;
   return layer;
 }
 
-StatusCode CellPositionsCaloDiscsTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsCaloDiscsTool::finalize() { return AlgTool::finalize(); }
