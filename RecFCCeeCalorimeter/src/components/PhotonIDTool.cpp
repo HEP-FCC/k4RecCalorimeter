@@ -8,24 +8,18 @@
 
 #include "nlohmann/json.hpp"
 
+#include "OnnxruntimeUtilities.h"
+
 using json = nlohmann::json;
 
 
 DECLARE_COMPONENT(PhotonIDTool)
 
-// convert vector data with given shape into ONNX runtime tensor
-template <typename T>
-Ort::Value vec_to_tensor(std::vector<T> &data, const std::vector<std::int64_t> &shape)
-{
-  Ort::MemoryInfo mem_info =
-      Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
-  auto tensor = Ort::Value::CreateTensor<T>(mem_info, data.data(), data.size(), shape.data(), shape.size());
-  return tensor;
-}
 
 PhotonIDTool::PhotonIDTool(const std::string &name,
                            ISvcLocator *svcLoc)
-    : Gaudi::Algorithm(name, svcLoc)
+    : Gaudi::Algorithm(name, svcLoc),
+  m_ortMemInfo(Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault))
 {
   declareProperty("inClusters", m_inClusters, "Input cluster collection");
   declareProperty("outClusters", m_outClusters, "Output cluster collection");
@@ -296,8 +290,7 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
     m_ortEnv = new Ort::Env(loggingLevel, "ONNX runtime environment for photonID");
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
-    m_ortSession = new Ort::Experimental::Session(*m_ortEnv, const_cast<std::string &>(mvaModelFileName), session_options);
-    // m_ortSession = new Ort::Session(*m_ortEnv, const_cast<std::string &>(mvaModelFileName), session_options);
+    m_ortSession = new Ort::Session(*m_ortEnv, mvaModelFileName.data(), session_options);
   }
   catch (const Ort::Exception &exception)
   {
@@ -308,14 +301,23 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   // print name/shape of inputs
   // use default allocator (CPU)
   Ort::AllocatorWithDefaultOptions allocator;
+#if ORT_API_VERSION < 13
+  // Before 1.13 we have to roll our own unique_ptr wrapper here
+  auto allocDeleter = [&allocator](char* p) { allocator.Free(p); };
+  using AllocatedStringPtr = std::unique_ptr<char, decltype(allocDeleter)>;
+#endif
+
+
   debug() << "Input Node Name/Shape (" << m_ortSession->GetInputCount() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
   {
-    // for old ONNX runtime version
-    // m_input_names.emplace_back(m_ortSession->GetInputName(i, allocator));
-    // for new runtime version
-    m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).get());
-    m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape(); 
+#if ORT_API_VERSION < 13
+    m_input_names.emplace_back(AllocatedStringPtr(m_ortSession->GetInputName(i, allocator), allocDeleter).release());
+#else
+    m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).release());
+#endif
+
+    m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_input_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
     {
@@ -336,10 +338,12 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   debug() << "Output Node Name/Shape (" << m_ortSession->GetOutputCount() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
   {
-    // for old ONNX runtime version
-    // m_output_names.emplace_back(m_ortSession->GetOutputName(i, allocator));
-    // for new runtime version
+#if ORT_API_VERSION < 13
+    m_output_names.emplace_back(AllocatedStringPtr(m_ortSession->GetOutputName(i, allocator), allocDeleter).release());
+#else
     m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).get());
+#endif
+
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << m_output_shapes.size() << endmsg;
     debug() << "\t" << m_output_names.at(i) << " : ";
@@ -384,15 +388,17 @@ StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *in
     float score= -1.0;
     // Create a single Ort tensor
     std::vector<Ort::Value> input_tensors;
-    input_tensors.emplace_back(vec_to_tensor<float>(mvaInputs, m_input_shapes));
+    input_tensors.emplace_back(vec_to_tensor<float>(mvaInputs, m_input_shapes, m_ortMemInfo));
 
     // pass data through model
     try
     {
-      std::vector<Ort::Value> output_tensors = m_ortSession->Run(m_input_names,
-                                                                 input_tensors,
-                                                                 m_output_names,
-                                                                 Ort::RunOptions{nullptr});
+      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr},
+                                              m_input_names.data(),
+                                              input_tensors.data(),
+                                              input_tensors.size(),
+                                              m_output_names.data(),
+                                              m_output_names.size());
 
       // double-check the dimensions of the output tensors
       // NOTE: the number of output tensors is equal to the number of output nodes specified in the Run() call
