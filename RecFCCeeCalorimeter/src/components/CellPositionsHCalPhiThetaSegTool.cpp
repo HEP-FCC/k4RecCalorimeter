@@ -33,11 +33,10 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize()
   if (m_segmentation == nullptr)
   {
     error() << "There is no phi-theta segmentation!!!!" << endmsg;
-    // return StatusCode::FAILURE;
+    return StatusCode::FAILURE;
   }
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
-  m_volman = m_geoSvc->getDetector()->volumeManager();
 
   // check if decoder contains "layer"
   std::vector<std::string> fields;
@@ -49,9 +48,10 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize()
   if (iter == fields.end())
   {
     error() << "Readout does not contain field: 'layer'" << endmsg;
+    return StatusCode::FAILURE;
   }
 
-  // needed to retrieve radii from the dd4hep extension
+  // retrieve radii from the LayeredCalorimeterData extension
   dd4hep::Detector* detector = m_geoSvc->getDetector();
   if (!detector)
   {
@@ -73,8 +73,7 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize()
     return StatusCode::FAILURE;
   }
 
-  // Debug information to verify the layers retrieved
-  // m_layersRetrieved is a pointer, then it needs to point to the address of the vector
+  // Debug information to check the number of layers retrieved from the LayeredCalorimeterData extension
   m_layersRetrieved = &(theExtension->layers);
   debug() << "Number of layers retrieved: " << m_layersRetrieved->size() << endmsg;
 
@@ -93,6 +92,14 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize()
 
   if (m_detectorName=="HCalThreePartsEndcap")
   {
+    // Check that the vector containing number of layers in each cylinder is provided
+    if (m_numLayersHCalThreeParts.empty())
+    {
+       error() << "The vector m_numLayersHCalThreeParts is empty." << endmsg;
+       return StatusCode::FAILURE;
+    }
+    // Check that the total number of layers provided in the steering file
+    // matches the total number of layers in the geometry xml file
     for (unsigned int i=0; i<m_numLayersHCalThreeParts.size(); i++) 
     {
       numLayersProvided += m_numLayersHCalThreeParts[i];
@@ -164,12 +171,16 @@ int CellPositionsHCalPhiThetaSegTool::layerId(const uint64_t &aCellId)
   return layer;
 }
 
+// calculate layer radii from LayeredCalorimeterData extension
+// which is included in the geometry description
 std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadii(unsigned int startIndex, unsigned int endIndex) {
   std::vector<double> radii;
 
   for (unsigned int idxLayer = startIndex; idxLayer < endIndex; ++idxLayer) {
     const dd4hep::rec::LayeredCalorimeterStruct::Layer & theLayer = m_layersRetrieved->at(idxLayer);
+    // inner radius of a given layer
     double layerInnerRadius = theLayer.distance;
+    // radial dimension of a given layer
     double layerThickness = theLayer.sensitive_thickness;
 
     // Calculate mid-radius for the current layer (layerInnerRadius+layerOuterRadius)/2
@@ -180,16 +191,18 @@ std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadii(unsign
   return radii;
 }
 
-// to be used for HCalTileBarrel 
+// calculateLayerRadii should be used for HCalTileBarrel which is formed
+// by a single cylinder with a constant number of radial layers
 std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiBarrel() {
   return calculateLayerRadii(0, m_layersRetrieved->size());
 }
 
-// to be used for HCalThreePartsEndcap
+// calculateLayerRadiiEndcap should be used for HCalThreePartsEndcap which is formed
+// by three cylinders along the z-coordinate and each cylinder has a different number of radial layers
 std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiEndcap() {
   std::vector<double> radii;
 
-  // Calculate radii for each part and merge the results
+  // Calculate radii for each part (cylinder) and merge the results
   unsigned int upperIndexLayerRadiiPartOne = m_numLayersHCalThreeParts[0];
   unsigned int upperIndexLayerRadiiPartTwo = upperIndexLayerRadiiPartOne + m_numLayersHCalThreeParts[1];
 
