@@ -2,23 +2,11 @@
 # Package: RecFCCeeCalorimeter
 ################################################################################
 
-# ONNX DEPENDENCIES
-# includes
-include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
-# libs
-link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
-# New versions of ONNXRuntime add directories to include
-# through the target onnxruntime::onnxruntime
-if(onnxruntime_FOUND)
-  set(ONNXRUNTIME_LIBRARY onnxruntime::onnxruntime)
-endif()
-
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                  SOURCES ${_module_sources}
                  LINK k4FWCore::k4FWCore
                       k4FWCore::k4Interface
-                      Gaudi::GaudiAlgLib
                       Gaudi::GaudiKernel
                       DD4hep::DDCore
                       EDM4HEP::edm4hep
@@ -27,7 +15,8 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       DD4hep::DDG4
                       ROOT::Core
                       ROOT::Hist
-		      ${ONNXRUNTIME_LIBRARY}
+                      onnxruntime::onnxruntime
+                      nlohmann_json::nlohmann_json
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
@@ -37,12 +26,6 @@ install(TARGETS k4RecFCCeeCalorimeterPlugins
 
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
-
-add_test(NAME FCCeeLAr_reproduceSegfault
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/reproduceSegfault.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-set_test_env(FCCeeLAr_reproduceSegfault)
 
 add_test(NAME FCCeeLAr_simulateForReco
          COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloSim.py
@@ -80,3 +63,9 @@ add_test(NAME FCCeeLAr_benchmarkCorrection
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_benchmarkCorrection)
+
+add_test(NAME FCCeeLAr_runxtalk
+  COMMAND k4run RecCalorimeter/tests/options/runEcalBarrel_ReconstructionTopoClusters_crosstalk.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_runxtalk)

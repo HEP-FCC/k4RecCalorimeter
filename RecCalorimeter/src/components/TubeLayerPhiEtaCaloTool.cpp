@@ -10,12 +10,12 @@ DECLARE_COMPONENT(TubeLayerPhiEtaCaloTool)
 
 TubeLayerPhiEtaCaloTool::TubeLayerPhiEtaCaloTool(const std::string& type, const std::string& name,
                                                  const IInterface* parent)
-    : GaudiTool(type, name, parent), m_geoSvc("GeoSvc", name) {
+    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<ICalorimeterTool>(this);
 }
 
 StatusCode TubeLayerPhiEtaCaloTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   
   if (!m_geoSvc) {
@@ -34,7 +34,7 @@ StatusCode TubeLayerPhiEtaCaloTool::initialize() {
   return sc;
 }
 
-StatusCode TubeLayerPhiEtaCaloTool::finalize() { return GaudiTool::finalize(); }
+StatusCode TubeLayerPhiEtaCaloTool::finalize() { return AlgTool::finalize(); }
 
 StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
   // Get the total number of active volumes in the geometry

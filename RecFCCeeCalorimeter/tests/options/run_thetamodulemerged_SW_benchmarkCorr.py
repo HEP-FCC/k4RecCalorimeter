@@ -25,6 +25,7 @@ from Configurables import GeoSvc
 from Configurables import HepMCToEDMConverter
 from Configurables import GenAlg
 from Configurables import FCCDataSvc
+from Configurables import ReadCaloCrosstalkMap
 from Gaudi.Configuration import INFO
 # from Gaudi.Configuration import *
 
@@ -57,13 +58,13 @@ applyUpDownstreamBenchmarkCorrections = True
 # (in strips: 0.5625/4=0.14)
 
 # Nevts = 20000
-Nevts = 10
+Nevts = 2
 # Nevts = 1
 # Nevts=1000
 
 # particle momentum and direction
 # momentum = 100  # in GeV
-momentum = 100  # in GeV
+momentum = 10.  # in GeV
 # momentum = 10  # in GeV
 thetaMin = 69.  # degrees
 thetaMax = 69.  # degrees
@@ -159,7 +160,7 @@ geoservice = GeoSvc("GeoSvc")
 path_to_detector = os.environ.get("K4GEO", "")
 print(path_to_detector)
 detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v02/ALLEGRO_o1_v02.xml'
+    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
 ]
 # prefix all xmls with path_to_detector
 geoservice.detectors = [
@@ -310,11 +311,18 @@ if runHCal:
 # (merging several modules and severla theta readout cells).
 # Add noise at this step if you derived the noise already assuming merged cells
 
+# read the crosstalk map
+readCrosstalkMap = ReadCaloCrosstalkMap("ReadCrosstalkMap",
+                                       fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/xtalk_neighbours_map_ecalB_thetamodulemerged.root",
+                                       OutputLevel=INFO)
+
 # Step 1: merge hits into cells according to initial segmentation
 ecalBarrelCellsName = "ECalBarrelCells"
 createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
                                         doCellCalibration=True,
                                         calibTool=calibEcalBarrel,
+                                        crosstalksTool=readCrosstalkMap,
+                                        addCrosstalk=False,
                                         addCellNoise=False,
                                         filterCellNoise=False,
                                         addPosition=True,

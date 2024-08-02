@@ -27,6 +27,7 @@ from Configurables import HepMCToEDMConverter
 from Configurables import GenAlg
 from Configurables import FCCDataSvc
 from Configurables import RewriteBitfield
+from Configurables import ReadCaloCrosstalkMap
 from Gaudi.Configuration import INFO
 
 import os
@@ -64,13 +65,13 @@ addShapeParameters = True
 # (in strips: 0.5625/4=0.14)
 
 # Nevts = 20000
-Nevts = 10
+Nevts = 2
 # Nevts = 1
 # Nevts=1000
 
 # particle momentum and direction
 # momentum = 100  # in GeV
-momentum = 50  # in GeV
+momentum = 10  # in GeV
 # momentum = 10  # in GeV
 thetaMin = 45  # degrees
 thetaMax = 135  # degrees
@@ -316,11 +317,18 @@ if runHCal:
 # (merging several modules and severla theta readout cells).
 # Add noise at this step if you derived the noise already assuming merged cells
 
+# read the crosstalk map
+readCrosstalkMap = ReadCaloCrosstalkMap("ReadCrosstalkMap",
+                                       fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/xtalk_neighbours_map_ecalB_thetamodulemerged.root",
+                                       OutputLevel=INFO)
+
 # Step 1: merge hits into cells according to initial segmentation
 ecalBarrelCellsName = "ECalBarrelCells"
 createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
                                         doCellCalibration=True,
                                         calibTool=calibEcalBarrel,
+                                        crosstalksTool=readCrosstalkMap,
+                                        addCrosstalk=False,
                                         addCellNoise=False,
                                         filterCellNoise=False,
                                         addPosition=True,

@@ -10,6 +10,7 @@
 #include "DD4hep/Detector.h"
 
 // ROOT
+#include "TSystem.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
@@ -18,7 +19,7 @@ DECLARE_COMPONENT(NoiseCaloCellsFromFileTool)
 
 NoiseCaloCellsFromFileTool::NoiseCaloCellsFromFileTool(const std::string& type, const std::string& name,
                                                        const IInterface* parent)
-    : GaudiTool(type, name, parent), m_geoSvc("GeoSvc", name) {
+    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<INoiseCaloCellsTool>(this);
   declareProperty("cellPositionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
 }
@@ -88,7 +89,7 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
 
   return sc;
@@ -96,7 +97,7 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
 
 void NoiseCaloCellsFromFileTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) {
   std::for_each(aCells.begin(), aCells.end(), [this](std::pair<const uint64_t, double>& p) {
-    p.second += (getNoiseConstantPerCell(p.first) * m_gauss.shoot());
+    p.second += (getNoiseRMSPerCell(p.first) * m_gauss.shoot());
   });
 }
 
@@ -104,29 +105,36 @@ void NoiseCaloCellsFromFileTool::filterCellNoise(std::unordered_map<uint64_t, do
   // Erase a cell if it has energy bellow a threshold from the vector
   auto it = aCells.begin();
   while ((it = std::find_if(it, aCells.end(), [this](std::pair<const uint64_t, double>& p) {
-            return m_useAbsInFilter ? bool(std::abs(p.second) < m_filterThreshold * getNoiseConstantPerCell(p.first)) : bool(p.second < m_filterThreshold * getNoiseConstantPerCell(p.first));
+            return m_useAbsInFilter ? bool(std::abs(p.second) < m_filterThreshold * getNoiseRMSPerCell(p.first)) : bool(p.second < m_filterThreshold * getNoiseRMSPerCell(p.first));
           })) != aCells.end()) {
     aCells.erase(it++);
   }
 }
 
 StatusCode NoiseCaloCellsFromFileTool::finalize() {
-  StatusCode sc = GaudiTool::finalize();
+  StatusCode sc = AlgTool::finalize();
   return sc;
 }
 
 StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
-  // check if file exists
+  // Check if file exists
   if (m_noiseFileName.empty()) {
-    error() << "Name of the file with noise values not set" << endmsg;
+    error() << "Name of the file with the noise values not provided!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  if (gSystem->AccessPathName(m_noiseFileName.value().c_str())) {
+    error() << "Provided file with the noise values not found!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   }
   std::unique_ptr<TFile> noiseFile(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
   if (noiseFile->IsZombie()) {
-    error() << "Couldn't open the file with noise constants" << endmsg;
+    error() << "Unable to open the file with the noise values!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Opening the file with noise constants: " << m_noiseFileName << endmsg;
+    info() << "Using the following file with noise values: "
+           << m_noiseFileName.value() << endmsg;
   }
 
   std::string elecNoiseLayerHistoName, pileupLayerHistoName;
@@ -134,8 +142,8 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
   for (unsigned i = 0; i < m_numRadialLayers; i++) {
     elecNoiseLayerHistoName = m_elecNoiseHistoName + std::to_string(i + 1);
     debug() << "Getting histogram with a name " << elecNoiseLayerHistoName << endmsg;
-    m_histoElecNoiseConst.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(elecNoiseLayerHistoName.c_str())));
-    if (m_histoElecNoiseConst.at(i).GetNbinsX() < 1) {
+    m_histoElecNoiseRMS.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(elecNoiseLayerHistoName.c_str())));
+    if (m_histoElecNoiseRMS.at(i).GetNbinsX() < 1) {
       error() << "Histogram  " << elecNoiseLayerHistoName
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
       return StatusCode::FAILURE;
@@ -143,8 +151,8 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
     if (m_addPileup) {
       pileupLayerHistoName = m_pileupHistoName + std::to_string(i + 1);
       debug() << "Getting histogram with a name " << pileupLayerHistoName << endmsg;
-      m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupLayerHistoName.c_str())));
-      if (m_histoPileupConst.at(i).GetNbinsX() < 1) {
+      m_histoPileupNoiseRMS.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupLayerHistoName.c_str())));
+      if (m_histoPileupNoiseRMS.at(i).GetNbinsX() < 1) {
         error() << "Histogram  " << pileupLayerHistoName
                 << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
         return StatusCode::FAILURE;
@@ -155,12 +163,12 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
   noiseFile->Close();
 
   // Check if we have same number of histograms (all layers) for pileup and electronics noise
-  if (m_histoElecNoiseConst.size() == 0) {
+  if (m_histoElecNoiseRMS.size() == 0) {
     error() << "No histograms with noise found!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
   if (m_addPileup) {
-    if (m_histoElecNoiseConst.size() != m_histoPileupConst.size()) {
+    if (m_histoElecNoiseRMS.size() != m_histoPileupNoiseRMS.size()) {
       error() << "Missing histograms! Different number of histograms for electronics noise and pileup!!!!" << endmsg;
       return StatusCode::FAILURE;
     }
@@ -169,14 +177,14 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsFromFileTool::getNoiseConstantPerCell(int64_t aCellId) {
+double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = m_segmentationPhiEta;
   if (segmentation == nullptr) {
     segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti->subsegmentation(aCellId));
   }
 
-  double elecNoise = 0.;
-  double pileupNoise = 0.;
+  double elecNoiseRMS = 0.;
+  double pileupNoiseRMS = 0.;
 
   double cellEta;
   if (m_useSeg)
@@ -188,35 +196,35 @@ double NoiseCaloCellsFromFileTool::getNoiseConstantPerCell(int64_t aCellId) {
   // All histograms have same binning, all bins with same size
   // Using the histogram in the first layer to get the bin size
   unsigned index = 0;
-  if (m_histoElecNoiseConst.size() != 0) {
-    int ibin = m_histoElecNoiseConst.at(index).FindFixBin(fabs(cellEta));
+  if (m_histoElecNoiseRMS.size() != 0) {
+    int ibin = m_histoElecNoiseRMS.at(index).FindFixBin(fabs(cellEta));
     // Check that there are not more layers than the constants are provided for
-    if (cellLayer < m_histoElecNoiseConst.size()) {
-      elecNoise = m_histoElecNoiseConst.at(cellLayer).GetBinContent(ibin);
+    if (cellLayer < m_histoElecNoiseRMS.size()) {
+      elecNoiseRMS = m_histoElecNoiseRMS.at(cellLayer).GetBinContent(ibin);
       if (m_addPileup) {
-        pileupNoise = m_histoPileupConst.at(cellLayer).GetBinContent(ibin);
+        pileupNoiseRMS = m_histoPileupNoiseRMS.at(cellLayer).GetBinContent(ibin);
       }
     } else {
-      debug()
+      error()
           << "More radial layers than we have noise for!!!! Using the last layer for all histograms outside the range."
           << endmsg;
     }
   } else {
-    debug() << "No histograms with noise constants!!!!! " << endmsg;
+    error() << "No histograms with noise constants!!!!! " << endmsg;
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoise = 0;
+  double totalNoiseRMS = 0;
   if (m_addPileup) {
-    totalNoise = sqrt(elecNoise*elecNoise + pileupNoise*pileupNoise) * m_scaleFactor;
+    totalNoiseRMS = sqrt(elecNoiseRMS*elecNoiseRMS + pileupNoiseRMS*pileupNoiseRMS) * m_scaleFactor;
   }
   else { // avoid useless math operations if no pileup
-    totalNoise = elecNoise * m_scaleFactor;
+    totalNoiseRMS = elecNoiseRMS * m_scaleFactor;
   }
 
-  if (totalNoise < 1e-6) {
-    debug() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoise << endmsg;
+  if (totalNoiseRMS < 1e-6) {
+    warning() << "Zero noise RMS: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoiseRMS << endmsg;
   }
 
-  return totalNoise;
+  return totalNoiseRMS;
 }

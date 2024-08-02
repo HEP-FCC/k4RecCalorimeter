@@ -5,13 +5,13 @@ DECLARE_COMPONENT(NoiseCaloCellsFlatTool)
 
 NoiseCaloCellsFlatTool::NoiseCaloCellsFlatTool(const std::string& type, const std::string& name,
                                                const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<INoiseCaloCellsTool>(this);
 }
 
 StatusCode NoiseCaloCellsFlatTool::initialize() {
   {
-    StatusCode sc = GaudiTool::initialize();
+    StatusCode sc = AlgTool::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -27,19 +27,20 @@ StatusCode NoiseCaloCellsFlatTool::initialize() {
     }
   }
 
-  info() << "Sigma of the cell noise: " << m_cellNoise * 1.e3 << " MeV" << endmsg;
+  info() << "RMS of the cell noise: " << m_cellNoiseRMS * 1.e3 << " MeV" << endmsg;
+  info() << "Offset of the cell noise: " << m_cellNoiseOffset * 1.e3 << " MeV" << endmsg;
   info() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
   return StatusCode::SUCCESS;
 }
 
 void NoiseCaloCellsFlatTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) {
   std::for_each(aCells.begin(), aCells.end(),
-                [this](std::pair<const uint64_t, double>& p) { p.second += (m_gauss.shoot() * m_cellNoise); });
+                [this](std::pair<const uint64_t, double>& p) { p.second += (m_cellNoiseOffset + (m_gauss.shoot() * m_cellNoiseRMS)); });
 }
 
 void NoiseCaloCellsFlatTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) {
   // Erase a cell if it has energy below a threshold
-  double threshold = m_filterThreshold * m_cellNoise;
+  double threshold = m_cellNoiseOffset + m_filterThreshold * m_cellNoiseRMS;
   auto it = aCells.begin();
   while ((it = std::find_if(it, aCells.end(), [&threshold](std::pair<const uint64_t, double>& p) {
             return bool(p.second < threshold);
@@ -48,4 +49,4 @@ void NoiseCaloCellsFlatTool::filterCellNoise(std::unordered_map<uint64_t, double
   }
 }
 
-StatusCode NoiseCaloCellsFlatTool::finalize() { return GaudiTool::finalize(); }
+StatusCode NoiseCaloCellsFlatTool::finalize() { return AlgTool::finalize(); }

@@ -5,6 +5,7 @@
 #include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 
+#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 
@@ -174,24 +175,24 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
             decoder->set(cellId, "phi", iphi);
             decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
             uint64_t id = cellId;
-            double noise = 0.;
+            double noiseRMS = 0.;
             double noiseOffset = 0.;
             if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId)
             {
-              noise = m_ecalBarrelNoiseTool->getNoiseConstantPerCell(id);
+              noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
               noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
             }
             else if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId)
             {
-              noise = m_hcalBarrelNoiseTool->getNoiseConstantPerCell(id);
+              noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
               noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
             }
             else
             {
               warning() << "Unexpected system value for phi-theta readout " << m_fieldValuesSegmented[iSys]
-                        << ", setting noise to 0.0" << endmsg;
+                        << ", setting noise RMS and offset to 0.0" << endmsg;
             }
-            map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noise, noiseOffset)));
+            map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
           }
         }
       }
@@ -220,43 +221,51 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
             decoder->set(cellId, "module", imodule * moduleThetaSegmentation->mergedModules(ilayer));
             decoder->set(cellId, "theta", numCells[2] + itheta * moduleThetaSegmentation->mergedThetaCells(ilayer)); // start from the minimum existing theta cell in this layer
             uint64_t id = cellId;
-            double noise = 0.;
+            double noiseRMS = 0.;
             double noiseOffset = 0.;
             if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId)
             {
-              noise = m_ecalBarrelNoiseTool->getNoiseConstantPerCell(id);
+              noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
               noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
             }
             else
             {
               warning() << "Unexpected system value for module-theta readout " << m_fieldValuesSegmented[iSys]
-                        << ", setting noise to 0.0" << endmsg;
+                        << ", setting noise RMS and offset to 0.0" << endmsg;
             }
-            map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noise, noiseOffset)));
+            map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
           }
         }
       }
     }
   }
 
-  std::unique_ptr<TFile> file(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
-  file->cd();
+  // Check if output directory exists
+  std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
+  if (!gSystem->OpenDirectory(outDirPath.c_str())) {
+    error() << "Output directory \"" << outDirPath
+            << "\" does not exists! Please create it." << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  std::unique_ptr<TFile> outFile(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
+  outFile->cd();
   TTree tree("noisyCells", "Tree with map of noise per cell");
   uint64_t saveCellId;
-  double saveNoiseLevel;
+  double saveNoiseRMS;
   double saveNoiseOffset;
   tree.Branch("cellId", &saveCellId, "cellId/l");
-  tree.Branch("noiseLevel", &saveNoiseLevel);
+  tree.Branch("noiseLevel", &saveNoiseRMS); // would be better to call it noiseRMS
   tree.Branch("noiseOffset", &saveNoiseOffset);
   for (const auto &item : map)
   {
     saveCellId = item.first;
-    saveNoiseLevel = item.second.first;
+    saveNoiseRMS = item.second.first;
     saveNoiseOffset = item.second.second;
     tree.Fill();
   }
-  file->Write();
-  file->Close();
+  outFile->Write();
+  outFile->Close();
 
   return StatusCode::SUCCESS;
 }

@@ -11,7 +11,7 @@ class IGeoSvc;
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // EDM4HEP
@@ -43,14 +43,14 @@ class ITHistSvc;
  *
  */
 
-class PreparePileup : public GaudiAlgorithm {
+class PreparePileup : public Gaudi::Algorithm {
 
 public:
   PreparePileup(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
@@ -65,21 +65,21 @@ private:
   /// Handle for geometry tool (used to prepare map of all existing cellIDs for the system)
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
   /// Handle for the tower building tool
-  ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<ITowerTool> m_towerTool;
   // calorimeter towers
-  std::vector<std::vector<float>> m_towers;
+  mutable std::vector<std::vector<float>> m_towers;
   /// number of towers in eta (calculated from m_deltaEtaTower and the eta size of the first layer)
   int m_nEtaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)
   int m_nPhiTower;
 
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
 
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
-  std::unordered_map<uint64_t, double> m_cellsMap;
+  mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Sum of energy in each cell per file
-  std::unordered_map<uint64_t, double> m_sumEnergyCellsMap;
+  mutable std::unordered_map<uint64_t, double> m_sumEnergyCellsMap;
 
   /// Pointer to the interface of histogram service
   SmartIF<ITHistSvc> m_histSvc;
@@ -121,7 +121,7 @@ private:
   dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Sum of energy of optimised cluster centred around each eta/phi cell
-  std::vector<std::vector<float>> m_energyOptimised;
+  mutable std::vector<std::vector<float>> m_energyOptimised;
   /// Flag for the ellipse used in the final cluster instead of the rectangle
   Gaudi::Property<bool> m_ellipseCluster{this, "ellipse", false};
 };

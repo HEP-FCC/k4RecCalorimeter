@@ -10,7 +10,7 @@ geoservice = GeoSvc("GeoSvc")
 path_to_detector = os.environ.get("K4GEO", "")
 print(path_to_detector)
 detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v02/ALLEGRO_o1_v02.xml'
+    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
 ]
 
 # prefix all xmls with path_to_detector
@@ -24,7 +24,7 @@ neighbours = CreateFCCeeCaloXTalkNeighbours("xtalk_neighbours",
                                        systemNames=["system"],
                                        systemValues=[4],
                                        activeFieldNames=["layer"],
-                                       activeVolumesNumbers=[12],
+                                       activeVolumesNumbers=[11],
                                        OutputLevel=DEBUG)
 
 # ApplicationMgr

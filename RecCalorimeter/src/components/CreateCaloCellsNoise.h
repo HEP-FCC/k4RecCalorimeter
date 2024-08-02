@@ -8,7 +8,7 @@
 #include "k4Interface/INoiseCaloCellsTool.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // EDM4HEP
@@ -46,22 +46,22 @@ class IGeoSvc;
  *
  */
 
-class CreateCaloCellsNoise : public GaudiAlgorithm {
+class CreateCaloCellsNoise : public Gaudi::Algorithm {
 
 public:
   CreateCaloCellsNoise(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize();
 
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
 
   StatusCode finalize();
 
 private:
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
-  ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
+  mutable ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
-  ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
+  mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
@@ -76,9 +76,9 @@ private:
   Gaudi::Property<bool> m_addPosition{this, "addPosition", false, "Add position information to the cells?"};
 
   /// Handle for calo hits (input collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
   /// Handle for calo cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes
@@ -111,7 +111,7 @@ private:
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
-  std::unordered_map<uint64_t, double> m_cellsMap;
+  mutable std::unordered_map<uint64_t, double> m_cellsMap;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */

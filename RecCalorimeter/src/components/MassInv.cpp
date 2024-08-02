@@ -21,6 +21,7 @@
 #include "edm4hep/MCParticleCollection.h"
 
 // ROOT
+#include "TSystem.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
 #include "TFitResult.h"
@@ -29,7 +30,7 @@
 DECLARE_COMPONENT(MassInv)
 
 MassInv::MassInv(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc),
+    : Gaudi::Algorithm(name, svcLoc),
       m_histSvc("THistSvc", "MassInv"),
       m_geoSvc("GeoSvc", "MassInv"),
       m_hEnergyPreAnyCorrections(nullptr),
@@ -44,7 +45,7 @@ MassInv::MassInv(const std::string& name, ISvcLocator* svcLoc)
 
 StatusCode MassInv::initialize() {
   {
-    StatusCode sc = GaudiAlgorithm::initialize();
+    StatusCode sc = Gaudi::Algorithm::initialize();
     if (sc.isFailure()) return sc;
   }
 
@@ -381,7 +382,7 @@ StatusCode MassInv::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode MassInv::execute() {
+StatusCode MassInv::execute(const EventContext&) const {
   // Get the input collection with clusters
   const edm4hep::ClusterCollection* inClusters = m_inClusters.get();
   edm4hep::ClusterCollection* correctedClusters = m_correctedClusters.createAndPut();
@@ -544,9 +545,9 @@ StatusCode MassInv::execute() {
     uint numCells = newCluster.hits_size();
     double noise = 0;
     if (m_constPileupNoise == 0) {
-      noise = getNoiseConstantPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
-      verbose() << " NUM CELLS = " << numCells << "   cluster noise const = " << getNoiseConstantPerCluster(newEta, numCells)
-                << " scaled to PU " << m_mu<< "  = " << getNoiseConstantPerCluster(newEta, numCells)* std::sqrt(static_cast<int>(m_mu)) << endmsg;
+      noise = getNoiseRMSPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
+      verbose() << " NUM CELLS = " << numCells << "   cluster noise RMS = " << getNoiseRMSPerCluster(newEta, numCells)
+                << " scaled to PU " << m_mu<< "  = " << noise << endmsg;
     } else {
       noise = m_constPileupNoise * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
     }
@@ -804,20 +805,27 @@ StatusCode MassInv::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode MassInv::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode MassInv::finalize() { return Gaudi::Algorithm::finalize(); }
 
 StatusCode MassInv::initNoiseFromFile() {
-  // check if file exists
+  // Check if file exists
   if (m_noiseFileName.empty()) {
-    error() << "Name of the file with noise values not set" << endmsg;
+    error() << "Name of the file with the noise values not provided!" << endmsg;
     return StatusCode::FAILURE;
   }
-  std::unique_ptr<TFile> file(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
-  if (file->IsZombie()) {
-    error() << "Couldn't open the file with noise constants" << endmsg;
+  if (gSystem->AccessPathName(m_noiseFileName.value().c_str())) {
+    error() << "Provided file with the noise values not found!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
+    return StatusCode::FAILURE;
+  }
+  std::unique_ptr<TFile> inFile(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
+  if (inFile->IsZombie()) {
+    error() << "Unable to open the file with the noise values!" << endmsg;
+    error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Opening the file with noise constants: " << m_noiseFileName << endmsg;
+    info() << "Using the following file with the noise constants: "
+           << m_noiseFileName.value() << endmsg;
   }
 
   std::string pileupParamHistoName;
@@ -825,7 +833,7 @@ StatusCode MassInv::initNoiseFromFile() {
   for (unsigned i = 0; i < 2; i++) {
     pileupParamHistoName = m_pileupHistoName + std::to_string(i);
     debug() << "Getting histogram with a name " << pileupParamHistoName << endmsg;
-    m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(file->Get(pileupParamHistoName.c_str())));
+    m_histoPileupConst.push_back(*dynamic_cast<TH1F*>(inFile->Get(pileupParamHistoName.c_str())));
     if (m_histoPileupConst.at(i).GetNbinsX() < 1) {
       error() << "Histogram  " << pileupParamHistoName
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
@@ -841,7 +849,7 @@ StatusCode MassInv::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double MassInv::getNoiseConstantPerCluster(double aEta, uint aNumCells) {
+double MassInv::getNoiseRMSPerCluster(double aEta, uint aNumCells) const {
   double param0 = 0.;
   double param1 = 0.;
 

@@ -13,23 +13,18 @@
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
+#include <onnxruntime_cxx_api.h>
+
+#include "OnnxruntimeUtilities.h"
 
 DECLARE_COMPONENT(CalibrateCaloClusters)
 
-// convert vector data with given shape into ONNX runtime tensor
-template <typename T>
-Ort::Value vec_to_tensor(std::vector<T> &data, const std::vector<std::int64_t> &shape)
-{
-  Ort::MemoryInfo mem_info =
-      Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
-  auto tensor = Ort::Value::CreateTensor<T>(mem_info, data.data(), data.size(), shape.data(), shape.size());
-  return tensor;
-}
 
 CalibrateCaloClusters::CalibrateCaloClusters(const std::string &name,
                                              ISvcLocator *svcLoc)
     : Gaudi::Algorithm(name, svcLoc),
-      m_geoSvc("GeoSvc", "CalibrateCaloClusters")
+      m_geoSvc("GeoSvc", "CalibrateCaloClusters"),
+      m_ortMemInfo(Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault))
 {
   declareProperty("inClusters", m_inClusters,
                   "Input cluster collection");
@@ -227,7 +222,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
     m_ortEnv = new Ort::Env(loggingLevel, "ONNX runtime environment");
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
-    m_ortSession = new Ort::Experimental::Session(*m_ortEnv, const_cast<std::string &>(calibrationFile), session_options);
+    m_ortSession = new Ort::Session(*m_ortEnv, calibrationFile.data(), session_options);
   }
   catch (const Ort::Exception &exception)
   {
@@ -239,12 +234,19 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   // use default allocator (CPU)
   Ort::AllocatorWithDefaultOptions allocator;
   debug() << "Input Node Name/Shape (" << m_input_names.size() << "):" << endmsg;
+#if ORT_API_VERSION < 13
+  // Before 1.13 we have to roll our own unique_ptr wrapper here
+  auto allocDeleter = [&allocator](char* p) { allocator.Free(p); };
+  using AllocatedStringPtr = std::unique_ptr<char, decltype(allocDeleter)>;
+#endif
+
   for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
   {
-    // for old ONNX runtime version
-    // m_input_names.emplace_back(m_ortSession->GetInputName(i, allocator));
-    // for new runtime version
-    m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).get());
+#if ORT_API_VERSION < 13
+    m_input_names.emplace_back(AllocatedStringPtr(m_ortSession->GetInputName(i, allocator), allocDeleter).release());
+#else
+    m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).release());
+#endif
     m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_input_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
@@ -266,10 +268,11 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   debug() << "Output Node Name/Shape (" << m_output_names.size() << "):" << endmsg;
   for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
   {
-    // for old ONNX runtime version
-    // m_output_names.emplace_back(m_ortSession->GetOutputName(i, allocator));
-    // for new runtime version
+#if ORT_API_VERSION < 13
+    m_output_names.emplace_back(AllocatedStringPtr(m_ortSession->GetOutputName(i, allocator), allocDeleter).release());
+#else
     m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).get());
+#endif
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_output_names.at(i) << " : ";
     for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++)
@@ -329,7 +332,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     float corr = 1.0;
     // Create a single Ort tensor
     std::vector<Ort::Value> input_tensors;
-    input_tensors.emplace_back(vec_to_tensor<float>(energiesInLayers, m_input_shapes));
+    input_tensors.emplace_back(vec_to_tensor<float>(energiesInLayers, m_input_shapes, m_ortMemInfo));
 
     // double-check the dimensions of the input tensor
     // assert(input_tensors[0].IsTensor() && input_tensors[0].GetTensorTypeAndShapeInfo().GetShape() == m_input_shapes);
@@ -337,10 +340,12 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     // pass data through model
     try
     {
-      std::vector<Ort::Value> output_tensors = m_ortSession->Run(m_input_names,
-                                                                 input_tensors,
-                                                                 m_output_names,
-                                                                 Ort::RunOptions{nullptr});
+      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr},
+                                              m_input_names.data(),
+                                              input_tensors.data(),
+                                              input_tensors.size(),
+                                              m_output_names.data(),
+                                              m_output_names.size());
 
       // double-check the dimensions of the output tensors
       // NOTE: the number of output tensors is equal to the number of output nodes specifed in the Run() call

@@ -13,7 +13,7 @@
 DECLARE_COMPONENT(CreateCaloCellPositions)
 
 CreateCaloCellPositions::CreateCaloCellPositions(const std::string& name, ISvcLocator* svcLoc)
-    : GaudiAlgorithm(name, svcLoc) {
+    : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hit collection (input)");
   declareProperty("positionsECalBarrelTool", m_cellPositionsECalBarrelTool,
                   "Handle for tool to retrieve cell positions in ECal Barrel");
@@ -29,12 +29,12 @@ CreateCaloCellPositions::CreateCaloCellPositions(const std::string& name, ISvcLo
 }
 
 StatusCode CreateCaloCellPositions::initialize() {
-  StatusCode sc = GaudiAlgorithm::initialize();
+  StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCellPositions::execute() {
+StatusCode CreateCaloCellPositions::execute(const EventContext&) const {
   // Get the input hit collection
   const auto* hits = m_hits.get();
   debug() << "Input hit collection size: " << hits->size() << endmsg;
@@ -81,4 +81,4 @@ StatusCode CreateCaloCellPositions::execute() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCellPositions::finalize() { return GaudiAlgorithm::finalize(); }
+StatusCode CreateCaloCellPositions::finalize() { return Gaudi::Algorithm::finalize(); }

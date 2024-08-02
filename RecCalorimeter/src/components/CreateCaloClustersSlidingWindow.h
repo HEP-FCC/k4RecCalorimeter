@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CREATECALOCLUSTERSSLIDINGWINDOW_H
 
 // GAUDI
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // k4FWCore
@@ -56,7 +56,7 @@ class ClusterCollection;
  *  @author Anna Zaborowska
  */
 
-class CreateCaloClustersSlidingWindow : public GaudiAlgorithm {
+class CreateCaloClustersSlidingWindow : public Gaudi::Algorithm {
 public:
   CreateCaloClustersSlidingWindow(const std::string& name, ISvcLocator* svcLoc);
   /**  Initialize.
@@ -67,7 +67,7 @@ public:
    *   Perform the sliding window algorithm and build clusters.
    *   @return status code
    */
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
   /**  Finalize.
    *   @return status code
    */
@@ -89,15 +89,15 @@ private:
    */
   unsigned int phiNeighbour(int aIPhi) const;
   /// Handle for calo clusters (output collection)
-  DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
   /// Handle for calo cluster cells (output collection)
-  DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
   /// Handle for the tower building tool
-  ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<ITowerTool> m_towerTool;
   // calorimeter towers
-  std::vector<std::vector<float>> m_towers;
+  mutable std::vector<std::vector<float>> m_towers;
   /// Vector of pre-clusters
-  std::vector<cluster> m_preClusters;
+  mutable std::vector<cluster> m_preClusters;
   /// number of towers in eta (calculated from m_deltaEtaTower and the eta size of the first layer)
   int m_nEtaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)

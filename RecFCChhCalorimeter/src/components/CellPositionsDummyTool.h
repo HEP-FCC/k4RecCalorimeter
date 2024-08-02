@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CELLPOSITIONSDUMMYTOOL_H
 
 // GAUDI
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
@@ -21,7 +21,7 @@ class IGeoSvc;
  *  @author Coralie Neubueser
 */
 
-class CellPositionsDummyTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsDummyTool : public AlgTool, virtual public ICellPositionsTool {
 
 public:
   CellPositionsDummyTool(const std::string& type, const std::string& name, const IInterface* parent);

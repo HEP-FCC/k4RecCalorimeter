@@ -7,7 +7,7 @@
 #include "k4Interface/ICellPositionsTool.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // edm4hep
@@ -29,7 +29,7 @@ class IGeoSvc;
  *
  */
 
-class CreateCaloCellPositionsFCCee : public GaudiAlgorithm {
+class CreateCaloCellPositionsFCCee : public Gaudi::Algorithm {
 
 public:
   CreateCaloCellPositionsFCCee(const std::string& name, ISvcLocator* svcLoc);
@@ -40,7 +40,7 @@ public:
   /**  Execute.
    *   @return status code
    */
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
   /**  Finalize.
    *   @return status code
    */
@@ -50,16 +50,16 @@ private:
   /// Handle for tool to get positions width
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{};
   /// Input collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Input collection metadata handle
   MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Reader};
   /// Output collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
   /// Output collection metadata handle
   MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{m_positionedHits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
 
   // Cache
-  std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
+  mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H */

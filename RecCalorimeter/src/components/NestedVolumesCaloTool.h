@@ -2,7 +2,7 @@
 #define RECCALORIMETER_NESTEDVOLUMESCALOTOOL_H
 
 // Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
 #include "k4Interface/ICalorimeterTool.h"
@@ -19,7 +19,7 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class NestedVolumesCaloTool : public GaudiTool, virtual public ICalorimeterTool {
+class NestedVolumesCaloTool : public AlgTool, virtual public ICalorimeterTool {
 public:
   NestedVolumesCaloTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~NestedVolumesCaloTool() = default;

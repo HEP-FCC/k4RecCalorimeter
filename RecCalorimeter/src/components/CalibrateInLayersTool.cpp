@@ -10,12 +10,12 @@
 DECLARE_COMPONENT(CalibrateInLayersTool)
 
 CalibrateInLayersTool::CalibrateInLayersTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : GaudiTool(type, name, parent), m_geoSvc("GeoSvc", "CalibrateInLayers") {
+    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", "CalibrateInLayers") {
   declareInterface<ICalibrateCaloHitsTool>(this);
 }
 
 StatusCode CalibrateInLayersTool::initialize() {
-  if (GaudiTool::initialize().isFailure()) {
+  if (AlgTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
   // check if readout exists
@@ -44,4 +44,4 @@ void CalibrateInLayersTool::calibrate(std::unordered_map<uint64_t, double>& aHit
   });
 }
 
-StatusCode CalibrateInLayersTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CalibrateInLayersTool::finalize() { return AlgTool::finalize(); }

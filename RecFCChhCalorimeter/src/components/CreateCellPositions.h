@@ -6,7 +6,7 @@
 #include "k4Interface/ICellPositionsTool.h"
 
 // Gaudi
-#include "GaudiAlg/GaudiAlgorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 #include "edm4hep/CalorimeterHit.h"
@@ -25,7 +25,7 @@ class IGeoSvc;
  *
  */
 
-class CreateCellPositions : public GaudiAlgorithm {
+class CreateCellPositions : public Gaudi::Algorithm {
 
 public:
   CreateCellPositions(const std::string& name, ISvcLocator* svcLoc);
@@ -36,7 +36,7 @@ public:
   /**  Execute.
    *   @return status code
    */
-  StatusCode execute();
+  StatusCode execute(const EventContext&) const;
   /**  Finalize.
    *   @return status code
    */
@@ -44,11 +44,11 @@ public:
 
 private:
   /// Handle for tool to get positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool;
+  mutable ToolHandle<ICellPositionsTool> m_cellPositionsTool;
   /// Input collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Output collection
-  DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONS_H */
