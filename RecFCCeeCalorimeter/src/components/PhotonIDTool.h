@@ -18,7 +18,7 @@ namespace edm4hep {
 }
 
 // ONNX
-#include "onnxruntime/core/session/experimental_onnxruntime_cxx_api.h"
+#include "onnxruntime_cxx_api.h"
 
 /** @class PhotonIDTool
  *
@@ -100,12 +100,13 @@ private:
 
   // the ONNX runtime session for running the inference,
   // the environment, and the input and output shapes and names
-  Ort::Experimental::Session* m_ortSession = nullptr;
+  Ort::Session* m_ortSession = nullptr;
   Ort::Env* m_ortEnv = nullptr;
+  Ort::MemoryInfo m_ortMemInfo;
   std::vector<std::int64_t> m_input_shapes;
   std::vector<std::int64_t> m_output_shapes;
-  std::vector<std::string> m_input_names;
-  std::vector<std::string> m_output_names;
+  std::vector<const char*> m_input_names;
+  std::vector<const char*> m_output_names;
   std::vector<std::string> m_internal_input_names;
   
   // the indices of the shapeParameters containing the inputs to the model (-1 if not found)

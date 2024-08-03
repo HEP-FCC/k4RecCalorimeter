@@ -2,17 +2,6 @@
 # Package: RecFCCeeCalorimeter
 ################################################################################
 
-# ONNX DEPENDENCIES
-# includes
-include_directories("${ONNXRUNTIME_INCLUDE_DIRS}")
-# libs
-link_directories("${ONNXRUNTIME_LIBRARY_DIRS}")
-# New versions of ONNXRuntime add directories to include
-# through the target onnxruntime::onnxruntime
-if(onnxruntime_FOUND)
-  set(ONNXRUNTIME_LIBRARY onnxruntime::onnxruntime)
-endif()
-
 file(GLOB _module_sources src/components/*.cpp)
 gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                  SOURCES ${_module_sources}
@@ -26,7 +15,7 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       DD4hep::DDG4
                       ROOT::Core
                       ROOT::Hist
-                      ${ONNXRUNTIME_LIBRARY}
+                      onnxruntime::onnxruntime
                       nlohmann_json::nlohmann_json
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
