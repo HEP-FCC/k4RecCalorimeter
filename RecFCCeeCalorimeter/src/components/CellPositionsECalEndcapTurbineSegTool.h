@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CELLPOSITIONSECALENDCAPTURBINESEGTOOL_H
 
 // GAUDI
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // k4FWCore
@@ -37,7 +37,7 @@ class Segmentation;
  *  @author Erich Varnes
  */
 
-class CellPositionsECalEndcapTurbineSegTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsECalEndcapTurbineSegTool : public AlgTool, virtual public ICellPositionsTool {
 public:
   CellPositionsECalEndcapTurbineSegTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CellPositionsECalEndcapTurbineSegTool() = default;

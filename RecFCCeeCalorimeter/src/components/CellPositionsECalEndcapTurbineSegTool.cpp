@@ -9,12 +9,12 @@ DECLARE_COMPONENT(CellPositionsECalEndcapTurbineSegTool)
 
 CellPositionsECalEndcapTurbineSegTool::CellPositionsECalEndcapTurbineSegTool(const std::string& type, const std::string& name,
 										     const IInterface* parent)
-    : GaudiTool(type, name, parent) {
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -125,4 +125,4 @@ int CellPositionsECalEndcapTurbineSegTool::layerId(const uint64_t& aCellId) {
   return layer;
 }
 
-StatusCode CellPositionsECalEndcapTurbineSegTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsECalEndcapTurbineSegTool::finalize() { return AlgTool::finalize(); }
