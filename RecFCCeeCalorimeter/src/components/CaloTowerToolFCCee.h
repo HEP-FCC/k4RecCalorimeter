@@ -182,6 +182,17 @@ private:
   SegmentationType m_hcalFwdSegmentationType;
   /// decoder: only for barrel
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+<<<<<<< HEAD
+=======
+  // Set of bools to record whether a proper segmentation was found
+  bool m_ecalBarrelSegmentationOK;
+  bool m_ecalEndcapSegmentationOK;
+  bool m_ecalFwdSegmentationOK;
+  bool m_hcalBarrelSegmentationOK;
+  bool m_hcalExtBarrelSegmentationOK;
+  bool m_hcalEndcapSegmentationOK;
+  bool m_hcalFwdSegmentationOK;
+>>>>>>> 0bdbac8 (Remove segmentation members)
   
   /// Maximum theta of detector
   float m_thetaMax;
