@@ -1,5 +1,5 @@
 from Configurables import ApplicationMgr
-from Configurables import EventCounter
+#from Configurables import EventCounter
 from Configurables import AuditorSvc, ChronoAuditor
 from Configurables import PodioOutput
 from Configurables import CaloTowerToolFCCee
@@ -241,11 +241,12 @@ saveECalBarrelTool = SimG4SaveCalHits(
 )
 saveECalBarrelTool.CaloHits.Path = ecalBarrelHitsName
 
+ecalEndcapHitsName = "ECalEndcapPositionedHits"
 saveECalEndcapTool = SimG4SaveCalHits(
     "saveECalEndcapHits",
     readoutName=ecalEndcapReadoutName
 )
-saveECalEndcapTool.CaloHits.Path = "ECalEndcapHits"
+saveECalEndcapTool.CaloHits.Path = ecalEndcapHitsName
 
 if runHCal:
     hcalBarrelHitsName = "HCalBarrelPositionedHits"
@@ -388,19 +389,20 @@ createEcalBarrelPositionedCells2.positionedHits.Path = "ECalBarrelPositionedCell
 
 
 # Create cells in ECal endcap
+ecalEndcapCellsName = "ECalEndcapCells"
 createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells",
                                         doCellCalibration=True,
                                         calibTool=calibEcalEndcap,
                                         addCellNoise=False,
                                         filterCellNoise=False,
-                                        OutputLevel=INFO)
-createEcalEndcapCells.hits.Path = "ECalEndcapHits"
-createEcalEndcapCells.cells.Path = "ECalEndcapCells"
+                                        OutputLevel=INFO,
+                                        hits=ecalEndcapHitsName,
+                                        cells=ecalEndcapCellsName)
 
 # Add to Ecal endcap cells the position information
 # (good for physics, all coordinates set properly)
 # not yet merged!!
- cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
+cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
     "CellPositionsECalEndcap",
     readoutName=ecalEndcapReadoutName,
      OutputLevel=INFO
@@ -622,15 +624,15 @@ if runHCal:
     createHcalBarrelCells.AuditExecute = True
 out.AuditExecute = True
 
-event_counter = EventCounter('event_counter')
-event_counter.Frequency = 10
+#event_counter = EventCounter('event_counter')
+#event_counter.Frequency = 10
 
 ExtSvc = [geoservice, podioevent, geantservice, audsvc]
 if dumpGDML:
     ExtSvc += [gdmldumpservice]
 
 TopAlg = [
-    event_counter,
+#    event_counter,
     genAlg,
     hepmc_converter,
     geantsim,
