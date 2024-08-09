@@ -316,9 +316,3 @@ createEcalBarrelCells.AuditExecute = True
 createHcalBarrelCells.AuditExecute = True
 out.AuditExecute = True
 #ApplicationMgr().ExtSvc += [audsvc]
-
-from Configurables import EventCounter
-event_counter = EventCounter('event_counter')
-event_counter.Frequency = 10
-ApplicationMgr().TopAlg += [event_counter]
-

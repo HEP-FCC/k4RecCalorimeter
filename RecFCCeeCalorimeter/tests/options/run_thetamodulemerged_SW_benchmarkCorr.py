@@ -1,5 +1,4 @@
 from Configurables import ApplicationMgr
-from Configurables import EventCounter
 from Configurables import AuditorSvc, ChronoAuditor
 from Configurables import PodioOutput
 from Configurables import CaloTowerToolFCCee
@@ -598,15 +597,11 @@ if runHCal:
     createHcalBarrelCells.AuditExecute = True
 out.AuditExecute = True
 
-event_counter = EventCounter('event_counter')
-event_counter.Frequency = 10
-
 ExtSvc = [geoservice, podioevent, geantservice, audsvc]
 if dumpGDML:
     ExtSvc += [gdmldumpservice]
 
 TopAlg = [
-    event_counter,
     genAlg,
     hepmc_converter,
     geantsim,
