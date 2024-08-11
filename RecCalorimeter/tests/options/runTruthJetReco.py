@@ -116,8 +116,3 @@ gen.AuditExecute = True
 hepmc_converter.AuditExecute = True
 #out.AuditExecute = True
 
-from Configurables import EventCounter
-event_counter = EventCounter('event_counter')
-event_counter.Frequency = 10
-ApplicationMgr().TopAlg += [event_counter]
-
