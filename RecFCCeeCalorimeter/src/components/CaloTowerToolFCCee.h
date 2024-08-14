@@ -4,17 +4,12 @@
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
 
-// k4geo
-#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
-#include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
 class IGeoSvc;
 
-// dd4hep
-#include "DDSegmentation/MultiSegmentation.h"
 
 namespace dd4hep {
 namespace DDSegmentation {
@@ -109,7 +104,7 @@ public:
 
 private:
   /// Type of the segmentation
-  enum class SegmentationType {kWrong, kModuleTheta, kMulti, kPhiTheta};
+  enum class SegmentationType {kWrong, kModuleTheta, kMulti, kPhiTheta, kEndcapTurbine};
   /**  Correct way to access the neighbour of the phi tower, taking into account
    * the full coverage in phi.
    *   Full coverage means that first tower in phi, with ID = 0 is a direct
@@ -121,15 +116,18 @@ private:
   /**  This is where the cell info is filled into towers
    *   @param[in] aTowers Calorimeter towers.
    *   @param[in] aCells Calorimeter cells collection.
-   *   @param[in] aSegmentation Segmentation of the calorimeter
+   *   @param[in] fillTowerCells If true, make a list of the cells in each tower
    */
   void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
-                       dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType,
                        bool fillTowersCells);
-  /**  Check if the readout name exists. If so, it returns the segmentation.
+  /**  Find the maximum phi, theta covered by a readout
+   *   @param[in] aReadoutName Readout name to be checked for maximum phi, theta
+   *   @param[out] phiThetaPair  Values of the maximum phi and theta 
+   */
+  StatusCode retrievePhiThetaExtrema(std::string aReadoutName, std::pair<double, double> &phiThetaPair);
+ /**  Check if the readout name exists. If so, it returns the segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
    */
-  std::pair<double, double> retrievePhiThetaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType);
   std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> retrieveSegmentation(std::string aReadoutName);
   /// Handle for electromagnetic barrel cells (input collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
@@ -168,20 +166,6 @@ private:
   /// Name of the hcal forward calorimeter readout
   Gaudi::Property<std::string> m_hcalFwdReadoutName{this, "hcalFwdReadoutName", "",
                                                     "name of the hcal fwd readout"};
-  /// ModuleTheta segmentation of the electromagnetic barrel (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_ecalBarrelSegmentation;
-  /// ModuleTheta?? segmentation of the ecal endcap calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_ecalEndcapSegmentation;
-  /// ModuleTheta?? segmentation of the ecal forward calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_ecalFwdSegmentation;
-  /// ModuleTheta?? segmentation of the hadronic barrel (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalBarrelSegmentation;
-  /// ModuleTheta?? segmentation of the hadronic extended barrel (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalExtBarrelSegmentation;
-  /// ModuleTheta?? segmentation of the hcal endcap calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalEndcapSegmentation;
-  /// ModuleTheta?? segmentation of the hcal forward calorimeter (owned by DD4hep)
-  dd4hep::DDSegmentation::Segmentation* m_hcalFwdSegmentation;
   /// Type of segmentation of the electromagnetic barrel
   SegmentationType m_ecalBarrelSegmentationType;
   /// Type of segmentation of the ecal endcap calorimeter
@@ -198,6 +182,7 @@ private:
   SegmentationType m_hcalFwdSegmentationType;
   /// decoder: only for barrel
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+
   /// Maximum theta of detector
   float m_thetaMax;
   /// Maximum phi of the detector
