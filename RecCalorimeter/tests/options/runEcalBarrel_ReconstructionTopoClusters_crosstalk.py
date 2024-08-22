@@ -2,7 +2,7 @@
 # IMPORTS
 #
 from Configurables import ApplicationMgr
-from Configurables import EventCounter
+#from Configurables import EventCounter
 from Configurables import AuditorSvc, ChronoAuditor
 # Input/output
 from Configurables import k4DataSvc, PodioInput
@@ -15,6 +15,7 @@ from Configurables import CreateEmptyCaloCellsCollection
 # Cell positioning tools
 from Configurables import CreateCaloCellPositionsFCCee
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
+from Configurables import CellPositionsECalEndcapTurbineSegTool
 # Redo segmentation for ECAL
 from Configurables import RedoSegmentation
 # Change HCAL segmentation
@@ -52,6 +53,7 @@ from math import cos, sin, tan
 # - general settings
 #
 inputfile = "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/ALLEGRO_sim.root"
+# note - this file probably contains the old ecal endcap segmentation so we disable the endcap digitisation later
 Nevts = 50  # -1 means all events
 dumpGDML = False
 
@@ -117,7 +119,7 @@ if dumpGDML:
 # - ECAL readouts
 ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"
 ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"
-ecalEndcapReadoutName = "ECalEndcapPhiEta"
+ecalEndcapReadoutName = "ECalEndcapTurbine"
 
 hcalBarrelReadoutName = ""
 hcalBarrelReadoutName2 = ""
@@ -173,14 +175,31 @@ createEcalBarrelPositionedCells.positionedHits.Path = ecalBarrelPositionedCellsN
 
 # Create cells in ECal endcap (needed if one wants to apply cell calibration,
 # which is not performed by ddsim)
-createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells",
-                                        doCellCalibration=True,
-                                        calibTool=calibEcalEndcap,
-                                        addCellNoise=False,
-                                        filterCellNoise=False,
-                                        OutputLevel=INFO)
-createEcalEndcapCells.hits.Path = ecalEndcapReadoutName
-createEcalEndcapCells.cells.Path = "ECalEndcapCells"
+#ecalEndcapCellsName = "ECalEndcapCells"
+#createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells",
+#                                        doCellCalibration=True,
+#                                        calibTool=calibEcalEndcap,
+#                                        addCellNoise=False,
+#                                        filterCellNoise=False,
+#                                        OutputLevel=INFO,
+#                                        hits=ecalEndcapReadoutName,
+#                                        cells=ecalEndcapCellsName)
+
+# Add to Ecal endcap cells the position information
+# (good for physics, all coordinates set properly)
+#cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
+#    "CellPositionsECalEndcap",
+#    readoutName=ecalEndcapReadoutName,
+#    OutputLevel=INFO
+#)
+#ecalEndcapPositionedCellsName = "ECalEndcapPositionedCells"
+#createEcalEndcapPositionedCells = CreateCaloCellPositionsFCCee(
+#    "CreateECalEndcapPositionedCells",
+#    OutputLevel=INFO
+#)
+#createEcalEndcapPositionedCells.positionsTool = cellPositionEcalEndcapTool
+#createEcalEndcapPositionedCells.hits.Path = ecalEndcapCellsName
+#createEcalEndcapPositionedCells.positionedHits.Path = ecalEndcapPositionedCellsName
 
 hcalBarrelCellsName = "emptyCaloCells"
 hcalBarrelPositionedCellsName = "emptyCaloCells"
@@ -198,7 +217,8 @@ if doSWClustering:
     towers = CaloTowerToolFCCee("towers",
                                 deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
                                 ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                ecalEndcapReadoutName=ecalEndcapReadoutName,
+                                #ecalEndcapReadoutName=ecalEndcapReadoutName,
+                                ecalEndcapReadoutName="",
                                 ecalFwdReadoutName="",
                                 hcalBarrelReadoutName=hcalBarrelReadoutName2,
                                 hcalExtBarrelReadoutName="",
@@ -206,7 +226,8 @@ if doSWClustering:
                                 hcalFwdReadoutName="",
                                 OutputLevel=INFO)
     towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-    towers.ecalEndcapCells.Path = "ECalEndcapCells"
+    #towers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
+    towers.ecalEndcapCells.Path = "emptyCaloCells"
     towers.ecalFwdCells.Path = "emptyCaloCells"
     towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
     towers.hcalExtBarrelCells.Path = "emptyCaloCells"
@@ -359,8 +380,8 @@ audsvc.Auditors = [chra]
 out.AuditExecute = True
 
 # Event counter
-event_counter = EventCounter('event_counter')
-event_counter.Frequency = 10
+#event_counter = EventCounter('event_counter')
+#event_counter.Frequency = 10
 
 # Configure list of external services
 ExtSvc = [geoservice, podioevent, audsvc]
@@ -369,15 +390,16 @@ if dumpGDML:
 
 # Setup alg sequence
 TopAlg = [
-    event_counter,
+#    event_counter,
     input_reader,
     createEcalBarrelCells,
     createEcalBarrelPositionedCells,
-    createEcalEndcapCells
+#    createEcalEndcapCells,
+#    createEcalEndcapPositionedCells
 ]
 createEcalBarrelCells.AuditExecute = True
 createEcalBarrelPositionedCells.AuditExecute = True
-createEcalEndcapCells.AuditExecute = True
+#createEcalEndcapCells.AuditExecute = True
 
 if resegmentECalBarrel:
     TopAlg += [
