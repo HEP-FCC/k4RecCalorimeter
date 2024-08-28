@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CellPositionsHCalPhiThetaSegTool_H
 
 // Gaudi
-#include "GaudiAlg/AlgTool.h"
+#include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // k4geo
