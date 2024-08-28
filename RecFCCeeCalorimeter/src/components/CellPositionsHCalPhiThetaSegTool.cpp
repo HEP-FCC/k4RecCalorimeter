@@ -11,14 +11,14 @@ CellPositionsHCalPhiThetaSegTool::CellPositionsHCalPhiThetaSegTool(
     const std::string &type,
     const std::string &name,
     const IInterface *parent)
-    : GaudiTool(type, name, parent)
+    : AlgTool(type, name, parent)
 {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsHCalPhiThetaSegTool::initialize()
 {
-  StatusCode sc = GaudiTool::initialize();
+  StatusCode sc = AlgTool::initialize();
   if (sc.isFailure())
     return sc;
   m_geoSvc = service("GeoSvc");
@@ -221,4 +221,4 @@ std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiEndcap(
   return radii;
 }
 
-StatusCode CellPositionsHCalPhiThetaSegTool::finalize() { return GaudiTool::finalize(); }
+StatusCode CellPositionsHCalPhiThetaSegTool::finalize() { return AlgTool::finalize(); }

@@ -2,7 +2,7 @@
 #define RECCALORIMETER_CellPositionsHCalPhiThetaSegTool_H
 
 // Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include "GaudiAlg/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 // k4geo
@@ -41,7 +41,7 @@ class Segmentation;
  *  @author Michaela Mlynarikova
  */
 
-class CellPositionsHCalPhiThetaSegTool : public GaudiTool, virtual public ICellPositionsTool {
+class CellPositionsHCalPhiThetaSegTool : public AlgTool, virtual public ICellPositionsTool {
 public:
   CellPositionsHCalPhiThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
   ~CellPositionsHCalPhiThetaSegTool() = default;
