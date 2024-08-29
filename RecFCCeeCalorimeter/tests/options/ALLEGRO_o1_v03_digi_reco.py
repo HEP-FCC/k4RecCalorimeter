@@ -1,49 +1,12 @@
 #
-# IMPORTS
+# COMMON IMPORTS
 #
-from Configurables import ApplicationMgr
-from Configurables import AuditorSvc, ChronoAuditor
-# Input/output
-from Configurables import k4DataSvc, PodioInput
-from Configurables import PodioOutput
-# Geometry
-from Configurables import GeoSvc
-# Create cells
-from Configurables import CreateCaloCells
-from Configurables import CreateEmptyCaloCellsCollection
-# Cell positioning tools
-from Configurables import CreateCaloCellPositionsFCCee
-from Configurables import CellPositionsECalBarrelModuleThetaSegTool
-from Configurables import CellPositionsECalEndcapTurbineSegTool
-# Redo segmentation for ECAL and HCAL
-from Configurables import RedoSegmentation
-# Read noise values from file and generate noise in cells
-from Configurables import NoiseCaloCellsVsThetaFromFileTool
-# Apply sampling fraction corrections
-from Configurables import CalibrateCaloHitsTool
-from Configurables import CalibrateInLayersTool
-# Up/down stream correction
-from Configurables import CorrectCaloClusters
-# SW clustering
-from Configurables import CaloTowerToolFCCee
-from Configurables import CreateCaloClustersSlidingWindowFCCee
-# Topo clustering
-from Configurables import CaloTopoClusterInputTool
-from Configurables import TopoCaloNeighbours
-from Configurables import TopoCaloNoisyCells
-from Configurables import CaloTopoClusterFCCee
-# Decorate clusters with shower shape parameters
-from Configurables import AugmentClustersFCCee
-# MVA calibration
-from Configurables import CalibrateCaloClusters
-# photon/pi0 identification
-from Configurables import PhotonIDTool
+
 # Logger
 from Gaudi.Configuration import INFO  # DEBUG, VERBOSE
 # units and physical constants
 from GaudiKernel.PhysicalConstants import pi
-# python libraries
-import os
+
 
 #
 # SETTINGS
@@ -112,6 +75,7 @@ runPhotonIDTool = False
 #
 
 # Input: load the output of the SIM step
+from Configurables import k4DataSvc, PodioInput
 podioevent = k4DataSvc('EventDataSvc')
 podioevent.input = inputfile
 input_reader = PodioInput('InputReader')
@@ -120,6 +84,8 @@ input_reader = PodioInput('InputReader')
 # Detector geometry
 # prefix all xmls with path_to_detector
 # if K4GEO is empty, this should use relative path to working directory
+from Configurables import GeoSvc
+import os
 geoservice = GeoSvc("GeoSvc")
 path_to_detector = os.environ.get("K4GEO", "")
 detectors_to_use = [
@@ -152,6 +118,7 @@ else:
     hcalEndcapReadoutName = ""
 
 # - EM scale calibration (sampling fraction)
+from Configurables import CalibrateInLayersTool
 #   * ECAL barrel
 calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel",
                                         samplingFraction=ecalBarrelSamplingFraction,
@@ -164,12 +131,18 @@ calibEcalEndcap = CalibrateInLayersTool("CalibrateECalEndcap",
                                         layerFieldName="layer")
 
 if runHCal:
+    from Configurables import CalibrateCaloHitsTool
     # HCAL barrel
     calibHCalBarrel = CalibrateCaloHitsTool(
         "CalibrateHCalBarrel", invSamplingFraction="29.4202")
     # HCAL endcap
     calibHCalEndcap = CalibrateCaloHitsTool(
         "CalibrateHCalEndcap", invSamplingFraction="29.4202")  # FIXME: to be updated for ddsim
+
+from Configurables import CreateCaloCells
+from Configurables import CreateCaloCellPositionsFCCee
+from Configurables import CellPositionsECalBarrelModuleThetaSegTool
+from Configurables import CellPositionsECalEndcapTurbineSegTool
 
 # Create cells in ECal barrel (needed if one wants to apply cell calibration,
 # which is not performed by ddsim)
@@ -208,6 +181,7 @@ if resegmentECalBarrel:
     # Add noise at this step if you derived the noise already assuming merged cells
     # Step 2a: compute new cellID of cells based on new readout
     # (merged module-theta segmentation with variable merging vs layer)
+    from Configurables import RedoSegmentation
     resegmentEcalBarrelTool = RedoSegmentation("ReSegmentationEcal",
                                                # old bitfield (readout)
                                                oldReadoutName=ecalBarrelReadoutName,
@@ -279,6 +253,7 @@ createEcalEndcapPositionedCells.positionedHits.Path = ecalEndcapPositionedCellsN
 if addNoise:
     ecalBarrelNoisePath = "elecNoise_ecalBarrelFCCee_theta.root"
     ecalBarrelNoiseRMSHistName = "h_elecNoise_fcc_"
+    from Configurables import NoiseCaloCellsVsThetaFromFileTool
     noiseBarrel = NoiseCaloCellsVsThetaFromFileTool("NoiseBarrel",
                                                     cellPositionsTool=cellPositionEcalBarrelTool,
                                                     readoutName=ecalBarrelReadoutName,
@@ -364,6 +339,7 @@ if runHCal:
 
     # first we create new hits with the readout without the row information
     # and then merge them into new cells
+    from Configurables import RedoSegmentation
     rewriteHCalBarrel = RedoSegmentation("ReSegmentationHCal",
                                          # old bitfield (readout)
                                          oldReadoutName=hcalBarrelReadoutName,
@@ -419,12 +395,15 @@ else:
     cellPositionHCalBarrelTool2 = None
 
 # Empty cells for parts of calorimeter not implemented yet
+from Configurables import CreateEmptyCaloCellsCollection
 createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
 createemptycells.cells.Path = "emptyCaloCells"
 
 if doSWClustering:
 
     # Produce sliding window clusters
+    from Configurables import CaloTowerToolFCCee
+    from Configurables import CreateCaloClustersSlidingWindowFCCee
 
     # Clustering parameters
     # - phi-theta window sizes
@@ -458,6 +437,20 @@ if doSWClustering:
     ecalBarrelTowers.hcalEndcapCells.Path = "emptyCaloCells"
     ecalBarrelTowers.hcalFwdCells.Path = "emptyCaloCells"
 
+    createECalBarrelClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalBarrelClusters",
+                                                                    towerTool=ecalBarrelTowers,
+                                                                    nThetaWindow=windT, nPhiWindow=windP,
+                                                                    nThetaPosition=posT, nPhiPosition=posP,
+                                                                    nThetaDuplicates=dupT, nPhiDuplicates=dupP,
+                                                                    nThetaFinal=finT, nPhiFinal=finP,
+                                                                    energyThreshold=threshold,
+                                                                    energySharingCorrection=False,
+                                                                    attachCells=True,
+                                                                    OutputLevel=INFO
+                                                                    )
+    createECalBarrelClusters.clusters.Path = "EMBCaloClusters"
+    createECalBarrelClusters.clusterCells.Path = "EMBCaloClusterCells"
+
     ecalEndcapTowers = CaloTowerToolFCCee("CreateECalEndcapTowers",
                                           deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
                                           ecalBarrelReadoutName="",
@@ -476,20 +469,6 @@ if doSWClustering:
     ecalEndcapTowers.hcalEndcapCells.Path = "emptyCaloCells"
     ecalEndcapTowers.hcalFwdCells.Path = "emptyCaloCells"
 
-    createECalBarrelClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalBarrelClusters",
-                                                                    towerTool=ecalBarrelTowers,
-                                                                    nThetaWindow=windT, nPhiWindow=windP,
-                                                                    nThetaPosition=posT, nPhiPosition=posP,
-                                                                    nThetaDuplicates=dupT, nPhiDuplicates=dupP,
-                                                                    nThetaFinal=finT, nPhiFinal=finP,
-                                                                    energyThreshold=threshold,
-                                                                    energySharingCorrection=False,
-                                                                    attachCells=True,
-                                                                    OutputLevel=INFO
-                                                                    )
-    createECalBarrelClusters.clusters.Path = "EMBCaloClusters"
-    createECalBarrelClusters.clusterCells.Path = "EMBCaloClusterCells"
-
     createECalEndcapClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalEndcapClusters",
                                                                     towerTool=ecalEndcapTowers,
                                                                     nThetaWindow=windT, nPhiWindow=windP,
@@ -505,6 +484,7 @@ if doSWClustering:
     createECalEndcapClusters.clusterCells.Path = "EMECCaloClusterCells"
 
     if applyUpDownstreamCorrections:
+        from Configurables import CorrectCaloClusters
         correctECalBarrelClusters = CorrectCaloClusters("CorrectECalBarrelClusters",
                                                         inClusters=createECalBarrelClusters.clusters.Path,
                                                         outClusters="Corrected" + createECalBarrelClusters.clusters.Path,
@@ -523,6 +503,7 @@ if doSWClustering:
                                                         )
 
     if addShapeParameters:
+        from Configurables import AugmentClustersFCCee
         augmentECalBarrelClusters = AugmentClustersFCCee("AugmentECalBarrelClusters",
                                                          inClusters=createECalBarrelClusters.clusters.Path,
                                                          outClusters="Augmented" + createECalBarrelClusters.clusters.Path,
@@ -543,6 +524,7 @@ if doSWClustering:
         else:
             inClusters = createECalBarrelClusters.clusters.Path
 
+        from Configurables import CalibrateCaloClusters
         calibrateECalBarrelClusters = CalibrateCaloClusters("calibrateECalBarrelClusters",
                                                             inClusters=inClusters,
                                                             outClusters="Calibrated" + createECalBarrelClusters.clusters.Path,
@@ -568,6 +550,7 @@ if doSWClustering:
             else:
                 inClusters = augmentECalBarrelClusters.outClusters.Path
 
+            from Configurables import PhotonIDTool
             photonIDECalBarrelClusters = PhotonIDTool("photonIDECalBarrelClusters",
                                                       inClusters=inClusters,
                                                       outClusters="PhotonID" + inClusters,
@@ -616,6 +599,10 @@ if doSWClustering:
 if doTopoClustering:
 
     # Produce topoclusters
+    from Configurables import CaloTopoClusterInputTool
+    from Configurables import TopoCaloNeighbours
+    from Configurables import TopoCaloNoisyCells
+    from Configurables import CaloTopoClusterFCCee
 
     #  ECAL only
     createECalBarrelTopoInput = CaloTopoClusterInputTool("CreateECalBarrelTopoInput",
@@ -675,6 +662,7 @@ if doTopoClustering:
     # no topoclusters for ECAL endcap yet: no noise and neighbour maps provided
 
     if applyUpDownstreamCorrections:
+        from Configurables import CorrectCaloClusters
         correctECalBarrelTopoClusters = CorrectCaloClusters(
             "CorrectECalBarrelTopoClusters",
             inClusters=createECalBarrelTopoClusters.clusters.Path,
@@ -694,6 +682,7 @@ if doTopoClustering:
         )
 
     if addShapeParameters:
+        from Configurables import AugmentClustersFCCee
         augmentECalBarrelTopoClusters = AugmentClustersFCCee("augmentECalBarrelTopoClusters",
                                                              inClusters=createECalBarrelTopoClusters.clusters.Path,
                                                              outClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path,
@@ -713,6 +702,7 @@ if doTopoClustering:
         else:
             inClusters = createECalBarrelTopoClusters.clusters.Path
 
+        from Configurables import CalibrateCaloClusters
         calibrateECalBarrelTopoClusters = CalibrateCaloClusters("calibrateECalBarrelTopoClusters",
                                                                 inClusters=inClusters,
                                                                 outClusters="Calibrated" + createECalBarrelTopoClusters.clusters.Path,
@@ -738,6 +728,7 @@ if doTopoClustering:
             else:
                 inClusters = augmentECalBarrelTopoClusters.outClusters.Path
 
+            from Configurables import PhotonIDTool
             photonIDECalBarrelTopoClusters = PhotonIDTool("photonIDECalBarrelTopoClusters",
                                                           inClusters=inClusters,
                                                           outClusters="PhotonID" + inClusters,
@@ -805,6 +796,7 @@ if doTopoClustering:
         createTopoClusters.clusterCells.Path = "CaloTopoClusterCells"
 
 # Output
+from Configurables import PodioOutput
 out = PodioOutput("out",
                   OutputLevel=INFO)
 out.filename = "ALLEGRO_sim_digi_reco.root"
@@ -868,6 +860,7 @@ if not saveClusterCells:
 #     out.outputCommands.append("drop %s" % augmentECalBarrelClusters.inClusters)
 
 # CPU information
+from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
@@ -973,6 +966,7 @@ TopAlg += [
     out
 ]
 
+from Configurables import ApplicationMgr
 ApplicationMgr(
     TopAlg=TopAlg,
     EvtSel='NONE',
