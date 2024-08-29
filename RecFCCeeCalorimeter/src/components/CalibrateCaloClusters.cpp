@@ -173,22 +173,17 @@ StatusCode CalibrateCaloClusters::finalize()
   if (m_ortEnv)
     delete m_ortEnv;
 
-  for (std::size_t i = 0; i < m_input_names.size(); i++) {
-    if (m_input_names.at(i)) {
-      delete m_input_names.at(i);
-    }
+  for (auto& name : m_input_names) {
+    delete name;
   }
-  m_input_names.resize(0);
 
-  for (std::size_t i = 0; i < m_output_names.size(); i++) {
-    if (m_output_names.at(i)) {
-      delete m_output_names.at(i);
-    }
+  for (auto& name : m_output_names) {
+    delete name;
   }
-  m_output_names.resize(0);
 
   return Gaudi::Algorithm::finalize();
 }
+
 
 edm4hep::ClusterCollection *CalibrateCaloClusters::initializeOutputClusters(
     const edm4hep::ClusterCollection *inClusters) const
