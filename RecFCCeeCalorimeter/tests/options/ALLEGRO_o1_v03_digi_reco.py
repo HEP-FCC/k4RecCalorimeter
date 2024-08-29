@@ -16,7 +16,8 @@ from GaudiKernel.PhysicalConstants import pi
 #
 inputfile = "ALLEGRO_sim_ee_z_qq.root"  # input file produced with ddsim
 Nevts = -1                              # -1 means all events
-addNoise = False                        # add noise or not to the cell energy
+addNoise = True                         # add noise or not to the cell energy
+addCrosstalk = True                     # switch on/off the crosstalk
 dumpGDML = False                        # create GDML file of detector model
 runHCal = True                          # if false, it will produce only ECAL clusters. if true, it will also produce ECAL+HCAL clusters
 
@@ -143,6 +144,12 @@ from Configurables import CreateCaloCells
 from Configurables import CreateCaloCellPositionsFCCee
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
 from Configurables import CellPositionsECalEndcapTurbineSegTool
+if addCrosstalk:
+    from Configurables import ReadCaloCrosstalkMap
+    # read the crosstalk map
+    readCrosstalkMap = ReadCaloCrosstalkMap("ReadCrosstalkMap",
+                                            fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/xtalk_neighbours_map_ecalB_thetamodulemerged.root",
+                                            OutputLevel=INFO)
 
 # Create cells in ECal barrel (needed if one wants to apply cell calibration,
 # which is not performed by ddsim)
@@ -151,6 +158,8 @@ ecalBarrelCellsName = "ECalBarrelCells"
 createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
                                         doCellCalibration=True,
                                         calibTool=calibEcalBarrel,
+                                        crosstalksTool=readCrosstalkMap,
+                                        addCrosstalk=addCrosstalk,
                                         addCellNoise=False,
                                         filterCellNoise=False,
                                         addPosition=True,

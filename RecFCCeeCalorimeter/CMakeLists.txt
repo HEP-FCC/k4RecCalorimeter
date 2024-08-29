@@ -50,9 +50,3 @@ add_test(NAME FCCeeLAr_benchmarkCorrection
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_benchmarkCorrection)
-
-add_test(NAME FCCeeLAr_runxtalk
-  COMMAND k4run RecCalorimeter/tests/options/runEcalBarrel_ReconstructionTopoClusters_crosstalk.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-set_test_env(FCCeeLAr_runxtalk)
