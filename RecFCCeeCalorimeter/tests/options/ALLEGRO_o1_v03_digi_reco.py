@@ -14,11 +14,11 @@ from GaudiKernel.PhysicalConstants import pi
 
 # - general settings
 #
-inputfile = "ALLEGRO_sim_e_barrel.root"  # input file produced with ddsim
-Nevts = -1                      # -1 means all events
-addNoise = False                # add noise or not to the cell energy
-dumpGDML = False                # create GDML file of detector model
-runHCal = True                  # if false, it will produce only ECAL clusters. if true, it will also produce ECAL+HCAL clusters
+inputfile = "ALLEGRO_sim_ee_z_qq.root"  # input file produced with ddsim
+Nevts = -1                              # -1 means all events
+addNoise = False                        # add noise or not to the cell energy
+dumpGDML = False                        # create GDML file of detector model
+runHCal = True                          # if false, it will produce only ECAL clusters. if true, it will also produce ECAL+HCAL clusters
 
 # - what to save in output file
 #

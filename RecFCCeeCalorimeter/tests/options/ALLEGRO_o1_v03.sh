@@ -7,14 +7,23 @@ else
   echo "The Key4hep stack was already loaded in this environment."
 fi
 
+# download the events to reconstruct
+if ! -test https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/gen/pythia_ee_z_qq_10evt.hepmc; then
+  echo "Downloading files needed for simulation"
+  wget https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/gen/pythia_ee_z_qq_10evt.hepmc
+fi
 # run the SIM step (for debug do not run it if files already present. Comment the if and fi lines for production)
-if ! test -f ALLEGRO_sim_e_barrel.root; then
-echo "Generating events and performing the Geant4 simulation with ddsim"
-ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle e- --numberOfEvents 10 --outputFile ALLEGRO_sim_e_barrel.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
+#if ! test -f ALLEGRO_sim_ee_z_qq.root; then
+echo "Performing the Geant4 simulation with ddsim"
+ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents -1 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
+#fi
+#if ! test -f ALLEGRO_sim_e_barrel.root; then
+#echo "Generating events and performing the Geant4 simulation with ddsim"
+#ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle e- --numberOfEvents 10 --outputFile ALLEGRO_sim_e_barrel.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
 #ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle e- --numberOfEvents 10 --outputFile ALLEGRO_sim_e_endcap.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
 #ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle pi- --numberOfEvents 10 --outputFile ALLEGRO_sim_pi_barrel.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
 #ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle pi- --numberOfEvents 10 --outputFile ALLEGRO_sim_pi_endcap.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
-fi
+#fi
 
 # get the files needed for calibration, noise, neighbor finding, etc
 if ! test -f ./neighbours_map_ecalB_thetamodulemerged_hcalB_thetaphi.root; then  # assumes that if the last file exists, all the other as well
