@@ -169,8 +169,23 @@ StatusCode CalibrateCaloClusters::finalize()
 {
   if (m_ortSession)
     delete m_ortSession;
+
   if (m_ortEnv)
     delete m_ortEnv;
+
+  for (std::size_t i = 0; i < m_input_names.size(); i++) {
+    if (m_input_names.at(i)) {
+      delete m_input_names.at(i);
+    }
+  }
+  m_input_names.resize(0);
+
+  for (std::size_t i = 0; i < m_output_names.size(); i++) {
+    if (m_output_names.at(i)) {
+      delete m_output_names.at(i);
+    }
+  }
+  m_output_names.resize(0);
 
   return Gaudi::Algorithm::finalize();
 }
@@ -271,7 +286,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
 #if ORT_API_VERSION < 13
     m_output_names.emplace_back(AllocatedStringPtr(m_ortSession->GetOutputName(i, allocator), allocDeleter).release());
 #else
-    m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).get());
+    m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).release());
 #endif
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_output_names.at(i) << " : ";

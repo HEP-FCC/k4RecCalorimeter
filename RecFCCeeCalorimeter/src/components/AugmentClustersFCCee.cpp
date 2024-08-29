@@ -129,9 +129,9 @@ StatusCode AugmentClustersFCCee::initialize()
       showerShapeDecorations.push_back(Form("energy_fraction_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("theta_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("phi_%s_layer_%d", detector, layer));
-      showerShapeDecorations.push_back(Form("maxcell_E_%s_layer_%d", detector, layer));
       // pi0/photon shape var only calculated in EMB
       if (m_do_photon_shapeVar && m_systemIDs[k] == systemID_EMB) {
+        showerShapeDecorations.push_back(Form("maxcell_E_%s_layer_%d", detector, layer));
         showerShapeDecorations.push_back(Form("width_theta_%s_layer_%d", detector, layer));
         showerShapeDecorations.push_back(Form("width_module_%s_layer_%d", detector, layer));
         showerShapeDecorations.push_back(Form("Ratio_E_max_2ndmax_%s_layer_%d", detector, layer));
@@ -651,7 +651,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
               return StatusCode::FAILURE;
             }
             width_theta[layer+startPositionToFill] = (sumEnLayer[layer+startPositionToFill] > 0.) ? std::sqrt(std::fabs(w_theta2)) : 0. ;
-	  }
+	        }
           double w_module2 = module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
           // Very small but negative values caused by computational precision are allowed,
           // otherwise crash.
