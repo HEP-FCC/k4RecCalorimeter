@@ -31,6 +31,7 @@ add_test(NAME ALLEGRO_o1_v03_sim_reco
          COMMAND ../../../RecFCCeeCalorimeter/tests/options/ALLEGRO_o1_v03.sh
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
+set_test_env(ALLEGRO_o1_v03_sim_reco)
 
 add_test(NAME FCCeeLAr_benchmarkCalibration
          COMMAND k4run RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
