@@ -27,24 +27,11 @@ install(TARGETS k4RecFCCeeCalorimeterPlugins
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
 
-add_test(NAME FCCeeLAr_simulateForReco
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/runCaloSim.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+add_test(NAME ALLEGRO_o1_v03_sim_reco
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/ALLEGRO_o1_v03.sh
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
-set_test_env(FCCeeLAr_simulateForReco)
-
-add_test(NAME FCCeeLAr_simRecoAllegroV3
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/run_thetamodulemerged.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-set_test_env(FCCeeLAr_simRecoAllegroV3)
-
-add_test(NAME FCCeeLAr_slidingWindowClustering
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/runFullCaloSystem_ReconstructionSW_noiseFromFile.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-set_test_env(FCCeeLAr_slidingWindowClustering)
-set_tests_properties(FCCeeLAr_slidingWindowClustering PROPERTIES DEPENDS "FCCeeLAr_simulateForReco")
+set_test_env(ALLEGRO_o1_v03_sim_reco)
 
 add_test(NAME FCCeeLAr_benchmarkCalibration
          COMMAND k4run RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
