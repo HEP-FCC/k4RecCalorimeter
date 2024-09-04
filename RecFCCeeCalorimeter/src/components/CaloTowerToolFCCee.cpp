@@ -234,7 +234,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
     CellsIntoTowers(aTowers, hcalExtBarrelCells, fillTowersCells);
     totalNumberOfCells += hcalExtBarrelCells->size();
   }
-
+  */
   // 6. HCAL endcap calorimeter
   const edm4hep::CalorimeterHitCollection* hcalEndcapCells = m_hcalEndcapCells.get();
   debug() << "Input Hcal endcap cell collection size: " << hcalEndcapCells->size() << endmsg;
@@ -243,7 +243,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
     CellsIntoTowers(aTowers, hcalEndcapCells,  fillTowersCells);
     totalNumberOfCells += hcalEndcapCells->size();
   }
-
+  /*
   // 7. HCAL forward calorimeter
   const edm4hep::CalorimeterHitCollection* hcalFwdCells = m_hcalFwdCells.get();
   debug() << "Input Hcal forward cell collection size: " << hcalFwdCells->size() << endmsg;
