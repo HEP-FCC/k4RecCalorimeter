@@ -1,18 +1,10 @@
 #!/bin/bash
 
 # Define the function for downloading files
+# Attempt to download the file using wget, exit the script if wget failed
 download_file() {
   local url="$1"
-
-  # Attempt to download the file using wget
-  wget "$url"
-
-  # Check the exit status of wget
-  if [ $? -ne 0 ]; then
-    # if wget failed, exit the script with status code 1
-    echo "Download failed."
-    exit 1
-  fi
+  wget "$url" || { echo "Download failed"; exit 1; }
 }
 
 # set-up the Key4hep environment if not already set
@@ -22,7 +14,7 @@ if [[ -z "${KEY4HEP_STACK}" ]]; then
 fi
 
 # download the events to reconstruct
-if ! -test ./pythia_ee_z_qq_10evt.hepmc; then
+if ! test -f ./pythia_ee_z_qq_10evt.hepmc; then
   echo "Downloading files needed for simulation"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/gen/pythia_ee_z_qq_10evt.hepmc"
 fi
@@ -30,7 +22,7 @@ fi
 # run the SIM step (for debug do not run it if files already present. Comment the if and fi lines for production)
 # if ! test -f ALLEGRO_sim_ee_z_qq.root; then
 echo "Performing the Geant4 simulation with ddsim"
-ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents -1 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
+ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents -1 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
 # fi
 #if ! test -f ALLEGRO_sim_e_barrel.root; then
 #echo "Generating events and performing the Geant4 simulation with ddsim"
@@ -39,12 +31,6 @@ ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents -1 --outputFile A
 #ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle pi- --numberOfEvents 10 --outputFile ALLEGRO_sim_pi_barrel.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
 #ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.particle pi- --numberOfEvents 10 --outputFile ALLEGRO_sim_pi_endcap.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml
 #fi
-
-retcode=$?
-if [ $retcode -ne 0 ]; then
-  echo "Simulation failed"
-  exit $retcode
-fi
 
 # get the files needed for calibration, noise, neighbor finding, etc
 if ! test -f ./neighbours_map_ecalB_thetamodulemerged_hcalB_thetaphi.root; then  # assumes that if the last file exists, all the other as well
