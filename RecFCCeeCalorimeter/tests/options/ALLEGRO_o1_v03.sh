@@ -2,7 +2,9 @@
 
 # set-up the Key4hep environment if not already set
 if [[ -z "${KEY4HEP_STACK}" ]]; then
-  source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
+  #  source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
+  echo "Error: Key4hep environment not set"
+  return 1
 else
   echo "The Key4hep stack was already loaded in this environment."
 fi
