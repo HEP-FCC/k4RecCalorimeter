@@ -150,6 +150,8 @@ if addCrosstalk:
     readCrosstalkMap = ReadCaloCrosstalkMap("ReadCrosstalkMap",
                                             fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/xtalk_neighbours_map_ecalB_thetamodulemerged.root",
                                             OutputLevel=INFO)
+else:
+    readCrosstalkMap = None
 
 # Create cells in ECal barrel (needed if one wants to apply cell calibration,
 # which is not performed by ddsim)
