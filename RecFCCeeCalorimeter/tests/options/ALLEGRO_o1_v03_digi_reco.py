@@ -197,6 +197,8 @@ if addCrosstalk:
     readCrosstalkMap = ReadCaloCrosstalkMap("ReadCrosstalkMap",
                                             fileName="https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/xtalk_neighbours_map_ecalB_thetamodulemerged.root",
                                             OutputLevel=INFO)
+else:
+    readCrosstalkMap = None
 
 # Create cells in ECal barrel (calibrated and positioned - optionally with xtalk and noise added)
 # from uncalibrated cells (+cellID info) from ddsim
@@ -362,7 +364,7 @@ if runHCal:
 
     # Create cells in HCal endcap
     hcalEndcapPositionedCellsName = hcalEndcapReadoutName + "Positioned"
-    createHCalEndcapCells = CreatePositionedCaloCells("CreateHCalEndcapCaloCells",
+    createHCalEndcapCells = CreatePositionedCaloCells("CreateHCalEndcapCells",
                                                       doCellCalibration=True,
                                                       calibTool=calibHCalEndcap,
                                                       addCellNoise=False,
