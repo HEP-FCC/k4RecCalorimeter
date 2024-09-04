@@ -19,11 +19,6 @@
 #include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/Constants.h"
 
-// DD4hep
-// #include "DD4hep/Detector.h"
-// #include "DD4hep/Volumes.h"
-// #include "TGeoManager.h"
-
 class IGeoSvc;
 
 /** @class CreatePositionedCaloCells
