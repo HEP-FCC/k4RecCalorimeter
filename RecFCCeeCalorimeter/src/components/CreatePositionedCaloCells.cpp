@@ -6,11 +6,6 @@
 // k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-// DD4hep
-//#include "DD4hep/Detector.h"
-//#include "DD4hep/Volumes.h"
-//#include "TGeoManager.h"
-
 // edm4hep
 #include "edm4hep/CalorimeterHit.h"
 
