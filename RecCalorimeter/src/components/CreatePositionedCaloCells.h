@@ -1,5 +1,5 @@
-#ifndef RECFCCEECALORIMETER_CREATEPOSITIONEDCALOCELLS_H
-#define RECFCCEECALORIMETER_CREATEPOSITIONEDCALOCELLS_H
+#ifndef RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
+#define RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
@@ -17,9 +17,6 @@
 // edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
-#include "edm4hep/Constants.h"
-
-class IGeoSvc;
 
 /** @class CreatePositionedCaloCells
  *
@@ -88,9 +85,6 @@ private:
   /// Handle for calo cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
-  /// Pointer to the geometry service (is this needed?)
-  ServiceHandle<IGeoSvc> m_geoSvc;
-  /// dd4hep::VolumeManager m_volman; (not needed)
   /// Maps of cell IDs (corresponding to DD4hep IDs) on final energies to be used for clustering
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
@@ -100,4 +94,4 @@ private:
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
 };
 
-#endif /* RECFCCEECALORIMETER_CREATEPOSITIONEDCALOCELLS_H */
+#endif /* RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H */

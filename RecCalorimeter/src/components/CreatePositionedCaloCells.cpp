@@ -3,16 +3,13 @@
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 
-// k4FWCore
-#include "k4Interface/IGeoSvc.h"
-
 // edm4hep
 #include "edm4hep/CalorimeterHit.h"
 
 DECLARE_COMPONENT(CreatePositionedCaloCells)
 
 CreatePositionedCaloCells::CreatePositionedCaloCells(const std::string& name, ISvcLocator* svcLoc) :
-Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
+Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
 
