@@ -26,7 +26,7 @@ StatusCode CreatePositionedCaloCells::initialize() {
 
   info() << "CreatePositionedCaloCells initialized" << endmsg;
   info() << "do calibration : " << m_doCellCalibration << endmsg;
-  info() << "add cell noise      : " << m_addCellNoise << endmsg;
+  info() << "add cell noise : " << m_addCellNoise << endmsg;
   info() << "remove cells below threshold : " << m_filterCellNoise << endmsg;
   info() << "emulate crosstalk : " << m_addCrosstalk << endmsg;
 
