@@ -23,11 +23,9 @@ runHCal = True                          # if false, it will produce only ECAL cl
 
 # - what to save in output file
 #
-# always drop unpositioned / uncalibrated cells, excepts for tests and debugging
+# always drop uncalibrated cells, except for tests and debugging
 # dropUncalibratedCells = True
-# dropUnpositionedCells = True
 dropUncalibratedCells = False
-dropUnpositionedCells = False
 
 # for big productions, save significant space removing hits and cells
 # however, hits and cluster cells might be wanted for small productions for detailed event displays
@@ -105,18 +103,20 @@ if dumpGDML:
 # Digitisation (merging hits into cells, EM scale calibration via sampling fractions)
 
 # - ECAL readouts
-ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"     # barrel, original segmentation (baseline)
-ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"   # barrel, after re-segmentation (for optimisation studies)
-ecalEndcapReadoutName = "ECalEndcapTurbine"               # endcap, turbine-like (baseline)
+ecalBarrelReadoutName = "ECalBarrelModuleThetaMerged"      # barrel, original segmentation (baseline)
+ecalBarrelReadoutName2 = "ECalBarrelModuleThetaMerged2"    # barrel, after re-segmentation (for optimisation studies)
+ecalEndcapReadoutName = "ECalEndcapTurbine"                # endcap, turbine-like (baseline)
 # - HCAL readouts
 if runHCal:
-    hcalBarrelReadoutName = "HCalBarrelReadout"           # barrel, original segmentation (row-phi)
-    hcalBarrelReadoutName2 = "BarHCal_Readout_phitheta"   # barrel, groups together cells of different row within same theta slice
-    hcalEndcapReadoutName = "HCalEndcapReadout"           # endcap, original segmentation
+    hcalBarrelReadoutName = "HCalBarrelReadout"            # barrel, original segmentation (row-phi)
+    hcalBarrelReadoutName2 = "BarHCal_Readout_phitheta"    # barrel, groups together cells of different row within same theta slice
+    hcalEndcapReadoutName = "HCalEndcapReadout"            # endcap, original segmentation
+    hcalEndcapReadoutName2 = "HCalEndcapReadout_phitheta"  # endcap, groups together cells of different row within same theta slice
 else:
     hcalBarrelReadoutName = ""
     hcalBarrelReadoutName2 = ""
     hcalEndcapReadoutName = ""
+    hcalEndcapReadoutName2 = ""
 
 # - EM scale calibration (sampling fraction)
 from Configurables import CalibrateInLayersTool
@@ -140,10 +140,57 @@ if runHCal:
     calibHCalEndcap = CalibrateCaloHitsTool(
         "CalibrateHCalEndcap", invSamplingFraction="29.4202")  # FIXME: to be updated for ddsim
 
-from Configurables import CreateCaloCells
-from Configurables import CreateCaloCellPositionsFCCee
+# - cell positioning tools
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
+cellPositionEcalBarrelTool = CellPositionsECalBarrelModuleThetaSegTool(
+    "CellPositionsECalBarrel",
+    readoutName=ecalBarrelReadoutName,
+    OutputLevel=INFO
+)
+if resegmentECalBarrel:
+    cellPositionEcalBarrelTool2 = CellPositionsECalBarrelModuleThetaSegTool(
+        "CellPositionsECalBarrel2",
+        readoutName=ecalBarrelReadoutName2,
+        OutputLevel=INFO
+    )
+
 from Configurables import CellPositionsECalEndcapTurbineSegTool
+cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
+    "CellPositionsECalEndcap",
+    readoutName=ecalEndcapReadoutName,
+    OutputLevel=INFO
+)
+
+if runHCal:
+    from Configurables import CellPositionsHCalPhiThetaSegTool
+    cellPositionHCalBarrelTool = CellPositionsHCalPhiThetaSegTool(
+        "CellPositionsHCalBarrel",
+        readoutName=hcalBarrelReadoutName,
+        detectorName="HCalBarrel",
+        OutputLevel=INFO
+    )
+    cellPositionHCalBarrelTool2 = CellPositionsHCalPhiThetaSegTool(
+        "CellPositionsHCalBarrel2",
+        readoutName=hcalBarrelReadoutName2,
+        detectorName="HCalBarrel",
+        OutputLevel=INFO
+    )
+    cellPositionHCalEndcapTool = CellPositionsHCalPhiThetaSegTool(
+        "CellPositionsHCalEndcap",
+        readoutName=hcalEndcapReadoutName,
+        detectorName="HCalThreePartsEndcap",
+        numLayersHCalThreeParts=[6, 9, 22],
+        OutputLevel=INFO
+    )
+    cellPositionHCalEndcapTool2 = CellPositionsHCalPhiThetaSegTool(
+        "CellPositionsHCalEndcap2",
+        readoutName=hcalEndcapReadoutName2,
+        detectorName="HCalThreePartsEndcap",
+        numLayersHCalThreeParts=[6, 9, 22],
+        OutputLevel=INFO
+    )
+
+# - crosstalk tool
 if addCrosstalk:
     from Configurables import ReadCaloCrosstalkMap
     # read the crosstalk map
@@ -153,44 +200,28 @@ if addCrosstalk:
 else:
     readCrosstalkMap = None
 
-# Create cells in ECal barrel (needed if one wants to apply cell calibration,
-# which is not performed by ddsim)
-# - merge hits into cells according to initial segmentation
-ecalBarrelCellsName = "ECalBarrelCells"
-createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
-                                        doCellCalibration=True,
-                                        calibTool=calibEcalBarrel,
-                                        crosstalksTool=readCrosstalkMap,
-                                        addCrosstalk=addCrosstalk,
-                                        addCellNoise=False,
-                                        filterCellNoise=False,
-                                        addPosition=True,
-                                        OutputLevel=INFO,
-                                        hits=ecalBarrelReadoutName,
-                                        cells=ecalBarrelCellsName)
-
-# - add to Ecal barrel cells the position information
-#   (good for physics, all coordinates set properly)
-cellPositionEcalBarrelTool = CellPositionsECalBarrelModuleThetaSegTool(
-    "CellPositionsECalBarrel",
-    readoutName=ecalBarrelReadoutName,
-    OutputLevel=INFO
-)
+# Create cells in ECal barrel (calibrated and positioned - optionally with xtalk and noise added)
+# from uncalibrated cells (+cellID info) from ddsim
 ecalBarrelPositionedCellsName = ecalBarrelReadoutName + "Positioned"
-createEcalBarrelPositionedCells = CreateCaloCellPositionsFCCee(
-    "CreateECalBarrelPositionedCells",
-    OutputLevel=INFO
-)
-createEcalBarrelPositionedCells.positionsTool = cellPositionEcalBarrelTool
-createEcalBarrelPositionedCells.hits.Path = ecalBarrelCellsName
-createEcalBarrelPositionedCells.positionedHits.Path = ecalBarrelPositionedCellsName
+from Configurables import CreatePositionedCaloCells
+createEcalBarrelCells = CreatePositionedCaloCells("CreatePositionedECalBarrelCells",
+                                                  doCellCalibration=True,
+                                                  positionsTool=cellPositionEcalBarrelTool,
+                                                  calibTool=calibEcalBarrel,
+                                                  crosstalkTool=readCrosstalkMap,
+                                                  addCrosstalk=addCrosstalk,
+                                                  addCellNoise=False,
+                                                  filterCellNoise=False,
+                                                  OutputLevel=INFO,
+                                                  hits=ecalBarrelReadoutName,
+                                                  cells=ecalBarrelPositionedCellsName)
 
 # -  now, if we want to also save cells with coarser granularity:
 if resegmentECalBarrel:
-    # 2. step - rewrite the cellId using the merged theta-module segmentation
+    # rewrite the cellId using the merged theta-module segmentation
     # (merging several modules and severla theta readout cells).
     # Add noise at this step if you derived the noise already assuming merged cells
-    # Step 2a: compute new cellID of cells based on new readout
+    # Step a: compute new cellID of cells based on new readout
     # (merged module-theta segmentation with variable merging vs layer)
     from Configurables import RedoSegmentation
     resegmentEcalBarrelTool = RedoSegmentation("ReSegmentationEcal",
@@ -202,64 +233,40 @@ if resegmentECalBarrel:
                                                newReadoutName=ecalBarrelReadoutName2,
                                                OutputLevel=INFO,
                                                debugPrint=200,
-                                               inhits=ecalBarrelCellsName,
+                                               inhits=ecalBarrelPositionedCellsName,
                                                outhits="ECalBarrelCellsMerged")
 
-    # Step 2b: merge new cells with same cellID together
+    # Step b: merge new cells with same cellID together
     # do not apply cell calibration again since cells were already
     # calibrated in Step 1
-    ecalBarrelCellsName2 = "ECalBarrelCells2"
-    createEcalBarrelCells2 = CreateCaloCells("CreateECalBarrelCells2",
-                                             doCellCalibration=False,
-                                             addCellNoise=False,
-                                             filterCellNoise=False,
-                                             OutputLevel=INFO,
-                                             hits="ECalBarrelCellsMerged",
-                                             cells=ecalBarrelCellsName2)
-
-    cellPositionEcalBarrelTool2 = CellPositionsECalBarrelModuleThetaSegTool(
-        "CellPositionsECalBarrel2",
-        readoutName=ecalBarrelReadoutName2,
-        OutputLevel=INFO
-    )
+    # noise and xtalk off assuming they were applied earlier
     ecalBarrelPositionedCellsName2 = ecalBarrelReadoutName2 + "Positioned"
-    createEcalBarrelPositionedCells2 = CreateCaloCellPositionsFCCee(
-        "CreateECalBarrelPositionedCells2",
-        OutputLevel=INFO
-    )
-    createEcalBarrelPositionedCells2.positionsTool = cellPositionEcalBarrelTool2
-    createEcalBarrelPositionedCells2.hits.Path = ecalBarrelCellsName2
-    createEcalBarrelPositionedCells2.positionedHits.Path = ecalBarrelPositionedCellsName2
-
+    createEcalBarrelCells2 = CreatePositionedCaloCells("CreatePositionedECalBarrelCells2",
+                                                       doCellCalibration=False,
+                                                       positionsTool=cellPositionEcalBarrelTool2,
+                                                       calibTool=None,
+                                                       crosstalkTool=None,
+                                                       addCrosstalk=False,
+                                                       addCellNoise=False,
+                                                       filterCellNoise=False,
+                                                       OutputLevel=INFO,
+                                                       hits="ECalBarrelCellsMerged",
+                                                       cells=ecalBarrelPositionedCellsName2)
 
 # Create cells in ECal endcap (needed if one wants to apply cell calibration,
 # which is not performed by ddsim)
-ecalEndcapCellsName = "ECalEndcapCells"
-createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCaloCells",
-                                        doCellCalibration=True,
-                                        calibTool=calibEcalEndcap,
-                                        addCellNoise=False,
-                                        filterCellNoise=False,
-                                        OutputLevel=INFO,
-                                        hits=ecalEndcapReadoutName,
-                                        cells=ecalEndcapCellsName)
-
-# Add to Ecal endcap cells the position information
-# (good for physics, all coordinates set properly)
-cellPositionEcalEndcapTool = CellPositionsECalEndcapTurbineSegTool(
-    "CellPositionsECalEndcap",
-    readoutName=ecalEndcapReadoutName,
-    OutputLevel=INFO
-)
 ecalEndcapPositionedCellsName = ecalEndcapReadoutName + "Positioned"
-createEcalEndcapPositionedCells = CreateCaloCellPositionsFCCee(
-    "CreateECalEndcapPositionedCells",
-    OutputLevel=INFO
-)
-createEcalEndcapPositionedCells.positionsTool = cellPositionEcalEndcapTool
-createEcalEndcapPositionedCells.hits.Path = ecalEndcapCellsName
-createEcalEndcapPositionedCells.positionedHits.Path = ecalEndcapPositionedCellsName
-
+createEcalEndcapCells = CreatePositionedCaloCells("CreatePositionedECalEndcapCells",
+                                                  doCellCalibration=True,
+                                                  positionsTool=cellPositionEcalEndcapTool,
+                                                  calibTool=calibEcalEndcap,
+                                                  crosstalkTool=None,
+                                                  addCrosstalk=False,
+                                                  addCellNoise=False,
+                                                  filterCellNoise=False,
+                                                  OutputLevel=INFO,
+                                                  hits=ecalEndcapReadoutName,
+                                                  cells=ecalEndcapPositionedCellsName)
 
 if addNoise:
     ecalBarrelNoisePath = "elecNoise_ecalBarrelFCCee_theta.root"
@@ -312,46 +319,28 @@ if addNoise:
 
 
 if runHCal:
-    # Create cells in HCal barrel
-    # 1 - merge hits into cells with the default readout
-    hcalBarrelCellsName = "HCalBarrelCells"
-    createHCalBarrelCells = CreateCaloCells("CreateHCalBarrelCells",
-                                            doCellCalibration=True,
-                                            calibTool=calibHCalBarrel,
-                                            addCellNoise=False,
-                                            filterCellNoise=False,
-                                            addPosition=True,
-                                            hits=hcalBarrelReadoutName,
-                                            cells=hcalBarrelCellsName,
-                                            OutputLevel=INFO)
+    # Apply calibration and positioning to cells in HCal barrel
+    hcalBarrelPositionedCellsName = hcalBarrelReadoutName + "Positioned"
+    createHCalBarrelCells = CreatePositionedCaloCells("CreateHCalBarrelCells",
+                                                      doCellCalibration=True,
+                                                      calibTool=calibHCalBarrel,
+                                                      positionsTool=cellPositionHCalBarrelTool,
+                                                      addCellNoise=False,
+                                                      filterCellNoise=False,
+                                                      hits=hcalBarrelReadoutName,
+                                                      cells=hcalBarrelPositionedCellsName,
+                                                      OutputLevel=INFO)
 
-    # 2 - attach positions to the cells (cell positions needed for RedoSegmentation!)
-    from Configurables import CellPositionsHCalBarrelPhiThetaSegTool
-    cellPositionHCalBarrelTool = CellPositionsHCalBarrelPhiThetaSegTool(
-        "CellPositionsHCalBarrel",
-        readoutName=hcalBarrelReadoutName,
-        OutputLevel=INFO
-    )
-    hcalBarrelPositionedCellsName = "HCalBarrelPositionedCells"
-    createHCalBarrelPositionedCells = CreateCaloCellPositionsFCCee(
-        "CreateHCalBarrelPositionedCells",
-        OutputLevel=INFO
-    )
-    createHCalBarrelPositionedCells.positionsTool = cellPositionHCalBarrelTool
-    createHCalBarrelPositionedCells.hits.Path = hcalBarrelCellsName
-    createHCalBarrelPositionedCells.positionedHits.Path = hcalBarrelPositionedCellsName
-
-    # 3 - compute new cellID of cells based on new readout - removing row information
+    # Compute new cellID of cells based on new readout - removing row information
     # We use a RedoSegmentation. Using a RewriteBitField with removeIds=["row"],
     # wont work because there are tiles with same layer/theta/phi but different row
     # as a consequence there will be multiple cells with same cellID in the output collection
     # and this will screw up the SW clustering
-    hcalBarrelCellsName2 = "HCalBarrelCells2"
 
     # first we create new hits with the readout without the row information
-    # and then merge them into new cells
+    # and then merge them into new cells, wihotut applying the calibration again
     from Configurables import RedoSegmentation
-    rewriteHCalBarrel = RedoSegmentation("ReSegmentationHCal",
+    rewriteHCalBarrel = RedoSegmentation("ReSegmentationHCalBarrel",
                                          # old bitfield (readout)
                                          oldReadoutName=hcalBarrelReadoutName,
                                          # specify which fields are going to be altered (deleted/rewritten)
@@ -363,47 +352,59 @@ if runHCal:
                                          inhits=hcalBarrelPositionedCellsName,
                                          outhits="HCalBarrelCellsWithoutRow")
 
-    createHCalBarrelCells2 = CreateCaloCells("CreateHCalBarrelCells2",
-                                             doCellCalibration=False,
-                                             addCellNoise=False,
-                                             filterCellNoise=False,
-                                             OutputLevel=INFO,
-                                             hits=rewriteHCalBarrel.outhits.Path,
-                                             cells=hcalBarrelCellsName2)
-
-    # 4 - attach positions to the new cells
-    from Configurables import CellPositionsHCalBarrelPhiThetaSegTool
     hcalBarrelPositionedCellsName2 = hcalBarrelReadoutName2 + "Positioned"
-    cellPositionHCalBarrelTool2 = CellPositionsHCalBarrelPhiThetaSegTool(
-        "CellPositionsHCalBarrel2",
-        readoutName=hcalBarrelReadoutName2,
-        OutputLevel=INFO
-    )
-    createHCalBarrelPositionedCells2 = CreateCaloCellPositionsFCCee(
-        "CreateHCalBarrelPositionedCells2",
-        OutputLevel=INFO
-    )
-    createHCalBarrelPositionedCells2.positionsTool = cellPositionHCalBarrelTool2
-    createHCalBarrelPositionedCells2.hits.Path = hcalBarrelCellsName2
-    createHCalBarrelPositionedCells2.positionedHits.Path = hcalBarrelPositionedCellsName2
+    createHCalBarrelCells2 = CreatePositionedCaloCells("CreateHCalBarrelCells2",
+                                                       doCellCalibration=False,
+                                                       positionsTool=cellPositionHCalBarrelTool2,
+                                                       addCellNoise=False,
+                                                       filterCellNoise=False,
+                                                       OutputLevel=INFO,
+                                                       hits=rewriteHCalBarrel.outhits.Path,
+                                                       cells=hcalBarrelPositionedCellsName2)
 
     # Create cells in HCal endcap
-    # createHCalEndcapCells = CreateCaloCells("CreateHCalEndcapCaloCells",
-    #                                    doCellCalibration=True,
-    #                                    calibTool=calibHCalEndcap,
-    #                                    addCellNoise=False,
-    #                                    filterCellNoise=False,
-    #                                    OutputLevel=INFO)
-    # createHCalEndcapCells.hits.Path="HCalEndcapHits"
-    # createHCalEndcapCells.cells.Path="HCalEndcapCells"
+    hcalEndcapPositionedCellsName = hcalEndcapReadoutName + "Positioned"
+    createHCalEndcapCells = CreatePositionedCaloCells("CreateHCalEndcapCells",
+                                                      doCellCalibration=True,
+                                                      calibTool=calibHCalEndcap,
+                                                      addCellNoise=False,
+                                                      filterCellNoise=False,
+                                                      positionsTool=cellPositionHCalEndcapTool,
+                                                      OutputLevel=INFO,
+                                                      hits=hcalEndcapReadoutName,
+                                                      cells=hcalEndcapPositionedCellsName)
+
+    rewriteHCalEndcap = RedoSegmentation("ReSegmentationHCalEndcap",
+                                         # old bitfield (readout)
+                                         oldReadoutName=hcalEndcapReadoutName,
+                                         # specify which fields are going to be altered (deleted/rewritten)
+                                         oldSegmentationIds=["row", "theta", "phi"],
+                                         # new bitfield (readout), with new segmentation (theta-phi grid)
+                                         newReadoutName=hcalEndcapReadoutName2,
+                                         OutputLevel=INFO,
+                                         debugPrint=200,
+                                         inhits=hcalEndcapPositionedCellsName,
+                                         outhits="HCalEndcapCellsWithoutRow")
+
+    hcalEndcapPositionedCellsName2 = hcalEndcapReadoutName2 + "Positioned"
+    createHCalEndcapCells2 = CreatePositionedCaloCells("CreateHCalEndcapCells2",
+                                                       doCellCalibration=False,
+                                                       positionsTool=cellPositionHCalEndcapTool2,
+                                                       addCellNoise=False,
+                                                       filterCellNoise=False,
+                                                       OutputLevel=INFO,
+                                                       hits=rewriteHCalEndcap.outhits.Path,
+                                                       cells=hcalEndcapPositionedCellsName2)
 
 else:
-    hcalBarrelCellsName = "emptyCaloCells"
     hcalBarrelPositionedCellsName = "emptyCaloCells"
-    hcalBarrelCellsName2 = "emptyCaloCells"
     hcalBarrelPositionedCellsName2 = "emptyCaloCells"
+    hcalEndcapPositionedCellsName = "emptyCaloCells"
+    hcalEndcapPositionedCellsName2 = "emptyCaloCells"
     cellPositionHCalBarrelTool = None
     cellPositionHCalBarrelTool2 = None
+    cellPositionHCalEndcapTool = None
+    cellPositionHCalEndcapTool2 = None
 
 # Empty cells for parts of calorimeter not implemented yet
 from Configurables import CreateEmptyCaloCellsCollection
@@ -579,7 +580,7 @@ if doSWClustering:
                                     ecalFwdReadoutName="",
                                     hcalBarrelReadoutName=hcalBarrelReadoutName2,
                                     hcalExtBarrelReadoutName="",
-                                    hcalEndcapReadoutName="",
+                                    hcalEndcapReadoutName=hcalEndcapReadoutName2,
                                     hcalFwdReadoutName="",
                                     OutputLevel=INFO)
         towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
@@ -587,7 +588,7 @@ if doSWClustering:
         towers.ecalFwdCells.Path = "emptyCaloCells"
         towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
         towers.hcalExtBarrelCells.Path = "emptyCaloCells"
-        towers.hcalEndcapCells.Path = "emptyCaloCells"
+        towers.hcalEndcapCells.Path = hcalEndcapPositionedCellsName2
         towers.hcalFwdCells.Path = "emptyCaloCells"
 
         createClusters = CreateCaloClustersSlidingWindowFCCee("CreateCaloClusters",
@@ -822,27 +823,17 @@ if dropUncalibratedCells:
     out.outputCommands.append("drop %s" % ecalEndcapReadoutName)
     if runHCal:
         out.outputCommands.append("drop %s" % hcalBarrelReadoutName)
-        # out.outputCommands.append("drop %s" % hcalEndcapReadoutName)
-
-# drop the unpositioned ECal and HCal barrel and endcap cells
-if dropUnpositionedCells:
-    if runHCal:
-        out.outputCommands += ["drop %s" % ecalBarrelCellsName,
-                               "drop %s" % ecalEndcapCellsName,
-                               "drop %s" % hcalBarrelCellsName,
-                               "drop %s" % hcalBarrelPositionedCellsName,
-                               "drop %s" % hcalBarrelCellsName2,
-                               "drop %s" % rewriteHCalBarrel.outhits.Path]
-
+        out.outputCommands.append("drop %s" % hcalEndcapReadoutName)
     else:
-        out.outputCommands += ["drop HCal*",
-                               "drop %s" % ecalBarrelCellsName,
-                               "drop %s" % ecalEndcapCellsName]
+        out.outputCommands += ["drop HCal*"]
 
     # drop the intermediate ecal barrel cells in case of a resegmentation
     if resegmentECalBarrel:
         out.outputCommands.append("drop ECalBarrelCellsMerged")
-        out.outputCommands.append("drop %s" % ecalBarrelCellsName2)
+    # drop the intermediate hcal barrel cells before resegmentation
+    if runHCal:
+        out.outputCommands.append("drop %s" % hcalBarrelPositionedCellsName)
+        out.outputCommands.append("drop %s" % hcalEndcapPositionedCellsName)
 
 # drop lumi, vertex, DCH, Muons (unless want to keep for event display)
 out.outputCommands.append("drop Lumi*")
@@ -862,6 +853,7 @@ if not saveCells:
         out.outputCommands.append("drop %s" % ecalBarrelPositionedCellsName2)
     if runHCal:
         out.outputCommands.append("drop %s" % hcalBarrelPositionedCellsName2)
+        out.outputCommands.append("drop %s" % hcalEndcapPositionedCellsName2)
 if not saveClusterCells:
     out.outputCommands.append("drop Calo*ClusterCells*")
 
@@ -886,39 +878,34 @@ if dumpGDML:
 TopAlg = [
     input_reader,
     createEcalBarrelCells,
-    createEcalBarrelPositionedCells,
     createEcalEndcapCells,
-    createEcalEndcapPositionedCells,
 ]
 createEcalBarrelCells.AuditExecute = True
-createEcalBarrelPositionedCells.AuditExecute = True
 createEcalEndcapCells.AuditExecute = True
-createEcalEndcapPositionedCells.AuditExecute = True
 
 if resegmentECalBarrel:
     TopAlg += [
         resegmentEcalBarrelTool,
         createEcalBarrelCells2,
-        createEcalBarrelPositionedCells2,
     ]
     resegmentEcalBarrelTool.AuditExecute = True
     createEcalBarrelCells2.AuditExecute = True
-    createEcalBarrelPositionedCells2.AuditExecute = True
 
 if runHCal:
     TopAlg += [
         createHCalBarrelCells,
-        createHCalBarrelPositionedCells,
         rewriteHCalBarrel,
         createHCalBarrelCells2,
-        createHCalBarrelPositionedCells2,
-        # createHCalEndcapCells
+        createHCalEndcapCells,
+        rewriteHCalEndcap,
+        createHCalEndcapCells2,
     ]
     createHCalBarrelCells.AuditExecute = True
-    createHCalBarrelPositionedCells.AuditExecute = True
     rewriteHCalBarrel.AuditExecute = True
     createHCalBarrelCells2.AuditExecute = True
-    createHCalBarrelPositionedCells2.AuditExecute = True
+    createHCalEndcapCells.AuditExecute = True
+    rewriteHCalEndcap.AuditExecute = True
+    createHCalEndcapCells2.AuditExecute = True
 
 if doSWClustering or doTopoClustering:
     TopAlg += [createemptycells]

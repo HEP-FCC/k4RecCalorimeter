@@ -47,7 +47,7 @@ public:
   StatusCode finalize();
 
 private:
-  /// Handle for tool to get positions width
+  /// Handle for tool to get positions
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{};
   /// Input collection
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
