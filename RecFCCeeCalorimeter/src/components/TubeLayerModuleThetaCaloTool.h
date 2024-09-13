@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H
-#define RECCALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H
+#ifndef RECFCCEECALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H
+#define RECFCCEECALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H
 
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
@@ -9,8 +9,8 @@
 
 class IGeoSvc;
 
-/** @class TubeLayerModuleThetaMergedCaloTool Reconstruction/RecCalorimeter/src/components/TubeLayerModuleThetaMergedCaloTool.h
- *TubeLayerModuleThetaMergedCaloTool.h
+/** @class TubeLayerModuleThetaCaloTool k4RecCalorimeter/RecFCCeeCalorimeter/src/components/TubeLayerModuleThetaCaloTool.h
+ *  TubeLayerModuleThetaCaloTool.h
  *
  *  Tool for geometry-dependent settings of the digitisation.
  *  It assumes cylindrical geometry (layers) and phi-theta segmentation.
@@ -19,10 +19,10 @@ class IGeoSvc;
  *  @author Zhibo Wu
  */
 
-class TubeLayerModuleThetaMergedCaloTool : public AlgTool, virtual public ICalorimeterTool {
+class TubeLayerModuleThetaCaloTool : public AlgTool, virtual public ICalorimeterTool {
 public:
-  TubeLayerModuleThetaMergedCaloTool(const std::string& type, const std::string& name, const IInterface* parent);
-  virtual ~TubeLayerModuleThetaMergedCaloTool() = default;
+  TubeLayerModuleThetaCaloTool(const std::string& type, const std::string& name, const IInterface* parent);
+  virtual ~TubeLayerModuleThetaCaloTool() = default;
   virtual StatusCode initialize() final;
   virtual StatusCode finalize() final;
   /** Prepare a map of all existing cells in current geometry.
@@ -52,8 +52,8 @@ private:
   Gaudi::Property<std::vector<std::string>> m_fieldNames{this, "fieldNames"};
   /// Values of the fields describing the segmented volume
   Gaudi::Property<std::vector<int>> m_fieldValues{this, "fieldValues"};
-  /// Temporary: for use with MergeLayer tool
+  /// Number of layers
   Gaudi::Property<unsigned int> m_activeVolumesNumber{this, "activeVolumesNumber", 0};
 };
 
-#endif /* RECCALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H */
+#endif /* RECFCCEECALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H */
