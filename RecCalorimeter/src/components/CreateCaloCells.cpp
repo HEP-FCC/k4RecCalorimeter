@@ -99,7 +99,14 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
 
   // 0. Clear all cells
   if (m_addCellNoise) {
-    std::for_each(m_cellsMap.begin(), m_cellsMap.end(), [](std::pair<const uint64_t, double>& p) { p.second = 0; });
+    // if cells are not filtered, the map has same size in each event, equal to the total number
+    // of cells in the calorimeter, so we can just reset the values to 0
+    // if cells are filtered, during each event they are removed from the cellsMap, so one has to
+    // restore the initial map of all empty cells
+    if (!m_filterCellNoise)
+      std::for_each(m_cellsMap.begin(), m_cellsMap.end(), [](std::pair<const uint64_t, double>& p) { p.second = 0; });
+    else
+      m_cellsMap = m_emptyCellsMap;
   } else {
     m_cellsMap.clear();
   }
