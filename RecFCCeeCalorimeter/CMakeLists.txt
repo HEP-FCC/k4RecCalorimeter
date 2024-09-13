@@ -50,3 +50,10 @@ add_test(NAME FCCeeLAr_benchmarkCorrection
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_benchmarkCorrection)
+
+# test for ALLEGRO addNoise, to be moved ddsim+k4run
+add_test(NAME FCCeeLAr_ecalNoise
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/runEcalBarrel_addNoise_thetamodulemerged.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(FCCeeLAr_ecalNoise)
