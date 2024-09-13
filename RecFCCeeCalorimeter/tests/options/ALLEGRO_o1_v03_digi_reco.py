@@ -53,7 +53,7 @@ doTopoClustering = True
 # cluster energy corrections
 # simple parametrisations of up/downstream losses for ECAL-only clusters
 # not to be applied for ECAL+HCAL clustering
-# superseded by MVA calibration, but turned on here for the purpose of testing that the code is not broken
+# superseded by MVA calibration, but turned on here for the purpose of testing that the code is not broken - will end up in separate cluster collection
 applyUpDownstreamCorrections = True
 
 # BDT regression from total cluster energy and fraction of energy in each layer (after correction for sampling fraction)
@@ -68,6 +68,7 @@ ecalBarrelThetaWeights = [-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]
 # not run by default in production, but to be turned on here for the purpose of testing that the code is not broken
 # currently off till we provide the onnx files
 runPhotonIDTool = False
+logEWeightInPhotonID = False
 
 #
 # ALGORITHMS AND SERVICES SETUP
@@ -144,6 +145,12 @@ if runHCal:
 from Configurables import CellPositionsECalBarrelModuleThetaSegTool
 cellPositionEcalBarrelTool = CellPositionsECalBarrelModuleThetaSegTool(
     "CellPositionsECalBarrel",
+    readoutName=ecalBarrelReadoutName,
+    OutputLevel=INFO
+)
+# the noise tool needs the positioning tool, but if I reuse the previous one the code crashes..
+cellPositionEcalBarrelToolForNoise = CellPositionsECalBarrelModuleThetaSegTool(
+    "CellPositionsECalBarrelForNoise",
     readoutName=ecalBarrelReadoutName,
     OutputLevel=INFO
 )
@@ -273,50 +280,54 @@ if addNoise:
     ecalBarrelNoiseRMSHistName = "h_elecNoise_fcc_"
     from Configurables import NoiseCaloCellsVsThetaFromFileTool
     noiseBarrel = NoiseCaloCellsVsThetaFromFileTool("NoiseBarrel",
-                                                    cellPositionsTool=cellPositionEcalBarrelTool,
+                                                    cellPositionsTool=cellPositionEcalBarrelToolForNoise,
                                                     readoutName=ecalBarrelReadoutName,
                                                     noiseFileName=ecalBarrelNoisePath,
                                                     elecNoiseRMSHistoName=ecalBarrelNoiseRMSHistName,
                                                     setNoiseOffset=False,
                                                     activeFieldName="layer",
                                                     addPileup=False,
-                                                    filterNoiseThreshold=0,
+                                                    filterNoiseThreshold=1,
                                                     numRadialLayers=11,
                                                     scaleFactor=1 / 1000.,  # MeV to GeV
                                                     OutputLevel=INFO)
 
-    # needs to be migrated!
-    # from Configurables import TubeLayerPhiEtaCaloTool
-    # barrelGeometry = TubeLayerPhiEtaCaloTool("EcalBarrelGeo",
-    #                                         readoutName=ecalBarrelReadoutNamePhiEta,
-    #                                         activeVolumeName="LAr_sensitive",
-    #                                         activeFieldName="layer",
-    #                                         activeVolumesNumber=12,
-    #                                         fieldNames=["system"],
-    #                                         fieldValues=[4])
+    from Configurables import TubeLayerModuleThetaCaloTool
+    barrelGeometry = TubeLayerModuleThetaCaloTool("EcalBarrelGeo",
+                                                  readoutName=ecalBarrelReadoutName,
+                                                  activeVolumeName="LAr_sensitive",
+                                                  activeFieldName="layer",
+                                                  activeVolumesNumber=11,
+                                                  fieldNames=["system"],
+                                                  fieldValues=[4],
+                                                  OutputLevel=INFO)
 
     # cells with noise not filtered
-    # createEcalBarrelCellsNoise = CreateCaloCells("CreateECalBarrelCellsNoise",
-    #                                              doCellCalibration=False,
-    #                                              addCellNoise=True,
-    #                                              filterCellNoise=False,
-    #                                              OutputLevel=INFO,
-    #                                              hits="ECalBarrelCellsStep2",
-    #                                              noiseTool=noiseBarrel,
-    #                                              geometryTool=barrelGeometry,
-    #                                              cells=EcalBarrelCellsName)
+    createEcalBarrelCellsNoise = CreatePositionedCaloCells("CreatePositionedECalBarrelCellsWithNoise",
+                                                           doCellCalibration=True,
+                                                           positionsTool=cellPositionEcalBarrelTool,
+                                                           calibTool=calibEcalBarrel,
+                                                           addCellNoise=True,
+                                                           filterCellNoise=False,
+                                                           noiseTool=noiseBarrel,
+                                                           geometryTool=barrelGeometry,
+                                                           OutputLevel=INFO,
+                                                           hits=ecalBarrelReadoutName,  # uncalibrated & unpositioned cells without noise
+                                                           cells=ecalBarrelPositionedCellsName + "WithNoise")
 
     # cells with noise filtered
-    # createEcalBarrelCellsNoise = CreateCaloCells("CreateECalBarrelCellsNoise_filtered",
-    #                                              doCellCalibration=False,
-    #                                              addCellNoise=True,
-    #                                              filterCellNoise=True,
-    #                                              OutputLevel=INFO,
-    #                                              hits="ECalBarrelCellsStep2",
-    #                                              noiseTool=noiseBarrel,
-    #                                              geometryTool=barrelGeometry,
-    #                                              cells=EcalBarrelCellsName)
-
+    createEcalBarrelCellsNoiseFiltered = CreatePositionedCaloCells("CreateECalBarrelCellsWithNoiseFiltered",
+                                                                   doCellCalibration=True,
+                                                                   calibTool=calibEcalBarrel,
+                                                                   positionsTool=cellPositionEcalBarrelTool,
+                                                                   addCellNoise=True,
+                                                                   filterCellNoise=True,
+                                                                   noiseTool=noiseBarrel,
+                                                                   geometryTool=barrelGeometry,
+                                                                   OutputLevel=INFO,
+                                                                   hits=ecalBarrelReadoutName,  # uncalibrated & unpositioned cells without noise
+                                                                   cells=ecalBarrelPositionedCellsName + "WithNoiseFiltered"
+                                                                   )
 
 if runHCal:
     # Apply calibration and positioning to cells in HCal barrel
@@ -526,6 +537,7 @@ if doSWClustering:
                                                          layerFieldNames=["layer"],
                                                          thetaRecalcWeights=[ecalBarrelThetaWeights],
                                                          do_photon_shapeVar=runPhotonIDTool,
+                                                         do_widthTheta_logE_weights=logEWeightInPhotonID,
                                                          OutputLevel=INFO
                                                          )
 
@@ -705,6 +717,7 @@ if doTopoClustering:
                                                              layerFieldNames=["layer"],
                                                              thetaRecalcWeights=[ecalBarrelThetaWeights],
                                                              do_photon_shapeVar=runPhotonIDTool,
+                                                             do_widthTheta_logE_weights=logEWeightInPhotonID,
                                                              OutputLevel=INFO)
 
     if applyMVAClusterEnergyCalibration:
@@ -882,6 +895,13 @@ TopAlg = [
 ]
 createEcalBarrelCells.AuditExecute = True
 createEcalEndcapCells.AuditExecute = True
+if addNoise:
+    TopAlg += [
+        createEcalBarrelCellsNoise,
+        createEcalBarrelCellsNoiseFiltered
+    ]
+    createEcalBarrelCellsNoise.AuditExecute = True
+    createEcalBarrelCellsNoiseFiltered.AuditExecute = True
 
 if resegmentECalBarrel:
     TopAlg += [
