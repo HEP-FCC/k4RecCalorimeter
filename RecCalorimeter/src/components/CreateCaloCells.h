@@ -28,7 +28,7 @@ class IGeoSvc;
 /** @class CreateCaloCells
  *
  *  Algorithm for creating calorimeter cells from Geant4 hits.
- *  Tube geometry with ModuleThetaMerged segmentation expected.
+ *  Tube geometry with PhiEta segmentation expected.
  *
  *  Flow of the program:
  *  1/ Merge Geant4 energy deposits with same cellID
@@ -70,7 +70,7 @@ private:
   /// Handle for the calorimeter cells noise tool
   mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
-  ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerModuleThetaMergedCaloTool", this};
+  ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 
   /// Add crosstalk to cells?
   Gaudi::Property<bool> m_addCrosstalk{this, "addCrosstalk", false, "Add crosstalk effect?"};
@@ -92,7 +92,7 @@ private:
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
   /// Name of the detector readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged", "Name of the detector readout"};
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes
   Gaudi::Property<std::string> m_activeVolumeName{this, "activeVolumeName", "_sensitive", "Name of the active volumes"};
   /// Name of active layers for sampling calorimeter
@@ -116,7 +116,7 @@ private:
    * This property won't be needed anymore.
    */
   unsigned int m_activeVolumesNumber;
-  /// Use only volume ID? If false, using ModuleThetaMergedSegmentation
+  /// Use only volume ID? If false, using PhiEtaSegmentation
   bool m_useVolumeIdOnly;
 
   /// Pointer to the geometry service
@@ -126,6 +126,8 @@ private:
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
   mutable std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
+  /// Maps of cell IDs with zero energy, for all cells in calo (needed if addCellNoise and filterCellNoise are both set)
+  mutable std::unordered_map<uint64_t, double> m_emptyCellsMap;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */
