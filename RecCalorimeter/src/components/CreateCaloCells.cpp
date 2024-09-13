@@ -70,6 +70,12 @@ StatusCode CreateCaloCells::initialize() {
       error() << "Unable to create empty cells!" << endmsg;
       return StatusCode::FAILURE;
     }
+    verbose() << "Initialised empty cell map with size " << m_cellsMap.size() << endmsg;
+    // noise filtering erases cells from the cell map after each event, so we need
+    // to backup the empty cell map for later reuse
+    if (m_addCellNoise && m_filterCellNoise) {
+      m_emptyCellsMap = m_cellsMap;
+    }
   }
   if (m_addPosition){
     m_volman = m_geoSvc->getDetector()->volumeManager();

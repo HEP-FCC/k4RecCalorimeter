@@ -89,7 +89,8 @@ private:
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
   mutable std::unordered_map<uint64_t, double> m_crosstalkCellsMap;
-
+  /// Maps of cell IDs with zero energy, for all cells in calo (needed if addNoise and filterNoise are both set)
+  mutable std::unordered_map<uint64_t, double> m_emptyCellsMap;
   /// Cache position vs cellID
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
 };
