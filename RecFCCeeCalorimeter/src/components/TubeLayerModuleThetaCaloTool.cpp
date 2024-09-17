@@ -1,20 +1,24 @@
-#include "TubeLayerModuleThetaMergedCaloTool.h"
+#include "TubeLayerModuleThetaCaloTool.h"
 
-// segm
+// dd4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/MultiSegmentation.h"
+
+// k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
+
+// k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-DECLARE_COMPONENT(TubeLayerModuleThetaMergedCaloTool)
+DECLARE_COMPONENT(TubeLayerModuleThetaCaloTool)
 
-TubeLayerModuleThetaMergedCaloTool::TubeLayerModuleThetaMergedCaloTool(const std::string& type, const std::string& name,
+TubeLayerModuleThetaCaloTool::TubeLayerModuleThetaCaloTool(const std::string& type, const std::string& name,
                                                  const IInterface* parent)
     : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<ICalorimeterTool>(this);
 }
 
-StatusCode TubeLayerModuleThetaMergedCaloTool::initialize() {
+StatusCode TubeLayerModuleThetaCaloTool::initialize() {
   StatusCode sc = AlgTool::initialize();
   if (sc.isFailure()) return sc;
   
@@ -24,7 +28,7 @@ StatusCode TubeLayerModuleThetaMergedCaloTool::initialize() {
     return StatusCode::FAILURE;
   }
   if (m_readoutName != "") {
-    // Check if readouts exist
+    // Check if readout exists
     info() << "Readout: " << m_readoutName << endmsg;
     if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
@@ -34,25 +38,17 @@ StatusCode TubeLayerModuleThetaMergedCaloTool::initialize() {
   return sc;
 }
 
-StatusCode TubeLayerModuleThetaMergedCaloTool::finalize() { return AlgTool::finalize(); }
+StatusCode TubeLayerModuleThetaCaloTool::finalize() { return AlgTool::finalize(); }
 
-StatusCode TubeLayerModuleThetaMergedCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
+StatusCode TubeLayerModuleThetaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
   // Get the total number of active volumes in the geometry
-  auto highestVol = gGeoManager->GetTopVolume();
-  unsigned int numLayers;
-  if (!m_activeVolumesNumber) {
-    numLayers = det::utils::countPlacedVolumes(highestVol, m_activeVolumeName);
-  } else {
-    // used when MergeLayers tool is used. To be removed once MergeLayer gets replaced by RedoSegmentation.
-    numLayers = m_activeVolumesNumber;
-  }
+  unsigned int numLayers = m_activeVolumesNumber;
   info() << "Number of active layers " << numLayers << endmsg;
 
   // get segmentation
   dd4hep::DDSegmentation::Segmentation *aSegmentation = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation();
   std::string segmentationType = aSegmentation->type();
   info() << "Segmentation type : " << segmentationType << endmsg;
-
   dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *moduleThetaSegmentation = nullptr;
   if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
     moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *>(aSegmentation);
@@ -72,7 +68,9 @@ StatusCode TubeLayerModuleThetaMergedCaloTool::prepareEmptyCells(std::unordered_
 
   for (unsigned int ilayer = 0; ilayer < numLayers; ilayer++) {
     dd4hep::DDSegmentation::CellID volumeId = 0;
-    (*decoder)["system"].set(volumeId, 4);
+    for (unsigned int it = 0; it < m_fieldNames.size(); it++) {
+      decoder->set(volumeId, m_fieldNames[it], m_fieldValues[it]);
+    }
     (*decoder)["layer"].set(volumeId, ilayer);
     (*decoder)["theta"].set(volumeId, 0);
     (*decoder)["module"].set(volumeId, 0);
