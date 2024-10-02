@@ -79,7 +79,7 @@ struct CreateTruthJet final
         m_clusterer->cluster(clustersPJ);
 
     auto edmJets = edm4hep::ReconstructedParticleCollection();
-    auto assoc = edm4hep::RecoMCParticleLinkCollection();
+    auto links = edm4hep::RecoMCParticleLinkCollection();
 
     for (auto cjet : inclusiveJets) {
       edm4hep::MutableReconstructedParticle jet;
@@ -92,15 +92,15 @@ struct CreateTruthJet final
       for (auto constit : constits) {
         int index = constit.user_info<k4::recCalo::ClusterInfo>().index();
 
-        auto association = assoc.create();
-        association.setFrom(jet);
-        association.setTo((input)[index]);
+        auto link = links.create();
+        link.setFrom(jet);
+        link.setTo((input)[index]);
       }
 
       edmJets.push_back(jet);
     }
 
-    return std::make_tuple(std::move(edmJets), std::move(assoc));
+    return std::make_tuple(std::move(edmJets), std::move(links));
   }
 
   StatusCode finalize() override {
