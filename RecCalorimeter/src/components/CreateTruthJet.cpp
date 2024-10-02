@@ -7,7 +7,7 @@
 
 // EDM4hep
 #include "edm4hep/MCParticleCollection.h"
-#include "edm4hep/MCRecoParticleAssociationCollection.h"
+#include "edm4hep/RecoMCParticleLinkCollection.h"
 #include "edm4hep/ReconstructedParticleCollection.h"
 
 // k4RecCalorimeter
@@ -39,7 +39,7 @@
 struct CreateTruthJet final
     : k4FWCore::MultiTransformer<
           std::tuple<edm4hep::ReconstructedParticleCollection,
-                     edm4hep::MCRecoParticleAssociationCollection>(
+                     edm4hep::RecoMCParticleLinkCollection>(
               const edm4hep::MCParticleCollection &)> {
 
   CreateTruthJet(const std::string &name, ISvcLocator *svcLoc)
@@ -61,7 +61,7 @@ struct CreateTruthJet final
   }
 
   std::tuple<edm4hep::ReconstructedParticleCollection,
-             edm4hep::MCRecoParticleAssociationCollection>
+             edm4hep::RecoMCParticleLinkCollection>
   operator()(const edm4hep::MCParticleCollection &input) const override {
 
     std::vector<fastjet::PseudoJet> clustersPJ;
@@ -79,7 +79,7 @@ struct CreateTruthJet final
         m_clusterer->cluster(clustersPJ);
 
     auto edmJets = edm4hep::ReconstructedParticleCollection();
-    auto assoc = edm4hep::MCRecoParticleAssociationCollection();
+    auto assoc = edm4hep::RecoMCParticleLinkCollection();
 
     for (auto cjet : inclusiveJets) {
       edm4hep::MutableReconstructedParticle jet;
@@ -93,8 +93,8 @@ struct CreateTruthJet final
         int index = constit.user_info<k4::recCalo::ClusterInfo>().index();
 
         auto association = assoc.create();
-        association.setRec(jet);
-        association.setSim((input)[index]);
+        association.setFrom(jet);
+        association.setTo((input)[index]);
       }
 
       edmJets.push_back(jet);
