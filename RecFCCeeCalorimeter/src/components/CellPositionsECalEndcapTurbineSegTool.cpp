@@ -81,15 +81,22 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   double radius;
 
   // find position of volume corresponding to first of group of merged cells
-  debug() << "cellID: " << aCellId << endmsg;
+  debug() << "cellID: " << std::hex << aCellId << std::dec << endmsg;
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
-  debug() << "volumeId: " << volumeId << endmsg;
-  m_decoder->set(volumeId, "rho", 0);
-  debug() << "volumeId: " << volumeId << endmsg;
+  debug() << "volumeId: " << std::hex << volumeId << std::dec << endmsg;
+  //m_decoder->set(volumeId, "rho", 0);
+  //debug() << "volumeId: " << volumeId << endmsg;
   m_decoder->set(volumeId, "z", 0);
-  debug() << "volumeId: " << volumeId << endmsg;  
+  //  m_decoder->set(volumeId, "module", 0); 
+  debug() << "volumeId: " << std::hex << volumeId << std::dec << endmsg;  
   auto detelement = m_volman.lookupDetElement(volumeId);
+  dd4hep::DDSegmentation::CellID iModule = m_decoder->get(aCellId, "module");
+  dd4hep::DDSegmentation::CellID iWheel = m_decoder->get(aCellId, "wheel");
+  dd4hep::DDSegmentation::CellID iSide = m_decoder->get(aCellId, "side");
+  debug() << "Detector wheel, module = " << iWheel << " " << iModule << endmsg;
+  debug() << "Detector element placement path " << detelement.placementPath() << endmsg;
   const auto& transformMatrix = detelement.nominal().worldTransformation();
+  double rhoHalfWidth = detelement.placement().volume().boundingBox().z();
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);
@@ -99,18 +106,34 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
 	  << outGlobal[2] / dd4hep::mm << endmsg;
   
   // get R, phi of volume
-  radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
+  radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2)) + rhoHalfWidth;
   double phi = std::atan2(outGlobal[1], outGlobal[0]);
   debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
   
-  // now get offset in theta and in phi from cell ID (due to theta grid + merging in theta/modules)
-  // the local position is normalised to r_xy=1 so theta is atan(1/z)
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   debug() << "Local position of cell (mm) : \t" 
 	  << inSeg.x() / dd4hep::mm << "\t" 
 	  << inSeg.y() / dd4hep::mm << "\t"
 	  << inSeg.z() / dd4hep::mm << endmsg;
-  outSeg = inSeg;
+  outSeg.SetZ(inSeg.z());
+
+  double z = inSeg.z(); // inSeg contains phi, y, z
+  double x = inSeg.y();
+  //  phi = inSeg.x();
+  // this will place rho at the outer edge of each layer, not in the middle.
+  // But I think it's the best I can do without importing details of the geometry
+  double rho = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2)) + rhoHalfWidth;
+  double y = std::sqrt(rho*rho-x*x);
+
+  //now rotate by phi of the blade, and change from local to global x,y 
+  double yprime = x*TMath::Cos(phi) +y*TMath::Sin(phi);
+  double xprime = y*TMath::Cos(phi) -x*TMath::Sin(phi);
+  
+  outSeg.SetX(xprime);
+  outSeg.SetY(((int)iSide)*yprime);
+  outSeg.SetZ(z);
+
+  
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
 	  << outSeg.z() / dd4hep::mm << "\n"
 	  << endmsg;
