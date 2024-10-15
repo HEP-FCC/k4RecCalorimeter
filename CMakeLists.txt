@@ -4,6 +4,7 @@ project(k4RecCalorimeter)
 
 include(GNUInstallDirs)
 include(CTest)
+include(cmake/Key4hepConfig.cmake)
 
 # Set default for install prefix
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
