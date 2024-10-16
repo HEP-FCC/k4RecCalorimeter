@@ -10,8 +10,9 @@
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// k4FWCore
+// Key4HEP
 #include "k4FWCore/DataHandle.h"
+#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICaloReadCellNoiseMap.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
 #include "k4Interface/ICalorimeterTool.h"
@@ -21,13 +22,14 @@
 // k4SimGeant4
 class IGeoSvc;
 
-// Datamodel
+// EDM4HEP
 namespace edm4hep {
 class CalorimeterHit;
 class CalorimeterHitCollection;
 class ClusterCollection;
 }
 
+// DD4HEP
 namespace DD4hep {
 namespace DDSegmentation {
 class Segmentation;
@@ -102,6 +104,11 @@ private:
   mutable DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"calo/clusters", Gaudi::DataHandle::Writer, this};
   // Cluster cells in collection
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
+  /// Handle for the cluster shape metadata to write
+  MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
+    m_clusterCollection,
+    edm4hep::labels::ShapeParameterNames,
+    Gaudi::DataHandle::Writer};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool

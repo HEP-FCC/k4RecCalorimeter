@@ -86,6 +86,10 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_index_layer_ecal = m_decoder_ecal->index("layer");
 
+  // initialise the list of metadata for the clusters
+  std::vector<std::string> shapeParameterNames = {"dR_over_E"};
+  m_shapeParametersHandle.put(shapeParameterNames);
+
   return StatusCode::SUCCESS;
 }
 

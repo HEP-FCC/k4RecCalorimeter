@@ -7,7 +7,7 @@
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 
-// datamodel
+// EDM4HEP
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/CalorimeterHit.h"
@@ -79,6 +79,11 @@ StatusCode CaloTopoCluster::initialize() {
       return StatusCode::FAILURE;
     }
   }
+
+  // initialise the list of metadata for the clusters
+  std::vector<std::string> shapeParameterNames = {"dR_over_E"};
+  m_shapeParametersHandle.put(shapeParameterNames);
+
   return StatusCode::SUCCESS;
 }
 
