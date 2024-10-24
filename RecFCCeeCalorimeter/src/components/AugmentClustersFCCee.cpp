@@ -29,6 +29,20 @@ AugmentClustersFCCee::AugmentClustersFCCee(const std::string &name, ISvcLocator 
   declareProperty("outClusters", m_outClusters, "Output clusters");
 }
 
+void AugmentClustersFCCee::PrintDebugMessage(MsgStream stream, const std::string& text) const
+{
+  if (debugIter < m_maxDebugPrint) {
+    stream << text << endmsg;
+    debugIter++;
+  }
+  else if (debugIter == m_maxDebugPrint) {
+    stream << "Maximum number of messages reached, suppressing further output" << endmsg;
+    debugIter++;
+  }
+  else
+    debugIter++;
+}
+					
 StatusCode AugmentClustersFCCee::initialize()
 {
   {
@@ -192,6 +206,7 @@ std::pair<std::vector<int>, std::vector<double>> MergeSumAndSort(const std::vect
 
 StatusCode AugmentClustersFCCee::finalize()
 {
+  
   return Gaudi::Algorithm::finalize();
 }
 
@@ -638,7 +653,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             // Negative values can happen when noise is on and not filtered
             // Negative values very close to zero can happen due to numerical precision
             if (w_theta2 < 0.) {
-              warning() << "w_theta2 in theta width calculation is negative: " << w_theta2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+	      PrintDebugMessage(warning(), "w_theta2 in theta width calculation is negative: " + std::to_string(w_theta2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta[layer+startPositionToFill] = 0.;
             }
             else {
@@ -649,7 +664,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             // Negative values can happen when noise is on and not filtered
             // Negative values very close to zero can happen due to numerical precision
             if (w_theta2 < 0.) {
-              warning() << "w_theta2 in theta width calculation is negative: " << w_theta2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+              PrintDebugMessage(warning(), "w_theta2 in theta width calculation is negative: " + std::to_string(w_theta2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta[layer+startPositionToFill] = 0.;
             }
             else {
@@ -659,8 +674,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           double w_module2 = module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
           // Negative values can happen when noise is on and not filtered
           // Negative values very close to zero can happen due to numerical precision
-          if (w_module2 < -1e-9) {
-            warning() << "w_module2 in module width calculation is negative: " << w_module2 << " , will set module width to zero (this might happen when noise simulation is on)" <<  endmsg;
+          if (w_module2 < 0) {
+            PrintDebugMessage(warning(), "w_module2 in module width calculation is negative: " + std::to_string(w_module2) + " , will set module width to zero (this might happen when noise simulation is on)");
             width_module[layer+startPositionToFill] = 0. ;
           }
           else {
@@ -815,28 +830,28 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
             }
             // Negative values of the RMS can be caused by computational precision or cells with E<0 (in case of noise)
             if (_w_theta_3Bin2 < 0) {
-              warning() << "_w_theta_3Bin2 in theta width calculation is negative: " << _w_theta_3Bin2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+              PrintDebugMessage(warning(), "_w_theta_3Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_3Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_3Bin[layer+startPositionToFill] = 0.;
             }
             else {
               width_theta_3Bin[layer+startPositionToFill] = std::sqrt(_w_theta_3Bin2);
             }
             if (_w_theta_5Bin2 < 0) {
-              warning() << "_w_theta_5Bin2 in theta width calculation is negative: " << _w_theta_5Bin2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+	      PrintDebugMessage(warning(), "_w_theta_5Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_5Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_5Bin[layer+startPositionToFill] = 0.;
             }
             else {
               width_theta_5Bin[layer+startPositionToFill] = std::sqrt(_w_theta_5Bin2);
             }
             if (_w_theta_7Bin2 < 0) {
-              warning() << "_w_theta_7Bin2 in theta width calculation is negative: " << _w_theta_7Bin2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+	      PrintDebugMessage(warning(), "_w_theta_7Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_7Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_7Bin[layer+startPositionToFill] = 0.;
             }
             else {
               width_theta_7Bin[layer+startPositionToFill] = std::sqrt(_w_theta_7Bin2);
             }
             if (_w_theta_9Bin2 < 0) {
-              warning() << "_w_theta_9Bin2 in theta width calculation is negative: " << _w_theta_9Bin2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+	      PrintDebugMessage(warning(), "_w_theta_9Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_9Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_9Bin[layer+startPositionToFill] = 0.;
             }
             else {
