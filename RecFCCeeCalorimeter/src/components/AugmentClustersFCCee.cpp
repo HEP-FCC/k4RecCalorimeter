@@ -660,7 +660,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
           // Negative values can happen when noise is on and not filtered
           // Negative values very close to zero can happen due to numerical precision
           if (w_module2 < -1e-9) {
-            warning() << "w_module2 in module width calculation is negative: " << w_theta2 << " , will set module width to zero (this might happen when noise simulation is on)" <<  endmsg;
+            warning() << "w_module2 in module width calculation is negative: " << w_module2 << " , will set module width to zero (this might happen when noise simulation is on)" <<  endmsg;
             width_module[layer+startPositionToFill] = 0. ;
           }
           else {
@@ -836,7 +836,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
               width_theta_7Bin[layer+startPositionToFill] = std::sqrt(_w_theta_7Bin2);
             }
             if (_w_theta_9Bin2 < 0) {
-              warning() << "_w_theta_9Bin2 in theta width calculation is negative: " << _w_theta_9Bin2 << << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
+              warning() << "_w_theta_9Bin2 in theta width calculation is negative: " << _w_theta_9Bin2 << " , will set theta width to zero (this might happen when noise simulation is on)" <<  endmsg;
               width_theta_9Bin[layer+startPositionToFill] = 0.;
             }
             else {
