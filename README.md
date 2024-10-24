@@ -1,6 +1,6 @@
 # k4RecCalorimeter - Key4hep Framework Components for Calorimeter Reconstruction
 
-![key4hep-build](https://github.com/HEP-FCC/FCCAnalyses/actions/workflows/key4hep-build.yaml/badge.svg)
+![key4hep-build](https://github.com/HEP-FCC/k4RecCalorimeter/actions/workflows/key4hep-build.yaml/badge.svg)
 
 The components are available from the Key4hep stack on machines with CVMFS.
 
