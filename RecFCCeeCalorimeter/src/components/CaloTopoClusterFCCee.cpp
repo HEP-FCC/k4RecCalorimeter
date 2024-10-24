@@ -167,88 +167,89 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
     verbose() << "Cluster energy:     " << energy << endmsg;
     checkTotEnergy += energy;
   
-    if (energy>=m_minClusterEnergy) {
-      edm4hep::MutableCluster cluster;
-      cluster.setEnergy(energy);
-      checkTotEnergyAboveThreshold += cluster.getEnergy();
-      // loop over the cells attached to the cluster to calculate cluster barycenter and attach cells
-      for (auto pair : i.second) {
-	dd4hep::DDSegmentation::CellID cID = pair.first;
-	// auto cellID = pair.first;
-	// get CalorimeterHit by cellID
-	auto newCell = edm4hep::MutableCalorimeterHit();
-	newCell.setEnergy(allCells[cID]);
-	newCell.setCellID(cID);
-	newCell.setType(pair.second);
-
-	// get cell position by cellID
-	// identify calo system
-	auto systemId = m_decoder->get(cID, m_index_system);
-	system[int(systemId)]++;
-	dd4hep::Position posCell;
-	if (systemId == 4)  // ECAL BARREL system id
-	  posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
-	else if (systemId == 8){  // HCAL BARREL system id
-	  if (m_noSegmentationHCalUsed)
-	    posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cID);
-	  else
-	    posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cID);
-	}
-	//else if (systemId == 9)  // HCAL EXT BARREL system id
-	//  posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cID);
-	//else if (systemId == 6)  // EMEC system id
-	//  posCell = m_cellPositionsEMECTool->xyzPosition(cID);
-	//else if (systemId == 7)  // HEC system id
-	//  posCell = m_cellPositionsHECTool->xyzPosition(cID);
-	//else if (systemId == 10)  // EMFWD system id
-	//  posCell = m_cellPositionsEMFwdTool->xyzPosition(cID);
-	//else if (systemId == 11)  // HFWD system id
-	//  posCell = m_cellPositionsHFwdTool->xyzPosition(cID);
-	else
-	  warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
-	newCell.setPosition(edm4hep::Vector3f{
-	    static_cast<float>(posCell.X() / dd4hep::mm),
-	    static_cast<float>(posCell.Y() / dd4hep::mm),
-	    static_cast<float>(posCell.Z() / dd4hep::mm)});
-
-	posX += posCell.X() * newCell.getEnergy();
-	posY += posCell.Y() * newCell.getEnergy();
-	posZ += posCell.Z() * newCell.getEnergy();
-
-	posPhi.push_back(posCell.Phi());
-	posTheta.push_back(posCell.Theta());
-	vecEnergy.push_back(newCell.getEnergy());
-	sumPhi += posCell.Phi() * newCell.getEnergy();
-	sumTheta += posCell.Theta() * newCell.getEnergy();
-
-	cluster.addToHits(newCell);
-	edmClusterCells->push_back(newCell);
-	auto er = allCells.erase(cID);
-	if (er!=1)
-	  info() << "Problem in erasing cell ID from map." << endmsg;
-      }
-      cluster.setPosition(edm4hep::Vector3f{
-	  static_cast<float>((posX / energy) / dd4hep::mm),
-	  static_cast<float>((posY / energy) / dd4hep::mm),
-	  static_cast<float>((posZ / energy) / dd4hep::mm)});
-      // store deltaR of cluster in time for the moment..
-      sumPhi = sumPhi / energy;
-      sumTheta = sumTheta / energy;
-      int counter = 0;
-      for (auto entryTheta : posTheta){
-	deltaR += sqrt(pow(entryTheta-sumTheta,2) + pow(posPhi[counter]-sumPhi,2)) * vecEnergy[counter];
-	counter++;
-      }
-      cluster.addToShapeParameters(deltaR / energy);
-      edmClusters->push_back(cluster);
-
-      if (system.size() > 1)
-	clusterWithMixedCells++;
-
-      posPhi.clear();
-      posTheta.clear();
-      vecEnergy.clear();
+    if (energy<m_minClusterEnergy) {
+      continue;
     }
+
+    edm4hep::MutableCluster cluster;
+    cluster.setEnergy(energy);
+    checkTotEnergyAboveThreshold += cluster.getEnergy();
+    // loop over the cells attached to the cluster to calculate cluster barycenter and attach cells
+    for (auto pair : i.second) {
+      dd4hep::DDSegmentation::CellID cID = pair.first;
+      // get CalorimeterHit by cellID
+      auto newCell = edm4hep::MutableCalorimeterHit();
+      newCell.setEnergy(allCells[cID]);
+      newCell.setCellID(cID);
+      newCell.setType(pair.second);
+
+      // identify calo system, retrieve positioning tool and
+      // get cell position by cellID
+      auto systemId = m_decoder->get(cID, m_index_system);
+      system[int(systemId)]++;
+      dd4hep::Position posCell;
+      if (systemId == 4)  // ECAL BARREL system id
+	posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
+      else if (systemId == 8){  // HCAL BARREL system id
+	if (m_noSegmentationHCalUsed)
+	  posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cID);
+	else
+	  posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cID);
+      }
+      //else if (systemId == 9)  // HCAL EXT BARREL system id
+      //  posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cID);
+      //else if (systemId == 6)  // EMEC system id
+      //  posCell = m_cellPositionsEMECTool->xyzPosition(cID);
+      //else if (systemId == 7)  // HEC system id
+      //  posCell = m_cellPositionsHECTool->xyzPosition(cID);
+      //else if (systemId == 10)  // EMFWD system id
+      //  posCell = m_cellPositionsEMFwdTool->xyzPosition(cID);
+      //else if (systemId == 11)  // HFWD system id
+      //  posCell = m_cellPositionsHFwdTool->xyzPosition(cID);
+      else
+	warning() << "No cell positions tool found for system id " << systemId << ". " << endmsg;
+      newCell.setPosition(edm4hep::Vector3f{
+	  static_cast<float>(posCell.X() / dd4hep::mm),
+	  static_cast<float>(posCell.Y() / dd4hep::mm),
+	  static_cast<float>(posCell.Z() / dd4hep::mm)});
+
+      posX += posCell.X() * newCell.getEnergy();
+      posY += posCell.Y() * newCell.getEnergy();
+      posZ += posCell.Z() * newCell.getEnergy();
+
+      posPhi.push_back(posCell.Phi());
+      posTheta.push_back(posCell.Theta());
+      vecEnergy.push_back(newCell.getEnergy());
+      sumPhi += posCell.Phi() * newCell.getEnergy();
+      sumTheta += posCell.Theta() * newCell.getEnergy();
+
+      cluster.addToHits(newCell);
+      edmClusterCells->push_back(newCell);
+      auto er = allCells.erase(cID);
+      if (er!=1)
+	info() << "Problem in erasing cell ID from map." << endmsg;
+      }
+    cluster.setPosition(edm4hep::Vector3f{
+	static_cast<float>((posX / energy) / dd4hep::mm),
+	static_cast<float>((posY / energy) / dd4hep::mm),
+	static_cast<float>((posZ / energy) / dd4hep::mm)});
+    // store deltaR of cluster in time for the moment..
+    sumPhi = sumPhi / energy;
+    sumTheta = sumTheta / energy;
+    int counter = 0;
+    for (auto entryTheta : posTheta){
+      deltaR += sqrt(pow(entryTheta-sumTheta,2) + pow(posPhi[counter]-sumPhi,2)) * vecEnergy[counter];
+      counter++;
+    }
+    cluster.addToShapeParameters(deltaR / energy);
+    edmClusters->push_back(cluster);
+
+    if (system.size() > 1)
+      clusterWithMixedCells++;
+
+    posPhi.clear();
+    posTheta.clear();
+    vecEnergy.clear();
   }
 
   debug() << "Number of clusters                                   : " << preClusterCollection.size() << endmsg;
