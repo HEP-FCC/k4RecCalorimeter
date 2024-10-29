@@ -1,6 +1,9 @@
 #ifndef RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 #define RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 
+
+#include "edm4hep/Constants.h"
+
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
