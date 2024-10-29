@@ -1,6 +1,8 @@
 #ifndef RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H
 #define RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H
 
+#include "edm4hep/Constants.h"
+
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"

@@ -10,6 +10,8 @@
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
+#include "edm4hep/Constants.h"
+
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
