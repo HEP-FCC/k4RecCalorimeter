@@ -17,6 +17,7 @@
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 #include "detectorSegmentations/FCCSWEndcapTurbine_k4geo.h"
+#include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
 
 DECLARE_COMPONENT(CaloTowerToolFCCee)
 
@@ -136,7 +137,7 @@ StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName
     }
     case SegmentationType::kPhiTheta: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
-      dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(aSegmentation);
+      dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(aSegmentation);
       phiMax = M_PI - M_PI/segmentationHCal->phiBins();
       thetaMax = M_PI - fabs(segmentationHCal->offsetTheta()) + segmentationHCal->gridSizeTheta() * .5;
       break;
@@ -342,7 +343,7 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
       m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr) {
-      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(
         m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr) {
 	segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
