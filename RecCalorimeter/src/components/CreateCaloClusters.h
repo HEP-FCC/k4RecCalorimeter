@@ -59,7 +59,7 @@ public:
 
 private:
   /// Pointer to the interface of histogram service
-  ITHistSvc* m_histSvc{nullptr};
+  SmartIF<ITHistSvc> m_histSvc;
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
 
