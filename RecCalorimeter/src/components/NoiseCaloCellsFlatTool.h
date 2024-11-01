@@ -47,7 +47,7 @@ private:
       this, "filterNoiseThreshold", 3,
       "remove cells with energy below offset + threshold * noise RMS"};
   /// Random Number Service
-  IRndmGenSvc* m_randSvc;
+  SmartIF<IRndmGenSvc> m_randSvc;
   /// Gaussian random number generator used for smearing with a constant resolution (m_sigma)
   Rndm::Numbers m_gauss;
 };
