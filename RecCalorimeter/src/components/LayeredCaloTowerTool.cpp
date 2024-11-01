@@ -215,7 +215,7 @@ void LayeredCaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, ui
   for (const auto& cell : *cells) {
     float etaCell = m_segmentation->eta(cell.getCellID());
     float phiCell = m_segmentation->phi(cell.getCellID());
-    if ((abs(static_cast<long int>(idEta(etaCell)) - static_cast<long int>(idEta(eta))) <= halfEtaFin) && (abs(static_cast<long int>(idPhi(phiCell)) - static_cast<long int>(idPhi(phi))) <= halfPhiFin)) {
+    if ((std::abs(static_cast<long int>(idEta(etaCell)) - static_cast<long int>(idEta(eta))) <= halfEtaFin) && (std::abs(static_cast<long int>(idPhi(phiCell)) - static_cast<long int>(idPhi(phi))) <= halfPhiFin)) {
       aEdmClusterCells->push_back(cell);
       aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
     }

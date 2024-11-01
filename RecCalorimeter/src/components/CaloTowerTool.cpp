@@ -443,8 +443,6 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType
 void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin, edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
   int etaId = idEta(eta);
   int phiId = idPhi(phi);
-  int num1 = 0;
-  int num2 = 0;
   std::vector<dd4hep::DDSegmentation::CellID> seen_cellIDs;
   if (aEllipse) {
     for (int iEta = etaId - halfEtaFin; iEta <= int(etaId + halfEtaFin); iEta++) {
@@ -458,7 +456,6 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
             auto cellclone = cell.clone();
             aEdmClusterCells->push_back(cellclone);
             aEdmCluster.addToHits(cellclone);
-            num1++;
           }
         }
       }
@@ -474,7 +471,6 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
           auto cellclone = cell.clone();
           aEdmClusterCells->push_back(cellclone);
           aEdmCluster.addToHits(cellclone);
-          num2++;
         }
       }
     }
