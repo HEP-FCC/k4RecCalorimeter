@@ -50,7 +50,7 @@ StatusCode CreateCaloClusters::initialize() {
   }
   
   // Histogram service
-  m_histSvc = service("THistSvc", false):
+  m_histSvc = service("THistSvc", false);
   if (!m_histSvc) {
     error() << "Unable to locate Histogram Service" << endmsg;
     return StatusCode::FAILURE;
