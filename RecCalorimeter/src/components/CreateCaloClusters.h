@@ -79,8 +79,6 @@ private:
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
   ToolHandle<ICellPositionsTool> m_cellPositionsHCalNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
   
-  const char *types[2] = {"EM", "HAD"};
-
   mutable TH1F* m_energyScale;
   mutable TH1F* m_benchmark;
   mutable TH1F* m_fractionEMcluster;

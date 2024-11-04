@@ -271,8 +271,6 @@ StatusCode CreateCaloClusters::execute(const EventContext&) const {
 	      posCell = m_cellPositionsHCalTool->xyzPosition(cellId);
 	    if ( !calibECal && !m_doCryoCorrection)
 	      cellEnergy = cellEnergy * (1/m_ehHCal);
-	    else if ( m_doCryoCorrection )
-	      cellEnergy = cellEnergy;
 	  }
 
 	  newCell.setEnergy(cellEnergy);

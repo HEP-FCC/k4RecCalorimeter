@@ -131,7 +131,7 @@ StatusCode PreparePileup::initialize() {
   debug() << "Number of calorimeter towers (eta x phi) : " << m_nEtaTower << " x " << m_nPhiTower << endmsg;
   // OPTIMISATION OF CLUSTER SIZE
   // sanity check
-  if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0) & !(m_nEtaFinal.size() == m_numLayers && m_nPhiFinal.size() == m_numLayers)) {
+  if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0) && !(m_nEtaFinal.size() == m_numLayers && m_nPhiFinal.size() == m_numLayers)) {
     error() << "Size of optimised window should be equal to number of layers or empty" << endmsg;
     return StatusCode::FAILURE;
   }
