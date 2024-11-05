@@ -1,6 +1,6 @@
 # k4RecCalorimeter - Key4hep Framework Components for Calorimeter Reconstruction
 
-![key4hep-build](https://github.com/HEP-FCC/k4RecCalorimeter/actions/workflows/key4hep-build.yaml/badge.svg)
+[![key4hep-build](https://github.com/HEP-FCC/k4RecCalorimeter/actions/workflows/key4hep-build.yaml/badge.svg)](https://github.com/HEP-FCC/k4RecCalorimeter/actions/workflows/key4hep-build.yaml)
 
 The components are available from the Key4hep stack on machines with CVMFS.
 
@@ -23,7 +23,7 @@ source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
 
 After fetching the repository, do
 ```
-source /cvmfs/sw.hsf.org/key4hep/setup.sh
+source /cvmfs/sw-nightlies.hsf.org/key4hep/setup.sh
 mkdir build install
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=install ..
