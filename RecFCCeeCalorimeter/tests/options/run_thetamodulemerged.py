@@ -435,8 +435,8 @@ if runHCal:
                                             OutputLevel=INFO)
 
     # 2 - attach positions to the cells
-    from Configurables import CellPositionsHCalBarrelPhiThetaSegTool
-    cellPositionHcalBarrelTool = CellPositionsHCalBarrelPhiThetaSegTool(
+    from Configurables import CellPositionsHCalPhiThetaSegTool
+    cellPositionHcalBarrelTool = CellPositionsHCalPhiThetaSegTool(
         "CellPositionsHCalBarrel",
         readoutName=hcalBarrelReadoutName,
         OutputLevel=INFO
@@ -466,9 +466,9 @@ if runHCal:
     rewriteHCalBarrel.outhits.Path = hcalBarrelCellsName2
 
     # 4 - attach positions to the new cells
-    from Configurables import CellPositionsHCalBarrelPhiThetaSegTool
+    from Configurables import CellPositionsHCalPhiThetaSegTool
     hcalBarrelPositionedCellsName2 = "HCalBarrelPositionedCells2"
-    cellPositionHcalBarrelTool2 = CellPositionsHCalBarrelPhiThetaSegTool(
+    cellPositionHcalBarrelTool2 = CellPositionsHCalPhiThetaSegTool(
         "CellPositionsHCalBarrel2",
         readoutName=hcalBarrelReadoutName2,
         OutputLevel=INFO
