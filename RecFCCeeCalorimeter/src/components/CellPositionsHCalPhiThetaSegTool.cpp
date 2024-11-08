@@ -27,9 +27,21 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize()
     error() << "Unable to locate Geometry service." << endmsg;
     return StatusCode::FAILURE;
   }
-  // get PhiTheta segmentation
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo *>(
-      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+
+  std::string segmentationType = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation()->type();
+  if(segmentationType == "FCCSWHCalPhiTheta_k4geo")
+  {
+    // get PhiTheta segmentation
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo *>(
+        m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  }
+  if(segmentationType == "FCCSWHCalPhiRow_k4geo")
+  {
+    // get PhiRow segmentation
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo *>(
+        m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  }
+
   if (m_segmentation == nullptr)
   {
     error() << "There is no phi-theta segmentation!!!!" << endmsg;
