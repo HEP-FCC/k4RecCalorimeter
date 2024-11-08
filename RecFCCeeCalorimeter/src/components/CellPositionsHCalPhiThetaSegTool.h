@@ -8,6 +8,7 @@
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
+#include "detectorSegmentations/FCCSWHCalPhiRow_k4geo.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
@@ -34,8 +35,8 @@ class Segmentation;
  * 
  *  Tool to determine each Calorimeter cell position.
  *
- *  For the FCCee HCal Barrel and EndCap with phi-theta segmentation,
- *  retrieved from the FCCSWHCalPhiTheta_k4geo segmentation.
+ *  For the FCCee HCal Barrel and EndCap with phi-theta / phi-row segmentation,
+ *  retrieved from the FCCSWHCalPhiTheta_k4geo/FCCSWHCalPhiRow_k4geo segmentation.
  *
  *  @author Michaela Mlynarikova
  *  Modified by Archil Durglishvili
@@ -62,7 +63,7 @@ private:
   /// Name of the hadronic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "HCalBarrelReadout"};
   /// Theta-phi segmentation
-  dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo* m_segmentation = nullptr;
+  dd4hep::DDSegmentation::Segmentation* m_segmentation = nullptr;
   /// Cellid decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = nullptr;
 };
