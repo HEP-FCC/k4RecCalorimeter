@@ -82,6 +82,11 @@ StatusCode CaloTopoClusterFCCee::initialize() {
       return StatusCode::FAILURE;
     }
   }
+  // Check if cell position HCal Endcap tool available
+  if (!m_cellPositionsHCalExtBarrelTool.retrieve()) {
+    error() << "Unable to retrieve HCal Endcap cell positions tool!!!" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_index_layer_ecal = m_decoder_ecal->index("layer");
@@ -180,8 +185,8 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
         else
           posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cID);
       }
-      //else if (systemId == 9)  // HCAL EXT BARREL system id
-      //  posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cID);
+      else if (systemId == 9)  // HCAL ENDCAP system id
+        posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cID);
       //else if (systemId == 6)  // EMEC system id
       //  posCell = m_cellPositionsEMECTool->xyzPosition(cID);
       //else if (systemId == 7)  // HEC system id
@@ -487,6 +492,9 @@ void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double
       noises[layer].push_back(m_noiseTool->noiseRMS(cell.first));
     }
   }
+
+  // if ECal barrel cells are not included in the input then return, otherwise it will crash
+  if(layers.empty()) return;
 
   // then compute the minima
   int num_layers = *std::max_element(layers.begin(), layers.end());
