@@ -1,6 +1,8 @@
 #ifndef RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H
 #define RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H
 
+#include "edm4hep/Constants.h"
+
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
@@ -102,6 +104,12 @@ private:
   std::vector<int> nMergedModules;
   // the number of modules / phi cells
   std::vector<int> nModules;
+
+  /// Limit of debug printing
+  mutable uint debugIter = 0;
+  Gaudi::Property<uint> m_maxDebugPrint{this, "maxDebugPrint", 10, "maximum number of debug/warning messages from execute()"};
+
+  void PrintDebugMessage(MsgStream stream, const std::string& text) const;
 };
 
 #endif /* RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H */

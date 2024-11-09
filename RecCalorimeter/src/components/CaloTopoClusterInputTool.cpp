@@ -42,7 +42,7 @@ StatusCode CaloTopoClusterInputTool::initialize() {
 StatusCode CaloTopoClusterInputTool::finalize() { return AlgTool::finalize(); }
 
 StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, double>& aCells) {
-  uint totalNumberOfCells = 0;
+  [[maybe_unused]] uint totalNumberOfCells = 0;
 
   // 1. ECAL barrel
   // Get the input collection with calorimeter cells

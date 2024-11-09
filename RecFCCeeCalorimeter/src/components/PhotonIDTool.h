@@ -1,6 +1,9 @@
 #ifndef RECFCCEECALORIMETER_PHOTONIDTOOL_H
 #define RECFCCEECALORIMETER_PHOTONIDTOOL_H
 
+
+#include "edm4hep/Constants.h"
+
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"

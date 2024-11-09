@@ -10,6 +10,8 @@
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
+#include "edm4hep/Constants.h"
+
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
@@ -142,6 +144,8 @@ private:
   Gaudi::Property<int> m_neighbourSigma{this, "neighbourSigma", 2, "number of sigma in noise threshold"};
   /// Last neighbour threshold in sigma
   Gaudi::Property<int> m_lastNeighbourSigma{this, "lastNeighbourSigma", 0, "number of sigma in noise threshold"};
+  /// Cluster energy threshold
+  Gaudi::Property<float> m_minClusterEnergy{this, "minClusterEnergy", 0., "minimum cluster energy"};
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
 

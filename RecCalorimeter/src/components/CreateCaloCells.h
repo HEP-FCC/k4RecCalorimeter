@@ -110,15 +110,6 @@ private:
                                                   "to to change segmentation (e.g. ID of the "
                                                   "ECal)"};
 
-  /** Temporary: for use with MergeLayer tool
-   * MergeLayer is going to be replaced by RedoSegmentation once we can define
-   * segmentation with variable cell (layer) size.
-   * This property won't be needed anymore.
-   */
-  unsigned int m_activeVolumesNumber;
-  /// Use only volume ID? If false, using PhiEtaSegmentation
-  bool m_useVolumeIdOnly;
-
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   dd4hep::VolumeManager m_volman;
