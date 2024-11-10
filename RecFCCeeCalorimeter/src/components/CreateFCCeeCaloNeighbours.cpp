@@ -413,16 +413,16 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         double phi = phiVol + dphi;
         double phiMin = phi - 0.5 * eCalPhiSize * ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
         double phiMax = phi + 0.5 * eCalPhiSize * ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
-        int minPhiHCal = (phiMin - hCalPhiOffset) / hCalPhiSize;
-        int maxPhiHCal = (phiMax - hCalPhiOffset) / hCalPhiSize;
+        int minPhiHCal = int(floor((phiMin - hCalPhiOffset + 0.5*hCalPhiSize) / hCalPhiSize));
+        int maxPhiHCal = int(floor((phiMax - hCalPhiOffset + 0.5*hCalPhiSize) / hCalPhiSize));
         for (int itheta = extremaECalLastLayerTheta.first; itheta <= extremaECalLastLayerTheta.second; itheta += ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer))
         {
           (*decoderECalBarrel)["theta"].set(cellIdECal, itheta);
           double theta = ecalBarrelModuleThetaSegmentation->theta(cellIdECal);
           double thetaMin = theta - eCalThetaSize * ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer) / 2.;
           double thetaMax = theta + eCalThetaSize * ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer) / 2.;
-          int minThetaHCal = (thetaMin - hCalThetaOffset) / hCalThetaSize;
-          int maxThetaHCal = (thetaMax - hCalThetaOffset) / hCalThetaSize;
+          int minThetaHCal = int(floor((thetaMin - hCalThetaOffset + 0.5*hCalThetaSize) / hCalThetaSize));
+          int maxThetaHCal = int(floor((thetaMax - hCalThetaOffset + 0.5*hCalThetaSize) / hCalThetaSize));
           debug() << "ECAL cell: cellId = " << cellIdECal << " module = " << imodule << " theta bin = " << itheta << endmsg;
           debug() << "ECAL cell: phi = " << phi << " theta = " << theta << endmsg;
           debug() << "ECAL cell: thetaMin = " << thetaMin << " thetaMax = " << thetaMax << endmsg;
@@ -470,16 +470,16 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         double phi = ecalBarrelPhiThetaSegmentation->phi(cellIdECal);
         double phiMin = phi - 0.5 * eCalPhiSize;
         double phiMax = phi + 0.5 * eCalPhiSize;
-        int minPhiHCal = (phiMin - hCalPhiOffset) / hCalPhiSize;
-        int maxPhiHCal = (phiMax - hCalPhiOffset) / hCalPhiSize;
+        int minPhiHCal = int(floor((phiMin - hCalPhiOffset + 0.5*hCalPhiSize) / hCalPhiSize));
+        int maxPhiHCal = int(floor((phiMax - hCalPhiOffset + 0.5*hCalPhiSize) / hCalPhiSize));
         for (int itheta = extremaECalLastLayerTheta.first; itheta <= extremaECalLastLayerTheta.second; itheta ++)
         {
           (*decoderECalBarrel)["theta"].set(cellIdECal, itheta);
           double theta = ecalBarrelPhiThetaSegmentation->theta(cellIdECal);
           double thetaMin = theta - 0.5 * eCalThetaSize;
           double thetaMax = theta + 0.5 * eCalThetaSize;
-          int minThetaHCal = (thetaMin - hCalThetaOffset) / hCalThetaSize;
-          int maxThetaHCal = (thetaMax - hCalThetaOffset) / hCalThetaSize;
+          int minThetaHCal = int(floor((thetaMin - hCalThetaOffset + 0.5*hCalThetaSize) / hCalThetaSize));
+          int maxThetaHCal = int(floor((thetaMax - hCalThetaOffset + 0.5*hCalThetaSize) / hCalThetaSize));
           debug() << "ECAL cell: cellId = " << cellIdECal << " phi bin = " << iphi << " theta bin = " << itheta << endmsg;
           debug() << "ECAL cell: phi = " << phi << " theta = " << theta << endmsg;
           debug() << "ECAL cell: thetaMin = " << thetaMin << " thetaMax = " << thetaMax << endmsg;
@@ -534,11 +534,11 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       int minModuleECal(-1), maxModuleECal(-1), minPhiECal(-1), maxPhiECal(-1);
       if (ecalBarrelModuleThetaSegmentation)
       {
-        minModuleECal = (int)((phiMin - eCalPhiOffset) / eCalPhiSize);
+        minModuleECal = int(floor((phiMin - eCalPhiOffset + 0.5*eCalPhiSize) / eCalPhiSize));
         if (minModuleECal < 0)
           minModuleECal += eCalModules; // need module to be >=0 so that subtracting module%mergedModules gives the correct result
         minModuleECal -= minModuleECal % ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
-        maxModuleECal = (int)((phiMax - eCalPhiOffset) / eCalPhiSize);
+        maxModuleECal = int(floor((phiMax - eCalPhiOffset + 0.5*eCalPhiSize) / eCalPhiSize));
         if (maxModuleECal < 0)
           maxModuleECal += eCalModules;
         maxModuleECal -= maxModuleECal % ecalBarrelModuleThetaSegmentation->mergedModules(eCalLastLayer);
@@ -548,8 +548,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       }
       else
       {
-        minPhiECal = (int)((phiMin - eCalPhiOffset) / eCalPhiSize);
-        maxPhiECal = (int)((phiMax - eCalPhiOffset) / eCalPhiSize);
+        minPhiECal = int(floor((phiMin - eCalPhiOffset + 0.5*eCalPhiSize) / eCalPhiSize));
+        maxPhiECal = int(floor((phiMax - eCalPhiOffset + 0.5*eCalPhiSize) / eCalPhiSize));
       }
 
       // Loop on theta
@@ -561,8 +561,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         double thetaMin = theta - 0.5 * hCalThetaSize;
         double thetaMax = theta + 0.5 * hCalThetaSize;
         // find ECAL barrel theta bins corresponding to this theta range
-        int minThetaECal = (thetaMin - eCalThetaOffset) / eCalThetaSize;
-        int maxThetaECal = (thetaMax - eCalThetaOffset) / eCalThetaSize;
+        int minThetaECal = int(floor((thetaMin - eCalThetaOffset + 0.5*eCalThetaSize) / eCalThetaSize));
+        int maxThetaECal = int(floor((thetaMax - eCalThetaOffset + 0.5*eCalThetaSize) / eCalThetaSize));
         if (ecalBarrelModuleThetaSegmentation)
         {
           minThetaECal -= minThetaECal % ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer);
