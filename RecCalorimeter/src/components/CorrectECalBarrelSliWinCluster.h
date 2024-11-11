@@ -160,7 +160,7 @@ private:
   /// Histogram of pileup noise added to energy of clusters
   mutable TH1F* m_hPileupEnergy;
   /// Random Number Service
-  IRndmGenSvc* m_randSvc;
+  SmartIF<IRndmGenSvc> m_randSvc;
   /// Gaussian random number generator used for the generation of random noise hits
   Rndm::Numbers m_gauss;
   /// Name of the file with noise constants

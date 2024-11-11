@@ -112,7 +112,7 @@ private:
   std::vector<TH1F> m_histoElecNoiseOffset;
 
   /// Random Number Service
-  IRndmGenSvc* m_randSvc;
+  SmartIF<IRndmGenSvc> m_randSvc;
   /// Gaussian random number generator used for the generation of random noise hits
   Rndm::Numbers m_gauss;
 

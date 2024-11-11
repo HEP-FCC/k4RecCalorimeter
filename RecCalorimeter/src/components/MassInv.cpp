@@ -320,7 +320,8 @@ StatusCode MassInv::initialize() {
     m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->getDetector()->readout(m_readoutName[iSys]).idSpec().decoder()));
   }
   // Initialize random service
-  if (service("RndmGenSvc", m_randSvc).isFailure()) {
+  m_randSvc = service("RndmGenSvc", false);
+  if (!m_randSvc) {
     error() << "Couldn't get RndmGenSvc!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
