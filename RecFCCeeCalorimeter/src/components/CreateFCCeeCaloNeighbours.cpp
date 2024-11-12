@@ -464,7 +464,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         }
 
         // add the neighbours if within the acceptance of the layer
-        bool hasNeighbours = false;
         int thetaStep = (ecalBarrelModuleThetaSegmentation) ? ecalBarrelModuleThetaSegmentation->mergedThetaCells(eCalLastLayer) : 1;
         for (int ithetaECal = minThetaECal; ithetaECal <= maxThetaECal; ithetaECal += thetaStep)
         {
