@@ -52,8 +52,8 @@ from math import cos, sin, tan
 
 # - general settings
 #
-inputfile = "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/ALLEGRO_sim.root"
-# note - this file probably contains the old ecal endcap segmentation so we disable the endcap digitisation later
+inputfile = "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/forTests/pythia_ee_z_qq_10evt_ALLEGRO_sim.root"
+# note - this config tests cross talk which is not yet working for the endcap so we disable the endcap digitization
 Nevts = 50  # -1 means all events
 dumpGDML = False
 
