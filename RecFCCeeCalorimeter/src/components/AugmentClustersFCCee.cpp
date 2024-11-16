@@ -294,7 +294,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         nCells++;
       }  // end of loop over cells
     }  // end of loop over system / readout
-    //std::cout << "Ecl = " << E << std::endl;
 
     // any number close to two pi should do, because if a cluster contains
     // the -pi<->pi transition, phiMin should be close to -pi and phiMax close to pi
@@ -615,28 +614,31 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
 
       int systemID = m_systemIDs[k];
       // loop over layers
-      for (unsigned layer = 0; layer < m_numLayers[k]; layer++)
-      {
+      for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
         // theta
-        if (m_thetaRecalcLayerWeights[k][layer]<0)
-        {
-          if (sumEnLayer[layer+startPositionToFill] != 0.0)
-          {
+        if (m_thetaRecalcLayerWeights[k][layer]<0) {
+          if (sumEnLayer[layer+startPositionToFill] != 0.0) {
             sumThetaLayer[layer+startPositionToFill] /= sumEnLayer[layer+startPositionToFill];
           }
+          else {
+            sumThetaLayer[layer+startPositionToFill] = 0.;
+          }
         }
-        else
-        {
-          if (sumWeightLayer[layer+startPositionToFill] != 0.0)
-          {
+        else {
+          if (sumWeightLayer[layer+startPositionToFill] != 0.0) {
             sumThetaLayer[layer+startPositionToFill] /= sumWeightLayer[layer+startPositionToFill];
+          }
+          else {
+            sumThetaLayer[layer+startPositionToFill] = 0.;
           }
         }
 
         // phi
-        if (sumEnLayer[layer+startPositionToFill] != 0.0)
-        {
+        if (sumEnLayer[layer+startPositionToFill] != 0.0) {
           sumPhiLayer[layer+startPositionToFill] /= sumEnLayer[layer+startPositionToFill];
+        }
+        else {
+          sumPhiLayer[layer+startPositionToFill] = 0.;
         }
         // make sure phi is in range -pi..pi
         if (sumPhiLayer[layer+startPositionToFill] > TMath::Pi())
@@ -649,18 +651,24 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
         // do pi0/photon shape var only for EMB
         if (m_do_photon_shapeVar && systemID == systemID_EMB) {
           if (m_do_widthTheta_logE_weights) {
-            double w_theta2 = theta2_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill], 2);
+            double w_theta2(0.0);
+            if (sumWeightLayer[layer+startPositionToFill] != 0.) {
+              w_theta2 = theta2_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumWeightLayer[layer+startPositionToFill], 2);
+            }
             // Negative values can happen when noise is on and not filtered
             // Negative values very close to zero can happen due to numerical precision
             if (w_theta2 < 0.) {
-	      PrintDebugMessage(warning(), "w_theta2 in theta width calculation is negative: " + std::to_string(w_theta2) + " , will set theta width to zero (this might happen when noise simulation is on)");
+              PrintDebugMessage(warning(), "w_theta2 in theta width calculation is negative: " + std::to_string(w_theta2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta[layer+startPositionToFill] = 0.;
             }
             else {
               width_theta[layer+startPositionToFill] = std::sqrt(w_theta2);
             }
           } else {
-            double w_theta2 = theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
+            double w_theta2(0.0);
+            if (sumEnLayer[layer+startPositionToFill] != 0.) {
+              w_theta2 = theta2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(theta_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
+            }
             // Negative values can happen when noise is on and not filtered
             // Negative values very close to zero can happen due to numerical precision
             if (w_theta2 < 0.) {
@@ -671,7 +679,11 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
               width_theta[layer+startPositionToFill] = std::sqrt(w_theta2);
             }
           }
-          double w_module2 = module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
+          double w_module2(0.0);
+          if (sumEnLayer[layer+startPositionToFill] != 0.)
+          {
+            w_module2 = module2_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill] - std::pow(module_E_layer[layer+startPositionToFill] / sumEnLayer[layer+startPositionToFill], 2);
+          }
           // Negative values can happen when noise is on and not filtered
           // Negative values very close to zero can happen due to numerical precision
           if (w_module2 < 0) {
@@ -837,21 +849,21 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext &ev
               width_theta_3Bin[layer+startPositionToFill] = std::sqrt(_w_theta_3Bin2);
             }
             if (_w_theta_5Bin2 < 0) {
-	      PrintDebugMessage(warning(), "_w_theta_5Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_5Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
+              PrintDebugMessage(warning(), "_w_theta_5Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_5Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_5Bin[layer+startPositionToFill] = 0.;
             }
             else {
               width_theta_5Bin[layer+startPositionToFill] = std::sqrt(_w_theta_5Bin2);
             }
             if (_w_theta_7Bin2 < 0) {
-	      PrintDebugMessage(warning(), "_w_theta_7Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_7Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
+              PrintDebugMessage(warning(), "_w_theta_7Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_7Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_7Bin[layer+startPositionToFill] = 0.;
             }
             else {
               width_theta_7Bin[layer+startPositionToFill] = std::sqrt(_w_theta_7Bin2);
             }
             if (_w_theta_9Bin2 < 0) {
-	      PrintDebugMessage(warning(), "_w_theta_9Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_9Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
+              PrintDebugMessage(warning(), "_w_theta_9Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_9Bin2) + " , will set theta width to zero (this might happen when noise simulation is on)");
               width_theta_9Bin[layer+startPositionToFill] = 0.;
             }
             else {
