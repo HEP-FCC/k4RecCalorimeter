@@ -115,7 +115,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
 	  << inSeg.x() / dd4hep::mm << "\t" 
 	  << inSeg.y() / dd4hep::mm << "\t"
 	  << inSeg.z() / dd4hep::mm << endmsg;
-  outSeg.SetZ(inSeg.z());
+  outSeg.SetZ(outGlobal[2]);
 
   double z = inSeg.z(); // inSeg contains phi, y, z
   double x = inSeg.y();
@@ -131,7 +131,6 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   
   outSeg.SetX(xprime);
   outSeg.SetY(((int)iSide)*yprime);
-  outSeg.SetZ(z);
 
   
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
