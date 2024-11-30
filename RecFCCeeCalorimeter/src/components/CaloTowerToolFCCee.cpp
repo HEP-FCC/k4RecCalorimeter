@@ -18,6 +18,8 @@
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 #include "detectorSegmentations/FCCSWEndcapTurbine_k4geo.h"
 #include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
+#include "detectorSegmentations/FCCSWHCalPhiRow_k4geo.h"
+
 
 DECLARE_COMPONENT(CaloTowerToolFCCee)
 
@@ -140,6 +142,13 @@ StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName
       dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(aSegmentation);
       phiMax = M_PI - M_PI/segmentationHCal->phiBins();
       thetaMax = M_PI - fabs(segmentationHCal->offsetTheta()) + segmentationHCal->gridSizeTheta() * .5;
+      break;
+    }
+    case SegmentationType::kPhiRow: {
+      info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
+      dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(aSegmentation);
+      phiMax = M_PI - M_PI/segmentationHCal->phiBins();
+      thetaMax = segmentationHCal->thetaMax();
       break;
     }
     case SegmentationType::kMulti: {
@@ -338,41 +347,48 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
   dd4hep::DDSegmentation::Segmentation* segmentation = nullptr;
   if (m_geoSvc->getDetector()->readouts().find(aReadoutName) == m_geoSvc->getDetector()->readouts().end()) {
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
-  } else {
+  }
+  else
+  {
     info() << "Readout " << aReadoutName << " found." << endmsg;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
       m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-    if (segmentation == nullptr) {
-      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(
-        m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-      if (segmentation == nullptr) {
-	segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-	if (segmentation == nullptr) {
-	  segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>( m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-	  if (segmentation == nullptr) {
-	    warning() << "There is no module-theta, phi-theta, endcap turbine, or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
-	    return std::make_pair(nullptr, SegmentationType::kWrong);
-	  } else {
-	    // check if multisegmentation contains only module-theta sub-segmentations
-	    dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
-	    for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
-	      subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
-	      if (subsegmentation == nullptr) {
-		warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
-		return std::make_pair(nullptr, SegmentationType::kWrong);
-	      }
+    if (segmentation == nullptr)
+    {
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+      if (segmentation == nullptr)
+      {
+        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+        if (segmentation == nullptr)
+        {
+          segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+          if (segmentation == nullptr)
+          {
+	    segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>( m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+	    if (segmentation == nullptr)
+            {
+	      warning() << "There is no module-theta, phi-theta, phi-row, endcap turbine, or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
+	      return std::make_pair(nullptr, SegmentationType::kWrong);
 	    }
-	    return std::make_pair(segmentation, SegmentationType::kMulti);
-	  }
-	} else {
-	  return std::make_pair(segmentation, SegmentationType::kEndcapTurbine);
-	}
-      } else {
-        return std::make_pair(segmentation, SegmentationType::kPhiTheta);
-      }
-    } else {
-      return std::make_pair(segmentation, SegmentationType::kModuleTheta);
-    }
+            else
+            {
+	      // check if multisegmentation contains only module-theta sub-segmentations
+	      dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
+	      for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations())
+              {
+	        subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
+	        if (subsegmentation == nullptr)
+                {
+                  warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
+	          return std::make_pair(nullptr, SegmentationType::kWrong);
+	        }
+	      }
+	      return std::make_pair(segmentation, SegmentationType::kMulti);
+	    }
+          } else return std::make_pair(segmentation, SegmentationType::kEndcapTurbine);
+        } else return std::make_pair(segmentation, SegmentationType::kPhiRow);
+      } else return std::make_pair(segmentation, SegmentationType::kPhiTheta);
+    } else return std::make_pair(segmentation, SegmentationType::kModuleTheta);
   }
   return std::make_pair(segmentation, SegmentationType::kWrong);
 }
