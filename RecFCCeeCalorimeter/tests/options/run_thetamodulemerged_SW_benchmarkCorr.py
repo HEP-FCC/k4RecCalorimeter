@@ -224,11 +224,9 @@ ecalEndcapReadoutName = "ECalEndcapTurbine"
 # HCAL
 if runHCal:
     hcalBarrelReadoutName = "HCalBarrelReadout"
-    hcalBarrelReadoutName2 = "BarHCal_Readout_phitheta"
     hcalEndcapReadoutName = "HCalEndcapReadout"
 else:
     hcalBarrelReadoutName = ""
-    hcalBarrelReadoutName2 = ""
     hcalEndcapReadoutName = ""
 
 # Configure saving of calorimeter hits
@@ -429,7 +427,7 @@ if runHCal:
                                             cells=hcalBarrelCellsName,
                                             OutputLevel=INFO)
 
-   # 2 - attach positions to the cells (cell positions needed for RedoSegmentation!)
+    # 2 - attach positions to the cells
     from Configurables import CellPositionsHCalPhiThetaSegTool
     cellPositionHcalBarrelTool = CellPositionsHCalPhiThetaSegTool(
         "CellPositionsHCalBarrel",
@@ -445,52 +443,6 @@ if runHCal:
     createHcalBarrelPositionedCells.hits.Path = hcalBarrelCellsName
     createHcalBarrelPositionedCells.positionedHits.Path = hcalBarrelPositionedCellsName
 
-    # 3 - compute new cellID of cells based on new readout - removing row information
-    # We use a RedoSegmentation. Using a RewriteBitField with removeIds=["row"],
-    # wont work because there are tiles with same layer/theta/phi but different row
-    # as a consequence there will be multiple cells with same cellID in the output collection
-    # and this will screw up the SW clustering
-    hcalBarrelCellsName2 = "HCalBarrelCells2"
-
-    # first we create new hits with the readout without the row information
-    # and then merge them into new cells
-    rewriteHCalBarrel = RedoSegmentation("ReSegmentationHcal",
-                                         # old bitfield (readout)
-                                         oldReadoutName=hcalBarrelReadoutName,
-                                         # specify which fields are going to be altered (deleted/rewritten)
-                                         oldSegmentationIds=["row", "theta", "phi"],
-                                         # new bitfield (readout), with new segmentation (merged modules and theta cells)
-                                         newReadoutName=hcalBarrelReadoutName2,
-                                         OutputLevel=INFO,
-                                         debugPrint=200,
-                                         inhits=hcalBarrelPositionedCellsName,
-                                         outhits="HCalBarrelCellsWithoutRow")
-
-    createHcalBarrelCells2 = CreateCaloCells("CreateHCalBarrelCells2",
-                                             doCellCalibration=False,
-                                             addCellNoise=False,
-                                             filterCellNoise=False,
-                                             OutputLevel=INFO,
-                                             hits=rewriteHCalBarrel.outhits.Path,
-                                             cells=hcalBarrelCellsName2)
-    
-    # 4 - attach positions to the new cells
-    from Configurables import CellPositionsHCalPhiThetaSegTool
-    hcalBarrelPositionedCellsName2 = "HCalBarrelPositionedCells2"
-    cellPositionHcalBarrelTool2 = CellPositionsHCalPhiThetaSegTool(
-        "CellPositionsHCalBarrel2",
-        readoutName=hcalBarrelReadoutName2,
-        OutputLevel=INFO
-    )
-    createHcalBarrelPositionedCells2 = CreateCaloCellPositionsFCCee(
-        "CreateHCalBarrelPositionedCells2",
-        OutputLevel=INFO
-    )
-    createHcalBarrelPositionedCells2.positionsTool = cellPositionHcalBarrelTool2
-    createHcalBarrelPositionedCells2.hits.Path = hcalBarrelCellsName2
-    createHcalBarrelPositionedCells2.positionedHits.Path = hcalBarrelPositionedCellsName2
-
-
     # createHcalEndcapCells = CreateCaloCells("CreateHcalEndcapCaloCells",
     #                                    doCellCalibration=True,
     #                                    calibTool=calibHcalEndcap,
@@ -503,10 +455,7 @@ if runHCal:
 else:
     hcalBarrelCellsName = "emptyCaloCells"
     hcalBarrelPositionedCellsName = "emptyCaloCells"
-    hcalBarrelCellsName2 = "emptyCaloCells"
-    hcalBarrelPositionedCellsName2 = "emptyCaloCells"
     cellPositionHcalBarrelTool = None
-    cellPositionHcalBarrelTool2 = None
 
 # Empty cells for parts of calorimeter not implemented yet
 createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
@@ -521,7 +470,7 @@ towers = CaloTowerToolFCCee("towers",
                             ecalBarrelReadoutName=ecalBarrelReadoutName,
                             ecalEndcapReadoutName=ecalEndcapReadoutName,
                             ecalFwdReadoutName="",
-                            hcalBarrelReadoutName=hcalBarrelReadoutName2,
+                            hcalBarrelReadoutName=hcalBarrelReadoutName,
                             hcalExtBarrelReadoutName="",
                             hcalEndcapReadoutName="",
                             hcalFwdReadoutName="",
@@ -530,7 +479,7 @@ towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
 towers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
 towers.ecalFwdCells.Path = "emptyCaloCells"
 
-towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName2
+towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName
 towers.hcalExtBarrelCells.Path = "emptyCaloCells"
 towers.hcalEndcapCells.Path = "emptyCaloCells"
 towers.hcalFwdCells.Path = "emptyCaloCells"
@@ -568,7 +517,7 @@ correctCaloClusters = CorrectCaloClusters("correctCaloClusters",
                                           numLayers=[12,13],
                                           firstLayerIDs=[0,0],
                                           lastLayerIDs=[11,12],
-                                          readoutNames=[ecalBarrelReadoutName,hcalBarrelReadoutName2],
+                                          readoutNames=[ecalBarrelReadoutName,hcalBarrelReadoutName],
                                           # do not split the following line or it will break scripts that update the values of the corrections
                                           upstreamParameters = [[0.03900891447361534, -4.322941016402328, -139.1811369546787, 0.498342628339746, -3.3545078429754813, -13.99996971344221],[]],
                                           upstreamFormulas=[['[0]+[1]/(x-[2])', '[0]+[1]/(x-[2])'],[]],
@@ -644,9 +593,6 @@ if runHCal:
     TopAlg += [
         createHcalBarrelCells,
         createHcalBarrelPositionedCells,
-        rewriteHCalBarrel,
-        createHcalBarrelCells2,
-        createHcalBarrelPositionedCells2,
         # createHcalEndcapCells
     ]
 
