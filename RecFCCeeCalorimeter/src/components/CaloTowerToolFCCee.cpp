@@ -139,12 +139,19 @@ StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName
     }
     case SegmentationType::kPhiTheta: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
+      dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(aSegmentation);
+      phiMax = M_PI - M_PI/segmentationHCal->phiBins();
+      thetaMax = M_PI - fabs(segmentationHCal->offsetTheta()) + segmentationHCal->gridSizeTheta() * .5;
+      break;
+    }
+    case SegmentationType::kHCalPhiTheta: {
+      info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
       dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(aSegmentation);
       phiMax = M_PI - M_PI/segmentationHCal->phiBins();
       thetaMax = M_PI - fabs(segmentationHCal->offsetTheta()) + segmentationHCal->gridSizeTheta() * .5;
       break;
     }
-    case SegmentationType::kPhiRow: {
+    case SegmentationType::kHCalPhiRow: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
       dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(aSegmentation);
       phiMax = M_PI - M_PI/segmentationHCal->phiBins();
@@ -355,38 +362,42 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::Segmentatio
       m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr)
     {
-      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr)
       {
-        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
         if (segmentation == nullptr)
         {
-          segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+          segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
           if (segmentation == nullptr)
           {
-	    segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>( m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-	    if (segmentation == nullptr)
+            segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+            if (segmentation == nullptr)
             {
-	      warning() << "There is no module-theta, phi-theta, phi-row, endcap turbine, or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
-	      return std::make_pair(nullptr, SegmentationType::kWrong);
-	    }
-            else
-            {
-	      // check if multisegmentation contains only module-theta sub-segmentations
-	      dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
-	      for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations())
+              segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>( m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+              if (segmentation == nullptr)
               {
-	        subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
-	        if (subsegmentation == nullptr)
+                warning() << "There is no module-theta, phi-theta, phi-row, endcap turbine, or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
+	        return std::make_pair(nullptr, SegmentationType::kWrong);
+              }
+              else
+              {
+                // check if multisegmentation contains only module-theta sub-segmentations
+                dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
+                for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations())
                 {
-                  warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
-	          return std::make_pair(nullptr, SegmentationType::kWrong);
+                  subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
+                  if (subsegmentation == nullptr)
+                  {
+                    warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
+                    return std::make_pair(nullptr, SegmentationType::kWrong);
+                  }
 	        }
-	      }
-	      return std::make_pair(segmentation, SegmentationType::kMulti);
-	    }
-          } else return std::make_pair(segmentation, SegmentationType::kEndcapTurbine);
-        } else return std::make_pair(segmentation, SegmentationType::kPhiRow);
+                return std::make_pair(segmentation, SegmentationType::kMulti);
+              }
+            } else return std::make_pair(segmentation, SegmentationType::kEndcapTurbine);
+          } else return std::make_pair(segmentation, SegmentationType::kHCalPhiRow);
+        } else return std::make_pair(segmentation, SegmentationType::kHCalPhiTheta);
       } else return std::make_pair(segmentation, SegmentationType::kPhiTheta);
     } else return std::make_pair(segmentation, SegmentationType::kModuleTheta);
   }
