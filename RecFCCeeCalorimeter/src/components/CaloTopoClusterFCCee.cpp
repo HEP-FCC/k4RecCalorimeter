@@ -36,10 +36,10 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
                   "Handle for tool to retrieve cell positions in HCal Barrel without DD4hep segmentation");
   declareProperty("positionsHCalExtBarrelTool", m_cellPositionsHCalExtBarrelTool=0,
                   "Handle for tool to retrieve cell positions in HCal ext Barrel");
-  //declareProperty("positionsEMECTool", m_cellPositionsEMECTool, "Handle for tool to retrieve cell positions in EMEC");
-  //declareProperty("positionsHECTool", m_cellPositionsHECTool, "Handle for tool to retrieve cell positions in HEC");
-  //declareProperty("positionsEMFwdTool", m_cellPositionsEMFwdTool, "Handle for tool to retrieve cell positions EM Fwd");
-  //declareProperty("positionsHFwdTool", m_cellPositionsHFwdTool, "Handle for tool to retrieve cell positions Had Fwd");
+  // declareProperty("positionsEMECTool", m_cellPositionsEMECTool, "Handle for tool to retrieve cell positions in EMEC");
+  // declareProperty("positionsHECTool", m_cellPositionsHECTool, "Handle for tool to retrieve cell positions in HEC");
+  // declareProperty("positionsEMFwdTool", m_cellPositionsEMFwdTool, "Handle for tool to retrieve cell positions EM Fwd");
+  // declareProperty("positionsHFwdTool", m_cellPositionsHFwdTool, "Handle for tool to retrieve cell positions Had Fwd");
   declareProperty("clusters", m_clusterCollection, "Handle for calo clusters (output collection)");
   declareProperty("clusterCells", m_clusterCellsCollection, "Handle for clusters (output collection)");
 }
@@ -69,23 +69,26 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     error() << "Unable to retrieve ECal Barrel cell positions tool!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  // Check if cell position HCal Barrel tool available (if name is set)
+  // Check if cell position HCal Barrel tool available (only if name is set so that we can also do ECAL-only topoclustering)
   if (!m_cellPositionsHCalBarrelTool.empty()) {
     if (!m_cellPositionsHCalBarrelTool.retrieve()) {
       error() << "Unable to retrieve HCal Barrel cell positions tool!!!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
+  // Check if cell position HCal Barrel no seg tool available (only if name is set so that we can also do ECAL-only topoclustering)
   if (!m_cellPositionsHCalBarrelNoSegTool.empty()) {
     if (!m_cellPositionsHCalBarrelNoSegTool.retrieve()) {
       error() << "Unable to retrieve HCal Barrel no segmentation cell positions tool!!!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
-  // Check if cell position HCal Endcap tool available
-  if (!m_cellPositionsHCalExtBarrelTool.retrieve()) {
-    error() << "Unable to retrieve HCal Endcap cell positions tool!!!" << endmsg;
-    return StatusCode::FAILURE;
+  // Check if cell position HCal Endcap tool available (only if name is set so that we can also do ECAL-only topoclustering)
+  if (!m_cellPositionsHCalExtBarrelTool.empty()) {
+    if (!m_cellPositionsHCalExtBarrelTool.retrieve()) {
+      error() << "Unable to retrieve HCal Ext Barrel cell positions tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
   }
 
   m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
