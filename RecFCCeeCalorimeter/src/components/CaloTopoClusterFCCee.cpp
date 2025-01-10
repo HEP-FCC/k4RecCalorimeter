@@ -30,6 +30,8 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
   declareProperty("positionsECalBarrelTool", m_cellPositionsECalBarrelTool,
                   "Handle for tool to retrieve cell positions in ECal Barrel");
+  declareProperty("positionsECalEndcapTool", m_cellPositionsECalEndcapTool,
+                  "Handle for tool to retrieve cell positions in ECal Endcap");
   declareProperty("positionsHCalBarrelTool", m_cellPositionsHCalBarrelTool=0,
                   "Handle for tool to retrieve cell positions in HCal Barrel");
   declareProperty("positionsHCalBarrelNoSegTool", m_cellPositionsHCalBarrelNoSegTool=0,
@@ -65,9 +67,11 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     return StatusCode::FAILURE;
   }
   // Check if cell position ECal Barrel tool available
-  if (!m_cellPositionsECalBarrelTool.retrieve()) {
-    error() << "Unable to retrieve ECal Barrel cell positions tool!!!" << endmsg;
-    return StatusCode::FAILURE;
+  if (!m_cellPositionsECalBarrelTool.empty()) {
+    if (!m_cellPositionsECalBarrelTool.retrieve()) {
+      error() << "Unable to retrieve ECal Barrel cell positions tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
   }
   // Check if cell position HCal Barrel tool available (only if name is set so that we can also do ECAL-only topoclustering)
   if (!m_cellPositionsHCalBarrelTool.empty()) {
@@ -197,7 +201,9 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
       system[int(systemId)]++;
       dd4hep::Position posCell;
       if (systemId == 4)  // ECAL BARREL system id
-	posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
+        posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
+      else if (systemId == 5)
+	posCell = m_cellPositionsECalEndcapTool->xyzPosition(cID);
       else if (systemId == 8){  // HCAL BARREL system id
 	if (m_noSegmentationHCalUsed)
 	  posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cID);
@@ -381,6 +387,10 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
                                      std::map<uint64_t, uint>& aClusterOfCell,
                                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
                                      bool aAllowClusterMerge) const {
+  // EWV debug
+  unsigned modSeed = (aCellId >> 28) & 0x7ff;
+  unsigned rhoSeed = (aCellId >> 39) & 0xff;
+  unsigned zSeed = (aCellId >> 47) & 0xff; 
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint>> addedNeighbourIds;
   // Retrieve cellIDs of neighbours
@@ -397,13 +407,25 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
     // loop over neighbours
     for (auto& itr : neighboursVec) {
       auto neighbourID = itr;
+      debug() << "neighbor ID is " << neighbourID << endmsg;
+      unsigned modNeighbor = (neighbourID >> 28) & 0x7ff;
+      unsigned rhoNeighbor = (neighbourID >> 39) & 0xff;
+      unsigned zNeighbor = (neighbourID >> 47) & 0xff;
+      if (rhoSeed != rhoNeighbor) {
+	debug() << "checking neighbor with different rho than seed " << modSeed << " " << rhoSeed << " " << zSeed << " " << modNeighbor << " " << rhoNeighbor << " " << zNeighbor << " " << aCellId << " " << neighbourID << endmsg;
+      }
+
       // Find the neighbour in the Calo cells list
       auto itAllCells = aCells.find(neighbourID);
       auto itAllUsedCells = aClusterOfCell.find(neighbourID);
-      
+
+      if (itAllCells == aCells.end()) {
+	debug() << "Can't find this neighbour in the list of cells!" << endmsg;
+      }
       // If cell is hit.. and is not assigned to a cluster
       if (itAllCells != aCells.end() && itAllUsedCells == aClusterOfCell.end()) {
         verbose() << "Found neighbour with CellID: " << neighbourID << endmsg;
+
         auto neighbouringCellEnergy = itAllCells->second;
         bool addNeighbour = false;
         int cellType = 2;
@@ -426,6 +448,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
 	}
 	else {
 	  double thr = m_noiseTool->noiseOffset(neighbourID) + (aNumSigma * m_noiseTool->noiseRMS(neighbourID));
+	  debug() << "Neighboring cell energy is " << neighbouringCellEnergy << endmsg;
 	  if (abs(neighbouringCellEnergy) > thr)
 	    addNeighbour = true;
 	  else
@@ -500,7 +523,7 @@ void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double
   // Fill all noises and offsets values
   for (const auto& cell : aCells) {
     int system = m_decoder->get(cell.first, m_index_system);
-    if (system == 4) { //ECal barrel
+    if (system == 4 || system == 5) { //ECal barrel or endcap
       int layer = m_decoder_ecal->get(cell.first, m_index_layer_ecal);
       if (layers.find(layer) == layers.end()) {
         offsets[layer] = std::vector<double>{};
