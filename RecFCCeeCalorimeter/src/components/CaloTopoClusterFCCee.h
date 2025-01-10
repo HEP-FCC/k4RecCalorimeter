@@ -121,6 +121,8 @@ private:
   mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
+  /// Handle for tool to get positions in ECal Endcap
+  ToolHandle<ICellPositionsTool> m_cellPositionsECalEndcapTool{"CellPositionsECalEndcapTool", this}; 
   /// Handle for tool to get positions in HCal Barrel
   ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in HCal Barrel 
