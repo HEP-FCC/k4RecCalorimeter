@@ -114,6 +114,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
     else if (segmentationType == "FCCSWHCalPhiRow_k4geo")
     {
       hcalPhiRowSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo *>(aSegmentation);
+    }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo")
     {
       ecalEndcapTurbineSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo *>(aSegmentation);
@@ -150,6 +151,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
     {
       info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
       info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
+    }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
       for (int iWheel = 0; iWheel < 3; iWheel++) {
 	info() << "Segmentation: nModules for wheel " << iWheel << ": " <<  ecalEndcapTurbineSegmentation->nModules(iWheel) << endmsg;
@@ -603,11 +605,11 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 	    (*decoder)["rho"].set(volumeId, 0);
 	    (*decoder)["z"].set(volumeId, 0);
 	    
-	    int numModules = ecalEndcapTurbineSegmentation->nModules(iWheel);
-	    int numCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
-	    int numCellsZ = ecalEndcapTurbineSegmentation->numCellsZ(iWheel);
-	    int numCellsRhoCalib = ecalEndcapTurbineSegmentation->numCellsRhoCalib(iWheel);
-	    int numCellsZCalib =  ecalEndcapTurbineSegmentation->numCellsZCalib(iWheel);
+	    unsigned numModules = ecalEndcapTurbineSegmentation->nModules(iWheel);
+	    unsigned numCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
+	    unsigned numCellsZ = ecalEndcapTurbineSegmentation->numCellsZ(iWheel);
+	    unsigned numCellsRhoCalib = ecalEndcapTurbineSegmentation->numCellsRhoCalib(iWheel);
+	    unsigned numCellsZCalib =  ecalEndcapTurbineSegmentation->numCellsZCalib(iWheel);
 	    // extrema 0: 0, ID of last module
 	    extrema[0] = std::make_pair(0, numModules - 1);
 	    // extrema[1]: 0, ID of last rho cell
@@ -620,9 +622,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 	    debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
 	    debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
 	    // Loop over segmentation cells
-	    for (int imodule = 0; imodule < numModules; imodule++) {
-	      for (int irho = 0; irho < numCellsRho; irho++) {
-		for (int iz = 0; iz < numCellsZ; iz++) {
+	    for (unsigned imodule = 0; imodule < numModules; imodule++) {
+	      for (unsigned irho = 0; irho < numCellsRho; irho++) {
+		for (unsigned iz = 0; iz < numCellsZ; iz++) {
 		  // check if we're at the boundary between wheels
 		  bool atInnerBoundary = false, atOuterBoundary=false;
 		  if (iWheel > 0 && irho == 0) atInnerBoundary = true;
