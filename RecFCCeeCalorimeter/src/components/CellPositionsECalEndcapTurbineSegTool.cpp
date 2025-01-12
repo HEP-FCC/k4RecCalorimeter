@@ -117,7 +117,6 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
 	  << inSeg.z() / dd4hep::mm << endmsg;
   outSeg.SetZ(outGlobal[2]);
 
-  double z = inSeg.z(); // inSeg contains phi, y, z
   double x = inSeg.y();
   //  phi = inSeg.x();
   // this will place rho at the outer edge of each layer, not in the middle.
