@@ -132,7 +132,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       return StatusCode::FAILURE;
     }
 
-      if((segmentationType != "FCCSWHCalPhiRow_k4geo") && (segmentationType == "FCCSWEndcapTurbine_k4geo"))
+      if((segmentationType != "FCCSWHCalPhiRow_k4geo") && (segmentationType != "FCCSWEndcapTurbine_k4geo"))
     {
       info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
       info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
