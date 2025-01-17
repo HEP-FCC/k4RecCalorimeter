@@ -325,15 +325,15 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
             dd4hep::DDSegmentation::CellID cellId = volumeId;
             decoder->set(cellId, "phi", iphi);
             decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
-            uint64_t id = cellId;
+	    {            uint64_t id = cellId;
             map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
                 id, det::utils::neighbours(*decoder, {m_activeFieldNamesSegmented[iSys], "phi", "theta"}, extrema,
                                            id, {false, true, false}, m_includeDiagonalCells)));
           }
         }
+	}
       }
     }
-
     // Loop over all cells in the HCal and retrieve existing cellIDs and find neighbours
     else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
     {
@@ -540,7 +540,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         (*decoder)["theta"].set(volumeId, 0);
         (*decoder)["module"].set(volumeId, 0);
         // Get number of segmentation cells within the active volume
-        // numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
+	{        // numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
         auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
         // extrema 1: min module number (0), max module number
         extrema[1] = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(ilayer));
@@ -580,6 +580,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
                     m_includeDiagonalCells)));
           }
         }
+      }
       }
     }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
@@ -670,17 +671,32 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 		    unsigned numCellsRhootherWheel = ecalEndcapTurbineSegmentation->numCellsRho(otherWheel);
 		    unsigned numCellsZCalibotherWheel = ecalEndcapTurbineSegmentation->numCellsZCalib(otherWheel);
 		    unsigned numCellsRhoCalibotherWheel = ecalEndcapTurbineSegmentation->numCellsRhoCalib(otherWheel);
-		    uint64_t newZ, newModule;
+		    uint64_t newZ;
+		    int newModule;
 		    if (numCellsZ > numCellsZotherWheel) {
 		      newZ = decoder->get(cellId, "z")/((1.0*numCellsZ)/numCellsZotherWheel);
 		    } else {
 		      newZ = decoder->get(cellId, "z")*((1.0*numCellsZotherWheel)/numCellsZ);
 		    }
-		    if (numModules > numModulesotherWheel) {
-		      newModule = decoder->get(cellId, "module")/((1.0*numModules)/numModulesotherWheel);
+		    // calculate offset in module index due to differences in
+		    // blade angle in different wheels
+		    double rho, z;
+		    if (atInnerBoundary) {
+		      rho = ecalEndcapTurbineSegmentation->offsetRho(iWheel);
 		    } else {
-		      newModule = decoder->get(cellId, "module")*((1.0*numModulesotherWheel)/numModules);
+		      rho = ecalEndcapTurbineSegmentation->offsetRho(otherWheel);
 		    }
+		    z = ((int)(iz-numCellsZ/2))*ecalEndcapTurbineSegmentation->gridSizeZ(iWheel);
+		    double alpha = ecalEndcapTurbineSegmentation->bladeAngle(iWheel);
+		    double alphaotherWheel = ecalEndcapTurbineSegmentation->bladeAngle(otherWheel);
+		    int moduleOffset = numModulesotherWheel*(z/(2*TMath::Pi()*rho))*(1./TMath::Tan(alpha)-1./TMath::Tan(alphaotherWheel));
+		 
+		    if (numModules > numModulesotherWheel) {
+		      newModule = decoder->get(cellId, "module")/((1.0*numModules)/numModulesotherWheel) + moduleOffset;
+		    } else {
+		      newModule = decoder->get(cellId, "module")*((1.0*numModulesotherWheel)/numModules) + moduleOffset;
+		    }
+		    if (newModule < 0) newModule = numModulesotherWheel+newModule;
 		    unsigned newLayer = newLayerOffset + otherRho/(numCellsRhootherWheel/numCellsRhoCalibotherWheel)*numCellsZCalibotherWheel + newZ/(numCellsZotherWheel/numCellsZCalibotherWheel);
 		    for (int ibmod = 0; ibmod < 2; ibmod++) {
 		      for (int izmod = 0; izmod < 2; izmod++) {
