@@ -185,9 +185,9 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
       }
 
       debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID() << endmsg;
-      debug() << "Position of cell (mm) : \t" << newCell.getPosition().x/dd4hep::mm
-                                      << "\t" << newCell.getPosition().y/dd4hep::mm
-                                      << "\t" << newCell.getPosition().z/dd4hep::mm << endmsg;
+      debug() << "Position of cell (mm) : \t" << newCell.getPosition().x
+                                      << "\t" << newCell.getPosition().y
+                                      << "\t" << newCell.getPosition().z << endmsg;
     }
   }
 
