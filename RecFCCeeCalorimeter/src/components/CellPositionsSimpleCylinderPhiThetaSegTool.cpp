@@ -57,6 +57,19 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
   debug() << "Radius of detector " << m_detectorName.value() << " [mm] : " << m_detRadius/dd4hep::mm << endmsg;
   debug() << "Z of detector " << m_detectorName.value() << " [mm] : " << m_detZ/dd4hep::mm << endmsg;
 
+   // get layer positions
+  const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>* layers = &(theExtension->layers) ;
+  for (unsigned int idxLayer = 0; idxLayer < layers->size(); ++idxLayer) {
+    const dd4hep::rec::LayeredCalorimeterStruct::Layer & theLayer = layers->at(idxLayer);
+    // distance from inner face of layer to origin
+    double layerInnerPosition = theLayer.distance;
+    // layer thickness
+    double layerThickness = theLayer.sensitive_thickness;
+    // calculate the position of the center of current layer
+    double position = layerInnerPosition + layerThickness / 2.;
+    m_layerPositions.push_back(position);
+  }
+
   // get phi-theta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(
       detector->readout(m_readoutName).segmentation().segmentation());
@@ -68,7 +81,6 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
   // Take readout bitfield decoder
   m_decoder = detector->readout(m_readoutName).idSpec().decoder();
   // check if decoder contains "layer"
-  /*
   std::vector<std::string> fields;
   for (uint itField = 0; itField < m_decoder->size(); itField++) {
     fields.push_back((*m_decoder)[itField].name());
@@ -77,8 +89,6 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
   if (iter == fields.end()) {
     error() << "Readout does not contain field: 'layer'" << endmsg;
   }
-  */
-
   
   return sc;
 }
@@ -110,16 +120,21 @@ void CellPositionsSimpleCylinderPhiThetaSegTool::getPositions(const edm4hep::Cal
 
 dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
   debug() << "Cell ID: " << aCellId << endmsg;
+
+  int layer = m_decoder->get(aCellId, "layer");
+
   // determine radius of cell
   double radius;
   if (m_detZ == 0.0) {
     // barrel
-    radius = m_detRadius;
+    // radius = m_detRadius;
+    radius = m_layerPositions[layer];
   }
   else {
     // endcap
     auto theta = m_segmentation->theta(aCellId);
-    radius = fabs(m_detZ * tan(theta));
+    // radius = fabs(m_detZ * tan(theta));
+    radius = fabs(m_layerPositions[layer] * tan(theta));
   }
   // get position scaled to R=1
   auto inSeg = m_segmentation->position(aCellId);
@@ -130,13 +145,10 @@ dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const u
 }
 
 int CellPositionsSimpleCylinderPhiThetaSegTool::layerId(const uint64_t& aCellId) {
-  /*
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");
   return layer;
-  */
-  return 0;
 }
 
 StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::finalize() { return AlgTool::finalize(); }
