@@ -28,8 +28,8 @@ class Segmentation;
 /** @class CellPositionsSimpleCylinderPhiThetaSegTool k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CellPositionsSimpleCylinderPhiThetaSegTool.h
  * CellPositionsSimpleCylinderPhiThetaSegTool.h
  *
- *  Tool to determine cell positions for a simple cylinder volume (without subvolumes) with a phi-theta grid readout
- *  Uses rmin, rmax information stored as CaloData to determine radius at which to position the hits
+ *  Tool to determine cell positions for a simple cylinder volume with a phi-theta grid readout
+ *  Uses layer information stored as CaloData to determine radius at which to position the hits
  * 
  *  @author Archil Durglishvili
  *  @author Giovanni Marchiori
@@ -65,6 +65,7 @@ private:
   double m_detRadius;
   /// Detector z (for endcap)
   double m_detZ;
-  
+  // vector to store layer positions for Barrel and Endcap
+  std::vector<double> m_layerPositions;
 };
 #endif /* RECCALORIMETER_CELLPOSITIONSSIMPLECYLINDERPHITHETASEGTOOL_H */
