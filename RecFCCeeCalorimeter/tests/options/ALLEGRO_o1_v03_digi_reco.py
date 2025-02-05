@@ -124,7 +124,7 @@ calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel",
                                         layerFieldName="layer")
 #   * ECAL endcap
 calibEcalEndcap = CalibrateInLayersTool("CalibrateECalEndcap",
-                                        samplingFraction=[0.16419] * 1 + [0.192898] * 1 + [0.18783] * 1 + [0.193203] * 1 + [0.193928] * 1 + [0.192286] * 1 + [0.199959] * 1 + [0.200153] * 1 + [0.212635] * 1 + [0.180345] * 1 + [0.18488] * 1 + [0.194762] * 1 + [0.197775] * 1 + [0.200504] * 1 + [0.205555] * 1 + [0.203601] * 1 + [0.210877] * 1 + [0.208376] * 1 + [0.216345] * 1 + [0.201452] * 1 + [0.202134] * 1 + [0.207566] * 1 + [0.208152] * 1 + [0.209889] * 1 + [0.211743] * 1 + [0.213188] * 1 + [0.215864] * 1 + [0.22972] * 1 + [0.192515] * 1 + [0.0103233] * 1,
+                                        samplingFraction = [0.0390585] * 1+ [0.463715] * 1+ [0.0853304] * 1+ [-16.2648] * 1+ [0.0442381] * 1+ [0.0552701] * 1+ [0.245704] * 1+ [0.137059] * 1+ [0.238013] * 1+ [0.147364] * 1+ [0.0788765] * 1+ [0.219239] * 1+ [0.151537] * 1+ [0.26711] * 1+ [0.0853741] * 1+ [0.0995584] * 1+ [0.206757] * 1+ [0.16663] * 1+ [0.238659] * 1+ [0.0978915] * 1+ [0.121322] * 1+ [0.204324] * 1+ [0.175887] * 1+ [0.244135] * 1+ [0.0994313] * 1+ [0.141767] * 1+ [0.205447] * 1+ [0.186003] * 1+ [0.237895] * 1+ [0.108545] * 1+ [0.16853] * 1+ [0.205409] * 1+ [0.195066] * 1+ [0.234766] * 1+ [0.109689] * 1+ [0.152743] * 1+ [0.202067] * 1+ [0.199587] * 1+ [0.22892] * 1+ [0.117163] * 1+ [0.247339] * 1+ [0.219485] * 1+ [0.217142] * 1+ [0.248389] * 1+ [0.125487] * 1+ [0.10275] * 1+ [0.185187] * 1+ [0.18939] * 1+ [0.171225] * 1+ [0.109632] * 1+ [0.159225] * 1+ [0.172072] * 1+ [0.174928] * 1+ [0.180492] * 1+ [0.184174] * 1+ [0.18843] * 1+ [0.191688] * 1+ [0.194472] * 1+ [0.198021] * 1+ [0.200064] * 1+ [0.20313] * 1+ [0.203984] * 1+ [0.208658] * 1+ [0.198391] * 1+ [0.153334] * 1+ [0.175712] * 1+ [0.169342] * 1+ [0.176852] * 1+ [0.175731] * 1+ [0.181481] * 1+ [0.17978] * 1+ [0.18426] * 1+ [0.185028] * 1+ [0.186753] * 1+ [0.190321] * 1+ [0.189175] * 1+ [0.193018] * 1+ [0.193594] * 1+ [0.195598] * 1+ [0.1969] * 1+ [0.197713] * 1+ [0.201379] * 1+ [0.193965] * 1+ [0.223362] * 1+ [0.166243] * 1+ [0.373141] * 1+ [0.112825] * 1+ [0.469126] * 1+ [-1.72559] * 1+ [0.0954407] * 1+ [0.0706573] * 1+ [-0.479969] * 1+ [-0.10003] * 1+ [0.112354] * 1+ [0.00607157] * 1+ [0.00386074] * 1+ [0.0039871] * 1+ [-0.00348533] * 1,
                                         readoutName=ecalEndcapReadoutName,
                                         layerFieldName="layer")
 
@@ -593,6 +593,7 @@ if doTopoClustering:
                                                         noiseTool=readECalBarrelNoisyCellsMap,
                                                         # cell positions tools for all sub - systems
                                                         positionsECalBarrelTool=cellPositionEcalBarrelTool,
+                                                        positionsECalEndcapTool="",
                                                         positionsHCalBarrelTool=cellPositionHCalBarrelTool,
                                                         # positionsHCalBarrelNoSegTool=cellPositionHCalBarrelNoSegTool,
                                                         positionsHCalExtBarrelTool=cellPositionHCalEndcapTool,
@@ -609,7 +610,60 @@ if doTopoClustering:
     createECalBarrelTopoClusters.clusters.Path = "EMBCaloTopoClusters"
     createECalBarrelTopoClusters.clusterCells.Path = "EMBCaloTopoClusterCells"
 
-    # no topoclusters for ECAL endcap yet: no noise and neighbour maps provided
+    createECalEndcapTopoInput = CaloTopoClusterInputTool("CreateECalEndcapTopoInput",
+                                                         ecalBarrelReadoutName="",
+                                                         ecalEndcapReadoutName=ecalEndcapReadoutName,
+                                                         ecalFwdReadoutName="",
+                                                         hcalBarrelReadoutName="",
+                                                         hcalExtBarrelReadoutName="",
+                                                         hcalEndcapReadoutName="",
+                                                         hcalFwdReadoutName="",
+                                                         OutputLevel=INFO)
+
+    createECalEndcapTopoInput.ecalBarrelCells.Path = "emptyCaloCells"
+    createECalEndcapTopoInput.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
+    createECalEndcapTopoInput.ecalFwdCells.Path = "emptyCaloCells"
+    createECalEndcapTopoInput.hcalBarrelCells.Path = "emptyCaloCells"
+    createECalEndcapTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
+    createECalEndcapTopoInput.hcalEndcapCells.Path = "emptyCaloCells"
+    createECalEndcapTopoInput.hcalFwdCells.Path = "emptyCaloCells"
+
+    ecalEndcapNeighboursMap = "neighbours_map_ecalE_turbine.root"
+    ecalEndcapNoiseMap = "cellNoise_map_endcapTurbine_electronicsNoiseLevel.root"
+
+    readECalEndcapNeighboursMap = TopoCaloNeighbours("ReadECalEndcapNeighboursMap",
+                                                     fileName=ecalEndcapNeighboursMap,
+                                                     OutputLevel=INFO)
+
+     # Noise levels per cell
+    readECalEndcapNoisyCellsMap = TopoCaloNoisyCells("ReadECalEndcapNoisyCellsMap",
+                                                     fileName=ecalEndcapNoiseMap,
+                                                     OutputLevel=INFO)
+    
+    createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
+                                                        TopoClusterInput=createECalEndcapTopoInput,
+                                          # expects neighbours map from cellid->vec < neighbourIds >
+                                                        neigboursTool=readECalEndcapNeighboursMap,
+                                          # tool to get noise level per cellid
+                                                        noiseTool=readECalEndcapNoisyCellsMap,
+                                          # cell positions tools for all sub - systems
+                                                        positionsECalBarrelTool="",
+                                                        positionsECalEndcapTool=cellPositionEcalEndcapTool,
+                                          #positionsHCalBarrelTool=cellPositionHcalBarrelTool,
+                                          #positionsHCalBarrelNoSegTool=cellPositionHcalBarrelNoSegTool,
+                                          #positionsHCalExtBarrelTool=cellPositionHcalExtBarrelTool,
+                                          # positionsHCalExtBarrelTool = HCalExtBcells,
+                                          # positionsEMECTool = EMECcells,
+                                          # positionsHECTool = HECcells,
+                                          # positionsEMFwdTool = ECalFwdcells,
+                                          # positionsHFwdTool = HCalFwdcells,
+                                                        noSegmentationHCal=False,
+                                                        seedSigma=4,
+                                                        neighbourSigma=2,
+                                                        lastNeighbourSigma=0,
+                                                        OutputLevel=INFO)
+    createECalEndcapTopoClusters.clusters.Path = "EMECaloTopoClusters"
+    createECalEndcapTopoClusters.clusterCells.Path = "EMECaloTopoClusterCells"
 
     if applyUpDownstreamCorrections:
         from Configurables import CorrectCaloClusters
@@ -731,6 +785,7 @@ if doTopoClustering:
                                                   noiseTool=readNoisyCellsMap,
                                                   # cell positions tools for all sub - systems
                                                   positionsECalBarrelTool=cellPositionEcalBarrelTool,
+                                                  positionsECalEndcapTool="",
                                                   positionsHCalBarrelTool=cellPositionHCalBarrelTool,
                                                   # positionsHCalBarrelNoSegTool=cellPositionHCalBarrelNoSegTool,
                                                   positionsHCalExtBarrelTool=cellPositionHCalEndcapTool,
@@ -879,6 +934,9 @@ if doSWClustering or doTopoClustering:
         TopAlg += [createECalBarrelTopoClusters]
         createECalBarrelTopoClusters.AuditExecute = True
 
+        TopAlg += [createECalEndcapTopoClusters]
+        createECalEndcapTopoClusters.AuditExecute = True
+        
         if applyUpDownstreamCorrections:
             TopAlg += [correctECalBarrelTopoClusters]
             correctECalBarrelTopoClusters.AuditExecute = True
