@@ -59,8 +59,6 @@ private:
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
   /// Merged module-theta segmentation
   dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* m_segmentation;
-  /// Cellid decoder
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// Volume manager
   dd4hep::VolumeManager m_volman;
 };
