@@ -42,19 +42,7 @@ StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
   }
     
 
-  // Take readout bitfield decoder from GeoSvc
-  m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_volman = m_geoSvc->getDetector()->volumeManager();
-
-  // check if decoder contains "layer"
-  std::vector<std::string> fields;
-  for (uint itField = 0; itField < m_decoder->size(); itField++) {
-    fields.push_back((*m_decoder)[itField].name());
-  }
-  auto iter = std::find(fields.begin(), fields.end(), "layer");
-  if (iter == fields.end()) {
-    error() << "Readout does not contain field: 'layer'" << endmsg;
-  }
 
   return sc;
 }
@@ -88,47 +76,17 @@ void CellPositionsECalBarrelModuleThetaSegTool::getPositions(const edm4hep::Calo
 
 dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
 
-  dd4hep::Position outSeg;
-  double radius;
-
-  // for module-theta merged segmentation, the local position returned
-  // by the segmentation class is theta of group of merged cells 
-  // and relative phi wrt first module in group of merged modules
-  // in a vector3 scaled such that R_xy=1
-
   // find position of volume corresponding to first of group of merged cells
   debug() << "cellID: " << aCellId << endmsg;
-  dd4hep::DDSegmentation::CellID volumeId = aCellId;
-  m_decoder->set(volumeId, "theta", 0);
+  dd4hep::DDSegmentation::CellID volumeId = m_segmentation->volumeID(aCellId);
   debug() << "volumeID: " << volumeId << endmsg;
-  auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();
-  double outGlobal[3];
-  double inLocal[] = {0, 0, 0};
-  transformMatrix.LocalToMaster(inLocal, outGlobal);
-  debug() << "Position of volume (mm) : \t" 
-	  << outGlobal[0] / dd4hep::mm << "\t" 
-	  << outGlobal[1] / dd4hep::mm << "\t"
-	  << outGlobal[2] / dd4hep::mm << endmsg;
-  
-  // get R, phi of volume
-  radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
-  double phi = std::atan2(outGlobal[1], outGlobal[0]);
-  debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
-  
-  // now get offset in theta and in phi from cell ID (due to theta grid + merging in theta/modules)
-  // the local position is normalised to r_xy=1 so theta is atan(1/z)
+  dd4hep::VolumeManagerContext* vc = m_volman.lookupContext(volumeId);
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   debug() << "Local position of cell (mm) : \t" 
 	  << inSeg.x() / dd4hep::mm << "\t" 
 	  << inSeg.y() / dd4hep::mm << "\t"
 	  << inSeg.z() / dd4hep::mm << endmsg;
-  double dphi = std::atan2(inSeg.y(), inSeg.x());
-  debug() << "Local phi of cell : \t"  << dphi << endmsg;
-  phi += dphi;
-  outSeg = dd4hep::Position(radius * std::cos(phi),
-			    radius * std::sin(phi),
-			    radius * inSeg.z());
+  dd4hep::Position outSeg = vc->localToWorld(dd4hep::Position (inSeg));
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
 	  << outSeg.z() / dd4hep::mm << "\n"
 	  << endmsg;
@@ -137,10 +95,7 @@ dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const ui
 }
 
 int CellPositionsECalBarrelModuleThetaSegTool::layerId(const uint64_t& aCellId) {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+  return m_segmentation->layer(aCellId);
 }
 
 StatusCode CellPositionsECalBarrelModuleThetaSegTool::finalize() { return AlgTool::finalize(); }
