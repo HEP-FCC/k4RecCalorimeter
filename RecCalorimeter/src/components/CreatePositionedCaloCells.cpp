@@ -84,6 +84,35 @@ StatusCode CreatePositionedCaloCells::initialize() {
   }
   m_cellsCellIDEncoding.put(hitsEncoding.value());
 
+  m_calotype = -1; // 0 em, 1 had, 2 muon
+  m_caloid = 0 ;  // 0 unknown, 1 ecal, 2 hcal, 3 yoke
+  std::string collName(m_hits.objKey());
+  std::transform(collName.begin(), collName.end(), collName.begin(), ::tolower);
+  std::cout << "collName: " << collName << std::endl;
+  if (collName.find("ecal") != std::string::npos) {
+    m_calotype = 0;
+    m_caloid = 1;
+  }
+  else if (collName.find("hcal") != std::string::npos) {
+    m_calotype = 1;
+    m_caloid = 2;
+  }
+  else if (collName.find("muon") != std::string::npos) {
+    m_calotype = 2;
+    m_caloid = 3;
+  }
+
+  m_layout = 0 ; // 0 any, 1 barrel, 2 endcap
+  if (collName.find("barrel") != std::string::npos) {
+    m_layout = 1;
+  }
+  else if (collName.find("endcap") != std::string::npos) {
+    m_layout = 2;
+  }
+  info() << "CaloType: " << m_calotype << endmsg;
+  info() << "CaloId: " << m_caloid << endmsg;
+  info() << "Layout: " << m_layout << endmsg;
+
   return StatusCode::SUCCESS;
 }
 
@@ -184,7 +213,11 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
         newCell.setPosition(cached_pos->second);
       }
 
-      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID() << endmsg;
+      // add cell type (for Pandora) - see iLCSoft/MarlinUtil/source/include/CalorimeterHitType.h
+      int layer = 0 ;
+      newCell.setType(m_calotype + 10*m_caloid + 1000*m_layout + 10000*layer);
+
+      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID()  << "\tcellType " << newCell.getType() << endmsg;
       debug() << "Position of cell (mm) : \t" << newCell.getPosition().x
                                       << "\t" << newCell.getPosition().y
                                       << "\t" << newCell.getPosition().z << endmsg;

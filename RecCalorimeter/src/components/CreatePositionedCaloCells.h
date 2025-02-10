@@ -96,6 +96,11 @@ private:
   mutable std::unordered_map<uint64_t, double> m_emptyCellsMap;
   /// Cache position vs cellID
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
+
+  /// For cell type - for PandoraPFA
+  int m_calotype;
+  int m_caloid;
+  int m_layout;
 };
 
 #endif /* RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H */
