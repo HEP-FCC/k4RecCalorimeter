@@ -59,6 +59,8 @@ public:
 
   StatusCode finalize();
 
+  virtual ~CreatePositionedCaloCells();
+
 private:
   /// Handle for tool to get cells positions
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
@@ -96,6 +98,12 @@ private:
   mutable std::unordered_map<uint64_t, double> m_emptyCellsMap;
   /// Cache position vs cellID
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
+
+  /// For cell type - for PandoraPFA
+  int m_calotype;
+  int m_caloid;
+  int m_layout;
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 };
 
 #endif /* RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H */

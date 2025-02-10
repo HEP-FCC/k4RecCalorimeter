@@ -78,7 +78,7 @@ dd4hep::Position CellPositionsECalBarrelPhiThetaSegTool::xyzPosition(const uint6
   transformMatrix.LocalToMaster(inLocal, outGlobal);
   //debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
   //        << outGlobal[2] / dd4hep::mm << endmsg;
-  // radius calculated from segmenation + z postion of volumes
+  // radius calculated from segmentation + z position of volumes
   auto inSeg = m_segmentation->position(aCellId);
   radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
   dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);

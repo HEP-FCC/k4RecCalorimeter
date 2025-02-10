@@ -18,6 +18,12 @@ Gaudi::Algorithm(name, svcLoc) {
   declareProperty("calibTool", m_calibTool, "Handle for tool to calibrate Geant4 energy to EM scale tool");
   declareProperty("noiseTool", m_noiseTool, "Handle for the calorimeter cells noise tool");
   declareProperty("geometryTool", m_geoTool, "Handle for the geometry tool");
+
+  m_decoder = nullptr;
+}
+
+CreatePositionedCaloCells::~CreatePositionedCaloCells() {
+  delete m_decoder;
 }
 
 StatusCode CreatePositionedCaloCells::initialize() {
@@ -83,6 +89,36 @@ StatusCode CreatePositionedCaloCells::initialize() {
     return StatusCode::FAILURE;
   }
   m_cellsCellIDEncoding.put(hitsEncoding.value());
+  m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
+
+  m_calotype = -1; // 0 em, 1 had, 2 muon
+  m_caloid = 0 ;  // 0 unknown, 1 ecal, 2 hcal, 3 yoke
+  std::string collName(m_hits.objKey());
+  std::transform(collName.begin(), collName.end(), collName.begin(), ::tolower);
+  std::cout << "collName: " << collName << std::endl;
+  if (collName.find("ecal") != std::string::npos) {
+    m_calotype = 0;
+    m_caloid = 1;
+  }
+  else if (collName.find("hcal") != std::string::npos) {
+    m_calotype = 1;
+    m_caloid = 2;
+  }
+  else if (collName.find("muon") != std::string::npos) {
+    m_calotype = 2;
+    m_caloid = 3;
+  }
+
+  m_layout = 0 ; // 0 any, 1 barrel, 2 endcap
+  if (collName.find("barrel") != std::string::npos) {
+    m_layout = 1;
+  }
+  else if (collName.find("endcap") != std::string::npos) {
+    m_layout = 2;
+  }
+  info() << "CaloType: " << m_calotype << endmsg;
+  info() << "CaloId: " << m_caloid << endmsg;
+  info() << "Layout: " << m_layout << endmsg;
 
   return StatusCode::SUCCESS;
 }
@@ -184,10 +220,14 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
         newCell.setPosition(cached_pos->second);
       }
 
-      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID() << endmsg;
-      debug() << "Position of cell (mm) : \t" << newCell.getPosition().x/dd4hep::mm
-                                      << "\t" << newCell.getPosition().y/dd4hep::mm
-                                      << "\t" << newCell.getPosition().z/dd4hep::mm << endmsg;
+      // add cell type (for Pandora) - see iLCSoft/MarlinUtil/source/include/CalorimeterHitType.h
+      int layer = m_decoder->get(cellid, "layer");
+      newCell.setType(m_calotype + 10*m_caloid + 1000*m_layout + 10000*layer);
+
+      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID()  << "\tcellType " << newCell.getType() << endmsg;
+      debug() << "Position of cell (mm) : \t" << newCell.getPosition().x
+                                      << "\t" << newCell.getPosition().y
+                                      << "\t" << newCell.getPosition().z << endmsg;
     }
   }
 
