@@ -59,6 +59,8 @@ public:
 
   StatusCode finalize();
 
+  virtual ~CreatePositionedCaloCells();
+
 private:
   /// Handle for tool to get cells positions
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
@@ -101,6 +103,7 @@ private:
   int m_calotype;
   int m_caloid;
   int m_layout;
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 };
 
 #endif /* RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H */
