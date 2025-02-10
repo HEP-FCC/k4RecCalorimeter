@@ -18,6 +18,12 @@ Gaudi::Algorithm(name, svcLoc) {
   declareProperty("calibTool", m_calibTool, "Handle for tool to calibrate Geant4 energy to EM scale tool");
   declareProperty("noiseTool", m_noiseTool, "Handle for the calorimeter cells noise tool");
   declareProperty("geometryTool", m_geoTool, "Handle for the geometry tool");
+
+  m_decoder = nullptr;
+}
+
+CreatePositionedCaloCells::~CreatePositionedCaloCells() {
+  delete m_decoder;
 }
 
 StatusCode CreatePositionedCaloCells::initialize() {
@@ -83,6 +89,7 @@ StatusCode CreatePositionedCaloCells::initialize() {
     return StatusCode::FAILURE;
   }
   m_cellsCellIDEncoding.put(hitsEncoding.value());
+  m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
 
   m_calotype = -1; // 0 em, 1 had, 2 muon
   m_caloid = 0 ;  // 0 unknown, 1 ecal, 2 hcal, 3 yoke
@@ -214,7 +221,7 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
       }
 
       // add cell type (for Pandora) - see iLCSoft/MarlinUtil/source/include/CalorimeterHitType.h
-      int layer = 0 ;
+      int layer = m_decoder->get(cellid, "layer");
       newCell.setType(m_calotype + 10*m_caloid + 1000*m_layout + 10000*layer);
 
       debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID()  << "\tcellType " << newCell.getType() << endmsg;
