@@ -387,10 +387,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
                                      std::map<uint64_t, uint>& aClusterOfCell,
                                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
                                      bool aAllowClusterMerge) const {
-  // EWV debug
-  unsigned modSeed = (aCellId >> 28) & 0x7ff;
-  unsigned rhoSeed = (aCellId >> 39) & 0xff;
-  unsigned zSeed = (aCellId >> 47) & 0xff; 
+
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint>> addedNeighbourIds;
   // Retrieve cellIDs of neighbours
@@ -407,14 +404,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
     // loop over neighbours
     for (auto& itr : neighboursVec) {
       auto neighbourID = itr;
-      debug() << "neighbor ID is " << neighbourID << endmsg;
-      unsigned modNeighbor = (neighbourID >> 28) & 0x7ff;
-      unsigned rhoNeighbor = (neighbourID >> 39) & 0xff;
-      unsigned zNeighbor = (neighbourID >> 47) & 0xff;
-      if (rhoSeed != rhoNeighbor) {
-	debug() << "checking neighbor with different rho than seed " << modSeed << " " << rhoSeed << " " << zSeed << " " << modNeighbor << " " << rhoNeighbor << " " << zNeighbor << " " << aCellId << " " << neighbourID << endmsg;
-      }
-
+     
       // Find the neighbour in the Calo cells list
       auto itAllCells = aCells.find(neighbourID);
       auto itAllUsedCells = aClusterOfCell.find(neighbourID);

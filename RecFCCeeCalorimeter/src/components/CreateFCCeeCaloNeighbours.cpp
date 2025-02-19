@@ -125,33 +125,33 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       return StatusCode::FAILURE;
     }
 
-      if (((segmentation == nullptr && segmentationType != "FCCSWHCalPhiRow_k4geo") ||
-        (phiThetaSegmentation == nullptr && hcalPhiThetaSegmentation == nullptr && hcalPhiRowSegmentation == nullptr && moduleThetaSegmentation == nullptr)) && (ecalEndcapTurbineSegmentation == nullptr))
-    {
-      error() << "Unable to cast segmentation pointer!!!!" << endmsg;
-      return StatusCode::FAILURE;
-    }
-
-      if((segmentationType != "FCCSWHCalPhiRow_k4geo") && (segmentationType != "FCCSWEndcapTurbine_k4geo"))
-    {
-      info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
-      info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
-    }
-
+    if (((segmentation == nullptr && segmentationType != "FCCSWHCalPhiRow_k4geo") ||
+	 (phiThetaSegmentation == nullptr && hcalPhiThetaSegmentation == nullptr && hcalPhiRowSegmentation == nullptr && moduleThetaSegmentation == nullptr)) && (ecalEndcapTurbineSegmentation == nullptr))
+      {
+	error() << "Unable to cast segmentation pointer!!!!" << endmsg;
+	return StatusCode::FAILURE;
+      }
+    
+    if((segmentationType != "FCCSWHCalPhiRow_k4geo") && (segmentationType != "FCCSWEndcapTurbine_k4geo"))
+      {
+	info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
+	info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
+      }
+    
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
-    {
-      info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
-    }
+      {
+	info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
+      }
     else if (segmentationType == "FCCSWGridPhiTheta_k4geo")
-    {
-      info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
-      info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
-    }
+      {
+	info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
+	info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
+      }
     else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
-    {
-      info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
-      info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
-    }
+      {
+	info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
+	info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
+      }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
       for (int iWheel = 0; iWheel < 3; iWheel++) {
 	info() << "Segmentation: nModules for wheel " << iWheel << ": " <<  ecalEndcapTurbineSegmentation->nModules(iWheel) << endmsg;
