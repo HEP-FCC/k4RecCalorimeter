@@ -319,19 +319,18 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         debug() << "Number of segmentation cells in phi, in theta, and min theta ID, : " << numCells << endmsg;
         // Loop over segmentation cells
         for (unsigned int iphi = 0; iphi < numCells[0]; iphi++)
-        {
-          for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
-          {
-            dd4hep::DDSegmentation::CellID cellId = volumeId;
-            decoder->set(cellId, "phi", iphi);
-            decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
-	    {            uint64_t id = cellId;
-            map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
-                id, det::utils::neighbours(*decoder, {m_activeFieldNamesSegmented[iSys], "phi", "theta"}, extrema,
-                                           id, {false, true, false}, m_includeDiagonalCells)));
-          }
-        }
-	}
+	  {
+	    for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
+	      {
+		dd4hep::DDSegmentation::CellID cellId = volumeId;
+		decoder->set(cellId, "phi", iphi);
+		decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
+		uint64_t id = cellId;
+		map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
+								      id, det::utils::neighbours(*decoder, {m_activeFieldNamesSegmented[iSys], "phi", "theta"}, extrema,
+												 id, {false, true, false}, m_includeDiagonalCells)));
+	      }
+	  }
       }
     }
     // Loop over all cells in the HCal and retrieve existing cellIDs and find neighbours
