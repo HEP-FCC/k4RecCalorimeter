@@ -539,7 +539,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         (*decoder)["theta"].set(volumeId, 0);
         (*decoder)["module"].set(volumeId, 0);
         // Get number of segmentation cells within the active volume
-	{        // numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
+	// numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
         auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
         // extrema 1: min module number (0), max module number
         extrema[1] = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(ilayer));
@@ -548,11 +548,11 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         // for layer N-1 of ECal barrel,  will be used for volume connecting
         if (ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1) && m_fieldNamesSegmented[iSys] == "system" &&
             m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId)
-        {
-          eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
-          extremaECalLastLayerModule = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(eCalLastLayer));
-          extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(eCalLastLayer));
-        }
+	  {
+	    eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
+	    extremaECalLastLayerModule = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(eCalLastLayer));
+	    extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(eCalLastLayer));
+	  }
         debug() << "Layer: " << ilayer << endmsg;
         debug() << "Extrema[0]: " << extrema[0].first << " , " << extrema[0].second << endmsg;
         debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
@@ -579,7 +579,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
                     m_includeDiagonalCells)));
           }
         }
-      }
       }
     }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
