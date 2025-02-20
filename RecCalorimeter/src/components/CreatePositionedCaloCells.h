@@ -100,9 +100,9 @@ private:
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
 
   /// For cell type - for PandoraPFA
-  int m_calotype;
-  int m_caloid;
-  int m_layout;
+  mutable int m_calotype;
+  mutable int m_caloid;
+  mutable int m_layout;
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 };
 

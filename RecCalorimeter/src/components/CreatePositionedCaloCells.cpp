@@ -1,5 +1,9 @@
 #include "CreatePositionedCaloCells.h"
 
+// dd4hep
+#include "DD4hep/Detector.h"
+#include "DD4hep/DetType.h"
+
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 
@@ -63,6 +67,8 @@ StatusCode CreatePositionedCaloCells::initialize() {
       error() << "Unable to retrieve the calo cells noise tool!!!" << endmsg;
       return StatusCode::FAILURE;
     }
+  }
+  if (m_addCellNoise) {
     // Geometry settings
     if (!m_geoTool.retrieve()) {
       error() << "Unable to retrieve the geometry tool!!!" << endmsg;
@@ -77,7 +83,7 @@ StatusCode CreatePositionedCaloCells::initialize() {
     verbose() << "Initialised empty cell map with size " << m_cellsMap.size() << endmsg;
     // noise filtering erases cells from the cell map after each event, so we need
     // to backup the empty cell map for later reuse
-    if (m_addCellNoise && m_filterCellNoise) {
+    if (m_filterCellNoise) {
       m_emptyCellsMap = m_cellsMap;
     }
   }
@@ -91,34 +97,11 @@ StatusCode CreatePositionedCaloCells::initialize() {
   m_cellsCellIDEncoding.put(hitsEncoding.value());
   m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
 
-  m_calotype = -1; // 0 em, 1 had, 2 muon
+  // these variables will be initilized in the execute() method
+  // once the system ID is extracted from one cell
+  m_calotype = -99; // -99 not initialized, 1 unknown, 0 em, 1 had, 2 muon
   m_caloid = 0 ;  // 0 unknown, 1 ecal, 2 hcal, 3 yoke
-  std::string collName(m_hits.objKey());
-  std::transform(collName.begin(), collName.end(), collName.begin(), ::tolower);
-  std::cout << "collName: " << collName << std::endl;
-  if (collName.find("ecal") != std::string::npos) {
-    m_calotype = 0;
-    m_caloid = 1;
-  }
-  else if (collName.find("hcal") != std::string::npos) {
-    m_calotype = 1;
-    m_caloid = 2;
-  }
-  else if (collName.find("muon") != std::string::npos) {
-    m_calotype = 2;
-    m_caloid = 3;
-  }
-
   m_layout = 0 ; // 0 any, 1 barrel, 2 endcap
-  if (collName.find("barrel") != std::string::npos) {
-    m_layout = 1;
-  }
-  else if (collName.find("endcap") != std::string::npos) {
-    m_layout = 2;
-  }
-  info() << "CaloType: " << m_calotype << endmsg;
-  info() << "CaloId: " << m_caloid << endmsg;
-  info() << "Layout: " << m_layout << endmsg;
 
   return StatusCode::SUCCESS;
 }
@@ -141,7 +124,6 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   } else {
     m_cellsMap.clear();
   }
-
 
   // 1. Merge energy deposits into cells
   // If running with noise, map was already prepared in initialize().
@@ -195,10 +177,62 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
     m_noiseTool->filterCellNoise(m_cellsMap);
   }
 
+  // determine detector type (only once)
+  if (m_calotype==-99 && m_cellsMap.size()>0) {
+    info() << "Determining calorimeter type for input collection " << m_hits.objKey() << endmsg;
+    uint cellid = m_cellsMap.begin()->first;
+    int system = m_decoder->get(cellid, "system");
+    debug() << "System: " << system << endmsg;
+    dd4hep::Detector* dd4hepgeo = &(dd4hep::Detector::getInstance());
+    const dd4hep::Detector::HandleMap& children = dd4hepgeo->detectors();
+    for (dd4hep::Detector::HandleMap::const_iterator i=children.begin(); i!=children.end(); ++i) {
+      dd4hep::DetElement det((*i).second);
+      int id = det.id();
+      if (id==system) {
+        dd4hep::DetType detType(det.typeFlag());
+        if ( detType.is( dd4hep::DetType::CALORIMETER ) ) {
+          if ( detType.is( dd4hep::DetType::ELECTROMAGNETIC ) ) {
+            m_calotype = 0;
+            m_caloid = 1;
+          }
+          else if ( detType.is( dd4hep::DetType::HADRONIC ) ) {
+            m_calotype = 1;
+            m_caloid = 2;
+          }
+          else if ( detType.is( dd4hep::DetType::MUON ) ) {
+            m_calotype = 2;
+            m_caloid = 3;
+          }
+          else {
+            warning() << "Detector type is neither ELECTROMAGNETIC, HADRONIC nor MUON" << endmsg;
+          }
+          if ( detType.is( dd4hep::DetType::BARREL ) ) {
+            m_layout = 1;
+          }
+          else if ( detType.is( dd4hep::DetType::ENDCAP ) ) {
+            m_layout = 2;
+          }
+          else {
+            warning() << "Detector type is neither BARREL nor ENDCAP" << endmsg;
+          }
+        }
+        else {
+          warning() << "Detector type is not CALORIMETER" << endmsg;
+          m_calotype = -1;
+          m_caloid = 0;
+        }
+        break;
+      }
+    }
+    info() << "CaloType: " << m_calotype << endmsg;
+    info() << "CaloId: " << m_caloid << endmsg;
+    info() << "Layout: " << m_layout << endmsg;
+  }
+
   // 6. Copy information to CaloHitCollection
   edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
   for (const auto& cell : m_cellsMap) {
-    if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {
+    if (m_addCellNoise || (!m_addCellNoise && cell.second != 0.)) {
       auto newCell = edmCellsCollection->create();
       newCell.setEnergy(cell.second);
       uint64_t cellid = cell.first;
@@ -224,6 +258,7 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
       int layer = m_decoder->get(cellid, "layer");
       newCell.setType(m_calotype + 10*m_caloid + 1000*m_layout + 10000*layer);
 
+      // TODO: create Sim<->Reco hit associations
       debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID()  << "\tcellType " << newCell.getType() << endmsg;
       debug() << "Position of cell (mm) : \t" << newCell.getPosition().x
                                       << "\t" << newCell.getPosition().y
