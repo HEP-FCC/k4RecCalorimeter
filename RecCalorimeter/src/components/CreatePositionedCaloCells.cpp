@@ -16,6 +16,7 @@ CreatePositionedCaloCells::CreatePositionedCaloCells(const std::string& name, IS
 Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
+  declareProperty("links", m_links, "The links between hits and cells (output)");
 
   declareProperty("positionsTool", m_cellPositionsTool, "Handle for cell positions tool");
   declareProperty("crosstalkTool", m_crosstalkTool, "Handle for the cell crosstalk tool");
@@ -129,8 +130,9 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   // If running with noise, map was already prepared in initialize().
   // Otherwise it is being created below
   for (const auto& hit : *hits) {
-    verbose() << "CellID : " << hit.getCellID() << endmsg;
-    m_cellsMap[hit.getCellID()] += hit.getEnergy();
+    auto id = hit.getCellID();
+    verbose() << "CellID : " << id << endmsg;
+    m_cellsMap[id] += hit.getEnergy();
   }
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
@@ -258,7 +260,6 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
       int layer = m_decoder->get(cellid, "layer");
       newCell.setType(m_calotype + 10*m_caloid + 1000*m_layout + 10000*layer);
 
-      // TODO: create Sim<->Reco hit associations
       debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID()  << "\tcellType " << newCell.getType() << endmsg;
       debug() << "Position of cell (mm) : \t" << newCell.getPosition().x
                                       << "\t" << newCell.getPosition().y
@@ -266,8 +267,24 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
     }
   }
 
+  // create hits<->cell links
+  edm4hep::CaloHitSimCaloHitLinkCollection* edmCellHitLinksCollection = new edm4hep::CaloHitSimCaloHitLinkCollection();
+  for (const auto& cell : *edmCellsCollection) {
+    auto cellID = cell.getCellID();
+    for (const auto& hit : *hits) {
+      auto hitID = hit.getCellID();
+      if (hitID == cellID) {
+        // create Sim<->Reco hit associations
+        auto link = edmCellHitLinksCollection->create();
+        link.setFrom(cell);
+        link.setTo(hit);
+      }
+    }
+  }
+
   // push the CaloHitCollection to event store
   m_cells.put(edmCellsCollection);
+  m_links.put(edmCellHitLinksCollection);
 
   debug() << "Output Cell collection size: " << edmCellsCollection->size() << endmsg;
 
