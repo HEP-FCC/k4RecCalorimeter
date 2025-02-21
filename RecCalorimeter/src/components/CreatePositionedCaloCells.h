@@ -20,6 +20,7 @@
 // edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
+#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 
 /** @class CreatePositionedCaloCells
  *
@@ -85,12 +86,15 @@ private:
 
   /// Handle for calo hits (input collection)
   mutable DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
-  /// Handle for the cellID encoding string of the input collection
+  /// Handle for the cellID encoding string of the input hit collection
   MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
+  /// Handle for hit<->cell link (output collection)
+  mutable DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_links{"links", Gaudi::DataHandle::Writer, this};
+  /// Handle for the cellID encoding of the output cell collection
   MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
-  /// Maps of cell IDs (corresponding to DD4hep IDs) on final energies to be used for clustering
+  /// Maps of cell IDs (corresponding to DD4hep IDs) vs digitised cell energies
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk
   mutable std::unordered_map<uint64_t, double> m_crosstalkCellsMap;
