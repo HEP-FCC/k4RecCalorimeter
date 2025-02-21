@@ -404,7 +404,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
     // loop over neighbours
     for (auto& itr : neighboursVec) {
       auto neighbourID = itr;
-     
+
       // Find the neighbour in the Calo cells list
       auto itAllCells = aCells.find(neighbourID);
       auto itAllUsedCells = aClusterOfCell.find(neighbourID);
