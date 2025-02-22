@@ -60,7 +60,6 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
   // Loop over a collection of calorimeter cells and build calo towers
   for (const auto& iCell : *ecalEndcapCells) {
     aCells.insert_or_assign(iCell.getCellID(), iCell.getEnergy());
-    debug() << "module, rho, z is " << ((iCell.getCellID() >> 28) & 0x7ff) << " " << ((iCell.getCellID() >> 39) & 0xff) << " " << ((iCell.getCellID() >> 47) & 0xff) << " " << iCell.getCellID() << endmsg;
   }
   totalNumberOfCells += ecalEndcapCells->size();
 
