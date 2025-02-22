@@ -30,10 +30,10 @@ if [ "$usePythia" -gt 0 ]; then
 else
   #if ! test -f ALLEGRO_sim_e_barrel.root; then
   echo "Generating events and performing the Geant4 simulation with ddsim"
-  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "90*deg" --gun.thetaMax "90*deg" --gun.particle e- --numberOfEvents 100 --outputFile ALLEGRO_sim_e_barrel.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "160*deg" --gun.thetaMax "160*deg" --gun.particle e- --numberOfEvents 100 --outputFile ALLEGRO_sim_e_endcap.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  ddsim --enableGun --gun.distribution uniform --gun.energy "50*GeV" --gun.thetaMin "90*deg" --gun.thetaMax "90*deg" --gun.particle pi- --numberOfEvents 100 --outputFile ALLEGRO_sim_pi_barrel.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  ddsim --enableGun --gun.distribution uniform --gun.energy "50*GeV" --gun.thetaMin "160*deg" --gun.thetaMax "160*deg" --gun.particle pi- --numberOfEvents 100 --outputFile ALLEGRO_sim_pi_endcap.root --random.enableEventSeed --random.seed 42 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
+  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "90*deg" --gun.thetaMax "90*deg" --gun.particle e- --numberOfEvents 100 --outputFile ALLEGRO_sim_e_barrel.root --random.enableEventSeed --random.seed 4255 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
+  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "160*deg" --gun.thetaMax "160*deg" --gun.particle e- --numberOfEvents 100 --outputFile ALLEGRO_sim_e_endcap.root --random.enableEventSeed --random.seed 3426 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
+  ddsim --enableGun --gun.distribution uniform --gun.energy "50*GeV" --gun.thetaMin "90*deg" --gun.thetaMax "90*deg" --gun.particle pi- --numberOfEvents 100 --outputFile ALLEGRO_sim_pi_barrel.root --random.enableEventSeed --random.seed 4316 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
+  ddsim --enableGun --gun.distribution uniform --gun.energy "50*GeV" --gun.thetaMin "160*deg" --gun.thetaMax "160*deg" --gun.particle pi- --numberOfEvents 100 --outputFile ALLEGRO_sim_pi_endcap.root --random.enableEventSeed --random.seed 63462 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
   #fi
 fi
 
