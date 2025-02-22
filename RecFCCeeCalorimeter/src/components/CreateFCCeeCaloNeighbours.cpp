@@ -121,13 +121,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       ecalEndcapTurbineSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo *>(aSegmentation);
     }
     else
-
-    {
-      ecalEndcapTurbineSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo *>(aSegmentation);
-    }
-
-    else
-
     {
       error() << "Segmentation type not handled." << endmsg;
       return StatusCode::FAILURE;
@@ -606,7 +599,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
                     m_includeDiagonalCells)));
           }
         }
-      }
       }
     }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
