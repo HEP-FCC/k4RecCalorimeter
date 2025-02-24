@@ -4,6 +4,8 @@
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
+#include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
+#include "detectorSegmentations/FCCSWHCalPhiRow_k4geo.h"
 
 #include "TSystem.h"
 #include "TFile.h"
@@ -16,6 +18,7 @@ CreateFCCeeCaloNoiseLevelMap::CreateFCCeeCaloNoiseLevelMap(const std::string &aN
 {
   declareProperty("ECalBarrelNoiseTool", m_ecalBarrelNoiseTool, "Handle for the cell noise tool of Barrel ECal");
   declareProperty("HCalBarrelNoiseTool", m_hcalBarrelNoiseTool, "Handle for the cell noise tool of Barrel HCal");
+  declareProperty("HCalEndcapNoiseTool", m_hcalEndcapNoiseTool, "Handle for the cell noise tool of Endcap HCal");
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
@@ -36,17 +39,29 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
     return StatusCode::FAILURE;
   }
 
-  if (!m_ecalBarrelNoiseTool.retrieve())
+  if (!m_ecalBarrelNoiseTool.empty())
   {
-    error() << "Unable to retrieve the ECAL noise tool!!!" << endmsg;
-    return StatusCode::FAILURE;
+    if (!m_ecalBarrelNoiseTool.retrieve())
+    {
+      error() << "Unable to retrieve the ECAL noise tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
   }
 
   if (!m_hcalBarrelNoiseTool.empty())
   {
     if (!m_hcalBarrelNoiseTool.retrieve())
     {
-      error() << "Unable to retrieve the HCAL noise tool!!!" << endmsg;
+      error() << "Unable to retrieve the HCAL Barrel noise tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
+
+  if (!m_hcalEndcapNoiseTool.empty())
+  {
+    if (!m_hcalEndcapNoiseTool.retrieve())
+    {
+      error() << "Unable to retrieve the HCAL Endcap noise tool!!!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
@@ -70,6 +85,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
     
     dd4hep::DDSegmentation::GridTheta_k4geo *segmentation = nullptr;
     dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo *phiThetaSegmentation = nullptr;
+    dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo *hcalPhiThetaSegmentation = nullptr;
+    dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo *hcalPhiRowSegmentation = nullptr;
     dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *moduleThetaSegmentation = nullptr;
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
     {
@@ -81,20 +98,34 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
       segmentation = dynamic_cast<dd4hep::DDSegmentation::GridTheta_k4geo *>(aSegmentation);
       phiThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo *>(aSegmentation);
     }
+    else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
+    {
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::GridTheta_k4geo *>(aSegmentation);
+      hcalPhiThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo *>(aSegmentation);
+    }
+    else if (segmentationType == "FCCSWHCalPhiRow_k4geo")
+    {
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::GridTheta_k4geo *>(aSegmentation);
+      hcalPhiRowSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo *>(aSegmentation);
+    }
     else
     {
       error() << "Segmentation type not handled." << endmsg;
       return StatusCode::FAILURE;
     }
     
-    if (segmentation == nullptr || (phiThetaSegmentation == nullptr && moduleThetaSegmentation == nullptr))
+    if ((segmentation == nullptr && segmentationType != "FCCSWHCalPhiRow_k4geo") ||
+        (phiThetaSegmentation == nullptr && hcalPhiThetaSegmentation == nullptr && hcalPhiRowSegmentation == nullptr && moduleThetaSegmentation == nullptr))
     {
       error() << "Unable to cast segmentation pointer!!!!" << endmsg;
       return StatusCode::FAILURE;
     }
 
-    info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
-    info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
+    if(segmentationType != "FCCSWHCalPhiRow_k4geo")
+    {
+      info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
+      info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
+    }
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
     {
       info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
@@ -103,6 +134,11 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
     {
       info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
       info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
+    }
+    else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
+    {
+      info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
+      info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
     }
 
     // Loop over all cells in the calorimeter and retrieve existing cellIDs
@@ -195,6 +231,186 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
             map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
           }
         }
+      }
+      // HCal phi-theta segmentation
+      else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
+      {
+        // Set system and layer of volume ID
+        dd4hep::DDSegmentation::CellID volumeId = 0;
+        (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
+        (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
+        (*decoder)["theta"].set(volumeId, 0);
+        (*decoder)["phi"].set(volumeId, 0);
+
+        // Get number of segmentation cells within the active volume
+        std::array<uint, 3> numCells;
+        std::vector<int> thetaBins(hcalPhiThetaSegmentation->thetaBins(ilayer));
+        numCells[0] = hcalPhiThetaSegmentation->phiBins();
+
+        // Barrel
+        if(m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId)
+        {
+          // number of cells in the layer
+          numCells[1] = thetaBins.size();
+          // ID of first cell theta bin (smallest theta)
+          if(numCells[1] > 0) numCells[2] = thetaBins[0];
+          else error() << "Can not get number of cells from the segmentation object: " << segmentationType << endmsg;
+
+          debug() << "Layer: " << ilayer << endmsg;
+          debug() << "Number of segmentation cells in phi, in theta, and min theta ID, for HCal barrel : " << numCells << endmsg;
+          // Loop over segmentation cells
+          for (unsigned int iphi = 0; iphi < numCells[0]; iphi++)
+          {
+            for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
+            {
+              dd4hep::DDSegmentation::CellID cellId = volumeId;
+              decoder->set(cellId, "phi", iphi);
+              decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
+              uint64_t id = cellId;
+              double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
+              double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+            }
+          }
+        } // barrel
+
+        // For endcap, determine noise separately for positive- and negative-z part
+        if(m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_hcalEndcapSysId)
+        {
+          // number of cells in the layer
+          numCells[1] = thetaBins.size()/2; // thetaBins contains theta IDs for both positive- and negative-z parts, hence divide size by 2
+
+          // ID of first cell theta bin (smallest theta) in the positive-z part of the endcap
+          if(numCells[1] > 0) numCells[2] = thetaBins[0];
+          else error() << "Can not get number of cells from the segmentation object: " << segmentationType << endmsg;
+
+          debug() << "Layer: " << ilayer << endmsg;
+          debug() << "Number of segmentation cells in phi, in theta, and min theta ID, for positive-z HCal endcap : " << numCells << endmsg;
+          // Loop over segmentation cells
+          for (unsigned int iphi = 0; iphi < numCells[0]; iphi++)
+          {
+            for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
+            {
+              dd4hep::DDSegmentation::CellID cellId = volumeId;
+              decoder->set(cellId, "phi", iphi);
+              decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
+              uint64_t id = cellId;
+              double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
+              double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+            }
+          }
+
+          // ID of first cell theta bin (smallest theta) in the negative-z part of the endcap
+          if(numCells[1] > 0) numCells[2] = thetaBins[thetaBins.size()/2];
+
+          debug() << "Layer: " << ilayer << endmsg;
+          debug() << "Number of segmentation cells in phi, in theta, and min theta ID, for negative-z HCal endcap : " << numCells << endmsg;
+          // Loop over segmentation cells
+          for (unsigned int iphi = 0; iphi < numCells[0]; iphi++)
+          {
+            for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
+            {
+              dd4hep::DDSegmentation::CellID cellId = volumeId;
+              decoder->set(cellId, "phi", iphi);
+              decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
+              uint64_t id = cellId;
+              double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
+              double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+            }
+          }
+        } // Endcap
+      }
+      // HCal phi-row segmentation
+      else if (segmentationType == "FCCSWHCalPhiRow_k4geo")
+      {
+        // Set system and layer of volume ID
+        dd4hep::DDSegmentation::CellID volumeId = 0;
+        (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
+        (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
+        (*decoder)["row"].set(volumeId, 0);
+        (*decoder)["phi"].set(volumeId, 0);
+
+        // Get number of segmentation cells within the active volume
+        std::array<int, 3> numCells;
+        std::vector<int> cellIndexes(hcalPhiRowSegmentation->cellIndexes(ilayer));
+        numCells[0] = hcalPhiRowSegmentation->phiBins();
+
+        // Barrel
+        if(m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId)
+        {
+          // number of cells in the layer
+          numCells[1] = cellIndexes.size();
+          // minimum cell index
+          if(numCells[1] > 0) numCells[2] = cellIndexes.front();
+          else error() << "Can not get number of cells from the segmentation object: " << segmentationType << endmsg;
+
+          debug() << "Layer: " << ilayer << endmsg;
+          debug() << "Number of segmentation cells in phi, in row, and min cell index, for HCal barrel : " << numCells << endmsg;
+          // Loop over segmentation cells
+          for (int iphi = 0; iphi < numCells[0]; iphi++)
+          {
+            for (int irow = 0; irow < numCells[1]; irow++)
+            {
+              dd4hep::DDSegmentation::CellID cellId = volumeId;
+              decoder->set(cellId, "phi", iphi);
+              decoder->set(cellId, "row", irow + numCells[2]); // start from the minimum existing cell index in this layer
+              uint64_t id = cellId;
+              double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
+              double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+            }
+          }
+        } // barrel
+
+        // For endcap, determine noise separately for positive- and negative-z part
+        if(m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_hcalEndcapSysId)
+        {
+          // number of cells in the layer
+          numCells[1] = cellIndexes.size()/2; // cellIndexes contains cell IDs for both positive- and negative-z parts, hence divide size by 2
+
+          // minimum cell index in the positive-z part of the endcap
+          if(numCells[1] > 0) numCells[2] = cellIndexes.front();
+          else error() << "Can not get number of cells from the segmentation object: " << segmentationType << endmsg;
+
+          debug() << "Layer: " << ilayer << endmsg;
+          debug() << "Number of segmentation cells in phi, in row, and min cell index, for positive-z HCal endcap : " << numCells << endmsg;
+          // Loop over segmentation cells
+          for (int iphi = 0; iphi < numCells[0]; iphi++)
+          {
+            for (int irow = 0; irow < numCells[1]; irow++)
+            {
+              dd4hep::DDSegmentation::CellID cellId = volumeId;
+              decoder->set(cellId, "phi", iphi);
+              decoder->set(cellId, "row", irow + numCells[2]); // start from the minimum existing cell index in this layer
+              uint64_t id = cellId;
+              double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
+              double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+            }
+          }
+
+          // minimum cell index in the negative-z part of the endcap
+          if(numCells[1] > 0) numCells[2] = cellIndexes.back();
+
+          debug() << "Layer: " << ilayer << endmsg;
+          debug() << "Number of segmentation cells in phi, in row, and min cell index, for negative-z HCal endcap : " << numCells << endmsg;
+          // Loop over segmentation cells
+          for (int iphi = 0; iphi < numCells[0]; iphi++)
+          {
+            for (int irow = 0; irow < numCells[1]; irow++)
+            {
+              dd4hep::DDSegmentation::CellID cellId = volumeId;
+              decoder->set(cellId, "phi", iphi);
+              decoder->set(cellId, "row", irow + numCells[2]); // start from the minimum cell index in this layer
+              uint64_t id = cellId;
+              double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
+              double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+            }
+          }
+        } // Endcap
       }
       else if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
       {
