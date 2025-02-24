@@ -153,15 +153,15 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
     }
     else if (segmentationType == "FCCSWGridPhiTheta_k4geo")
-      {
-	info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
-	info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
-      }
+    {
+      info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
+      info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
+    }
     else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
-      {
-	info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
-	info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
-      }
+    {
+      info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
+      info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
+    }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
       for (int iWheel = 0; iWheel < 3; iWheel++) {
 	info() << "Segmentation: nModules for wheel " << iWheel << ": " <<  ecalEndcapTurbineSegmentation->nModules(iWheel) << endmsg;
