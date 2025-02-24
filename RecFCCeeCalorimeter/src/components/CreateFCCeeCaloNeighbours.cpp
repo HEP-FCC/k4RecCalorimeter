@@ -148,9 +148,10 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
     }
 
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
-      {
-	info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
-      }
+    {
+      info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
+      info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
+    }
     else if (segmentationType == "FCCSWGridPhiTheta_k4geo")
       {
 	info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
@@ -161,13 +162,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 	info() << "Segmentation: size in Phi " << hcalPhiThetaSegmentation->gridSizePhi() << endmsg;
 	info() << "Segmentation: offset in Phi " << hcalPhiThetaSegmentation->offsetPhi() << endmsg;
       }
-    else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
-      for (int iWheel = 0; iWheel < 3; iWheel++) {
-	info() << "Segmentation: nModules for wheel " << iWheel << ": " <<  ecalEndcapTurbineSegmentation->nModules(iWheel) << endmsg;
-	info() << "Segmentation: size in rho for wheel " << iWheel << ": " << ecalEndcapTurbineSegmentation->gridSizeRho(iWheel) << endmsg;
-	info() << "Segmentation: size in z for wheel " << iWheel << ": " << ecalEndcapTurbineSegmentation->gridSizeZ(iWheel) << endmsg;	
-      }
-    }
     else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
       for (int iWheel = 0; iWheel < 3; iWheel++) {
 	info() << "Segmentation: nModules for wheel " << iWheel << ": " <<  ecalEndcapTurbineSegmentation->nModules(iWheel) << endmsg;
@@ -335,20 +329,18 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         debug() << "Number of segmentation cells in phi, in theta, and min theta ID, : " << numCells << endmsg;
         // Loop over segmentation cells
         for (unsigned int iphi = 0; iphi < numCells[0]; iphi++)
-
-	  {
-	    for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
-	      {
-		dd4hep::DDSegmentation::CellID cellId = volumeId;
-		decoder->set(cellId, "phi", iphi);
-		decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
-		uint64_t id = cellId;
-		map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
-								      id, det::utils::neighbours(*decoder, {m_activeFieldNamesSegmented[iSys], "phi", "theta"}, extrema,
-												 id, {false, true, false}, m_includeDiagonalCells)));
-	      }
-	  }
-
+        {
+          for (unsigned int itheta = 0; itheta < numCells[1]; itheta++)
+          {
+            dd4hep::DDSegmentation::CellID cellId = volumeId;
+            decoder->set(cellId, "phi", iphi);
+            decoder->set(cellId, "theta", itheta + numCells[2]); // start from the minimum existing theta cell in this layer
+            uint64_t id = cellId;
+            map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
+                id, det::utils::neighbours(*decoder, {m_activeFieldNamesSegmented[iSys], "phi", "theta"}, extrema,
+                                           id, {false, true, false}, m_includeDiagonalCells)));
+          }
+        }
       }
     }
     // Loop over all cells in the HCal and retrieve existing cellIDs and find neighbours
@@ -568,11 +560,11 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         // for layer N-1 of ECal barrel,  will be used for volume connecting
         if (ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1) && m_fieldNamesSegmented[iSys] == "system" &&
             m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId)
-	  {
-	    eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
-	    extremaECalLastLayerModule = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(eCalLastLayer));
-	    extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(eCalLastLayer));
-	  }
+        {
+          eCalLastLayer = m_activeVolumesNumbersSegmented[iSys] - 1;
+          extremaECalLastLayerModule = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(eCalLastLayer));
+          extremaECalLastLayerTheta = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(eCalLastLayer));
+        }
         debug() << "Layer: " << ilayer << endmsg;
         debug() << "Extrema[0]: " << extrema[0].first << " , " << extrema[0].second << endmsg;
         debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
