@@ -4,7 +4,6 @@
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
 
-
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
@@ -182,7 +181,6 @@ private:
   SegmentationType m_hcalFwdSegmentationType;
   /// decoder: only for barrel
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
-
   /// Maximum theta of detector
   float m_thetaMax;
   /// Maximum phi of the detector
