@@ -149,9 +149,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
     {
-      info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
-      info() << "Segmentation: offset in Phi " << phiThetaSegmentation->offsetPhi() << endmsg;
-    }
+      info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
     else if (segmentationType == "FCCSWGridPhiTheta_k4geo")
     {
       info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
@@ -551,7 +549,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         // Get number of segmentation cells within the active volume
 
 	// numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
-
         auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
         // extrema 1: min module number (0), max module number
         extrema[1] = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(ilayer));
