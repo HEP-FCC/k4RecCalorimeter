@@ -82,6 +82,7 @@ StatusCode CaloTowerToolFCCee::initialize() {
   // Maximum theta & phi of the calorimeter system
   m_phiMax = *std::max_element(listPhiMax.begin(), listPhiMax.end());
   m_thetaMax = *std::max_element(listThetaMax.begin(), listThetaMax.end());
+  debug() << "Detector limits: phiMax " << m_phiMax << " thetaMax " << m_thetaMax << endmsg;
 
   // very small number (epsilon) substructed from the edges to ensure correct division
   float epsilon = 0.0001;
