@@ -149,6 +149,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
     {
       info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
+    }
     else if (segmentationType == "FCCSWGridPhiTheta_k4geo")
     {
       info() << "Segmentation: size in Phi " << phiThetaSegmentation->gridSizePhi() << endmsg;
