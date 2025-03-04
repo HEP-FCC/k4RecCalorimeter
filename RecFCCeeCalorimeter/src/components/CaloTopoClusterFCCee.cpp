@@ -22,7 +22,6 @@
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
 
-
 DECLARE_COMPONENT(CaloTopoClusterFCCee)
 
 CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
