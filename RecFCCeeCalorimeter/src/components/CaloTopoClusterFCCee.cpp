@@ -282,7 +282,7 @@ void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, doubl
     // retrieve the noise const and offset assigned to cell
     // first try to use the cache
     int system = m_decoder->get(cell.first, m_index_system);
-    if (system == 4) { //ECal barrel
+    if (system == 4 || system == 5) { //ECal barrel or endcap
       int layer = m_decoder_ecal->get(cell.first, m_index_layer_ecal);
 
       double min_threshold = m_min_offset[layer] + m_min_noise[layer] * aNumSigma;
@@ -421,7 +421,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
 	// first try to use the cache
 	bool is_below = false;
 	int system = m_decoder->get(neighbourID, m_index_system);
-	if (system == 4) { //ECal barrel
+	if (system == 4 || system == 5) { //ECal barrel or endcap
 	  int layer = m_decoder_ecal->get(neighbourID, m_index_layer_ecal);
 	  double min_threshold = m_min_offset[layer] + m_min_noise[layer] * aNumSigma;
 	  if (abs(neighbouringCellEnergy) < min_threshold) {
