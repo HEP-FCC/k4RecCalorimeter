@@ -22,6 +22,7 @@
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
 
+
 DECLARE_COMPONENT(CaloTopoClusterFCCee)
 
 CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
@@ -387,7 +388,6 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
                                      std::map<uint64_t, uint>& aClusterOfCell,
                                      std::map<uint, std::vector<std::pair<uint64_t, int>>>& aPreClusterCollection,
                                      bool aAllowClusterMerge) const {
-
   // Fill vector to be returned, next cell ids and cluster id for which neighbours are found
   std::vector<std::pair<uint64_t, uint>> addedNeighbourIds;
   // Retrieve cellIDs of neighbours
@@ -404,7 +404,6 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
     // loop over neighbours
     for (auto& itr : neighboursVec) {
       auto neighbourID = itr;
-
       // Find the neighbour in the Calo cells list
       auto itAllCells = aCells.find(neighbourID);
       auto itAllUsedCells = aClusterOfCell.find(neighbourID);
@@ -415,7 +414,6 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
       // If cell is hit.. and is not assigned to a cluster
       if (itAllCells != aCells.end() && itAllUsedCells == aClusterOfCell.end()) {
         verbose() << "Found neighbour with CellID: " << neighbourID << endmsg;
-
         auto neighbouringCellEnergy = itAllCells->second;
         bool addNeighbour = false;
         int cellType = 2;

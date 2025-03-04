@@ -146,7 +146,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
       info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
       info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
     }
-
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo")
     {
       info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
@@ -341,6 +340,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         }
       }
     }
+
     // Loop over all cells in the HCal and retrieve existing cellIDs and find neighbours
     else if (segmentationType == "FCCSWHCalPhiTheta_k4geo")
     {
@@ -547,7 +547,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
         (*decoder)["theta"].set(volumeId, 0);
         (*decoder)["module"].set(volumeId, 0);
         // Get number of segmentation cells within the active volume
-
 	// numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
         auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
         // extrema 1: min module number (0), max module number
