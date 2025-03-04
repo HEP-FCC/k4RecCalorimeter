@@ -517,6 +517,8 @@ void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double
         noises[layer] = std::vector<double>{};
         layers.insert(layer);
       }
+      debug() << "In createCache, noise offset for cell " << cell.first << " is " << m_noiseTool->noiseOffset(cell.first) << endmsg;
+      debug() << "In createCache, noise RMS is " << m_noiseTool->noiseRMS(cell.first) << endmsg; 
       offsets[layer].push_back(m_noiseTool->noiseOffset(cell.first));
       noises[layer].push_back(m_noiseTool->noiseRMS(cell.first));
     }

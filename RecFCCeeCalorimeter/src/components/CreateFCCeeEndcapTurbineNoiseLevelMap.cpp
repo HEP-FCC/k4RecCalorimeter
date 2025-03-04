@@ -31,11 +31,11 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
     return StatusCode::FAILURE;
   }
   std::unordered_map<uint64_t, std::pair<double,double>> map;
-  
+
   //////////////////////////////////
   /// SEGMENTED VOLUME           ///
   //////////////////////////////////
-  
+
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
@@ -52,6 +52,11 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
       return StatusCode::FAILURE;
     }
     
+    unsigned layerOffset[3];
+    layerOffset[0] = 0;
+    layerOffset[1] = segmentation->numCellsRhoCalib(0)*segmentation->numCellsZCalib(0);
+    layerOffset[2] = layerOffset[1] + segmentation->numCellsRhoCalib(1)*segmentation->numCellsZCalib(1);
+    
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     // Loop over all cells in the calorimeter and retrieve existing cellIDs
     // Loop over active layers
@@ -60,7 +65,8 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
     extrema.push_back(std::make_pair(0, 0)); // modules (set per wheel)
     extrema.push_back(std::make_pair(0, 0)); // rho (set per wheel)
     extrema.push_back(std::make_pair(0, 0)); // z (set per wheel)
-    for (int iSide = -1; iSide < 1; iSide+=2) {
+
+    for (int iSide = -1; iSide < 2; iSide+=2) {
       for (unsigned int iWheel = 0; iWheel < 3; iWheel++)
 	{
 	  dd4hep::DDSegmentation::CellID volumeId = 0;
@@ -76,6 +82,8 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
 	  int numModules = segmentation->nModules(iWheel);
 	  int numCellsRho = segmentation->numCellsRho(iWheel);
 	  int numCellsZ = segmentation->numCellsZ(iWheel);
+	  int numCellsRhoCalib = segmentation->numCellsRhoCalib(iWheel);
+	  int numCellsZCalib = segmentation->numCellsZCalib(iWheel);
 	  
 	  // extrema 1: 0, ID of last module
 	  extrema[1] = std::make_pair(0, numModules - 1);
@@ -92,7 +100,15 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
 		decoder->set(cellId, "module", imodule);
 		decoder->set(cellId, "rho", irho);
 		decoder->set(cellId, "z", iz);
+		unsigned iLayerZ = iz/(numCellsZ/numCellsZCalib);
+		unsigned iLayerRho = irho/(numCellsRho/numCellsRhoCalib);
+		unsigned iLayer = layerOffset[iWheel] + iLayerRho*numCellsZCalib + iLayerZ;
+		decoder->set(cellId, "layer", iLayer);
+
 		uint64_t id = cellId;
+		if (iSide==1 && iWheel == 2 && imodule == 113 && irho == 19 && iz == 1) {
+		  debug() << "in test cell, iLayer = " << iLayer << " and cell ID = " << id << endmsg;
+		}
 		double noiseRMS = 1e-12;  // dummy small non-zero value
 		double noiseOffset = 0.;
 		map.insert( std::pair<uint64_t, std::pair<double, double> >(id, std::make_pair(noiseRMS, noiseOffset) ) );
