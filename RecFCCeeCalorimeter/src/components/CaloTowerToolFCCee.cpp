@@ -20,6 +20,7 @@
 #include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
 #include "detectorSegmentations/FCCSWHCalPhiRow_k4geo.h"
 
+
 DECLARE_COMPONENT(CaloTowerToolFCCee)
 
 CaloTowerToolFCCee::CaloTowerToolFCCee(const std::string& type, const std::string& name, const IInterface* parent)
