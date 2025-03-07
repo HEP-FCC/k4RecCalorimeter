@@ -30,6 +30,8 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
   declareProperty("neigboursTool", m_neighboursTool, "Handle for tool to retrieve cell neighbours");
   declareProperty("positionsECalBarrelTool", m_cellPositionsECalBarrelTool,
                   "Handle for tool to retrieve cell positions in ECal Barrel");
+  declareProperty("positionsECalEndcapTool", m_cellPositionsECalEndcapTool,
+                  "Handle for tool to retrieve cell positions in ECal Endcap");
   declareProperty("positionsHCalBarrelTool", m_cellPositionsHCalBarrelTool=0,
                   "Handle for tool to retrieve cell positions in HCal Barrel");
   declareProperty("positionsHCalBarrelNoSegTool", m_cellPositionsHCalBarrelNoSegTool=0,
@@ -65,9 +67,11 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     return StatusCode::FAILURE;
   }
   // Check if cell position ECal Barrel tool available
-  if (!m_cellPositionsECalBarrelTool.retrieve()) {
-    error() << "Unable to retrieve ECal Barrel cell positions tool!!!" << endmsg;
-    return StatusCode::FAILURE;
+  if (!m_cellPositionsECalBarrelTool.empty()) {
+    if (!m_cellPositionsECalBarrelTool.retrieve()) {
+      error() << "Unable to retrieve ECal Barrel cell positions tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
   }
   // Check if cell position HCal Barrel tool available (only if name is set so that we can also do ECAL-only topoclustering)
   if (!m_cellPositionsHCalBarrelTool.empty()) {
@@ -197,7 +201,9 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
       system[int(systemId)]++;
       dd4hep::Position posCell;
       if (systemId == 4)  // ECAL BARREL system id
-	posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
+        posCell = m_cellPositionsECalBarrelTool->xyzPosition(cID);
+      else if (systemId == 5)
+	posCell = m_cellPositionsECalEndcapTool->xyzPosition(cID);
       else if (systemId == 8){  // HCAL BARREL system id
 	if (m_noSegmentationHCalUsed)
 	  posCell = m_cellPositionsHCalBarrelNoSegTool->xyzPosition(cID);
@@ -276,7 +282,7 @@ void CaloTopoClusterFCCee::findingSeeds(const std::unordered_map<uint64_t, doubl
     // retrieve the noise const and offset assigned to cell
     // first try to use the cache
     int system = m_decoder->get(cell.first, m_index_system);
-    if (system == 4) { //ECal barrel
+    if (system == 4 || system == 5) { //ECal barrel or endcap
       int layer = m_decoder_ecal->get(cell.first, m_index_layer_ecal);
 
       double min_threshold = m_min_offset[layer] + m_min_noise[layer] * aNumSigma;
@@ -400,7 +406,10 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
       // Find the neighbour in the Calo cells list
       auto itAllCells = aCells.find(neighbourID);
       auto itAllUsedCells = aClusterOfCell.find(neighbourID);
-      
+
+      if (itAllCells == aCells.end()) {
+	debug() << "Can't find this neighbour in the list of cells!" << endmsg;
+      }
       // If cell is hit.. and is not assigned to a cluster
       if (itAllCells != aCells.end() && itAllUsedCells == aClusterOfCell.end()) {
         verbose() << "Found neighbour with CellID: " << neighbourID << endmsg;
@@ -412,7 +421,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
 	// first try to use the cache
 	bool is_below = false;
 	int system = m_decoder->get(neighbourID, m_index_system);
-	if (system == 4) { //ECal barrel
+	if (system == 4 || system == 5) { //ECal barrel or endcap
 	  int layer = m_decoder_ecal->get(neighbourID, m_index_layer_ecal);
 	  double min_threshold = m_min_offset[layer] + m_min_noise[layer] * aNumSigma;
 	  if (abs(neighbouringCellEnergy) < min_threshold) {
@@ -426,6 +435,7 @@ CaloTopoClusterFCCee::searchForNeighbours(const uint64_t aCellId,
 	}
 	else {
 	  double thr = m_noiseTool->noiseOffset(neighbourID) + (aNumSigma * m_noiseTool->noiseRMS(neighbourID));
+	  debug() << "Neighboring cell energy is " << neighbouringCellEnergy << endmsg;
 	  if (abs(neighbouringCellEnergy) > thr)
 	    addNeighbour = true;
 	  else
@@ -500,13 +510,15 @@ void CaloTopoClusterFCCee::createCache(const std::unordered_map<uint64_t, double
   // Fill all noises and offsets values
   for (const auto& cell : aCells) {
     int system = m_decoder->get(cell.first, m_index_system);
-    if (system == 4) { //ECal barrel
+    if (system == 4 || system == 5) { //ECal barrel or endcap
       int layer = m_decoder_ecal->get(cell.first, m_index_layer_ecal);
       if (layers.find(layer) == layers.end()) {
         offsets[layer] = std::vector<double>{};
         noises[layer] = std::vector<double>{};
         layers.insert(layer);
       }
+      debug() << "In createCache, noise offset for cell " << cell.first << " is " << m_noiseTool->noiseOffset(cell.first) << endmsg;
+      debug() << "In createCache, noise RMS is " << m_noiseTool->noiseRMS(cell.first) << endmsg; 
       offsets[layer].push_back(m_noiseTool->noiseOffset(cell.first));
       noises[layer].push_back(m_noiseTool->noiseRMS(cell.first));
     }
