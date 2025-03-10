@@ -41,11 +41,11 @@ private:
   /// ideally could replace with vector of handles (so that we can also have ecal endcap and so on)
   /// Handle for the cells noise tool in ECal barrel
   ToolHandle<INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
-  /// Handle for the cells noise tool in HCal
+  /// Handle for the cells noise tool in ECal endcap
   ToolHandle<INoiseConstTool> m_ecalEndcapNoiseTool{"ReadNoiseFromFileTool", this};
-  /// Handle for the cells noise tool in HCal
+  /// Handle for the cells noise tool in HCal barrel
   ToolHandle<INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
-  /// Handle for the cells noise tool in HCal
+  /// Handle for the cells noise tool in HCal endcap
   ToolHandle<INoiseConstTool> m_hcalEndcapNoiseTool{"ReadNoiseFromFileTool", this};
 
   // System ID of ECAL and HCAL detectors
