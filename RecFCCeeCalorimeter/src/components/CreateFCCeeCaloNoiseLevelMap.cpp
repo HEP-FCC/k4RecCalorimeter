@@ -352,7 +352,7 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize()
       } // end looper over side
     } // end if (segmentationType == "FCCSWEndcapTurbine_k4geo")
 
-    if(segmentationType == "FCCSWHCalPhiTheta_k4geo" || segmentationType == "FCCSWHCalPhiRow_k4geo")
+    else if(segmentationType == "FCCSWHCalPhiTheta_k4geo" || segmentationType == "FCCSWHCalPhiRow_k4geo")
     {
       for (unsigned int ilayer = 0; ilayer < m_activeVolumesNumbersSegmented[iSys]; ilayer++)
       {

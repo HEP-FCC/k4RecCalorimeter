@@ -73,6 +73,13 @@ StatusCode CaloTopoClusterFCCee::initialize() {
       return StatusCode::FAILURE;
     }
   }
+  // Check if cell position ECal Endcap tool available
+  if (!m_cellPositionsECalEndcapTool.empty()) {
+    if (!m_cellPositionsECalEndcapTool.retrieve()) {
+      error() << "Unable to retrieve ECal Endcap cell positions tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
   // Check if cell position HCal Barrel tool available (only if name is set so that we can also do ECAL-only topoclustering)
   if (!m_cellPositionsHCalBarrelTool.empty()) {
     if (!m_cellPositionsHCalBarrelTool.retrieve()) {
