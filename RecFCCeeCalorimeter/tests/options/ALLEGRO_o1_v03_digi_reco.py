@@ -601,7 +601,7 @@ if doTopoClustering:
     createECalBarrelTopoClusters = CaloTopoClusterFCCee("CreateECalBarrelTopoClusters",
                                                         cells=[ecalBarrelPositionedCellsName],
                                                         clusters="EMBCaloTopoClusters",
-                                                        clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
+                                                        clusterCells="EMBCaloTopoClusterCells",
                                                         neigboursTool=readECalBarrelNeighboursMap,
                                                         noiseTool=readECalBarrelNoisyCellsMap,
                                                         seedSigma=4,
@@ -620,23 +620,11 @@ if doTopoClustering:
     readECalEndcapNoisyCellsMap = TopoCaloNoisyCells("ReadECalEndcapNoisyCellsMap",
                                                      fileName=ecalEndcapNoiseMap,
                                                      OutputLevel=INFO)
-    
-    createECalBarrelTopoClusters = CaloTopoClusterFCCee("CreateECalBarrelTopoClusters",
-                                                        cells=[ecalBarrelPositionedCellsName],
-                                                        clusters="EMBCaloTopoClusters",
-                                                        clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
-                                                        neigboursTool=readECalBarrelNeighboursMap,
-                                                        noiseTool=readECalBarrelNoisyCellsMap,
-                                                        readoutName=ecalBarrelReadoutName,
-                                                        seedSigma=4,
-                                                        neighbourSigma=2,
-                                                        lastNeighbourSigma=0,
-                                                        OutputLevel=INFO)
 
     createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
                                                         cells=[ecalEndcapPositionedCellsName],
                                                         clusters="EMECaloTopoClusters",
-                                                        clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
+                                                        clusterCells="EMECaloTopoClusterCells",
                                                         neigboursTool=readECalEndcapNeighboursMap,
                                                         noiseTool=readECalEndcapNoisyCellsMap,
                                                         readoutName=ecalEndcapReadoutName,
@@ -723,13 +711,13 @@ if doTopoClustering:
 
     # ECAL + HCAL
     if runHCal:
-        # neighbours map
+        # Neighbours map
         neighboursMap = "neighbours_map_ecalB_thetamodulemerged_ecalE_turbine_hcalB_hcalEndcap_phitheta.root"
         readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
                                                fileName=neighboursMap,
                                                OutputLevel=INFO)
 
-        # noise levels per cell
+        # Noise levels per cell
         noiseMap = "cellNoise_map_electronicsNoiseLevel_ecalB_ECalBarrelModuleThetaMerged_ecalE_ECalEndcapTurbine_hcalB_HCalBarrelReadout_hcalE_HCalEndcapReadout.root"
         readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
                                                fileName=noiseMap,
@@ -738,7 +726,7 @@ if doTopoClustering:
         createTopoClusters = CaloTopoClusterFCCee("CreateTopoClusters",
                                                   cells=[ecalBarrelPositionedCellsName, ecalEndcapPositionedCellsName, hcalBarrelPositionedCellsName, hcalEndcapPositionedCellsName],
                                                   clusters="CaloTopoClusters",
-                                                  clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
+                                                  clusterCells="CaloTopoClusterCells",
                                                   neigboursTool=readNeighboursMap,
                                                   noiseTool=readNoisyCellsMap,
                                                   readoutName=ecalBarrelReadoutName,
