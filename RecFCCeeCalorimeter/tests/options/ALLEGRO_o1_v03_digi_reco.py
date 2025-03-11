@@ -580,121 +580,70 @@ if doSWClustering:
 if doTopoClustering:
 
     # Produce topoclusters
-    from Configurables import CaloTopoClusterInputTool
-    from Configurables import TopoCaloNeighbours
-    from Configurables import TopoCaloNoisyCells
-    from Configurables import CaloTopoClusterFCCee
 
     #  ECAL only
-    createECalBarrelTopoInput = CaloTopoClusterInputTool("CreateECalBarrelTopoInput",
-                                                         ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                                         ecalEndcapReadoutName="",
-                                                         ecalFwdReadoutName="",
-                                                         hcalBarrelReadoutName="",
-                                                         hcalExtBarrelReadoutName="",
-                                                         hcalEndcapReadoutName="",
-                                                         hcalFwdReadoutName="",
-                                                         OutputLevel=INFO)
 
-    createECalBarrelTopoInput.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-    createECalBarrelTopoInput.ecalEndcapCells.Path = "emptyCaloCells"
-    createECalBarrelTopoInput.ecalFwdCells.Path = "emptyCaloCells"
-    createECalBarrelTopoInput.hcalBarrelCells.Path = "emptyCaloCells"
-    createECalBarrelTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
-    createECalBarrelTopoInput.hcalEndcapCells.Path = "emptyCaloCells"
-    createECalBarrelTopoInput.hcalFwdCells.Path = "emptyCaloCells"
-
+    # Neighbours map
     ecalBarrelNeighboursMap = "neighbours_map_ecalB_thetamodulemerged.root"
-    ecalBarrelNoiseMap = "cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged.root"
-
+    from Configurables import TopoCaloNeighbours
     readECalBarrelNeighboursMap = TopoCaloNeighbours("ReadECalBarrelNeighboursMap",
                                                      fileName=ecalBarrelNeighboursMap,
                                                      OutputLevel=INFO)
 
     # Noise levels per cell
+    ecalBarrelNoiseMap = "cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged.root"
+    from Configurables import TopoCaloNoisyCells
     readECalBarrelNoisyCellsMap = TopoCaloNoisyCells("ReadECalBarrelNoisyCellsMap",
                                                      fileName=ecalBarrelNoiseMap,
                                                      OutputLevel=INFO)
-
+    
+    from Configurables import CaloTopoClusterFCCee
     createECalBarrelTopoClusters = CaloTopoClusterFCCee("CreateECalBarrelTopoClusters",
-                                                        TopoClusterInput=createECalBarrelTopoInput,
-                                                        # expects neighbours map from cellid->vec < neighbourIds >
+                                                        cells=[ecalBarrelPositionedCellsName],
+                                                        clusters="EMBCaloTopoClusters",
+                                                        clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
                                                         neigboursTool=readECalBarrelNeighboursMap,
-                                                        # tool to get noise level per cellid
                                                         noiseTool=readECalBarrelNoisyCellsMap,
-                                                        # cell positions tools for all sub - systems
-                                                        positionsECalBarrelTool=cellPositionEcalBarrelTool,
-                                                        positionsECalEndcapTool="",
-                                                        positionsHCalBarrelTool=cellPositionHCalBarrelTool,
-                                                        # positionsHCalBarrelNoSegTool=cellPositionHCalBarrelNoSegTool,
-                                                        positionsHCalExtBarrelTool=cellPositionHCalEndcapTool,
-                                                        # positionsHCalExtBarrelTool = HCalExtBcells,
-                                                        # positionsEMECTool = EMECcells,
-                                                        # positionsHECTool = HECcells,
-                                                        # positionsEMFwdTool = ECalFwdcells,
-                                                        # positionsHFwdTool = HCalFwdcells,
-                                                        noSegmentationHCal=False,
                                                         seedSigma=4,
                                                         neighbourSigma=2,
                                                         lastNeighbourSigma=0,
                                                         OutputLevel=INFO)
-    createECalBarrelTopoClusters.clusters.Path = "EMBCaloTopoClusters"
-    createECalBarrelTopoClusters.clusterCells.Path = "EMBCaloTopoClusterCells"
 
-    createECalEndcapTopoInput = CaloTopoClusterInputTool("CreateECalEndcapTopoInput",
-                                                         ecalBarrelReadoutName="",
-                                                         ecalEndcapReadoutName=ecalEndcapReadoutName,
-                                                         ecalFwdReadoutName="",
-                                                         hcalBarrelReadoutName="",
-                                                         hcalExtBarrelReadoutName="",
-                                                         hcalEndcapReadoutName="",
-                                                         hcalFwdReadoutName="",
-                                                         OutputLevel=INFO)
-
-    createECalEndcapTopoInput.ecalBarrelCells.Path = "emptyCaloCells"
-    createECalEndcapTopoInput.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
-    createECalEndcapTopoInput.ecalFwdCells.Path = "emptyCaloCells"
-    createECalEndcapTopoInput.hcalBarrelCells.Path = "emptyCaloCells"
-    createECalEndcapTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
-    createECalEndcapTopoInput.hcalEndcapCells.Path = "emptyCaloCells"
-    createECalEndcapTopoInput.hcalFwdCells.Path = "emptyCaloCells"
-
+    # Neighbours map
     ecalEndcapNeighboursMap = "neighbours_map_ecalE_turbine.root"
-    ecalEndcapNoiseMap = "cellNoise_map_endcapTurbine_electronicsNoiseLevel.root"
-
     readECalEndcapNeighboursMap = TopoCaloNeighbours("ReadECalEndcapNeighboursMap",
                                                      fileName=ecalEndcapNeighboursMap,
                                                      OutputLevel=INFO)
 
-     # Noise levels per cell
+    # Noise levels per cell
+    ecalEndcapNoiseMap = "cellNoise_map_endcapTurbine_electronicsNoiseLevel.root"
     readECalEndcapNoisyCellsMap = TopoCaloNoisyCells("ReadECalEndcapNoisyCellsMap",
                                                      fileName=ecalEndcapNoiseMap,
                                                      OutputLevel=INFO)
     
-    createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
-                                                        TopoClusterInput=createECalEndcapTopoInput,
-                                          # expects neighbours map from cellid->vec < neighbourIds >
-                                                        neigboursTool=readECalEndcapNeighboursMap,
-                                          # tool to get noise level per cellid
-                                                        noiseTool=readECalEndcapNoisyCellsMap,
-                                          # cell positions tools for all sub - systems
-                                                        positionsECalBarrelTool="",
-                                                        positionsECalEndcapTool=cellPositionEcalEndcapTool,
-                                          #positionsHCalBarrelTool=cellPositionHcalBarrelTool,
-                                          #positionsHCalBarrelNoSegTool=cellPositionHcalBarrelNoSegTool,
-                                          #positionsHCalExtBarrelTool=cellPositionHcalExtBarrelTool,
-                                          # positionsHCalExtBarrelTool = HCalExtBcells,
-                                          # positionsEMECTool = EMECcells,
-                                          # positionsHECTool = HECcells,
-                                          # positionsEMFwdTool = ECalFwdcells,
-                                          # positionsHFwdTool = HCalFwdcells,
-                                                        noSegmentationHCal=False,
+    createECalBarrelTopoClusters = CaloTopoClusterFCCee("CreateECalBarrelTopoClusters",
+                                                        cells=[ecalBarrelPositionedCellsName],
+                                                        clusters="EMBCaloTopoClusters",
+                                                        clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
+                                                        neigboursTool=readECalBarrelNeighboursMap,
+                                                        noiseTool=readECalBarrelNoisyCellsMap,
+                                                        readoutName=ecalBarrelReadoutName,
                                                         seedSigma=4,
                                                         neighbourSigma=2,
                                                         lastNeighbourSigma=0,
                                                         OutputLevel=INFO)
-    createECalEndcapTopoClusters.clusters.Path = "EMECaloTopoClusters"
-    createECalEndcapTopoClusters.clusterCells.Path = "EMECaloTopoClusterCells"
+
+    createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
+                                                        cells=[ecalEndcapPositionedCellsName],
+                                                        clusters="EMECaloTopoClusters",
+                                                        clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
+                                                        neigboursTool=readECalEndcapNeighboursMap,
+                                                        noiseTool=readECalEndcapNoisyCellsMap,
+                                                        readoutName=ecalEndcapReadoutName,
+                                                        seedSigma=4,
+                                                        neighbourSigma=2,
+                                                        lastNeighbourSigma=0,
+                                                        OutputLevel=INFO)
 
     if applyUpDownstreamCorrections:
         from Configurables import CorrectCaloClusters
@@ -774,64 +723,29 @@ if doTopoClustering:
 
     # ECAL + HCAL
     if runHCal:
-        createTopoInput = CaloTopoClusterInputTool("CreateTopoInput",
-                                                   ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                                   ecalEndcapReadoutName="",
-                                                   ecalFwdReadoutName="",
-                                                   hcalBarrelReadoutName=hcalBarrelReadoutName,
-                                                   hcalExtBarrelReadoutName="",
-                                                   hcalEndcapReadoutName=hcalEndcapReadoutName,
-                                                   hcalFwdReadoutName="",
-                                                   OutputLevel=INFO)
-
-        createTopoInput.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-        createTopoInput.ecalEndcapCells.Path = "emptyCaloCells"
-        createTopoInput.ecalFwdCells.Path = "emptyCaloCells"
-        createTopoInput.hcalBarrelCells.Path = hcalBarrelPositionedCellsName
-        createTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
-        createTopoInput.hcalEndcapCells.Path = hcalEndcapPositionedCellsName
-        createTopoInput.hcalFwdCells.Path = "emptyCaloCells"
-
-        cellPositionHCalBarrelNoSegTool = None
-        cellPositionHCalExtBarrelTool = None
-
-        #neighboursMap = "neighbours_map_ecalB_thetamodulemerged_hcalB_hcalEndcap_phirow.root"
-        neighboursMap = "neighbours_map_ecalB_thetamodulemerged_hcalB_hcalEndcap_phitheta.root"
-        noiseMap = "cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged_hcalB_thetaphi.root"
-
+        # neighbours map
+        neighboursMap = "neighbours_map_ecalB_thetamodulemerged_ecalE_turbine_hcalB_hcalEndcap_phitheta.root"
         readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
                                                fileName=neighboursMap,
                                                OutputLevel=INFO)
 
-        # Noise levels per cell
+        # noise levels per cell
+        noiseMap = "cellNoise_map_electronicsNoiseLevel_ecalB_ECalBarrelModuleThetaMerged_ecalE_ECalEndcapTurbine_hcalB_HCalBarrelReadout_hcalE_HCalEndcapReadout.root"
         readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
                                                fileName=noiseMap,
                                                OutputLevel=INFO)
 
         createTopoClusters = CaloTopoClusterFCCee("CreateTopoClusters",
-                                                  TopoClusterInput=createTopoInput,
-                                                  # expects neighbours map from cellid->vec < neighbourIds >
+                                                  cells=[ecalBarrelPositionedCellsName, ecalEndcapPositionedCellsName, hcalBarrelPositionedCellsName, hcalEndcapPositionedCellsName],
+                                                  clusters="CaloTopoClusters",
+                                                  clusterCells=outputClusters.replace("Clusters", "Cluster") + "Cells",
                                                   neigboursTool=readNeighboursMap,
-                                                  # tool to get noise level per cellid
                                                   noiseTool=readNoisyCellsMap,
-                                                  # cell positions tools for all sub - systems
-                                                  positionsECalBarrelTool=cellPositionEcalBarrelTool,
-                                                  positionsECalEndcapTool="",
-                                                  positionsHCalBarrelTool=cellPositionHCalBarrelTool,
-                                                  # positionsHCalBarrelNoSegTool=cellPositionHCalBarrelNoSegTool,
-                                                  positionsHCalExtBarrelTool=cellPositionHCalEndcapTool,
-                                                  # positionsHCalExtBarrelTool = HCalExtBcells,
-                                                  # positionsEMECTool = EMECcells,
-                                                  # positionsHECTool = HECcells,
-                                                  # positionsEMFwdTool = ECalFwdcells,
-                                                  # positionsHFwdTool = HCalFwdcells,
-                                                  noSegmentationHCal=False,
+                                                  readoutName=ecalBarrelReadoutName,
                                                   seedSigma=4,
                                                   neighbourSigma=2,
                                                   lastNeighbourSigma=0,
                                                   OutputLevel=INFO)
-        createTopoClusters.clusters.Path = "CaloTopoClusters"
-        createTopoClusters.clusterCells.Path = "CaloTopoClusterCells"
 
 # Output
 from Configurables import PodioOutput
