@@ -515,6 +515,9 @@ CaloTopoClusterFCCee::searchForNeighbours (
 
 StatusCode CaloTopoClusterFCCee::finalize() {
   delete m_decoder;
+  for ( size_t ih=0; ih<m_cellCollectionHandles.size(); ih++ )
+    delete m_cellCollectionHandles[ih];
+
   return Gaudi::Algorithm::finalize();
 }
 
