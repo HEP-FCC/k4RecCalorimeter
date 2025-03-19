@@ -11,17 +11,11 @@
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
 
-// k4FWCore
-#include "k4Interface/IGeoSvc.h"
-
 // EDM4hep
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 
 // DD4hep
-// needed (with G4Svc) to get decoder for ecal to
-// extract layer information and use cache of minimum noise vs layer
-#include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
 
 DECLARE_COMPONENT(CaloTopoClusterFCCee)
@@ -36,13 +30,6 @@ CaloTopoClusterFCCee::CaloTopoClusterFCCee(const std::string& name, ISvcLocator*
 StatusCode CaloTopoClusterFCCee::initialize() {
 
   if (Gaudi::Algorithm::initialize().isFailure()) {
-    return StatusCode::FAILURE;
-  }
-
-  // Check geometry service
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry Service" << endmsg;
     return StatusCode::FAILURE;
   }
 
@@ -72,12 +59,6 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   // setup system decoder
   m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(m_systemEncoding);
   m_indexSystem = m_decoder->index("system");
-
-  // setup ecal decoder
-  if (!m_readoutName.value().empty()) {
-    m_decoder_ecal = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
-    m_index_layer_ecal = m_decoder_ecal->index("layer");
-  }
 
   // initialise the list of metadata for the clusters
   std::vector<std::string> shapeParameterNames = {"dR_over_E"};
@@ -110,16 +91,6 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   }
 
   debug() << "Number of active cells                               : " << inCells->size() << endmsg;
-
-  // On first event with non-zero cells, create cache
-  // Note that if this event for some reason is pathologic (some layers without cells)
-  // the cache risks being incomplete
-  // It would probably be better to calculate and store minimum noise per
-  // layer in a different way - maybe running over the full cell map in the
-  // input noise map
-  if (m_min_noise.empty() && m_decoder_ecal) {
-    createCache(inCells);
-  }
 
   // Find seeds
   edm4hep::CalorimeterHitCollection seedCells = findSeeds(inCells);
@@ -195,10 +166,12 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
       cluster.addToHits(cell);
       outClusterCells->push_back(cell);
     }
+
     // set cluster position (weighted barycentre of cell positions)
     cluster.setPosition(edm4hep::Vector3f(clusterPosX / clusterEnergy,
                                           clusterPosY / clusterEnergy,
                                           clusterPosZ / clusterEnergy));
+
     // store deltaR of cluster in time for the moment..
     sumCellPhi = sumCellPhi / clusterEnergy;
     sumCellTheta = sumCellTheta / clusterEnergy;
@@ -241,31 +214,6 @@ edm4hep::CalorimeterHitCollection CaloTopoClusterFCCee::findSeeds(
     verbose() << "cellID   = " << cell.getCellID() << endmsg;
 
     // retrieve the noise const and offset assigned to cell
-    // first try to use the cache
-    int system = m_decoder->get(cell.getCellID(), m_indexSystem);
-    verbose() << "system   = " << system << endmsg;
-    if (system == 4 && m_decoder_ecal) { //ECal barrel
-      int layer = m_decoder_ecal->get(cell.getCellID(), m_index_layer_ecal);
-      verbose() << "layer   = " << layer << endmsg;
-
-      double min_threshold = m_min_offset[layer] +
-                             m_min_noise[layer] * m_seedSigma;
-
-      verbose() << "m_min_offset[layer]   = " << m_min_offset[layer] << endmsg;
-      verbose() << "m_min_noise[layer]   = " << m_min_noise[layer] << endmsg;
-      verbose() << "num sigma   = " << m_seedSigma.value() << endmsg;
-      verbose() << "min_threshold   = " << min_threshold << endmsg;
-      verbose() << "abs(cell energy)   = " << std::fabs(cell.getEnergy()) << endmsg;
-
-      if (std::fabs(cell.getEnergy()) < min_threshold) {
-        // if we are below the minimum threshold for the full layer, no need to
-        // retrieve the exact value
-        continue;
-      }
-    }
-
-    // we are above the minimum threshold of the layer. Let's see if we are
-    // above the threshold for this cell.
     double threshold = m_noiseTool->noiseOffset(cell.getCellID()) +
                        (m_noiseTool->noiseRMS(cell.getCellID()) * m_seedSigma);
     debug() << "======================================" << endmsg;
@@ -430,32 +378,13 @@ CaloTopoClusterFCCee::searchForNeighbours (
       bool addNeighbour = false;
       int cellType = 2;
       // retrieve the cell noise level [GeV]
-      //
-      // first try to use the cache
-      bool isBelow = false;
-      int system = m_decoder->get(neighbourID, m_indexSystem);
-      if (system == 4 && m_decoder_ecal) { // ECal barrel
-        int layer = m_decoder_ecal->get(neighbourID, m_index_layer_ecal);
-        double min_threshold = m_min_offset[layer] +
-                               m_min_noise[layer] * aNumSigma;
-        if (std::fabs(neighbouringCellEnergy) < min_threshold) {
-          // if we are below the minimum threshold for the full layer, no
-          // need to retrieve the exact value
-          isBelow = true;
-        }
-      }
-
-      if (isBelow) {
+      double thr = m_noiseTool->noiseOffset(neighbourID) +
+        (aNumSigma * m_noiseTool->noiseRMS(neighbourID));
+      if (std::fabs(neighbouringCellEnergy) > thr)
+        addNeighbour = true;
+      else
         addNeighbour = false;
-      }
-      else {
-        double thr = m_noiseTool->noiseOffset(neighbourID) +
-                     (aNumSigma * m_noiseTool->noiseRMS(neighbourID));
-        if (std::fabs(neighbouringCellEnergy) > thr)
-          addNeighbour = true;
-        else
-          addNeighbour = false;
-      }
+
       // give cell type according to threshold
       if (aNumSigma == m_lastNeighbourSigma){
         cellType = 3;
@@ -469,7 +398,7 @@ CaloTopoClusterFCCee::searchForNeighbours (
         // retrieve the cell
         // add neighbour to cells for cluster
         edm4hep::MutableCalorimeterHit clusteredCell =
-            allCellsMap[neighbourID].clone();
+          allCellsMap[neighbourID].clone();
         clusteredCell.setType(cellType);
         protoClusters[aClusterID].push_back(clusteredCell);
         alreadyUsedCells[neighbourID] = aClusterID;
@@ -521,48 +450,6 @@ StatusCode CaloTopoClusterFCCee::finalize() {
   return Gaudi::Algorithm::finalize();
 }
 
-
-/**
- * \brief Cache the minimum offset and noise per layer for faster lookups down
- * the chain.
- */
-void CaloTopoClusterFCCee::createCache(const edm4hep::CalorimeterHitCollection* aCells) const {
-  std::unordered_map<int, std::vector<double>> offsets;
-  std::unordered_map<int, std::vector<double>> noises;
-  std::unordered_set<int> layers;
-
-  // Fill all noises and offsets values
-  for (const auto& cell : *aCells) {
-    int system = m_decoder->get(cell.getCellID(), m_indexSystem);
-    if (system == 4 && m_decoder_ecal) { // ECal barrel (we should find a decent way on having a per-system cache)
-      int layer = m_decoder_ecal->get(cell.getCellID(), m_index_layer_ecal);
-      if (layers.find(layer) == layers.end()) {
-        offsets[layer] = std::vector<double>{};
-        noises[layer] = std::vector<double>{};
-        layers.insert(layer);
-      }
-      debug() << "In createCache, noise offset for cell " << cell.getCellID() << " is " << m_noiseTool->noiseOffset(cell.getCellID()) << endmsg;
-      debug() << "In createCache, noise RMS is " << m_noiseTool->noiseRMS(cell.getCellID()) << endmsg;
-      offsets[layer].push_back(m_noiseTool->noiseOffset(cell.getCellID()));
-      noises[layer].push_back(m_noiseTool->noiseRMS(cell.getCellID()));
-    }
-  }
-
-  // if ECal barrel cells are not included in the input then return, otherwise it will crash
-  if (layers.empty()) return;
-
-  // then compute the minima
-  int num_layers = *std::max_element(layers.begin(), layers.end());
-  m_min_noise.resize(num_layers+1);
-  m_min_offset.resize(num_layers+1);
-
-  for (auto& off : offsets) {
-    m_min_offset[off.first] = *std::min_element(off.second.begin(), off.second.end());
-  }
-  for (auto& n : noises) {
-    m_min_noise[n.first] = *std::min_element(n.second.begin(), n.second.end());
-  }
-}
 
 inline bool CaloTopoClusterFCCee::cellIdInColl(
     const uint64_t cellId,
