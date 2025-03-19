@@ -728,7 +728,6 @@ if doTopoClustering:
                                                   clusterCells="CaloTopoClusterCells",
                                                   neigboursTool=readNeighboursMap,
                                                   noiseTool=readNoisyCellsMap,
-                                                  readoutName=ecalBarrelReadoutName,
                                                   seedSigma=4,
                                                   neighbourSigma=2,
                                                   lastNeighbourSigma=0,
