@@ -19,9 +19,6 @@
 #include "k4Interface/ICaloReadCellNoiseMap.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
 
-// k4SimGeant4
-class IGeoSvc;
-
 // EDM4HEP
 namespace edm4hep {
 class CalorimeterHit;
@@ -107,7 +104,6 @@ private:
   /// List of input cell collections
   Gaudi::Property<std::vector<std::string>> m_cellCollections{this, "cells", {}, "Names of CalorimeterHit collections to read"};
   /// the vector of input DataHandles for the input cell collections
-  /// std::vector<DataObjectHandleBase*> m_cellCollectionHandles;
   std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
   // Cluster collection (output)
   mutable DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"clusters", Gaudi::DataHandle::Writer, this};
@@ -118,8 +114,6 @@ private:
     m_clusterCollection,
     edm4hep::labels::ShapeParameterNames,
     Gaudi::DataHandle::Writer};
-  /// Pointer to the geometry service
-  SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the cells noise tool
   mutable ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
@@ -133,8 +127,6 @@ private:
   Gaudi::Property<int> m_lastNeighbourSigma{this, "lastNeighbourSigma", 0, "number of sigma in noise threshold"};
   /// Cluster energy threshold
   Gaudi::Property<float> m_minClusterEnergy{this, "minClusterEnergy", 0., "minimum cluster energy"};
-  /// Name of the electromagnetic calorimeter readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelModuleThetaMerged"};
 
   /// System encoding string
   Gaudi::Property<std::string> m_systemEncoding{
@@ -144,18 +136,7 @@ private:
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   int m_indexSystem;
 
-  /// Decoder for ECal layers
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder_ecal;
-  int m_index_layer_ecal;
-
-  // minimum noise and offset per barrel ECal layer
-  // this serves as a very small cache for fast lookups
-  // and avoid looking into the huge map for most of the cells.
-  mutable std::vector<double> m_min_offset;
-  mutable std::vector<double> m_min_noise;
-
   // Utility functions
-  void createCache(const edm4hep::CalorimeterHitCollection* aCells) const;
   inline bool cellIdInColl(const uint64_t cellId,
     const edm4hep::CalorimeterHitCollection& coll) const;
 };
