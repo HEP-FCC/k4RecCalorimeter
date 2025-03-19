@@ -627,7 +627,6 @@ if doTopoClustering:
                                                         clusterCells="EMECaloTopoClusterCells",
                                                         neigboursTool=readECalEndcapNeighboursMap,
                                                         noiseTool=readECalEndcapNoisyCellsMap,
-                                                        readoutName=ecalEndcapReadoutName,
                                                         seedSigma=4,
                                                         neighbourSigma=2,
                                                         lastNeighbourSigma=0,
