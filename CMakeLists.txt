@@ -37,6 +37,7 @@ else()
   message(FATAL_ERROR "Failed to locate ONNXRuntime!")
 endif()
 
+find_package(sipm REQUIRED) # Digitizer package for FiberDRCaloDigitizer
 #---------------------------------------------------------------
 
 set(GAUDI_GENCONF_DIR "genConfDir")
