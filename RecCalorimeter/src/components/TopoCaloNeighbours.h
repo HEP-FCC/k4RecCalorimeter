@@ -23,12 +23,12 @@ class TopoCaloNeighbours : public AlgTool, virtual public ICaloReadNeighboursMap
 public:
   TopoCaloNeighbours(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~TopoCaloNeighbours() = default;
- 
+
   /** Read a map of cellIDs to vector of cellIDs (neighbours).
    */
   virtual StatusCode initialize() final;
   virtual StatusCode finalize() final;
-  
+
   /** Function to be called for the neighbours of a cell.
    *   @param[in] aCellId, cellid of the cell of interest.
    *   @return vector of cellIDs, corresponding to the cells neighbours.

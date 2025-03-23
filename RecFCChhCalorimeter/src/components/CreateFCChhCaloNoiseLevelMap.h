@@ -4,8 +4,8 @@
 // Gaudi
 #include "GaudiKernel/Service.h"
 #include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -54,7 +54,7 @@ private:
   Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNamesPhiEta", {"layer"}};
   /// Number of layers in the segmented volume
   Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {8}};
-  // Radii of layers in the segmented volume                                                                                                                                                                                         
+  // Radii of layers in the segmented volume
   Gaudi::Property<std::vector<double>> m_activeVolumesEta{this, "activeVolumesEta"};
 
   /// Names of the detector readout for volumes with nested volume structure and no segmentation
@@ -69,9 +69,7 @@ private:
   /// Names of the nested volumes - to retrieve the number of active volumes, need to correspond to
   /// m_activeFieldNamesNested
   Gaudi::Property<std::vector<std::string>> m_activeVolumeNamesNested{
-      this,
-      "activeVolumeNamesNested",
-      {"layerVolume", "moduleVolume", "wedgeVolume"}};  // to find out number of volumes
+      this, "activeVolumeNamesNested", {"layerVolume", "moduleVolume", "wedgeVolume"}}; // to find out number of volumes
 
   /// Name of output file
   std::string m_outputFileName;

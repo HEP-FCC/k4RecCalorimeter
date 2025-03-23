@@ -2,8 +2,8 @@
 #define RECCALORIMETER_MASSINV_H
 
 // Gaudi
-#include "GaudiKernel/RndmGenerators.h"
 #include "Gaudi/Algorithm.h"
+#include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // Key4HEP
@@ -15,18 +15,18 @@ class ITHistSvc;
 
 // EDM4HEP
 namespace edm4hep {
-  class ClusterCollection;
-  class CalorimeterHitCollection;
-  class MCParticleCollection;
-}
+class ClusterCollection;
+class CalorimeterHitCollection;
+class MCParticleCollection;
+} // namespace edm4hep
 
 namespace dd4hep {
 namespace DDSegmentation {
-class FCCSWGridPhiEta_k4geo;
-class MultiSegmentation;
-class BitFieldCoder;
-}
-}
+  class FCCSWGridPhiEta_k4geo;
+  class MultiSegmentation;
+  class BitFieldCoder;
+} // namespace DDSegmentation
+} // namespace dd4hep
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -40,9 +40,9 @@ class BitFieldCoder;
  *  Corrections:
  *  1) Pseudorapidity position (correction for finite granularity of detector using log-weighting)
  *      Correction uses only cells from the first defined detector in m_systemId (default ECal Barrel). The number of
- *      layers used for this correction is specified in *numLayers*. Weights are defined for each layer in *etaRecalcWeights*.
- *  2) Energy correction for pileup noise, which is parametrised per cluster as  P0 * number_of_cells ^P1. Parameters
- *      are eta-dependent and read from file *noiseFileName* as histograms called as in *pileupHistoName*
+ *      layers used for this correction is specified in *numLayers*. Weights are defined for each layer in
+ * *etaRecalcWeights*. 2) Energy correction for pileup noise, which is parametrised per cluster as  P0 * number_of_cells
+ * ^P1. Parameters are eta-dependent and read from file *noiseFileName* as histograms called as in *pileupHistoName*
  *      (+ 0/1 respectively).
  *  3) Energy correction for the upstream material. The energy upstream is calculated as (P00 + P01 * E_clu) + (P10 +
  *      P11 * sqrt(E_clu) ) * E_firstLayer. Parameters P00, P01, P10 and P11 are eta-dependent and specified in
@@ -85,13 +85,14 @@ private:
   /** Find the appropriate noise constant from the histogram
    *  @param[in] aEta Pseudorapidity value of the centre of the cluster
    *  @param[in] aNumCells Number of cells in a cluster
-    *  @return Width of the Gaussian distribution of noise per cluster
+   *  @return Width of the Gaussian distribution of noise per cluster
    */
   double getNoiseRMSPerCluster(double aEta, uint numCells) const;
   /// Handle for clusters (input collection)
   mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer,
+                                                                     this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
   mutable DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Pointer to the interface of histogram service
@@ -236,7 +237,7 @@ private:
   /// segmentation of detetor in eta (for number of bins in histograms)
   Gaudi::Property<double> m_dEta{this, "dEta", 0.01, "Segmentation in eta"};
   /// segmentation of detetor in phi (for number of bins in histograms)
-  Gaudi::Property<double> m_dPhi{this, "dPhi", 2*M_PI/704, "Segmentation in phi"};
+  Gaudi::Property<double> m_dPhi{this, "dPhi", 2 * M_PI / 704, "Segmentation in phi"};
   /// Histogram of upstream energy added to energy of clusters
   TH1F* m_hUpstreamEnergy;
   /// Size of the window in phi for the final cluster building, optimised for each layer  (in units of cell size)
@@ -260,8 +261,7 @@ private:
   /// Correction factor for mass inveriant calculation
   Gaudi::Property<double> m_massInvCorrection{this, "massInvCorrection", 1.};
 
-
-// ISOLATION
+  // ISOLATION
   /// Handle for the tower building tool
   mutable ToolHandle<ITowerTool> m_towerTool;
   // calorimeter towers
@@ -275,7 +275,8 @@ private:
   /// Number of layersSize of cluster(s) in phi
   Gaudi::Property<std::vector<uint>> m_phiSizes{this, "phiSize", {17}, "Size of cluster(s) in phi"};
   /// Threshold for energy in HCal so photon is considered non-isolated
-  Gaudi::Property<float> m_hcalEnergyThreshold{this, "isolationEnergy", 1, "Requirement for energy in HCal to be smaller than"};
+  Gaudi::Property<float> m_hcalEnergyThreshold{this, "isolationEnergy", 1,
+                                               "Requirement for energy in HCal to be smaller than"};
   /// Histogram of total HCal energy
   TH1F* m_hHCalEnergy;
   TH1F* m_hHCalTotalEnergy;

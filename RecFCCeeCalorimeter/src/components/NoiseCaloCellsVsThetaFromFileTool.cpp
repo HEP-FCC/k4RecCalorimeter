@@ -10,15 +10,15 @@
 #include "DD4hep/Detector.h"
 
 // ROOT
-#include "TSystem.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
+#include "TSystem.h"
 
 DECLARE_COMPONENT(NoiseCaloCellsVsThetaFromFileTool)
 
 NoiseCaloCellsVsThetaFromFileTool::NoiseCaloCellsVsThetaFromFileTool(const std::string& type, const std::string& name,
-                                                       const IInterface* parent)
+                                                                     const IInterface* parent)
     : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<INoiseCaloCellsTool>(this);
   declareInterface<INoiseConstTool>(this);
@@ -66,7 +66,8 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   return sc;
 }
@@ -82,8 +83,11 @@ void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::unordered_map<uint6
   // Erase a cell if it has energy below a threshold from the vector
   auto it = aCells.begin();
   while ((it = std::find_if(it, aCells.end(), [this](std::pair<const uint64_t, double>& p) {
-    return m_useAbsInFilter ? bool(std::abs(p.second-getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first)) : bool(p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first));
-  })) != aCells.end()) {
+            return m_useAbsInFilter ? bool(std::abs(p.second - getNoiseOffsetPerCell(p.first)) <
+                                           m_filterThreshold * getNoiseRMSPerCell(p.first))
+                                    : bool(p.second < getNoiseOffsetPerCell(p.first) +
+                                                          m_filterThreshold * getNoiseRMSPerCell(p.first));
+          })) != aCells.end()) {
     aCells.erase(it++);
   }
 }
@@ -110,8 +114,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
     error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Using the following file with noise values: "
-           << m_noiseFileName.value() << endmsg;
+    info() << "Using the following file with noise values: " << m_noiseFileName.value() << endmsg;
   }
 
   std::string elecNoiseRMSLayerHistoName, pileupNoiseRMSLayerHistoName;
@@ -126,7 +129,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_setNoiseOffset){
+    if (m_setNoiseOffset) {
       elecNoiseOffsetLayerHistoName = m_elecNoiseOffsetHistoName + std::to_string(i + 1);
       debug() << "Getting histogram with a name " << elecNoiseOffsetLayerHistoName << endmsg;
       m_histoElecNoiseOffset.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(elecNoiseOffsetLayerHistoName.c_str())));
@@ -145,10 +148,11 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
                 << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
         return StatusCode::FAILURE;
       }
-      if (m_setNoiseOffset){
+      if (m_setNoiseOffset) {
         pileupNoiseOffsetLayerHistoName = m_pileupNoiseOffsetHistoName + std::to_string(i + 1);
         debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
-        m_histoPileupNoiseOffset.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
+        m_histoPileupNoiseOffset.push_back(
+            *dynamic_cast<TH1F*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
         if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
           error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
                   << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
@@ -166,19 +170,23 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
   }
   if (m_addPileup) {
     if (m_histoElecNoiseRMS.size() != m_histoPileupNoiseRMS.size()) {
-      error() << "Missing histograms! Different number of histograms for electronics noise RMS and pileup noise RMS!!!!" << endmsg;
+      error() << "Missing histograms! Different number of histograms for electronics noise RMS and pileup noise RMS!!!!"
+              << endmsg;
       return StatusCode::FAILURE;
     }
   }
   if (m_setNoiseOffset) {
     if (m_histoElecNoiseOffset.size() != m_histoElecNoiseRMS.size()) {
-      error() << "Missing histograms! Different number of histograms for electronics noise RMS and offset!!!!" << endmsg;
+      error() << "Missing histograms! Different number of histograms for electronics noise RMS and offset!!!!"
+              << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_addPileup) {
       if (m_histoPileupNoiseOffset.size() != m_histoElecNoiseRMS.size()) {
-	error() << "Missing histograms! Different number of histograms for electronics noise RMS and pileup noise offset!!!!" << endmsg;
-	return StatusCode::FAILURE;
+        error() << "Missing histograms! Different number of histograms for electronics noise RMS and pileup noise "
+                   "offset!!!!"
+                << endmsg;
+        return StatusCode::FAILURE;
       }
     }
   }
@@ -217,23 +225,23 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   // Total noise: electronics noise + pileup
   double totalNoiseRMS = 0;
   if (m_addPileup) {
-    totalNoiseRMS = sqrt(elecNoiseRMS*elecNoiseRMS + pileupNoiseRMS*pileupNoiseRMS) * m_scaleFactor;
-  }
-  else { // avoid useless math operations if no pileup
+    totalNoiseRMS = sqrt(elecNoiseRMS * elecNoiseRMS + pileupNoiseRMS * pileupNoiseRMS) * m_scaleFactor;
+  } else { // avoid useless math operations if no pileup
     totalNoiseRMS = elecNoiseRMS * m_scaleFactor;
   }
 
   if (totalNoiseRMS < 1e-6) {
-    warning() << "Zero noise RMS: cell theta " << cellTheta << " layer " << cellLayer << " noise RMS " << totalNoiseRMS << endmsg;
+    warning() << "Zero noise RMS: cell theta " << cellTheta << " layer " << cellLayer << " noise RMS " << totalNoiseRMS
+              << endmsg;
   }
 
   return totalNoiseRMS;
 }
 
-
 double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
-  if (!m_setNoiseOffset) return 0.;
+  if (!m_setNoiseOffset)
+    return 0.;
 
   double elecNoiseOffset = 0.;
   double pileupNoiseOffset = 0.;
@@ -249,8 +257,8 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId
     int Nbins = m_histoElecNoiseOffset.at(index).GetNbinsX();
     int ibin = m_histoElecNoiseOffset.at(index).FindBin(cellTheta);
     if (ibin > Nbins) {
-      error() << "theta outside range of the histograms! Cell theta: "
-              << cellTheta << " Nbins in histogram: " << Nbins << endmsg;
+      error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins
+              << endmsg;
       ibin = Nbins;
     }
 
@@ -262,8 +270,8 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId
       }
     } else {
       error()
-	<< "More radial layers than we have noise for!!!! Using the last layer for all histograms outside the range."
-	<< endmsg;
+          << "More radial layers than we have noise for!!!! Using the last layer for all histograms outside the range."
+          << endmsg;
     }
   } else {
     error() << "No histograms with noise offset!!!!! " << endmsg;

@@ -7,9 +7,9 @@
 
 // FCCSW
 #include "detectorCommon/DetUtils_k4geo.h"
-#include "k4Interface/IGeoSvc.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/IGeoSvc.h"
 
 class IGeoSvc;
 
@@ -17,9 +17,9 @@ class IGeoSvc;
  *   CellPositionsDummyTool.h
  *
  *  Tool that returns (0,0,0) for each Calorimeter cell.
- * 
+ *
  *  @author Coralie Neubueser
-*/
+ */
 
 class CellPositionsDummyTool : public AlgTool, virtual public ICellPositionsTool {
 
@@ -31,7 +31,8 @@ public:
 
   virtual StatusCode finalize() final;
 
-  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells, edm4hep::CalorimeterHitCollection& outputColl) final;
+  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
+                            edm4hep::CalorimeterHitCollection& outputColl) final;
 
   virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
 

@@ -26,14 +26,12 @@ class ClusterCollection;
  *     A tower contains all cells within certain theta and phi (tower size: '\b deltaThetaTower', '\b deltaPhiTower').
  *     Currently there is no support of cell splitting, so each cell should be completely inside the tower
  *  2. Find local maxima.
- *     Local maxima are found using the sliding window of a fixed size in phi x theta ('\b nThetaWindow' '\b nPhiWindow' in
- *units of tower size).
- *     If a local max is found and its energy is above threshold ('\b energyThreshold'), it is added to the preclusters
- *list.
- *     Each precluster contains the barycentre position and the transverse energy.
- *     Position is recalculated using the window size in theta x phi ('\b nThetaPosition', '\b nPhiPosition')
- *     that may be smaller than the sliding window to reduce the noise influence. Both windows are centred at the same
- *tower. The energy of the precluster is the energy calculated using the sliding window.
+ *     Local maxima are found using the sliding window of a fixed size in phi x theta ('\b nThetaWindow' '\b nPhiWindow'
+ *in units of tower size). If a local max is found and its energy is above threshold ('\b energyThreshold'), it is added
+ *to the preclusters list. Each precluster contains the barycentre position and the transverse energy. Position is
+ *recalculated using the window size in theta x phi ('\b nThetaPosition', '\b nPhiPosition') that may be smaller than
+ *the sliding window to reduce the noise influence. Both windows are centred at the same tower. The energy of the
+ *precluster is the energy calculated using the sliding window.
  *  3. Remove duplicates.
  *     If two pre-clusters are found next to each other (within window '\b nThetaDuplicates', '\b nPhiDuplicates'), the
  *pre-cluster with lower energy is removed.
@@ -44,7 +42,8 @@ class ClusterCollection;
  *tower size) around the barycentre position.
  *     For each cluster the cell collection is searched and all those inside the cluster are attached.
  *
- *  Note: Sliding window performs well for electrons/gamma reconstruction. Topological clusters should be better for jets.
+ *  Note: Sliding window performs well for electrons/gamma reconstruction. Topological clusters should be better for
+ *jets.
  *
  *  @author Jana Faltova
  *  @author Anna Zaborowska
@@ -89,7 +88,8 @@ private:
   /// Handle for calo clusters (output collection)
   mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
   /// Handle for calo cluster cells (output collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer,
+                                                                       this};
   /// Handle for the tower building tool
   mutable ToolHandle<ITowerToolThetaModule> m_towerTool;
   // calorimeter towers

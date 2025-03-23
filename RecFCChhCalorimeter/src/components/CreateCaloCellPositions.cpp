@@ -30,7 +30,8 @@ CreateCaloCellPositions::CreateCaloCellPositions(const std::string& name, ISvcLo
 
 StatusCode CreateCaloCellPositions::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   return StatusCode::SUCCESS;
 }
 
@@ -48,19 +49,19 @@ StatusCode CreateCaloCellPositions::execute(const EventContext&) const {
     auto systemId = m_decoder->get(cellId, "system");
     dd4hep::Position posCell;
 
-    if (systemId == 5)  // ECAL BARREL system id
+    if (systemId == 5) // ECAL BARREL system id
       posCell = m_cellPositionsECalBarrelTool->xyzPosition(cellId);
-    else if (systemId == 8)  // HCAL BARREL system id
+    else if (systemId == 8) // HCAL BARREL system id
       posCell = m_cellPositionsHCalBarrelTool->xyzPosition(cellId);
-    else if (systemId == 9)  // HCAL EXT BARREL system id
+    else if (systemId == 9) // HCAL EXT BARREL system id
       posCell = m_cellPositionsHCalExtBarrelTool->xyzPosition(cellId);
-    else if (systemId == 6)  // EMEC system id
+    else if (systemId == 6) // EMEC system id
       posCell = m_cellPositionsEMECTool->xyzPosition(cellId);
-    else if (systemId == 7)  // HEC system id
+    else if (systemId == 7) // HEC system id
       posCell = m_cellPositionsHECTool->xyzPosition(cellId);
-    else if (systemId == 10)  // EMFWD system id
+    else if (systemId == 10) // EMFWD system id
       posCell = m_cellPositionsEMFwdTool->xyzPosition(cellId);
-    else if (systemId == 11)  // HFWD system id
+    else if (systemId == 11) // HFWD system id
       posCell = m_cellPositionsHFwdTool->xyzPosition(cellId);
 
     auto edmPos = edm4hep::Vector3f();
@@ -72,7 +73,8 @@ StatusCode CreateCaloCellPositions::execute(const EventContext&) const {
     edmPositionedHitCollection->push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << posCell.x() / dd4hep::mm << "\t" << posCell.y() / dd4hep::mm << "\t"
             << posCell.z() / dd4hep::mm << endmsg;
   }

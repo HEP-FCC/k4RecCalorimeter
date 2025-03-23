@@ -8,11 +8,10 @@
 
 DECLARE_COMPONENT(CellPositionsSimpleCylinderPhiThetaSegTool)
 
-CellPositionsSimpleCylinderPhiThetaSegTool::CellPositionsSimpleCylinderPhiThetaSegTool(
-  const std::string& type,
-  const std::string& name,
-  const IInterface* parent)
-  : AlgTool(type, name, parent) {
+CellPositionsSimpleCylinderPhiThetaSegTool::CellPositionsSimpleCylinderPhiThetaSegTool(const std::string& type,
+                                                                                       const std::string& name,
+                                                                                       const IInterface* parent)
+    : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
@@ -20,8 +19,9 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
 
   // base class initialization
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
-  
+  if (sc.isFailure())
+    return sc;
+
   // get geometry service
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -35,7 +35,7 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
     error() << "Unable to retrieve the detector." << endmsg;
     return StatusCode::FAILURE;
   }
-  
+
   // get the detector element
   dd4hep::DetElement detectorEl = detector->detector(m_detectorName);
   if (!detectorEl.isValid()) {
@@ -44,7 +44,7 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
   }
 
   // get info about rmin, rmax
-  dd4hep::rec::LayeredCalorimeterData* theExtension =  detectorEl.extension<dd4hep::rec::LayeredCalorimeterData>();
+  dd4hep::rec::LayeredCalorimeterData* theExtension = detectorEl.extension<dd4hep::rec::LayeredCalorimeterData>();
   if (!theExtension) {
     error() << "The detector element does not have the required LayeredCalorimeterData extension." << endmsg;
     return StatusCode::FAILURE;
@@ -54,13 +54,13 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
     m_detZ = (theExtension->extent[2] + theExtension->extent[3]) / 2.0;
   else
     m_detZ = 0.0;
-  debug() << "Radius of detector " << m_detectorName.value() << " [mm] : " << m_detRadius/dd4hep::mm << endmsg;
-  debug() << "Z of detector " << m_detectorName.value() << " [mm] : " << m_detZ/dd4hep::mm << endmsg;
+  debug() << "Radius of detector " << m_detectorName.value() << " [mm] : " << m_detRadius / dd4hep::mm << endmsg;
+  debug() << "Z of detector " << m_detectorName.value() << " [mm] : " << m_detZ / dd4hep::mm << endmsg;
 
-   // get layer positions
-  const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>* layers = &(theExtension->layers) ;
+  // get layer positions
+  const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>* layers = &(theExtension->layers);
   for (unsigned int idxLayer = 0; idxLayer < layers->size(); ++idxLayer) {
-    const dd4hep::rec::LayeredCalorimeterStruct::Layer & theLayer = layers->at(idxLayer);
+    const dd4hep::rec::LayeredCalorimeterStruct::Layer& theLayer = layers->at(idxLayer);
     // distance from inner face of layer to origin
     double layerInnerPosition = theLayer.distance;
     // layer thickness
@@ -89,7 +89,7 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
   if (iter == fields.end()) {
     error() << "Readout does not contain field: 'layer'" << endmsg;
   }
-  
+
   return sc;
 }
 
@@ -110,7 +110,8 @@ void CellPositionsSimpleCylinderPhiThetaSegTool::getPositions(const edm4hep::Cal
     outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << "\n"
             << endmsg;
@@ -129,8 +130,7 @@ dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const u
     // barrel
     // radius = m_detRadius;
     radius = m_layerPositions[layer];
-  }
-  else {
+  } else {
     // endcap
     auto theta = m_segmentation->theta(aCellId);
     // radius = fabs(m_detZ * tan(theta));

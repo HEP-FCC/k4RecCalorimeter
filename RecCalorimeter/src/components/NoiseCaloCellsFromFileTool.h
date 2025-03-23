@@ -3,18 +3,18 @@
 
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
-#include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
+#include "GaudiKernel/RndmGenerators.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // k4FWCore
-#include "k4Interface/INoiseCaloCellsTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/INoiseCaloCellsTool.h"
 class IGeoSvc;
 
-//DD4hep
+// DD4hep
 #include "DDSegmentation/MultiSegmentation.h"
 
 // Root
@@ -59,8 +59,9 @@ private:
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
                                     "Add pileup contribution to the electronics noise? (only if read from file)"};
-  /// use segmentation in case no cell psotion tool defined. 
-  Gaudi::Property<bool> m_useSeg{this, "useSegmentation", true, "Specify if segmentation is used to determine cell position."};
+  /// use segmentation in case no cell psotion tool defined.
+  Gaudi::Property<bool> m_useSeg{this, "useSegmentation", true,
+                                 "Specify if segmentation is used to determine cell position."};
   /// Name of the file with noise constants
   Gaudi::Property<std::string> m_noiseFileName{this, "noiseFileName", "", "Name of the file with noise constants"};
   /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
@@ -79,9 +80,11 @@ private:
   Gaudi::Property<double> m_filterThreshold{
       this, "filterNoiseThreshold", 3, "Energy threshold (cells with Ecell < filterThreshold*m_cellNoise removed)"};
   /// Change the cell filter condition to remove only cells with abs(Ecell) < filterThreshold*m_cellNoise removed)
-  /// This avoids to keep only 'one side'  of the noise fluctuations and prevents biasing cluster energy towards higher energies
+  /// This avoids to keep only 'one side'  of the noise fluctuations and prevents biasing cluster energy towards higher
+  /// energies
   Gaudi::Property<bool> m_useAbsInFilter{
-      this, "useAbsInFilter", false, "Cell filtering condition becomes: drop cell if abs(Ecell) < filterThreshold*m_cellNoise"};
+      this, "useAbsInFilter", false,
+      "Cell filtering condition becomes: drop cell if abs(Ecell) < filterThreshold*m_cellNoise"};
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
   /// Histograms with pileup RMS (index in array - radial layer)

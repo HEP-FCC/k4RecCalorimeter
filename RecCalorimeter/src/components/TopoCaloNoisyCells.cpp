@@ -1,8 +1,8 @@
 #include "TopoCaloNoisyCells.h"
 
-#include "TSystem.h"
-#include "TFile.h"
 #include "TBranch.h"
+#include "TFile.h"
+#include "TSystem.h"
 #include "TTree.h"
 
 DECLARE_COMPONENT(TopoCaloNoisyCells)
@@ -15,7 +15,8 @@ TopoCaloNoisyCells::TopoCaloNoisyCells(const std::string& type, const std::strin
 StatusCode TopoCaloNoisyCells::initialize() {
   {
     StatusCode sc = AlgTool::initialize();
-    if (sc.isFailure()) return sc;
+    if (sc.isFailure())
+      return sc;
   }
 
   // Check if file exists
@@ -34,8 +35,7 @@ StatusCode TopoCaloNoisyCells::initialize() {
     error() << "File path: " << m_fileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Using the following file with the noisy cells: "
-           << m_fileName.value() << endmsg;
+    info() << "Using the following file with the noisy cells: " << m_fileName.value() << endmsg;
   }
 
   TTree* tree = nullptr;
@@ -44,11 +44,13 @@ StatusCode TopoCaloNoisyCells::initialize() {
   double readNoisyCells;
   double readNoisyCellsOffset;
   tree->SetBranchAddress("cellId", &readCellId);
-  tree->SetBranchAddress("noiseLevel", &readNoisyCells); // would be better to call branch noiseRMS rather than noiseLevel
+  tree->SetBranchAddress("noiseLevel",
+                         &readNoisyCells); // would be better to call branch noiseRMS rather than noiseLevel
   tree->SetBranchAddress("noiseOffset", &readNoisyCellsOffset);
   for (uint i = 0; i < tree->GetEntries(); i++) {
     tree->GetEntry(i);
-    m_map.insert(std::pair<uint64_t, std::pair<double, double>>(readCellId, std::make_pair(readNoisyCells, readNoisyCellsOffset)));
+    m_map.insert(std::pair<uint64_t, std::pair<double, double>>(readCellId,
+                                                                std::make_pair(readNoisyCells, readNoisyCellsOffset)));
   }
   delete tree;
   inFile->Close();

@@ -12,34 +12,27 @@
 
 using json = nlohmann::json;
 
-
 DECLARE_COMPONENT(PhotonIDTool)
 
-
-PhotonIDTool::PhotonIDTool(const std::string &name,
-                           ISvcLocator *svcLoc)
+PhotonIDTool::PhotonIDTool(const std::string& name, ISvcLocator* svcLoc)
     : Gaudi::Algorithm(name, svcLoc),
-  m_ortMemInfo(Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault))
-{
+      m_ortMemInfo(Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault)) {
   declareProperty("inClusters", m_inClusters, "Input cluster collection");
   declareProperty("outClusters", m_outClusters, "Output cluster collection");
 }
 
-StatusCode PhotonIDTool::initialize()
-{
+StatusCode PhotonIDTool::initialize() {
   // Initialize base class
   {
     StatusCode sc = Gaudi::Algorithm::initialize();
-    if (sc.isFailure())
-    {
+    if (sc.isFailure()) {
       return sc;
     }
   }
 
   // read the files defining the model
   StatusCode sc = readMVAFiles(m_mvaInputsFile, m_mvaModelFile);
-  if (sc.isFailure())
-  {
+  if (sc.isFailure()) {
     error() << "Initialization of photon ID tool config files not successful!" << endmsg;
     return sc;
   }
@@ -47,40 +40,34 @@ StatusCode PhotonIDTool::initialize()
   // read from the metadata the names of the shape parameters in the input clusters
   std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get({});
   debug() << "Variables in shapeParameters of input clusters:" << endmsg;
-  for (const auto &str : shapeParameters) {
+  for (const auto& str : shapeParameters) {
     debug() << str << endmsg;
   }
 
   // check if the shape parameters contain the inputs needed for the inference
   m_inputPositionsInShapeParameters.clear();
-  for (const auto &feature : m_internal_input_names) {
+  for (const auto& feature : m_internal_input_names) {
 
     if (feature == "ecl") {
       // for the cluster energy, check if we have rawE in decorations
       // this is for cluster that have been passed through the MVA calibration
       // otherwise, we will use the energy of the cluster object
       auto it = std::find(shapeParameters.begin(), shapeParameters.end(), "rawE");
-      if (it != shapeParameters.end())
-      {
+      if (it != shapeParameters.end()) {
         int position = std::distance(shapeParameters.begin(), it);
         m_inputPositionsInShapeParameters.push_back(position);
         info() << "Feature " << feature << " found in position " << position << " of shapeParameters" << endmsg;
-      }
-      else {
+      } else {
         m_inputPositionsInShapeParameters.push_back(-1);
       }
-    }
-    else {
+    } else {
       // for the other features, check if they are in the shape parameters
       auto it = std::find(shapeParameters.begin(), shapeParameters.end(), feature);
-      if (it != shapeParameters.end())
-      {
+      if (it != shapeParameters.end()) {
         int position = std::distance(shapeParameters.begin(), it);
         m_inputPositionsInShapeParameters.push_back(position);
         info() << "Feature " << feature << " found in position " << position << " of shapeParameters" << endmsg;
-      }
-      else
-      {
+      } else {
         // at least one of the inputs of the MVA was not found in the shapeParameters
         // so we can stop checking the others
         m_inputPositionsInShapeParameters.clear();
@@ -89,7 +76,7 @@ StatusCode PhotonIDTool::initialize()
       }
     }
   }
-    
+
   // append the MVA score to the output shape parameters
   shapeParameters.push_back("photonIDscore");
   m_outShapeParameterHandle.put(shapeParameters);
@@ -98,22 +85,19 @@ StatusCode PhotonIDTool::initialize()
   return StatusCode::SUCCESS;
 }
 
-StatusCode PhotonIDTool::execute([[maybe_unused]] const EventContext &evtCtx) const
-{
+StatusCode PhotonIDTool::execute([[maybe_unused]] const EventContext& evtCtx) const {
   verbose() << "-------------------------------------------" << endmsg;
 
   // Get the input collection with clusters
-  const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
+  const edm4hep::ClusterCollection* inClusters = m_inClusters.get();
 
   // Initialize output clusters
-  edm4hep::ClusterCollection *outClusters = initializeOutputClusters(inClusters);
-  if (!outClusters)
-  {
+  edm4hep::ClusterCollection* outClusters = initializeOutputClusters(inClusters);
+  if (!outClusters) {
     error() << "Something went wrong in initialization of the output cluster collection, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
-  if (inClusters->size() != outClusters->size())
-  {
+  if (inClusters->size() != outClusters->size()) {
     error() << "Sizes of input and output cluster collections does not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -121,8 +105,7 @@ StatusCode PhotonIDTool::execute([[maybe_unused]] const EventContext &evtCtx) co
   // Run inference
   {
     StatusCode sc = applyMVAtoClusters(inClusters, outClusters);
-    if (sc.isFailure())
-    {
+    if (sc.isFailure()) {
       return sc;
     }
   }
@@ -130,8 +113,7 @@ StatusCode PhotonIDTool::execute([[maybe_unused]] const EventContext &evtCtx) co
   return StatusCode::SUCCESS;
 }
 
-StatusCode PhotonIDTool::finalize()
-{
+StatusCode PhotonIDTool::finalize() {
   if (m_ortSession)
     delete m_ortSession;
 
@@ -149,13 +131,10 @@ StatusCode PhotonIDTool::finalize()
   return Gaudi::Algorithm::finalize();
 }
 
-edm4hep::ClusterCollection *PhotonIDTool::initializeOutputClusters(
-    const edm4hep::ClusterCollection *inClusters) const
-{
-  edm4hep::ClusterCollection *outClusters = m_outClusters.createAndPut();
+edm4hep::ClusterCollection* PhotonIDTool::initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const {
+  edm4hep::ClusterCollection* outClusters = m_outClusters.createAndPut();
 
-  for (auto const &inCluster : *inClusters)
-  {
+  for (auto const& inCluster : *inClusters) {
     auto outCluster = inCluster.clone();
     outClusters->push_back(outCluster);
   }
@@ -163,9 +142,7 @@ edm4hep::ClusterCollection *PhotonIDTool::initializeOutputClusters(
   return outClusters;
 }
 
-StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
-                                      const std::string& mvaModelFileName)
-{
+StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName, const std::string& mvaModelFileName) {
   // 1. read the file with the list of input features
   // Open the JSON file
   std::ifstream file(mvaInputsFileName);
@@ -189,8 +166,7 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   if (!j.contains("timeStamp")) {
     error() << "Error: timeStamp key not found in JSON" << endmsg;
     return StatusCode::FAILURE;
-  }
-  else {
+  } else {
     timeStamp = j["timeStamp"];
   }
 
@@ -198,8 +174,7 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   if (!j.contains("clusterCollection")) {
     error() << "Error: clusterCollection key not found in JSON" << endmsg;
     return StatusCode::FAILURE;
-  }
-  else {
+  } else {
     clusterCollection = j["clusterCollection"];
   }
 
@@ -207,8 +182,7 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   if (!j.contains("trainingTool")) {
     error() << "Error: trainingTool key not found in JSON" << endmsg;
     return StatusCode::FAILURE;
-  }
-  else {
+  } else {
     trainingTool = j["trainingTool"];
   }
 
@@ -219,18 +193,17 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   if (!j.contains("shapeParameters")) {
     error() << "Error: shapeParameters key not found in JSON" << endmsg;
     return StatusCode::FAILURE;
-  }
-  else {
+  } else {
     try {
       const auto& shape_params = j["shapeParameters"];
       if (!shape_params.is_array()) {
-	throw std::runtime_error("shapeParameters is not an array");
+        throw std::runtime_error("shapeParameters is not an array");
       }
       for (const auto& param : shape_params) {
-	if (!param.is_string()) {
-	  throw std::runtime_error("shapeParameters contains non-string values");
-	}
-	m_internal_input_names.push_back(param.get<std::string>());
+        if (!param.is_string()) {
+          throw std::runtime_error("shapeParameters contains non-string values");
+        }
+        m_internal_input_names.push_back(param.get<std::string>());
       }
     } catch (const std::exception& e) {
       error() << "Error: " << e.what() << endmsg;
@@ -238,41 +211,35 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
     }
   }
   info() << "   Input shape parameters:" << endmsg;
-  for (const auto &str : m_internal_input_names) {
+  for (const auto& str : m_internal_input_names) {
     info() << "      " << str << endmsg;
   }
   if (!j.contains("trainingParameters")) {
     error() << "Error: trainingParameters key not found in JSON" << endmsg;
     return StatusCode::FAILURE;
-  }
-  else {
+  } else {
     info() << "   Training parameters:" << endmsg;
-    for (const auto &param : j["trainingParameters"].items()) {
+    for (const auto& param : j["trainingParameters"].items()) {
       std::string key = param.key();
       std::string value;
       if (param.value().is_string()) {
-	value = param.value().get<std::string>();
-      }
-      else if (param.value().is_number()) {
-	value = std::to_string(param.value().get<double>());
-      }
-      else if (param.value().is_null()) {
-	value = "null";
-      }
-      else {
-	value = "invalid";
+        value = param.value().get<std::string>();
+      } else if (param.value().is_number()) {
+        value = std::to_string(param.value().get<double>());
+      } else if (param.value().is_null()) {
+        value = "null";
+      } else {
+        value = "invalid";
       }
       info() << "      " << key << " : " << value << endmsg;
     }
   }
 
-
-  // 2. - read the file with the MVA model and setup the ONNX runtime  
+  // 2. - read the file with the MVA model and setup the ONNX runtime
   // set ONNX logging level based on output level of this alg
   OrtLoggingLevel loggingLevel = ORT_LOGGING_LEVEL_WARNING;
   MSG::Level outputLevel = this->msgStream().level();
-  switch (outputLevel)
-  {
+  switch (outputLevel) {
   case MSG::Level::FATAL:                   // 6
     loggingLevel = ORT_LOGGING_LEVEL_FATAL; // 4
     break;
@@ -294,15 +261,12 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   default:
     break;
   }
-  try
-  {
+  try {
     m_ortEnv = new Ort::Env(loggingLevel, "ONNX runtime environment for photonID");
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
     m_ortSession = new Ort::Session(*m_ortEnv, mvaModelFileName.data(), session_options);
-  }
-  catch (const Ort::Exception &exception)
-  {
+  } catch (const Ort::Exception& exception) {
     error() << "ERROR setting up ONNX runtime environment: " << exception.what() << endmsg;
     return StatusCode::FAILURE;
   }
@@ -316,10 +280,8 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
   using AllocatedStringPtr = std::unique_ptr<char, decltype(allocDeleter)>;
 #endif
 
-
   debug() << "Input Node Name/Shape (" << m_ortSession->GetInputCount() << "):" << endmsg;
-  for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
-  {
+  for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++) {
 #if ORT_API_VERSION < 13
     m_input_names.emplace_back(AllocatedStringPtr(m_ortSession->GetInputName(i, allocator), allocDeleter).release());
 #else
@@ -328,25 +290,21 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
 
     m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_input_names.at(i) << " : ";
-    for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
-    {
+    for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++) {
       debug() << m_input_shapes[k] << "x";
     }
     debug() << m_input_shapes[m_input_shapes.size() - 1] << endmsg;
   }
   // some models might have negative shape values to indicate dynamic shape, e.g., for variable batch size.
-  for (auto &s : m_input_shapes)
-  {
-    if (s < 0)
-    {
+  for (auto& s : m_input_shapes) {
+    if (s < 0) {
       s = 1;
     }
   }
 
   // print name/shape of outputs
   debug() << "Output Node Name/Shape (" << m_ortSession->GetOutputCount() << "):" << endmsg;
-  for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
-  {
+  for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++) {
 #if ORT_API_VERSION < 13
     m_output_names.emplace_back(AllocatedStringPtr(m_ortSession->GetOutputName(i, allocator), allocDeleter).release());
 #else
@@ -356,58 +314,49 @@ StatusCode PhotonIDTool::readMVAFiles(const std::string& mvaInputsFileName,
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << m_output_shapes.size() << endmsg;
     debug() << "\t" << m_output_names.at(i) << " : ";
-    for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++)
-    {
+    for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++) {
       debug() << m_output_shapes[k] << "x";
     }
     debug() << m_output_shapes[m_output_shapes.size() - 1] << endmsg;
   }
 
   debug() << "PhotonID config files read out successfully" << endmsg;
-  
+
   return StatusCode::SUCCESS;
 }
 
-StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *inClusters,
-                                            edm4hep::ClusterCollection *outClusters) const
-{
+StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection* inClusters,
+                                            edm4hep::ClusterCollection* outClusters) const {
   size_t numShapeVars = m_internal_input_names.size();
   std::vector<float> mvaInputs(numShapeVars);
-  
+
   // loop over the input clusters and perform the inference
-  for (unsigned int j = 0; j < inClusters->size(); ++j)
-  {
+  for (unsigned int j = 0; j < inClusters->size(); ++j) {
     // read the values of the input features
-    for (unsigned int i = 0; i < m_inputPositionsInShapeParameters.size(); i++) {  
+    for (unsigned int i = 0; i < m_inputPositionsInShapeParameters.size(); i++) {
       int position = m_inputPositionsInShapeParameters[i];
       if (position == -1)
         mvaInputs[i] = (inClusters->at(j)).getEnergy();
       else
         mvaInputs[i] = (inClusters->at(j)).getShapeParameters(position);
     }
-    
+
     // print the values of the input features
     verbose() << "MVA inputs:" << endmsg;
-    for (unsigned short int k = 0; k < numShapeVars; ++k)
-    {
+    for (unsigned short int k = 0; k < numShapeVars; ++k) {
       verbose() << "var " << k << " : " << mvaInputs[k] << endmsg;
     }
 
     // run the MVA and save the output score in output
-    float score= -1.0;
+    float score = -1.0;
     // Create a single Ort tensor
     std::vector<Ort::Value> input_tensors;
     input_tensors.emplace_back(vec_to_tensor<float>(mvaInputs, m_input_shapes, m_ortMemInfo));
 
     // pass data through model
-    try
-    {
-      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr},
-                                              m_input_names.data(),
-                                              input_tensors.data(),
-                                              input_tensors.size(),
-                                              m_output_names.data(),
-                                              m_output_names.size());
+    try {
+      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr}, m_input_names.data(), input_tensors.data(),
+                                              input_tensors.size(), m_output_names.data(), m_output_names.size());
 
       // double-check the dimensions of the output tensors
       // NOTE: the number of output tensors is equal to the number of output nodes specified in the Run() call
@@ -415,13 +364,11 @@ StatusCode PhotonIDTool::applyMVAtoClusters(const edm4hep::ClusterCollection *in
       // the probabilities are in the 2nd entry of the output
       debug() << output_tensors.size() << endmsg;
       debug() << output_tensors[1].GetTensorTypeAndShapeInfo().GetShape() << endmsg;
-      float *outputData = output_tensors[1].GetTensorMutableData<float>();
-      for (int i=0; i<2; i++)
+      float* outputData = output_tensors[1].GetTensorMutableData<float>();
+      for (int i = 0; i < 2; i++)
         debug() << i << " " << outputData[i] << endmsg;
       score = outputData[1];
-    }
-    catch (const Ort::Exception &exception)
-    {
+    } catch (const Ort::Exception& exception) {
       error() << "ERROR running model inference: " << exception.what() << endmsg;
       return StatusCode::FAILURE;
     }

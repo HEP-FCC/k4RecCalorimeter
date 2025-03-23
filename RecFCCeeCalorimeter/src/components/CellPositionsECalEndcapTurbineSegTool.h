@@ -7,8 +7,8 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/IGeoSvc.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/IGeoSvc.h"
 
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
@@ -23,17 +23,18 @@
 class IGeoSvc;
 namespace DD4hep {
 namespace DDSegmentation {
-class Segmentation;
+  class Segmentation;
 }
-}
+} // namespace DD4hep
 
-/** @class CellPositionsECalEndcapTurbineSegTool Reconstruction/RecFCCeeCalorimeter/src/components/CellPositionsECalEndcapTurbineSegTool.h
+/** @class CellPositionsECalEndcapTurbineSegTool
+ * Reconstruction/RecFCCeeCalorimeter/src/components/CellPositionsECalEndcapTurbineSegTool.h
  * CellPositionsECalEndcapTurbineSegTool.h
  *
  *  Tool to determine each Calorimeter cell position.
  *
- *   For the FCCee Endcap ECAL, determined from the placed volumes and the FCCSW endcap turbine segmentation.   
- * 
+ *   For the FCCee Endcap ECAL, determined from the placed volumes and the FCCSW endcap turbine segmentation.
+ *
  *  @author Erich Varnes
  */
 
@@ -46,7 +47,8 @@ public:
 
   virtual StatusCode finalize() final;
 
-  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells, edm4hep::CalorimeterHitCollection& outputColl) final;
+  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
+                            edm4hep::CalorimeterHitCollection& outputColl) final;
 
   virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
 

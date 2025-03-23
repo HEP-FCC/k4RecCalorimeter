@@ -4,8 +4,7 @@
 
 DECLARE_COMPONENT(CellPositionsTailCatcherTool)
 
-CellPositionsTailCatcherTool::CellPositionsTailCatcherTool(const std::string& type,
-                                                           const std::string& name,
+CellPositionsTailCatcherTool::CellPositionsTailCatcherTool(const std::string& type, const std::string& name,
                                                            const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
@@ -13,7 +12,8 @@ CellPositionsTailCatcherTool::CellPositionsTailCatcherTool(const std::string& ty
 
 StatusCode CellPositionsTailCatcherTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -59,7 +59,8 @@ void CellPositionsTailCatcherTool::getPositions(const edm4hep::CalorimeterHitCol
     ;
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << endmsg;
   }
@@ -85,8 +86,8 @@ dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const uint64_t& aCell
   debug() << "Radius : " << radius << endmsg;
   dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, outGlobal[2]);
 
-  if (outGlobal[2] == 0) {     // central tail catcher
-    radius = m_centralRadius;  // 901.5cm
+  if (outGlobal[2] == 0) {    // central tail catcher
+    radius = m_centralRadius; // 901.5cm
     outSeg.SetCoordinates(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
   }
   return outSeg;

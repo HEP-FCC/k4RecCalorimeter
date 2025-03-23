@@ -5,14 +5,15 @@
 DECLARE_COMPONENT(CellPositionsDummyTool)
 
 CellPositionsDummyTool::CellPositionsDummyTool(const std::string& type, const std::string& name,
-                                                       const IInterface* parent)
+                                               const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsDummyTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -22,7 +23,7 @@ StatusCode CellPositionsDummyTool::initialize() {
 }
 
 void CellPositionsDummyTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                              edm4hep::CalorimeterHitCollection& outputColl) {
+                                          edm4hep::CalorimeterHitCollection& outputColl) {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -36,7 +37,8 @@ void CellPositionsDummyTool::getPositions(const edm4hep::CalorimeterHitCollectio
     positionedHit.setPosition(edmPos);
     outputColl.push_back(positionedHit);
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outPos.x() / dd4hep::mm << "\t" << outPos.y() / dd4hep::mm << "\t"
             << outPos.z() / dd4hep::mm << endmsg;
   }
@@ -45,12 +47,12 @@ void CellPositionsDummyTool::getPositions(const edm4hep::CalorimeterHitCollectio
 
 dd4hep::Position CellPositionsDummyTool::xyzPosition(const uint64_t& /*aCellId*/) const {
   dd4hep::Position outPos;
-  outPos.SetCoordinates(0,0,0);
+  outPos.SetCoordinates(0, 0, 0);
   return outPos;
 }
 
 int CellPositionsDummyTool::layerId(const uint64_t& /*aCellId*/) {
-  int layer=0;
+  int layer = 0;
   return layer;
 }
 

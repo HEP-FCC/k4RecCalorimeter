@@ -5,22 +5,23 @@
 DECLARE_COMPONENT(CellPositionsHCalBarrelPhiSegTool)
 
 CellPositionsHCalBarrelPhiSegTool::CellPositionsHCalBarrelPhiSegTool(const std::string& type, const std::string& name,
-                                                                   const IInterface* parent)
+                                                                     const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsHCalBarrelPhiSegTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
     return StatusCode::FAILURE;
   }
-  // get PhiEta segmentation                                                                                                                                   
+  // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-									  m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
   }
@@ -40,7 +41,7 @@ StatusCode CellPositionsHCalBarrelPhiSegTool::initialize() {
 }
 
 void CellPositionsHCalBarrelPhiSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                    edm4hep::CalorimeterHitCollection& outputColl) {
+                                                     edm4hep::CalorimeterHitCollection& outputColl) {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -56,7 +57,8 @@ void CellPositionsHCalBarrelPhiSegTool::getPositions(const edm4hep::CalorimeterH
     outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outPos.x() / dd4hep::mm << "\t" << outPos.y() / dd4hep::mm << "\t"
             << outPos.z() / dd4hep::mm << endmsg;
   }
@@ -78,8 +80,8 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& 
 
   auto inSeg = m_segmentation->position(aCellId);
   // get radius in cm
-  double radius = m_radii[layer];  
-  dd4hep::Position outSeg(inSeg.x()*radius, inSeg.y()*radius, global[2]);
+  double radius = m_radii[layer];
+  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global[2]);
 
   return outSeg;
 }

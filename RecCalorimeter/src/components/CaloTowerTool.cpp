@@ -49,7 +49,7 @@ StatusCode CaloTowerTool::initialize() {
     return StatusCode::FAILURE;
   }
   if (m_useHalfTower) {
-   m_decoder = m_geoSvc->getDetector()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
+    m_decoder = m_geoSvc->getDetector()->readout(m_ecalBarrelReadoutName).idSpec().decoder();
   }
   info() << "Retrieving Ecal endcap segmentation" << endmsg;
   tmpPair = retrieveSegmentation(m_ecalEndcapReadoutName);
@@ -103,14 +103,15 @@ StatusCode CaloTowerTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTowerTool::finalize() { 
+StatusCode CaloTowerTool::finalize() {
   for (auto& towerInMap : m_cellsInTowers) {
     towerInMap.second.clear();
-    }
-  return AlgTool::finalize();
   }
+  return AlgTool::finalize();
+}
 
-std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType) {
+std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation,
+                                                               SegmentationType aType) {
   double phiMax = -1;
   double etaMax = -1;
   dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
@@ -127,12 +128,17 @@ std::pair<double, double> CaloTowerTool::retrievePhiEtaExtrema(dd4hep::DDSegment
       double phi = -1;
       double eta = -1;
       info() << "== Retrieving multi segmentation " << aSegmentation->name() << endmsg;
-      for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation)->subSegmentations()) {
+      for (const auto& subSegm :
+           dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation)->subSegmentations()) {
         segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
         phi = fabs(segmentation->offsetPhi()) + M_PI / (double)segmentation->phiBins();
         eta = fabs(segmentation->offsetEta()) + segmentation->gridSizeEta() * 0.5;
-        if (eta > etaMax) { etaMax = eta;}
-        if (phi > phiMax) { phiMax = phi;}
+        if (eta > etaMax) {
+          etaMax = eta;
+        }
+        if (phi > phiMax) {
+          phiMax = phi;
+        }
       }
       break;
     }
@@ -244,7 +250,8 @@ uint CaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers, bool f
   debug() << "Input hadronic extended barrel cell collection size: " << hcalExtBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (m_hcalExtBarrelSegmentation != nullptr) {
-    CellsIntoTowers(aTowers, hcalExtBarrelCells, m_hcalExtBarrelSegmentation, m_hcalExtBarrelSegmentationType, fillTowersCells);
+    CellsIntoTowers(aTowers, hcalExtBarrelCells, m_hcalExtBarrelSegmentation, m_hcalExtBarrelSegmentationType,
+                    fillTowersCells);
     totalNumberOfCells += hcalExtBarrelCells->size();
   }
 
@@ -320,23 +327,24 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
   float epsilon = 0.0001;
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
   const dd4hep::DDSegmentation::MultiSegmentation* multisegmentation = nullptr;
-  if( aType == SegmentationType::kPhiEta) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(aSegmentation);
-  } else if( aType == SegmentationType::kMulti) {
+  if (aType == SegmentationType::kPhiEta) {
+    segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(aSegmentation);
+  } else if (aType == SegmentationType::kMulti) {
     multisegmentation = dynamic_cast<const dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation);
   }
   bool pass = true;
   for (const auto& cell : *aCells) {
     pass = true;
     // if multisegmentation is used - first find out which segmentation to use
-    if( aType == SegmentationType::kMulti) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&multisegmentation->subsegmentation(cell.getCellID()));
+    if (aType == SegmentationType::kMulti) {
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+          &multisegmentation->subsegmentation(cell.getCellID()));
     }
     if (m_useHalfTower) {
-        uint layerId = m_decoder->get(cell.getCellID(), "layer");
-        if ( layerId > m_max_layer ) {
-          pass = false;
-        }
+      uint layerId = m_decoder->get(cell.getCellID(), "layer");
+      if (layerId > m_max_layer) {
+        pass = false;
+      }
     }
     if (pass) {
       // find to which tower(s) the cell belongs
@@ -369,9 +377,9 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
       fracPhiMiddle = 1.0;
       if (iPhiMin != iPhiMax) {
         fracPhiMin =
-          fabs(phi(iPhiMin) + 0.5 * m_deltaPhiTower - phiCellMin) / (2 * M_PI / (double)segmentation->phiBins());
+            fabs(phi(iPhiMin) + 0.5 * m_deltaPhiTower - phiCellMin) / (2 * M_PI / (double)segmentation->phiBins());
         fracPhiMax =
-          fabs(phiCellMax - phi(iPhiMax) + 0.5 * m_deltaPhiTower) / (2 * M_PI / (double)segmentation->phiBins());
+            fabs(phiCellMax - phi(iPhiMax) + 0.5 * m_deltaPhiTower) / (2 * M_PI / (double)segmentation->phiBins());
         if ((iPhiMax - iPhiMin - 1) != 0) {
           fracPhiMiddle = (1 - fracPhiMin - fracPhiMax) / float(iPhiMax - iPhiMin - 1);
         } else {
@@ -397,10 +405,12 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
             ratioPhi = fracPhiMiddle;
           }
           aTowers[iEta][phiNeighbour(iPhi)] +=
-            cell.getEnergy() / cosh(segmentation->eta(cell.getCellID())) * ratioEta * ratioPhi;
+              cell.getEnergy() / cosh(segmentation->eta(cell.getCellID())) * ratioEta * ratioPhi;
           if (fillTowersCells) {
             m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].push_back(cell.clone());
-            if ( fabs(etaCellMin) < 1.5 && m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() > 8 ) verbose() << "NUM CELLs IN TOWER : " << m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() << endmsg;
+            if (fabs(etaCellMin) < 1.5 && m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size() > 8)
+              verbose() << "NUM CELLs IN TOWER : " << m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))].size()
+                        << endmsg;
           }
         }
       }
@@ -408,26 +418,30 @@ void CaloTowerTool::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
   }
 }
 
-std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType> CaloTowerTool::retrieveSegmentation(std::string aReadoutName) {
+std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType>
+CaloTowerTool::retrieveSegmentation(std::string aReadoutName) {
   dd4hep::DDSegmentation::Segmentation* segmentation = nullptr;
   if (m_geoSvc->getDetector()->readouts().find(aReadoutName) == m_geoSvc->getDetector()->readouts().end()) {
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
   } else {
     info() << "Readout " << aReadoutName << " found." << endmsg;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-      m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
     if (segmentation == nullptr) {
       segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+          m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
       if (segmentation == nullptr) {
-        error() << "There is no phi-eta or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
+        error() << "There is no phi-eta or multi- segmentation for the readout " << aReadoutName << " defined."
+                << endmsg;
       } else {
         // check if multisegmentation contains only phi-eta sub-segmentations
         dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
-        for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
+        for (const auto& subSegm :
+             dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
           subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
           if (subsegmentation == nullptr) {
-            error() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a phi-eta grid." << endmsg;
+            error() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName
+                    << " is not a phi-eta grid." << endmsg;
             return std::make_pair(nullptr, SegmentationType::kWrong);
           }
         }
@@ -440,17 +454,20 @@ std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerTool::SegmentationType
   return std::make_pair(segmentation, SegmentationType::kWrong);
 }
 
-void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin, edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
+void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin,
+                                edm4hep::MutableCluster& aEdmCluster,
+                                edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
   int etaId = idEta(eta);
   int phiId = idPhi(phi);
   std::vector<dd4hep::DDSegmentation::CellID> seen_cellIDs;
   if (aEllipse) {
     for (int iEta = etaId - halfEtaFin; iEta <= int(etaId + halfEtaFin); iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= int(phiId + halfPhiFin); iPhi++) {
-        if (pow( (etaId - iEta) / (halfEtaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
+        if (pow((etaId - iEta) / (halfEtaFin + 0.5), 2) + pow((phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
           for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-            if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
-                continue;
+            if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) !=
+                seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
+              continue;
             }
             seen_cellIDs.push_back(cell.getCellID());
             auto cellclone = cell.clone();
@@ -464,7 +481,8 @@ void CaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint half
     for (int iEta = etaId - halfEtaFin; iEta <= int(etaId + halfEtaFin); iEta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= int(phiId + halfPhiFin); iPhi++) {
         for (auto cell : m_cellsInTowers[std::make_pair(iEta, phiNeighbour(iPhi))]) {
-          if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
+          if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) !=
+              seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
             continue;
           }
           seen_cellIDs.push_back(cell.getCellID());

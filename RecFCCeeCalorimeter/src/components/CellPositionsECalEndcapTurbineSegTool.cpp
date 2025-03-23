@@ -7,15 +7,17 @@
 
 DECLARE_COMPONENT(CellPositionsECalEndcapTurbineSegTool)
 
-CellPositionsECalEndcapTurbineSegTool::CellPositionsECalEndcapTurbineSegTool(const std::string& type, const std::string& name,
-										     const IInterface* parent)
+CellPositionsECalEndcapTurbineSegTool::CellPositionsECalEndcapTurbineSegTool(const std::string& type,
+                                                                             const std::string& name,
+                                                                             const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -23,7 +25,8 @@ StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
   }
 
   // get segmentation
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no endcap turbine segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
@@ -49,7 +52,7 @@ StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
 }
 
 void CellPositionsECalEndcapTurbineSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                               edm4hep::CalorimeterHitCollection& outputColl) {
+                                                         edm4hep::CalorimeterHitCollection& outputColl) {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
 
@@ -67,7 +70,8 @@ void CellPositionsECalEndcapTurbineSegTool::getPositions(const edm4hep::Calorime
     outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << "\n"
             << endmsg;
@@ -87,33 +91,29 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   m_decoder->set(volumeId, "rho", 0);
   debug() << "volumeId: " << volumeId << endmsg;
   m_decoder->set(volumeId, "z", 0);
-  debug() << "volumeId: " << volumeId << endmsg;  
+  debug() << "volumeId: " << volumeId << endmsg;
   auto detelement = m_volman.lookupDetElement(volumeId);
   const auto& transformMatrix = detelement.nominal().worldTransformation();
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);
-  debug() << "Position of volume (mm) : \t" 
-	  << outGlobal[0] / dd4hep::mm << "\t" 
-	  << outGlobal[1] / dd4hep::mm << "\t"
-	  << outGlobal[2] / dd4hep::mm << endmsg;
-  
+  debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
+          << outGlobal[2] / dd4hep::mm << endmsg;
+
   // get R, phi of volume
   radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
   double phi = std::atan2(outGlobal[1], outGlobal[0]);
   debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
-  
+
   // now get offset in theta and in phi from cell ID (due to theta grid + merging in theta/modules)
   // the local position is normalised to r_xy=1 so theta is atan(1/z)
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
-  debug() << "Local position of cell (mm) : \t" 
-	  << inSeg.x() / dd4hep::mm << "\t" 
-	  << inSeg.y() / dd4hep::mm << "\t"
-	  << inSeg.z() / dd4hep::mm << endmsg;
+  debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
+          << inSeg.z() / dd4hep::mm << endmsg;
   outSeg = inSeg;
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
-	  << outSeg.z() / dd4hep::mm << "\n"
-	  << endmsg;
+          << outSeg.z() / dd4hep::mm << "\n"
+          << endmsg;
 
   return outSeg;
 }

@@ -18,8 +18,8 @@
 
 DECLARE_COMPONENT(CreateCaloCellsNoise)
 
-CreateCaloCellsNoise::CreateCaloCellsNoise(const std::string& name, ISvcLocator* svcLoc) :
-Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
+CreateCaloCellsNoise::CreateCaloCellsNoise(const std::string& name, ISvcLocator* svcLoc)
+    : Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
 
@@ -30,7 +30,8 @@ Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
 
 StatusCode CreateCaloCellsNoise::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   info() << "CreateCaloCellsNoise initialized" << endmsg;
   info() << "do calibration : " << m_doCellCalibration << endmsg;
@@ -64,7 +65,7 @@ StatusCode CreateCaloCellsNoise::initialize() {
       return StatusCode::FAILURE;
     }
   }
-  if (m_addPosition){
+  if (m_addPosition) {
     m_volman = m_geoSvc->getDetector()->volumeManager();
   }
   return StatusCode::SUCCESS;
@@ -112,13 +113,14 @@ StatusCode CreateCaloCellsNoise::execute(const EventContext&) const {
       newCell.setEnergy(cell.second);
       uint64_t cellid = cell.first;
       newCell.setCellID(cellid);
-      if (m_addPosition){
+      if (m_addPosition) {
         auto detelement = m_volman.lookupDetElement(cellid);
         const auto& transformMatrix = detelement.nominal().worldTransformation();
         double outGlobal[3];
         double inLocal[] = {0, 0, 0};
         transformMatrix.LocalToMaster(inLocal, outGlobal);
-        edm4hep::Vector3f position = edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
+        edm4hep::Vector3f position =
+            edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
         newCell.setPosition(position);
       }
     }

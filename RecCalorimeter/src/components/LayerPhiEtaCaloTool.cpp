@@ -7,15 +7,15 @@
 
 DECLARE_COMPONENT(LayerPhiEtaCaloTool)
 
-LayerPhiEtaCaloTool::LayerPhiEtaCaloTool(const std::string& type, const std::string& name,
-                                                 const IInterface* parent)
+LayerPhiEtaCaloTool::LayerPhiEtaCaloTool(const std::string& type, const std::string& name, const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareInterface<ICalorimeterTool>(this);
 }
 
 StatusCode LayerPhiEtaCaloTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
@@ -46,7 +46,7 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
     numLayers = m_activeVolumesNumber;
   }
   info() << "Number of active layers " << numLayers << endmsg;
-  
+
   // get PhiEta segmentation
   dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation;
   segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
@@ -55,8 +55,8 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
-  info() << "FCCSWGridPhiEta_k4geo: size in eta " << segmentation->gridSizeEta() << " , bins in phi " << segmentation->phiBins()
-         << endmsg;
+  info() << "FCCSWGridPhiEta_k4geo: size in eta " << segmentation->gridSizeEta() << " , bins in phi "
+         << segmentation->phiBins() << endmsg;
   info() << "FCCSWGridPhiEta_k4geo: offset in eta " << segmentation->offsetEta() << " , offset in phi "
          << segmentation->offsetPhi() << endmsg;
 
@@ -71,9 +71,9 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
   dd4hep::DDSegmentation::VolumeID volumeID = 0;
   for (unsigned int it = 0; it < m_fieldNames.size(); it++) {
     decoder->set(volumeID, m_fieldNames[it], m_fieldValues[it]);
-  }  
+  }
 
-  if (m_activeVolumesEta.size() != numLayers){
+  if (m_activeVolumesEta.size() != numLayers) {
     error() << "The given number of min eta is not equal to the number of layer!!!!" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -88,11 +88,15 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
 
     // Calculate number of cells per layer
     auto numCells = det::utils::numberOfCells(volumeID, *segmentation);
-    uint cellsEta = ceil(( 2*m_activeVolumesEta[ilayer] - segmentation->gridSizeEta() ) / 2 / segmentation->gridSizeEta()) * 2 + 1; // ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta()) ;
-    uint minEtaID = int(floor(( - m_activeVolumesEta[ilayer] + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
-  
-    numCells[1] = cellsEta; 
-    numCells[2] = minEtaID; 
+    uint cellsEta =
+        ceil((2 * m_activeVolumesEta[ilayer] - segmentation->gridSizeEta()) / 2 / segmentation->gridSizeEta()) * 2 +
+        1; // ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta()) ;
+    uint minEtaID =
+        int(floor((-m_activeVolumesEta[ilayer] + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) /
+                  segmentation->gridSizeEta()));
+
+    numCells[1] = cellsEta;
+    numCells[2] = minEtaID;
     debug() << "Segmentation cells  (Nphi, Neta, minEta): " << numCells << endmsg;
     // Loop over segmenation cells
     for (unsigned int iphi = 0; iphi < numCells[0]; iphi++) {
@@ -100,7 +104,7 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
         decoder->set(volumeID, "phi", iphi);
         decoder->set(volumeID, "eta", ieta + numCells[2]); // start from the minimum existing eta cell in this layer
         dd4hep::DDSegmentation::CellID cellId = volumeID;
-	//debug() << "CellID: " <<  cellId<< endmsg;
+        // debug() << "CellID: " <<  cellId<< endmsg;
         aCells.insert(std::pair<dd4hep::DDSegmentation::CellID, double>(cellId, 0));
       }
     }

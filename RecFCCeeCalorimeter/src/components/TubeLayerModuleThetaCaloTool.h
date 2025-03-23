@@ -9,8 +9,8 @@
 
 class IGeoSvc;
 
-/** @class TubeLayerModuleThetaCaloTool k4RecCalorimeter/RecFCCeeCalorimeter/src/components/TubeLayerModuleThetaCaloTool.h
- *  TubeLayerModuleThetaCaloTool.h
+/** @class TubeLayerModuleThetaCaloTool
+ * k4RecCalorimeter/RecFCCeeCalorimeter/src/components/TubeLayerModuleThetaCaloTool.h TubeLayerModuleThetaCaloTool.h
  *
  *  Tool for geometry-dependent settings of the digitisation.
  *  It assumes cylindrical geometry (layers) and phi-theta segmentation.

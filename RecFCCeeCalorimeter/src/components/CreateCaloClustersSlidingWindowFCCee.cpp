@@ -182,9 +182,11 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
           // Recalculating the energy within the final cluster size
           for (int ipTheta = idThetaFin - halfThetaFin; ipTheta <= idThetaFin + halfThetaFin; ipTheta++) {
             for (int ipPhi = idPhiFin - halfPhiFin; ipPhi <= idPhiFin + halfPhiFin; ipPhi++) {
-              if (ipTheta >= 0 && ipTheta < m_nThetaTower) {  // check if we are not outside of map in theta
+              if (ipTheta >= 0 && ipTheta < m_nThetaTower) { // check if we are not outside of map in theta
                 if (m_ellipseFinalCluster) {
-                  if (pow( (ipTheta - idThetaFin) / (m_nThetaFinal / 2.), 2) + pow( (ipPhi - idPhiFin) / (m_nPhiFinal / 2.), 2) < 1) {
+                  if (pow((ipTheta - idThetaFin) / (m_nThetaFinal / 2.), 2) +
+                          pow((ipPhi - idPhiFin) / (m_nPhiFinal / 2.), 2) <
+                      1) {
                     sumEnergyFin += m_towers[ipTheta][phiNeighbour(ipPhi)];
                   }
                 } else {
@@ -217,11 +219,11 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
     // finish processing that slice, shift window to next theta tower
     if (iTheta < m_nThetaTower - halfThetaWin - 1) {
       // substract first theta slice in current window
-      std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta - halfThetaWin].begin(), sumOverTheta.begin(),
-                     std::minus<float>());
+      std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta - halfThetaWin].begin(),
+                     sumOverTheta.begin(), std::minus<float>());
       // add next theta slice to the window
-      std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta + halfThetaWin + 1].begin(), sumOverTheta.begin(),
-                     std::plus<float>());
+      std::transform(sumOverTheta.begin(), sumOverTheta.end(), m_towers[iTheta + halfThetaWin + 1].begin(),
+                     sumOverTheta.begin(), std::plus<float>());
     }
   }
 
@@ -237,7 +239,8 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
     for (auto it2 = it1 + 1; it2 != m_preClusters.end();) {
       if ((abs(int(m_towerTool->idTheta((*it1).theta) - m_towerTool->idTheta((*it2).theta))) < m_nThetaDuplicates) &&
           ((abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) < m_nPhiDuplicates) ||
-           (abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) > m_nPhiTower - m_nPhiDuplicates))) {
+           (abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) >
+            m_nPhiTower - m_nPhiDuplicates))) {
         m_preClusters.erase(it2);
       } else {
         it2++;
@@ -267,12 +270,10 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
                (abs(idPhiClShare - idPhiCl) > m_nPhiTower - m_nPhiFinal))) {
             // add energy in shared towers to sumEnergySharing[][]
             for (int iTheta = std::max(idThetaCl, idThetaClShare) - halfThetaFin;
-                 iTheta <= std::min(idThetaCl, idThetaClShare) + halfThetaFin;
-                 iTheta++) {
+                 iTheta <= std::min(idThetaCl, idThetaClShare) + halfThetaFin; iTheta++) {
               for (int iPhi = std::max(idPhiCl, idPhiClShare) - halfPhiFin;
-                   iTheta <= std::min(idPhiCl, idPhiClShare) + halfPhiFin;
-                   iPhi++) {
-                if (iTheta >= 0 && iTheta < m_nThetaTower) {  // check if we are not outside of map in theta
+                   iTheta <= std::min(idPhiCl, idPhiClShare) + halfPhiFin; iPhi++) {
+                if (iTheta >= 0 && iTheta < m_nThetaTower) { // check if we are not outside of map in theta
                   sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] +=
                       m_towers[iTheta][phiNeighbour(iPhi)] / sin(m_towerTool->theta(iTheta));
                 }
@@ -284,12 +285,13 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
       // apply the actual correction: substract the weighted energy contributions in other clusters
       for (int iTheta = idThetaCl - halfThetaFin; iTheta <= idThetaCl + halfThetaFin; iTheta++) {
         for (int iPhi = idPhiCl - halfPhiFin; iPhi <= idPhiCl + halfPhiFin; iPhi++) {
-          if(iTheta - idThetaCl + halfThetaFin >= 0)
+          if (iTheta - idThetaCl + halfThetaFin >= 0)
             if (sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] != 0) {
-              float sumButOne = sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)];
-            float towerEnergy = m_towers[iTheta][phiNeighbour(iPhi)] / sin(m_towerTool->theta(iTheta));
-            clusterEnergy -= towerEnergy * sumButOne / (sumButOne + towerEnergy);
-          }
+              float sumButOne =
+                  sumEnergySharing[iTheta - idThetaCl + halfThetaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)];
+              float towerEnergy = m_towers[iTheta][phiNeighbour(iPhi)] / sin(m_towerTool->theta(iTheta));
+              clusterEnergy -= towerEnergy * sumButOne / (sumButOne + towerEnergy);
+            }
         }
       }
     }
@@ -302,7 +304,8 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
       edmCluster.setEnergy(clusterEnergy);
       if (m_attachCells) {
         debug() << "Attaching cells to the clusters." << endmsg;
-        m_towerTool->attachCells(clu.theta, clu.phi, halfThetaFin, halfPhiFin, edmCluster, edmClusterCells, m_ellipseFinalCluster);
+        m_towerTool->attachCells(clu.theta, clu.phi, halfThetaFin, halfPhiFin, edmCluster, edmClusterCells,
+                                 m_ellipseFinalCluster);
       }
       debug() << "Cluster theta: " << clu.theta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
               << " y: " << edmCluster.getPosition().y << " z: " << edmCluster.getPosition().z

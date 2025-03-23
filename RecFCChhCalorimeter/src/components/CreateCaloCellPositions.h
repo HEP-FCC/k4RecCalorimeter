@@ -61,7 +61,8 @@ private:
   /// Input collection
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Output collection
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits",
+                                                                         Gaudi::DataHandle::Writer, this};
 };
 
 #endif /* DETCOMPONENTS_CREATECELLPOSITIONS_H */

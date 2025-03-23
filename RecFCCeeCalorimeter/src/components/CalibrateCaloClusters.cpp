@@ -10,120 +10,100 @@
 #include "DD4hep/Detector.h"
 
 // our EDM
+#include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
-#include "edm4hep/CalorimeterHitCollection.h"
 #include <onnxruntime_cxx_api.h>
 
 #include "OnnxruntimeUtilities.h"
 
 DECLARE_COMPONENT(CalibrateCaloClusters)
 
-
-CalibrateCaloClusters::CalibrateCaloClusters(const std::string &name,
-                                             ISvcLocator *svcLoc)
-    : Gaudi::Algorithm(name, svcLoc),
-      m_geoSvc("GeoSvc", "CalibrateCaloClusters"),
-      m_ortMemInfo(Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault))
-{
-  declareProperty("inClusters", m_inClusters,
-                  "Input cluster collection");
-  declareProperty("outClusters", m_outClusters,
-                  "Calibrated (output) cluster collection");
+CalibrateCaloClusters::CalibrateCaloClusters(const std::string& name, ISvcLocator* svcLoc)
+    : Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", "CalibrateCaloClusters"),
+      m_ortMemInfo(Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault)) {
+  declareProperty("inClusters", m_inClusters, "Input cluster collection");
+  declareProperty("outClusters", m_outClusters, "Calibrated (output) cluster collection");
 }
 
-StatusCode CalibrateCaloClusters::initialize()
-{
+StatusCode CalibrateCaloClusters::initialize() {
   // Initialize base class
   {
     StatusCode sc = Gaudi::Algorithm::initialize();
-    if (sc.isFailure())
-    {
+    if (sc.isFailure()) {
       return sc;
     }
   }
 
   // Check if readouts exist
-  for (unsigned short int i = 0; i < m_readoutNames.size(); ++i)
-  {
+  for (unsigned short int i = 0; i < m_readoutNames.size(); ++i) {
     auto readouts = m_geoSvc->getDetector()->readouts();
-    if (readouts.find(m_readoutNames.value().at(i)) == readouts.end())
-    {
+    if (readouts.find(m_readoutNames.value().at(i)) == readouts.end()) {
       error() << "Missing readout, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
 
   // Check if readout related variables have the same size
-  if (m_systemIDs.size() != m_readoutNames.size())
-  {
+  if (m_systemIDs.size() != m_readoutNames.size()) {
     error() << "Sizes of the systemIDs vector and readoutNames vector do not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
-  if (m_systemIDs.size() != m_numLayers.size())
-  {
+  if (m_systemIDs.size() != m_numLayers.size()) {
     error() << "Sizes of systemIDs vector and numLayers vector do not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
-  if (m_systemIDs.size() != m_layerFieldNames.size())
-  {
+  if (m_systemIDs.size() != m_layerFieldNames.size()) {
     error() << "Sizes of systemIDs vector and layerFieldNames vector do not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
-  if (m_systemIDs.size() != m_firstLayerIDs.size())
-  {
+  if (m_systemIDs.size() != m_firstLayerIDs.size()) {
     error() << "Sizes of systemIDs vector and firstLayerIDs vector do not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
 
   // calculate total number of layers summed over the various subsystems
   m_numLayersTotal = 0;
-  for (unsigned short int i = 0; i < m_numLayers.size(); ++i)
-  {
+  for (unsigned short int i = 0; i < m_numLayers.size(); ++i) {
     m_numLayersTotal += m_numLayers[i];
   }
 
   // Initialize the calibration tool
   StatusCode sc = readCalibrationFile(m_calibrationFile);
-  if (sc.isFailure())
-  {
+  if (sc.isFailure()) {
     error() << "Initialization of calibration tool correction functions not successful!" << endmsg;
     return sc;
   }
 
-  // read from the metadata the names of the shape parameters in the input clusters and append the total raw energy to the output
+  // read from the metadata the names of the shape parameters in the input clusters and append the total raw energy to
+  // the output
   std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get({});
   shapeParameters.push_back("rawE");
   m_outShapeParameterHandle.put(shapeParameters);
 
   // check if the shape parameters contain the inputs needed for the calibration
   m_inputPositionsInShapeParameters.clear();
-  for (unsigned short int iSystem = 0; iSystem < m_systemIDs.size(); iSystem++)
-  {
+  for (unsigned short int iSystem = 0; iSystem < m_systemIDs.size(); iSystem++) {
     std::string detector = m_detectorNames[iSystem];
-    for (unsigned short int iLayer=0; iLayer<m_numLayers[iSystem]; iLayer++)
-    {
+    for (unsigned short int iLayer = 0; iLayer < m_numLayers[iSystem]; iLayer++) {
       std::string decoration = Form("energy_fraction_%s_layer_%hu", detector.c_str(), iLayer);
-      auto it = std::find(shapeParameters.begin(), shapeParameters.end(),
-                          decoration);
-      if (it != shapeParameters.end())
-      {
+      auto it = std::find(shapeParameters.begin(), shapeParameters.end(), decoration);
+      if (it != shapeParameters.end()) {
         int position = std::distance(shapeParameters.begin(), it);
         m_inputPositionsInShapeParameters.push_back(position);
         info() << "Decoration " << decoration << " found in position " << position << " of shapeParameters" << endmsg;
-      }
-      else
-      {
+      } else {
         // at least one of the inputs of the MVA was not found in the shapeParameters
-        // so we can stop checking the others 
+        // so we can stop checking the others
         m_inputPositionsInShapeParameters.clear();
         info() << "Decoration " << decoration << " not found. Will recalculate energy fractions from cells" << endmsg;
         break;
       }
     }
-    if ((int) m_inputPositionsInShapeParameters.size() == m_numLayersTotal)
-    {
-      info() << "Decorations found in shapeParamers for all BDT inputs. Will not recalculate energy fractions from cells" << endmsg;
+    if ((int)m_inputPositionsInShapeParameters.size() == m_numLayersTotal) {
+      info()
+          << "Decorations found in shapeParamers for all BDT inputs. Will not recalculate energy fractions from cells"
+          << endmsg;
     }
   }
 
@@ -131,24 +111,21 @@ StatusCode CalibrateCaloClusters::initialize()
   return StatusCode::SUCCESS;
 }
 
-StatusCode CalibrateCaloClusters::execute(const EventContext& evtCtx) const
-{
-  (void) evtCtx;  // event context not used
+StatusCode CalibrateCaloClusters::execute(const EventContext& evtCtx) const {
+  (void)evtCtx; // event context not used
 
   verbose() << "-------------------------------------------" << endmsg;
 
   // Get the input collection with clusters
-  const edm4hep::ClusterCollection *inClusters = m_inClusters.get();
+  const edm4hep::ClusterCollection* inClusters = m_inClusters.get();
 
   // Initialize output clusters
-  edm4hep::ClusterCollection *outClusters = initializeOutputClusters(inClusters);
-  if (!outClusters)
-  {
+  edm4hep::ClusterCollection* outClusters = initializeOutputClusters(inClusters);
+  if (!outClusters) {
     error() << "Something went wrong in initialization of the output cluster collection, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
-  if (inClusters->size() != outClusters->size())
-  {
+  if (inClusters->size() != outClusters->size()) {
     error() << "Sizes of input and output cluster collections does not match, exiting!" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -156,8 +133,7 @@ StatusCode CalibrateCaloClusters::execute(const EventContext& evtCtx) const
   // Apply calibration
   {
     StatusCode sc = calibrateClusters(inClusters, outClusters);
-    if (sc.isFailure())
-    {
+    if (sc.isFailure()) {
       return sc;
     }
   }
@@ -165,8 +141,7 @@ StatusCode CalibrateCaloClusters::execute(const EventContext& evtCtx) const
   return StatusCode::SUCCESS;
 }
 
-StatusCode CalibrateCaloClusters::finalize()
-{
+StatusCode CalibrateCaloClusters::finalize() {
   if (m_ortSession)
     delete m_ortSession;
 
@@ -184,14 +159,11 @@ StatusCode CalibrateCaloClusters::finalize()
   return Gaudi::Algorithm::finalize();
 }
 
+edm4hep::ClusterCollection*
+CalibrateCaloClusters::initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const {
+  edm4hep::ClusterCollection* outClusters = m_outClusters.createAndPut();
 
-edm4hep::ClusterCollection *CalibrateCaloClusters::initializeOutputClusters(
-    const edm4hep::ClusterCollection *inClusters) const
-{
-  edm4hep::ClusterCollection *outClusters = m_outClusters.createAndPut();
-
-  for (auto const &inCluster : *inClusters)
-  {
+  for (auto const& inCluster : *inClusters) {
     auto outCluster = inCluster.clone();
     outClusters->push_back(outCluster);
   }
@@ -199,13 +171,11 @@ edm4hep::ClusterCollection *CalibrateCaloClusters::initializeOutputClusters(
   return outClusters;
 }
 
-StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibrationFile)
-{
+StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string& calibrationFile) {
   // set logging level based on output level of this alg
   OrtLoggingLevel loggingLevel = ORT_LOGGING_LEVEL_WARNING;
   MSG::Level outputLevel = this->msgStream().level();
-  switch (outputLevel)
-  {
+  switch (outputLevel) {
   case MSG::Level::FATAL:                   // 6
     loggingLevel = ORT_LOGGING_LEVEL_FATAL; // 4
     break;
@@ -227,15 +197,12 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   default:
     break;
   }
-  try
-  {
+  try {
     m_ortEnv = new Ort::Env(loggingLevel, "ONNX runtime environment");
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
     m_ortSession = new Ort::Session(*m_ortEnv, calibrationFile.data(), session_options);
-  }
-  catch (const Ort::Exception &exception)
-  {
+  } catch (const Ort::Exception& exception) {
     error() << "ERROR setting up ONNX runtime environment: " << exception.what() << endmsg;
     return StatusCode::FAILURE;
   }
@@ -250,8 +217,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   using AllocatedStringPtr = std::unique_ptr<char, decltype(allocDeleter)>;
 #endif
 
-  for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++)
-  {
+  for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++) {
 #if ORT_API_VERSION < 13
     m_input_names.emplace_back(AllocatedStringPtr(m_ortSession->GetInputName(i, allocator), allocDeleter).release());
 #else
@@ -259,25 +225,21 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
 #endif
     m_input_shapes = m_ortSession->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_input_names.at(i) << " : ";
-    for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++)
-    {
+    for (std::size_t k = 0; k < m_input_shapes.size() - 1; k++) {
       debug() << m_input_shapes[k] << "x";
     }
     debug() << m_input_shapes[m_input_shapes.size() - 1] << endmsg;
   }
   // some models might have negative shape values to indicate dynamic shape, e.g., for variable batch size.
-  for (auto &s : m_input_shapes)
-  {
-    if (s < 0)
-    {
+  for (auto& s : m_input_shapes) {
+    if (s < 0) {
       s = 1;
     }
   }
 
   // print name/shape of outputs
   debug() << "Output Node Name/Shape (" << m_output_names.size() << "):" << endmsg;
-  for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++)
-  {
+  for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++) {
 #if ORT_API_VERSION < 13
     m_output_names.emplace_back(AllocatedStringPtr(m_ortSession->GetOutputName(i, allocator), allocDeleter).release());
 #else
@@ -285,8 +247,7 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
 #endif
     m_output_shapes = m_ortSession->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
     debug() << "\t" << m_output_names.at(i) << " : ";
-    for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++)
-    {
+    for (std::size_t k = 0; k < m_output_shapes.size() - 1; k++) {
       debug() << m_output_shapes[k] << "x";
     }
     debug() << m_output_shapes[m_output_shapes.size() - 1] << endmsg;
@@ -297,11 +258,8 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   // the first dimension of the tensors are the number of clusters
   // to be calibrated simultaneously (-1 = dynamic)
   // we will calibrate once at a time
-  if (m_input_shapes.size() != 2 ||
-      m_output_shapes.size() != 2 ||
-      m_input_shapes[1] != (m_numLayersTotal + 1) ||
-      m_output_shapes[1] != 1)
-  {
+  if (m_input_shapes.size() != 2 || m_output_shapes.size() != 2 || m_input_shapes[1] != (m_numLayersTotal + 1) ||
+      m_output_shapes[1] != 1) {
     error() << "The input or output shapes in the calibration files do not match the expected architecture" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -309,22 +267,19 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string &calibra
   return StatusCode::SUCCESS;
 }
 
-StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollection *inClusters,
-                                                    edm4hep::ClusterCollection *outClusters) const
-{
+StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollection* inClusters,
+                                                    edm4hep::ClusterCollection* outClusters) const {
 
   // this vector will contain the input features for the calibration
   // i.e. the fraction of energy in each layer and the total energy
   std::vector<float> energiesInLayers(m_numLayersTotal + 1);
 
   // loop over the input clusters and perform the calibration
-  for (unsigned int j = 0; j < inClusters->size(); ++j)
-  {
+  for (unsigned int j = 0; j < inClusters->size(); ++j) {
 
     // retrieve total cluster energy
     float ecl = (inClusters->at(j)).getEnergy();
-    if (ecl <= 0.)
-    {
+    if (ecl <= 0.) {
       warning() << "Energy in calorimeter <= 0, ignoring energy correction!" << endmsg;
       continue;
     }
@@ -333,8 +288,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     // calculate cluster energy in each layer and normalize by total cluster energy
     calcEnergiesInLayers(inClusters->at(j), energiesInLayers);
     verbose() << "Calibration inputs:" << endmsg;
-    for (unsigned short int k = 0; k < energiesInLayers.size(); ++k)
-    {
+    for (unsigned short int k = 0; k < energiesInLayers.size(); ++k) {
       verbose() << "    f" << k << " : " << energiesInLayers[k] << endmsg;
     }
 
@@ -348,24 +302,17 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     // assert(input_tensors[0].IsTensor() && input_tensors[0].GetTensorTypeAndShapeInfo().GetShape() == m_input_shapes);
 
     // pass data through model
-    try
-    {
-      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr},
-                                              m_input_names.data(),
-                                              input_tensors.data(),
-                                              input_tensors.size(),
-                                              m_output_names.data(),
-                                              m_output_names.size());
+    try {
+      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr}, m_input_names.data(), input_tensors.data(),
+                                              input_tensors.size(), m_output_names.data(), m_output_names.size());
 
       // double-check the dimensions of the output tensors
       // NOTE: the number of output tensors is equal to the number of output nodes specifed in the Run() call
       // assert(output_tensors.size() == output_names.size() && output_tensors[0].IsTensor());
 
-      float *outputData = output_tensors[0].GetTensorMutableData<float>();
+      float* outputData = output_tensors[0].GetTensorMutableData<float>();
       corr = outputData[0];
-    }
-    catch (const Ort::Exception &exception)
-    {
+    } catch (const Ort::Exception& exception) {
       error() << "ERROR running model inference: " << exception.what() << endmsg;
       return StatusCode::FAILURE;
     }
@@ -379,9 +326,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
   return StatusCode::SUCCESS;
 }
 
-void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
-                                                 std::vector<float> &energiesInLayers) const
-{
+void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster, std::vector<float>& energiesInLayers) const {
   // reset vector with energies per layer
   std::fill(energiesInLayers.begin(), energiesInLayers.end(), 0.0);
 
@@ -389,41 +334,33 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
   double ecl = cluster.getEnergy();
 
   // if all inputs are available as shapeParameters, use them
-  if (m_inputPositionsInShapeParameters.size() == m_numLayersTotal)
-  {
+  if (m_inputPositionsInShapeParameters.size() == m_numLayersTotal) {
     // the shapeParameters already contain energy fractions so we
     // do not divide by cluster energy
-    for (unsigned short int i=0; i < m_numLayersTotal; i++)
-    {
+    for (unsigned short int i = 0; i < m_numLayersTotal; i++) {
       energiesInLayers[i] = cluster.getShapeParameters(m_inputPositionsInShapeParameters[i]);
     }
     // add as last input the total raw cluster energy
     energiesInLayers[m_numLayersTotal] = ecl;
-  }
-  else
-  {
+  } else {
     // calculate the energy fractions from the cells
     // loop over the various readouts/subsystems/...
     unsigned short int startPositionToFill = 0;
-    for (unsigned short int k = 0; k < m_readoutNames.size(); k++)
-    {
-      if (k > 0)
-      {
+    for (unsigned short int k = 0; k < m_readoutNames.size(); k++) {
+      if (k > 0) {
         startPositionToFill += m_numLayers[k - 1];
       }
       int systemID = m_systemIDs[k];
       unsigned short int firstLayer = m_firstLayerIDs[k];
       std::string layerField = m_layerFieldNames[k];
       std::string readoutName = m_readoutNames[k];
-      dd4hep::DDSegmentation::BitFieldCoder *decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
+      dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
       // for each readout, loop over the cells and calculate the energies in the layers
       // of that subsystem
-      for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); ++cell)
-      {
+      for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); ++cell) {
         dd4hep::DDSegmentation::CellID cellID = cell->getCellID();
-        if (decoder->get(cellID, "system") != systemID)
-        {
+        if (decoder->get(cellID, "system") != systemID) {
           continue;
         }
         int layer = decoder->get(cellID, layerField);
@@ -431,8 +368,7 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster,
       }
     }
     // divide by the cluster energy to prepare the inputs for the MVA
-    for (unsigned short int k = 0; k < m_numLayersTotal; ++k)
-    {
+    for (unsigned short int k = 0; k < m_numLayersTotal; ++k) {
       energiesInLayers[k] /= ecl;
     }
     // add as last input the total cluster energy

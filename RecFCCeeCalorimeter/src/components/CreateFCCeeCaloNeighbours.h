@@ -5,10 +5,10 @@
 #include "GaudiKernel/Service.h"
 
 // k4FWCore
-#include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/IGeoSvc.h"
 #include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICaloCreateMap.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/IGeoSvc.h"
 
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
@@ -51,21 +51,28 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Names of the detector readout for the volumes
-  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNames", {"ECalBarrelModuleThetaMerged", "HCalBarrelReadout","HCalEndcapReadout"}};
+  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{
+      this, "readoutNames", {"ECalBarrelModuleThetaMerged", "HCalBarrelReadout", "HCalEndcapReadout"}};
   /// Name of the fields describing the segmented volume
-  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system", "system","system"}};
+  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system", "system", "system"}};
   /// Values of the fields describing the segmented volume
   Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {4, 8, 9}};
   /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module" or "phi", "theta"
-  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer", "layer","layer"}};
+  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{
+      this, "activeFieldNames", {"layer", "layer", "layer"}};
   /// Number of layers in the segmented volumes
-  Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {11, 13, 37}};
+  Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{
+      this, "activeVolumesNumbers", {11, 13, 37}};
   // Theta ranges of layers in the segmented volumes
   Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
   /// Whether to consider diagonal cells as neighbours or not
-  Gaudi::Property<bool> m_includeDiagonalCells{this, "includeDiagonalCells", false, "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
+  Gaudi::Property<bool> m_includeDiagonalCells{
+      this, "includeDiagonalCells", false,
+      "If True will consider also diagonal neighbours in volumes with theta-module segmentation"};
   /// Whether to consider diagonal cells as neighbours or not for HCal phi-theta segmentation
-  Gaudi::Property<bool> m_includeDiagonalCellsHCal{this, "includeDiagonalCellsHCal", false, "If True will consider also diagonal neighbours in volumes with phi-theta segmentation"};
+  Gaudi::Property<bool> m_includeDiagonalCellsHCal{
+      this, "includeDiagonalCellsHCal", false,
+      "If True will consider also diagonal neighbours in volumes with phi-theta segmentation"};
 
   // System ID of ECAL and HCAL barrels
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};

@@ -13,7 +13,8 @@ class IGeoSvc;
  *LayerPhiEtaCaloTool.h
  *
  *  Tool for geometry-dependent settings of the digitisation.
- *  Needs the eta range per layer as input to calculate the total number of calo cells, layers and phi-eta segmentation is taken from the geometry.
+ *  Needs the eta range per layer as input to calculate the total number of calo cells, layers and phi-eta segmentation
+ *is taken from the geometry.
  *
  *  @author Anna Zaborowska, Coralie Neubueser
  */
@@ -54,7 +55,8 @@ private:
   /// Temporary: for use with MergeLayer tool
   Gaudi::Property<unsigned int> m_activeVolumesNumber{this, "activeVolumesNumber", 10};
   /// Temporary: for use with Tile Calo
-  Gaudi::Property<std::vector<double>> m_activeVolumesEta{this, "activeVolumesEta", {1.2524, 1.2234, 1.1956, 1.15609, 1.1189, 1.08397, 1.0509, 0.9999, 0.9534, 0.91072}};
+  Gaudi::Property<std::vector<double>> m_activeVolumesEta{
+      this, "activeVolumesEta", {1.2524, 1.2234, 1.1956, 1.15609, 1.1189, 1.08397, 1.0509, 0.9999, 0.9534, 0.91072}};
 };
 
 #endif /* RECCALORIMETER_TUBELAYERPHIETACALOTOOL_H */

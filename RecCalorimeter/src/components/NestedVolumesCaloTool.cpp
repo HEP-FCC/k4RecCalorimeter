@@ -14,8 +14,9 @@ NestedVolumesCaloTool::NestedVolumesCaloTool(const std::string& type, const std:
 
 StatusCode NestedVolumesCaloTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
-  
+  if (sc.isFailure())
+    return sc;
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;

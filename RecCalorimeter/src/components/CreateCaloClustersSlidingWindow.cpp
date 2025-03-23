@@ -170,9 +170,11 @@ StatusCode CreateCaloClustersSlidingWindow::execute(const EventContext&) const {
           // Recalculating the energy within the final cluster size
           for (int ipEta = idEtaFin - halfEtaFin; ipEta <= idEtaFin + halfEtaFin; ipEta++) {
             for (int ipPhi = idPhiFin - halfPhiFin; ipPhi <= idPhiFin + halfPhiFin; ipPhi++) {
-              if (ipEta >= 0 && ipEta < m_nEtaTower) {  // check if we are not outside of map in eta
+              if (ipEta >= 0 && ipEta < m_nEtaTower) { // check if we are not outside of map in eta
                 if (m_ellipseFinalCluster) {
-                  if (pow( (ipEta - idEtaFin) / (m_nEtaFinal / 2.), 2) + pow( (ipPhi - idPhiFin) / (m_nPhiFinal / 2.), 2) < 1) {
+                  if (pow((ipEta - idEtaFin) / (m_nEtaFinal / 2.), 2) +
+                          pow((ipPhi - idPhiFin) / (m_nPhiFinal / 2.), 2) <
+                      1) {
                     sumEnergyFin += m_towers[ipEta][phiNeighbour(ipPhi)];
                   }
                 } else {
@@ -222,7 +224,8 @@ StatusCode CreateCaloClustersSlidingWindow::execute(const EventContext&) const {
     for (auto it2 = it1 + 1; it2 != m_preClusters.end();) {
       if ((abs(int(m_towerTool->idEta((*it1).eta) - m_towerTool->idEta((*it2).eta))) < m_nEtaDuplicates) &&
           ((abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) < m_nPhiDuplicates) ||
-           (abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) > m_nPhiTower - m_nPhiDuplicates))) {
+           (abs(int(m_towerTool->idPhi((*it1).phi) - m_towerTool->idPhi((*it2).phi))) >
+            m_nPhiTower - m_nPhiDuplicates))) {
         m_preClusters.erase(it2);
       } else {
         it2++;
@@ -254,12 +257,10 @@ StatusCode CreateCaloClustersSlidingWindow::execute(const EventContext&) const {
                (abs(idPhiClShare - idPhiCl) > m_nPhiTower - m_nPhiFinal))) {
             // add energy in shared towers to sumEnergySharing[][]
             for (int iEta = std::max(idEtaCl, idEtaClShare) - halfEtaFin;
-                 iEta <= std::min(idEtaCl, idEtaClShare) + halfEtaFin;
-                 iEta++) {
+                 iEta <= std::min(idEtaCl, idEtaClShare) + halfEtaFin; iEta++) {
               for (int iPhi = std::max(idPhiCl, idPhiClShare) - halfPhiFin;
-                   iEta <= std::min(idPhiCl, idPhiClShare) + halfPhiFin;
-                   iPhi++) {
-                if (iEta >= 0 && iEta < m_nEtaTower) {  // check if we are not outside of map in eta
+                   iEta <= std::min(idPhiCl, idPhiClShare) + halfPhiFin; iPhi++) {
+                if (iEta >= 0 && iEta < m_nEtaTower) { // check if we are not outside of map in eta
                   sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] +=
                       m_towers[iEta][phiNeighbour(iPhi)] * cosh(m_towerTool->eta(iEta));
                 }
@@ -271,12 +272,13 @@ StatusCode CreateCaloClustersSlidingWindow::execute(const EventContext&) const {
       // apply the actual correction: substract the weighted energy contributions in other clusters
       for (int iEta = idEtaCl - halfEtaFin; iEta <= idEtaCl + halfEtaFin; iEta++) {
         for (int iPhi = idPhiCl - halfPhiFin; iPhi <= idPhiCl + halfPhiFin; iPhi++) {
-          if(iEta - idEtaCl + halfEtaFin >= 0)
+          if (iEta - idEtaCl + halfEtaFin >= 0)
             if (sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)] != 0) {
-              float sumButOne = sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)];
-            float towerEnergy = m_towers[iEta][phiNeighbour(iPhi)] * cosh(m_towerTool->eta(iEta));
-            clusterEnergy -= towerEnergy * sumButOne / (sumButOne + towerEnergy);
-          }
+              float sumButOne =
+                  sumEnergySharing[iEta - idEtaCl + halfEtaFin][phiNeighbour(iPhi - idPhiCl + halfPhiFin)];
+              float towerEnergy = m_towers[iEta][phiNeighbour(iPhi)] * cosh(m_towerTool->eta(iEta));
+              clusterEnergy -= towerEnergy * sumButOne / (sumButOne + towerEnergy);
+            }
         }
       }
     }
@@ -288,7 +290,8 @@ StatusCode CreateCaloClustersSlidingWindow::execute(const EventContext&) const {
       edmCluster.setEnergy(clusterEnergy);
       if (m_attachCells) {
         debug() << "Attaching cells to the clusters." << endmsg;
-        m_towerTool->attachCells(clu.eta, clu.phi, halfEtaFin, halfPhiFin, edmCluster, edmClusterCells, m_ellipseFinalCluster);
+        m_towerTool->attachCells(clu.eta, clu.phi, halfEtaFin, halfPhiFin, edmCluster, edmClusterCells,
+                                 m_ellipseFinalCluster);
       }
       debug() << "Cluster eta: " << clu.eta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
               << " y: " << edmCluster.getPosition().y << " z: " << edmCluster.getPosition().z

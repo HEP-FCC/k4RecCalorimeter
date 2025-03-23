@@ -35,17 +35,13 @@
  */
 
 struct CreateCaloJet final
-    : k4FWCore::Transformer<edm4hep::ReconstructedParticleCollection(
-          const edm4hep::ClusterCollection &)> {
-  CreateCaloJet(const std::string &name, ISvcLocator *svcLoc)
-      : Transformer(
-            name, svcLoc,
-            {KeyValues("InputClusterCollection", {"CorrectedCaloClusters"})},
-            {KeyValues("OutputJetCollection", {"Jets"})}) {}
+    : k4FWCore::Transformer<edm4hep::ReconstructedParticleCollection(const edm4hep::ClusterCollection&)> {
+  CreateCaloJet(const std::string& name, ISvcLocator* svcLoc)
+      : Transformer(name, svcLoc, {KeyValues("InputClusterCollection", {"CorrectedCaloClusters"})},
+                    {KeyValues("OutputJetCollection", {"Jets"})}) {}
 
   StatusCode initialize() override {
-    m_clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius,
-                                              m_isExclusive, m_minPt);
+    m_clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_isExclusive, m_minPt);
 
     if (!m_clusterer->initialize()) {
       return StatusCode::FAILURE;
@@ -54,8 +50,7 @@ struct CreateCaloJet final
     return StatusCode::SUCCESS;
   }
 
-  edm4hep::ReconstructedParticleCollection
-  operator()(const edm4hep::ClusterCollection &input) const override {
+  edm4hep::ReconstructedParticleCollection operator()(const edm4hep::ClusterCollection& input) const override {
     std::vector<fastjet::PseudoJet> clustersPJ;
     int i = 0;
 
@@ -68,8 +63,7 @@ struct CreateCaloJet final
       double theta = acos(sqrt(z * z / (x * x + y * y + z * z)));
       double eta = -log(tan(theta / 2.));
       double phi = atan2(y, x);
-      double pT =
-          cluster.getEnergy() * sqrt((x * x + y * y) / (x * x + y * y + z * z));
+      double pT = cluster.getEnergy() * sqrt((x * x + y * y) / (x * x + y * y + z * z));
 
       // Take clusters to be massless
       fastjet::PseudoJet clusterPJ;
@@ -80,11 +74,9 @@ struct CreateCaloJet final
       i++;
     }
 
-    std::vector<fastjet::PseudoJet> inclusiveJets =
-        m_clusterer->cluster(clustersPJ);
+    std::vector<fastjet::PseudoJet> inclusiveJets = m_clusterer->cluster(clustersPJ);
 
-    edm4hep::ReconstructedParticleCollection edmJets =
-        edm4hep::ReconstructedParticleCollection();
+    edm4hep::ReconstructedParticleCollection edmJets = edm4hep::ReconstructedParticleCollection();
     // Add a reconstructed particle for each jet
     for (auto cjet : inclusiveJets) {
       edm4hep::MutableReconstructedParticle jet;
@@ -111,16 +103,12 @@ struct CreateCaloJet final
   }
 
 private:
-  Gaudi::Property<std::string> m_jetAlg{this, "JetAlg", "antikt",
-                                        "Name of jet clustering algorithm"};
-  Gaudi::Property<double> m_jetRadius{this, "JetRadius", 0.4,
-                                      "Jet clustering radius"};
-  Gaudi::Property<double> m_minPt{this, "MinPt", 10,
-                                  "Minimum pT for saved jets"};
-  Gaudi::Property<int> m_isExclusive{this, "IsExclusiveClustering", 0,
-                                     "1 if exclusive, 0 if inclusive"};
+  Gaudi::Property<std::string> m_jetAlg{this, "JetAlg", "antikt", "Name of jet clustering algorithm"};
+  Gaudi::Property<double> m_jetRadius{this, "JetRadius", 0.4, "Jet clustering radius"};
+  Gaudi::Property<double> m_minPt{this, "MinPt", 10, "Minimum pT for saved jets"};
+  Gaudi::Property<int> m_isExclusive{this, "IsExclusiveClustering", 0, "1 if exclusive, 0 if inclusive"};
 
-  k4::recCalo::ClusterJet *m_clusterer = nullptr;
+  k4::recCalo::ClusterJet* m_clusterer = nullptr;
 };
 
 DECLARE_COMPONENT(CreateCaloJet)

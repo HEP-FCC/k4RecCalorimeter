@@ -17,9 +17,9 @@ class IGeoSvc;
  *
  *  Algorithm for creating empty calorimeter cells collection
  *  Use-case:
- *  Input for clustering algorithm are collections from ALL calorimeter systems 
- *  (ECAL barrel, HCAL barrel+extended barrel, ECAL + HCAL endcaps, ECAL + HCAL forward calorimeter). 
- *  If not all collections are available (e.g. running simulations with just a subset of calorimeters), 
+ *  Input for clustering algorithm are collections from ALL calorimeter systems
+ *  (ECAL barrel, HCAL barrel+extended barrel, ECAL + HCAL endcaps, ECAL + HCAL forward calorimeter).
+ *  If not all collections are available (e.g. running simulations with just a subset of calorimeters),
  *  the user is supposed to create dummy cell collections for the other calorimeters.
  *
  *  @author Jana Faltova

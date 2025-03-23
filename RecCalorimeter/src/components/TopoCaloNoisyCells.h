@@ -27,24 +27,24 @@ public:
    */
   virtual StatusCode initialize() final;
   virtual StatusCode finalize() final;
- 
+
   /** Expected noise per cell in terms of sigma of Gaussian distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
   virtual double noiseRMS(uint64_t aCellId) final;
-  
+
   /** Expected noise per cell in terms of mean of distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
-   */ 
+   */
   virtual double noiseOffset(uint64_t aCellId) final;
 
 private:
   /// Name
   Gaudi::Property<std::string> m_fileName{this, "fileName",
                                           "/afs/cern.ch/user/c/cneubuse/public/FCChh/cellNoise_map_segHcal.root"};
-  std::unordered_map<uint64_t, std::pair<double,double>> m_map;
+  std::unordered_map<uint64_t, std::pair<double, double>> m_map;
 };
 
 #endif /* RECCALORIMETER_TOPOCALONOISYCELLS_H */

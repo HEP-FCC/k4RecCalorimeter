@@ -12,7 +12,8 @@ NoiseCaloCellsFlatTool::NoiseCaloCellsFlatTool(const std::string& type, const st
 StatusCode NoiseCaloCellsFlatTool::initialize() {
   {
     StatusCode sc = AlgTool::initialize();
-    if (sc.isFailure()) return sc;
+    if (sc.isFailure())
+      return sc;
   }
 
   // Initialize random service
@@ -35,8 +36,9 @@ StatusCode NoiseCaloCellsFlatTool::initialize() {
 }
 
 void NoiseCaloCellsFlatTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) {
-  std::for_each(aCells.begin(), aCells.end(),
-                [this](std::pair<const uint64_t, double>& p) { p.second += (m_cellNoiseOffset + (m_gauss.shoot() * m_cellNoiseRMS)); });
+  std::for_each(aCells.begin(), aCells.end(), [this](std::pair<const uint64_t, double>& p) {
+    p.second += (m_cellNoiseOffset + (m_gauss.shoot() * m_cellNoiseRMS));
+  });
 }
 
 void NoiseCaloCellsFlatTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) {

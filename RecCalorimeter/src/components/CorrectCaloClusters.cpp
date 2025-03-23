@@ -8,18 +8,18 @@
 
 // FCC Detectors
 #include "detectorCommon/DetUtils_k4geo.h"
+#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
-#include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DDSegmentation/MultiSegmentation.h"
 
 // our EDM
+#include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
-#include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/MCParticleCollection.h"
 #include "edm4hep/VertexCollection.h"
 
@@ -27,18 +27,14 @@
 #include "TF2.h"
 
 // Include the <cmath> header for std::fabs
-#include <cmath>  
+#include <cmath>
 
 DECLARE_COMPONENT(CorrectCaloClusters)
 
-CorrectCaloClusters::CorrectCaloClusters(const std::string& name,
-                                         ISvcLocator* svcLoc)
-    : Gaudi::Algorithm(name, svcLoc),
-      m_geoSvc("GeoSvc", "CorrectCaloClusters") {
-  declareProperty("inClusters", m_inClusters,
-                  "Input cluster collection");
-  declareProperty("outClusters", m_outClusters,
-                  "Corrected (output) cluster collection");
+CorrectCaloClusters::CorrectCaloClusters(const std::string& name, ISvcLocator* svcLoc)
+    : Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", "CorrectCaloClusters") {
+  declareProperty("inClusters", m_inClusters, "Input cluster collection");
+  declareProperty("outClusters", m_outClusters, "Corrected (output) cluster collection");
 }
 
 StatusCode CorrectCaloClusters::initialize() {
@@ -78,78 +74,88 @@ StatusCode CorrectCaloClusters::initialize() {
     return StatusCode::FAILURE;
   }
   if (m_upstreamCorr) {
-    if (m_upstreamFormulas.empty()){
+    if (m_upstreamFormulas.empty()) {
       error() << "Upstream correction is turned on, but upstreamFormulas vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_upstreamParams.empty()){
+    if (m_upstreamParams.empty()) {
       error() << "Upstream correction is turned on, but upstreamParams vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_systemIDs.size() != m_upstreamFormulas.size()) {
-      error() <<  "Sizes of systemIDs vector and upstreamFormulas vector does not match, exiting!" << endmsg;
+      error() << "Sizes of systemIDs vector and upstreamFormulas vector does not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_systemIDs.size() != m_upstreamParams.size()) {
-      error() <<  "Sizes of systemIDs vector and upstreamParams vector does not match, exiting!" << endmsg;
+      error() << "Sizes of systemIDs vector and upstreamParams vector does not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
-  if (m_downstreamCorr) { 
-    if (m_downstreamFormulas.empty()){
+  if (m_downstreamCorr) {
+    if (m_downstreamFormulas.empty()) {
       error() << "Downstream correction is turned on, but downstreamFormulas vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_downstreamParams.empty()){
+    if (m_downstreamParams.empty()) {
       error() << "Downstream correction is turned on, but downstreamParams vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_systemIDs.size() != m_downstreamFormulas.size()) {
-      error() <<  "Sizes of systemIDs vector and downstreamFormulas vector does not match, exiting!" << endmsg;
+      error() << "Sizes of systemIDs vector and downstreamFormulas vector does not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
     if (m_systemIDs.size() != m_downstreamParams.size()) {
-      error() <<  "Sizes of systemIDs vector and downstreamParams vector does not match, exiting!" << endmsg;
+      error() << "Sizes of systemIDs vector and downstreamParams vector does not match, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
   }
-  if (m_benchmarkCorr) { 
-    // number of benchmark parameters is 6 
-    size_t nBenchmarkParams = 6; 
+  if (m_benchmarkCorr) {
+    // number of benchmark parameters is 6
+    size_t nBenchmarkParams = 6;
     // check that all benchmark parameters and functions are not empty and have the correct size
-    if (m_benchmarkFormulas.empty()){
+    if (m_benchmarkFormulas.empty()) {
       error() << "Benchmark correction is turned on, but benchmarkFormulas vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_benchmarkParametrization.empty()){
+    if (m_benchmarkParametrization.empty()) {
       error() << "Benchmark correction is turned on, but benchmarkParametrization vector is empty, exiting!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_benchmarkFormulas.size() != m_benchmarkParametrization.size()){
-      error() <<  "Sizes of benchmarkFormulas vector and benchmarkParametrization vector does not match, exiting! " << m_benchmarkFormulas.size() << endmsg;
+    if (m_benchmarkFormulas.size() != m_benchmarkParametrization.size()) {
+      error() << "Sizes of benchmarkFormulas vector and benchmarkParametrization vector does not match, exiting! "
+              << m_benchmarkFormulas.size() << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_benchmarkParamsApprox.size() != nBenchmarkParams){
-        error() <<  "The benchmarkParamsApprox vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
-        return StatusCode::FAILURE;
-      }
-    if (m_benchmarkEneSwitch<0.){
-      if (m_benchmarkFormulas[0].size() != nBenchmarkParams){
-        error() <<  "A single formula parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
+    if (m_benchmarkParamsApprox.size() != nBenchmarkParams) {
+      error() << "The benchmarkParamsApprox vector does not have the proper size, the size should be "
+              << nBenchmarkParams << endmsg;
+      return StatusCode::FAILURE;
+    }
+    if (m_benchmarkEneSwitch < 0.) {
+      if (m_benchmarkFormulas[0].size() != nBenchmarkParams) {
+        error() << "A single formula parametrization for benchmark correction is turned on, but the "
+                   "benchmarkFormulas[0] vector does not have the proper size, the size should be "
+                << nBenchmarkParams << endmsg;
         return StatusCode::FAILURE;
       }
     }
-    if (m_benchmarkEneSwitch>0.){
-      if (m_benchmarkFormulas.size()<2){
-        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas vector does not have the proper size, the size should be 2." << endmsg;
+    if (m_benchmarkEneSwitch > 0.) {
+      if (m_benchmarkFormulas.size() < 2) {
+        error() << "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas "
+                   "vector does not have the proper size, the size should be 2."
+                << endmsg;
         return StatusCode::FAILURE;
       }
-      if (m_benchmarkFormulas[0].size() != nBenchmarkParams){
-        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas[0] vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
+      if (m_benchmarkFormulas[0].size() != nBenchmarkParams) {
+        error() << "The two formulas parametrization for benchmark correction is turned on, but the "
+                   "benchmarkFormulas[0] vector does not have the proper size, the size should be "
+                << nBenchmarkParams << endmsg;
         return StatusCode::FAILURE;
       }
-      if (m_benchmarkFormulas[1].size() != nBenchmarkParams){
-        error() <<  "The two formulas parametrization for benchmark correction is turned on, but the benchmarkFormulas[1] vector does not have the proper size, the size should be " << nBenchmarkParams << endmsg;
+      if (m_benchmarkFormulas[1].size() != nBenchmarkParams) {
+        error() << "The two formulas parametrization for benchmark correction is turned on, but the "
+                   "benchmarkFormulas[1] vector does not have the proper size, the size should be "
+                << nBenchmarkParams << endmsg;
         return StatusCode::FAILURE;
       }
     }
@@ -164,14 +170,16 @@ StatusCode CorrectCaloClusters::initialize() {
     }
   }
   {
-    StatusCode sc = initializeCorrFunctions(m_downstreamFunctions, m_downstreamFormulas, m_downstreamParams, "downstream");
+    StatusCode sc =
+        initializeCorrFunctions(m_downstreamFunctions, m_downstreamFormulas, m_downstreamParams, "downstream");
     if (sc.isFailure()) {
       error() << "Initialization of downstream correction functions not successful!" << endmsg;
       return sc;
     }
   }
   {
-    StatusCode sc = initializeCorrFunctions(m_benchmarkFunctions, m_benchmarkFormulas, m_benchmarkParametrization, "benchmark"); 
+    StatusCode sc =
+        initializeCorrFunctions(m_benchmarkFunctions, m_benchmarkFormulas, m_benchmarkParametrization, "benchmark");
     if (sc.isFailure()) {
       error() << "Initialization of benchmark correction functions not successful!" << endmsg;
       return sc;
@@ -214,7 +222,6 @@ StatusCode CorrectCaloClusters::initialize() {
   return StatusCode::SUCCESS;
 }
 
-
 StatusCode CorrectCaloClusters::execute(const EventContext&) const {
   verbose() << "-------------------------------------------" << endmsg;
 
@@ -237,10 +244,8 @@ StatusCode CorrectCaloClusters::execute(const EventContext&) const {
     StatusCode sc = applyUpstreamCorr(inClusters, outClusters);
     if (sc.isFailure()) {
       return sc;
-    }
-    else{
+    } else {
       verbose() << "Running the upstream correction." << endmsg;
-
     }
   }
 
@@ -249,43 +254,39 @@ StatusCode CorrectCaloClusters::execute(const EventContext&) const {
     StatusCode sc = applyDownstreamCorr(inClusters, outClusters);
     if (sc.isFailure()) {
       return sc;
-    }
-    else{ 
+    } else {
       verbose() << "Running the downstream correction." << endmsg;
     }
   }
 
   // Apply benchmark correction
-  if (m_benchmarkCorr) { 
+  if (m_benchmarkCorr) {
     StatusCode sc = applyBenchmarkCorr(inClusters, outClusters);
     if (sc.isFailure()) {
       return sc;
-    }
-    else{
+    } else {
       verbose() << "Running the benchmark correction." << endmsg;
     }
   }
 
-  if ((m_upstreamCorr && m_downstreamCorr && m_benchmarkCorr) || (m_upstreamCorr && m_benchmarkCorr) || (m_downstreamCorr && m_benchmarkCorr)){
-    warning() << "Too many corrections in the house, apply upstream and downstream on ECal standalone and benchmark on combined ECal and HCal simulation." << endmsg;
+  if ((m_upstreamCorr && m_downstreamCorr && m_benchmarkCorr) || (m_upstreamCorr && m_benchmarkCorr) ||
+      (m_downstreamCorr && m_benchmarkCorr)) {
+    warning() << "Too many corrections in the house, apply upstream and downstream on ECal standalone and benchmark on "
+                 "combined ECal and HCal simulation."
+              << endmsg;
   }
 
   return StatusCode::SUCCESS;
 }
 
+StatusCode CorrectCaloClusters::finalize() { return Gaudi::Algorithm::finalize(); }
 
-StatusCode CorrectCaloClusters::finalize() {
-
-  return Gaudi::Algorithm::finalize();
-}
-
-
-edm4hep::ClusterCollection* CorrectCaloClusters::initializeOutputClusters(
-    const edm4hep::ClusterCollection* inClusters) const {
+edm4hep::ClusterCollection*
+CorrectCaloClusters::initializeOutputClusters(const edm4hep::ClusterCollection* inClusters) const {
 
   edm4hep::ClusterCollection* outClusters = m_outClusters.createAndPut();
 
-  for (auto const& inCluster: *inClusters) {
+  for (auto const& inCluster : *inClusters) {
     auto outCluster = inCluster.clone();
     verbose() << "Cluster position:" << endmsg;
     verbose() << "    x: " << outCluster.getPosition().x << endmsg;
@@ -297,7 +298,6 @@ edm4hep::ClusterCollection* CorrectCaloClusters::initializeOutputClusters(
   return outClusters;
 }
 
-
 StatusCode CorrectCaloClusters::initializeCorrFunctions(std::vector<std::vector<TF1*>>& functions,
                                                         std::vector<std::vector<std::string>> formulas,
                                                         std::vector<std::vector<double>> parameters,
@@ -308,7 +308,7 @@ StatusCode CorrectCaloClusters::initializeCorrFunctions(std::vector<std::vector<
     auto& paramVec = parameters[i];
 
     bool hasY = false;
-    for (auto& formula: formulaVec) {
+    for (auto& formula : formulaVec) {
       if (formula.find("y") != std::string::npos) {
         hasY = true;
       }
@@ -330,14 +330,14 @@ StatusCode CorrectCaloClusters::initializeCorrFunctions(std::vector<std::vector<
 
     {
       size_t j = 0;
-      for (auto& func: funcVec) {
+      for (auto& func : funcVec) {
         for (int k = 0; k < func->GetNpar(); ++k) {
           if (j >= paramVec.size()) {
             error() << "Correction parameter vector is not long enough!" << endmsg;
             return StatusCode::FAILURE;
           }
           func->SetParameter(k, paramVec.at(j));
-          std::string parName(1, 'a' + (char) j);
+          std::string parName(1, 'a' + (char)j);
           func->SetParName(k, parName.c_str());
           j += 1;
         }
@@ -349,15 +349,12 @@ StatusCode CorrectCaloClusters::initializeCorrFunctions(std::vector<std::vector<
   return StatusCode::SUCCESS;
 }
 
-
 StatusCode CorrectCaloClusters::applyUpstreamCorr(const edm4hep::ClusterCollection* inClusters,
                                                   edm4hep::ClusterCollection* outClusters) const {
   for (size_t i = 0; i < m_readoutNames.size(); ++i) {
     for (size_t j = 0; j < inClusters->size(); ++j) {
-      double energyInFirstLayer = getEnergyInLayer(inClusters->at(j),
-                                                   m_readoutNames[i],
-                                                   m_systemIDs[i],
-                                                   m_firstLayerIDs[i]);
+      double energyInFirstLayer =
+          getEnergyInLayer(inClusters->at(j), m_readoutNames[i], m_systemIDs[i], m_firstLayerIDs[i]);
       if (energyInFirstLayer < 0) {
         warning() << "Energy in first calorimeter layer negative, ignoring upstream energy correction!" << endmsg;
         continue;
@@ -386,15 +383,12 @@ StatusCode CorrectCaloClusters::applyUpstreamCorr(const edm4hep::ClusterCollecti
   return StatusCode::SUCCESS;
 }
 
-
 StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollection* inClusters,
                                                     edm4hep::ClusterCollection* outClusters) const {
   for (size_t i = 0; i < m_readoutNames.size(); ++i) {
     for (size_t j = 0; j < inClusters->size(); ++j) {
-      double energyInLastLayer = getEnergyInLayer(inClusters->at(j),
-                                                  m_readoutNames[i],
-                                                  m_systemIDs[i],
-                                                  m_lastLayerIDs[i]);
+      double energyInLastLayer =
+          getEnergyInLayer(inClusters->at(j), m_readoutNames[i], m_systemIDs[i], m_lastLayerIDs[i]);
       if (energyInLastLayer < 0) {
         warning() << "Energy in last calorimeter layer negative, ignoring downstream energy correction!" << endmsg;
         continue;
@@ -424,7 +418,7 @@ StatusCode CorrectCaloClusters::applyDownstreamCorr(const edm4hep::ClusterCollec
 }
 
 StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollection* inClusters,
-                                                    edm4hep::ClusterCollection* outClusters) const {
+                                                   edm4hep::ClusterCollection* outClusters) const {
 
   const size_t numReadoutNames = m_readoutNames.size();
 
@@ -432,68 +426,57 @@ StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollect
   int hcal_index = -1;
 
   // Identify ECal and HCal readout positions in the input parameters when running the calibration
-  for (size_t i=0; i<numReadoutNames; ++i){
-    if (m_systemIDs[i] == m_systemIDECal){
-      ecal_index = i; 
-    }
-    else if (m_systemIDs[i] == m_systemIDHCal){
-      hcal_index = i; 
+  for (size_t i = 0; i < numReadoutNames; ++i) {
+    if (m_systemIDs[i] == m_systemIDECal) {
+      ecal_index = i;
+    } else if (m_systemIDs[i] == m_systemIDHCal) {
+      hcal_index = i;
     }
   }
 
   for (size_t j = 0; j < inClusters->size(); ++j) {
-    double energyInLastLayerECal = getEnergyInLayer(inClusters->at(j),
-                                                    m_readoutNames[ecal_index],
-                                                    m_systemIDs[ecal_index],
-                                                    m_lastLayerIDs[ecal_index]);
-  
-    double energyInFirstLayerECal = getEnergyInLayer(inClusters->at(j),
-                                                     m_readoutNames[ecal_index],
-                                                     m_systemIDs[ecal_index],
-                                                     m_firstLayerIDs[ecal_index]);
+    double energyInLastLayerECal = getEnergyInLayer(inClusters->at(j), m_readoutNames[ecal_index],
+                                                    m_systemIDs[ecal_index], m_lastLayerIDs[ecal_index]);
 
-    double energyInFirstLayerHCal = getEnergyInLayer(inClusters->at(j),
-                                                     m_readoutNames[hcal_index],
-                                                     m_systemIDs[hcal_index],
-                                                     m_firstLayerIDs[hcal_index]);
+    double energyInFirstLayerECal = getEnergyInLayer(inClusters->at(j), m_readoutNames[ecal_index],
+                                                     m_systemIDs[ecal_index], m_firstLayerIDs[ecal_index]);
 
-    double totalEnergyInECal = getTotalEnergy(inClusters->at(j),
-                                         m_readoutNames[ecal_index],
-                                         m_systemIDs[ecal_index]);
+    double energyInFirstLayerHCal = getEnergyInLayer(inClusters->at(j), m_readoutNames[hcal_index],
+                                                     m_systemIDs[hcal_index], m_firstLayerIDs[hcal_index]);
 
-    double totalEnergyInHCal = getTotalEnergy(inClusters->at(j),
-                                         m_readoutNames[hcal_index],
-                                         m_systemIDs[hcal_index]);
-                                         
+    double totalEnergyInECal = getTotalEnergy(inClusters->at(j), m_readoutNames[ecal_index], m_systemIDs[ecal_index]);
+
+    double totalEnergyInHCal = getTotalEnergy(inClusters->at(j), m_readoutNames[hcal_index], m_systemIDs[hcal_index]);
 
     // calculate approximate benchmark energy using non energy dependent benchmark parameters
-    double approximateBenchmarkEnergy = m_benchmarkParamsApprox[0] * totalEnergyInECal +
-                                        m_benchmarkParamsApprox[1] * totalEnergyInHCal +
-                                        m_benchmarkParamsApprox[2] * sqrt(abs(energyInLastLayerECal * m_benchmarkParamsApprox[0] * energyInFirstLayerHCal * m_benchmarkParamsApprox[1])) +
-                                        m_benchmarkParamsApprox[3] * pow(totalEnergyInECal * m_benchmarkParamsApprox[0], 2) +
-                                        m_benchmarkParamsApprox[4] * energyInFirstLayerECal +
-                                        m_benchmarkParamsApprox[5];
+    double approximateBenchmarkEnergy =
+        m_benchmarkParamsApprox[0] * totalEnergyInECal + m_benchmarkParamsApprox[1] * totalEnergyInHCal +
+        m_benchmarkParamsApprox[2] * sqrt(abs(energyInLastLayerECal * m_benchmarkParamsApprox[0] *
+                                              energyInFirstLayerHCal * m_benchmarkParamsApprox[1])) +
+        m_benchmarkParamsApprox[3] * pow(totalEnergyInECal * m_benchmarkParamsApprox[0], 2) +
+        m_benchmarkParamsApprox[4] * energyInFirstLayerECal + m_benchmarkParamsApprox[5];
 
     // Calculate energy-dependent benchmark parameters p[0]-p[5]
     auto benchmarkFormulasHighEne = m_benchmarkFunctions.at(0);
-    int nParam = benchmarkFormulasHighEne.size(); 
-    std::vector<double> benchmarkParameters(nParam,-1.); 
-    
-    if (m_benchmarkEneSwitch>0.)
-    {
+    int nParam = benchmarkFormulasHighEne.size();
+    std::vector<double> benchmarkParameters(nParam, -1.);
+
+    if (m_benchmarkEneSwitch > 0.) {
       auto benchmarkFormulasLowEne = m_benchmarkFunctions.at(1);
-      // ensure smooth transition between low- and high-energy formulas (parameter l controls how fast the transition is)
-      int l=2;
+      // ensure smooth transition between low- and high-energy formulas (parameter l controls how fast the transition
+      // is)
+      int l = 2;
       double transition = 0.5 * (1 + tanh(l * (approximateBenchmarkEnergy - m_benchmarkEneSwitch) / 2));
-      verbose() << "Using two formulas for benchmark calibration, the second formula provided will be used to correct energies below benchmarkEneSwitch threshold." << endmsg;
+      verbose() << "Using two formulas for benchmark calibration, the second formula provided will be used to correct "
+                   "energies below benchmarkEneSwitch threshold."
+                << endmsg;
       for (size_t k = 0; k < benchmarkFormulasHighEne.size(); ++k) {
         auto func_low_ene = benchmarkFormulasLowEne.at(k);
         auto func_high_ene = benchmarkFormulasHighEne.at(k);
         benchmarkParameters[k] = (1 - transition) * func_low_ene->Eval(approximateBenchmarkEnergy) +
-                                transition * func_high_ene->Eval(approximateBenchmarkEnergy);
+                                 transition * func_high_ene->Eval(approximateBenchmarkEnergy);
       }
-    }
-    else{
+    } else {
       verbose() << "Using one formula for benchmark calibration." << endmsg;
       for (size_t k = 0; k < benchmarkFormulasHighEne.size(); ++k) {
         auto func = benchmarkFormulasHighEne.at(k);
@@ -501,36 +484,35 @@ StatusCode CorrectCaloClusters::applyBenchmarkCorr(const edm4hep::ClusterCollect
       }
     }
 
-    // Get final benchmark energy using the energy dependent benchmark parameters     
-    double benchmarkEnergy = benchmarkParameters[0] * totalEnergyInECal +
-                             benchmarkParameters[1] * totalEnergyInHCal +
-                             benchmarkParameters[2] * std::sqrt(std::fabs(energyInLastLayerECal * benchmarkParameters[0] * energyInFirstLayerHCal * benchmarkParameters[1])) +
-                             benchmarkParameters[3] * std::pow(totalEnergyInECal * benchmarkParameters[0], 2) +
-                             benchmarkParameters[4] * energyInFirstLayerECal +
-                             benchmarkParameters[5];
+    // Get final benchmark energy using the energy dependent benchmark parameters
+    double benchmarkEnergy =
+        benchmarkParameters[0] * totalEnergyInECal + benchmarkParameters[1] * totalEnergyInHCal +
+        benchmarkParameters[2] * std::sqrt(std::fabs(energyInLastLayerECal * benchmarkParameters[0] *
+                                                     energyInFirstLayerHCal * benchmarkParameters[1])) +
+        benchmarkParameters[3] * std::pow(totalEnergyInECal * benchmarkParameters[0], 2) +
+        benchmarkParameters[4] * energyInFirstLayerECal + benchmarkParameters[5];
 
     // Protection against negative energy (might be improved)
     if (benchmarkEnergy < 0.0) {
-      outClusters->at(j).setEnergy(totalEnergyInECal * benchmarkParameters[0] + totalEnergyInHCal * benchmarkParameters[1]);
+      outClusters->at(j).setEnergy(totalEnergyInECal * benchmarkParameters[0] +
+                                   totalEnergyInHCal * benchmarkParameters[1]);
     } else {
       outClusters->at(j).setEnergy(benchmarkEnergy);
     }
 
-    if (inClusters->at(j).getEnergy()>1.){ 
-    debug() << "********************************************************************" << endmsg;
-    debug() << "Cluster energy: " << inClusters->at(j).getEnergy() << endmsg;
-    debug() << "totalEnergyInECal+HCal from hits: " << totalEnergyInECal+totalEnergyInHCal << endmsg;
-    debug() << "********************************************************************" << endmsg;
-    debug() << "Corrected cluster energy benchmark: " << outClusters->at(j).getEnergy() << endmsg;
-    debug() << "********************************************************************" << endmsg;    
-    } 
-  }            
+    if (inClusters->at(j).getEnergy() > 1.) {
+      debug() << "********************************************************************" << endmsg;
+      debug() << "Cluster energy: " << inClusters->at(j).getEnergy() << endmsg;
+      debug() << "totalEnergyInECal+HCal from hits: " << totalEnergyInECal + totalEnergyInHCal << endmsg;
+      debug() << "********************************************************************" << endmsg;
+      debug() << "Corrected cluster energy benchmark: " << outClusters->at(j).getEnergy() << endmsg;
+      debug() << "********************************************************************" << endmsg;
+    }
+  }
   return StatusCode::SUCCESS;
 }
 
-double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
-                                             const std::string& readoutName,
-                                             int systemID,
+double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster, const std::string& readoutName, int systemID,
                                              int layerID) const {
   dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 
@@ -549,7 +531,6 @@ double CorrectCaloClusters::getEnergyInLayer(edm4hep::Cluster cluster,
   return energy;
 }
 
-
 double CorrectCaloClusters::getClusterTheta(edm4hep::Cluster cluster) const {
   double rxy = std::sqrt(std::pow(cluster.getPosition().x, 2) + std::pow(cluster.getPosition().y, 2));
   double theta = ::fabs(std::atan2(rxy, cluster.getPosition().z));
@@ -558,9 +539,7 @@ double CorrectCaloClusters::getClusterTheta(edm4hep::Cluster cluster) const {
   return theta;
 }
 
-
-double CorrectCaloClusters::getTotalEnergy(edm4hep::Cluster cluster,
-                                           const std::string& readoutName,
+double CorrectCaloClusters::getTotalEnergy(edm4hep::Cluster cluster, const std::string& readoutName,
                                            int systemID) const {
   dd4hep::DDSegmentation::BitFieldCoder* decoder = m_geoSvc->getDetector()->readout(readoutName).idSpec().decoder();
 

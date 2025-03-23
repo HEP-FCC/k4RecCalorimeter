@@ -1,8 +1,8 @@
 #include "CreatePositionedCaloCells.h"
 
 // dd4hep
-#include "DD4hep/Detector.h"
 #include "DD4hep/DetType.h"
+#include "DD4hep/Detector.h"
 
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
@@ -12,8 +12,8 @@
 
 DECLARE_COMPONENT(CreatePositionedCaloCells)
 
-CreatePositionedCaloCells::CreatePositionedCaloCells(const std::string& name, ISvcLocator* svcLoc) :
-Gaudi::Algorithm(name, svcLoc) {
+CreatePositionedCaloCells::CreatePositionedCaloCells(const std::string& name, ISvcLocator* svcLoc)
+    : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
   declareProperty("links", m_links, "The links between hits and cells (output)");
@@ -27,13 +27,12 @@ Gaudi::Algorithm(name, svcLoc) {
   m_decoder = nullptr;
 }
 
-CreatePositionedCaloCells::~CreatePositionedCaloCells() {
-  delete m_decoder;
-}
+CreatePositionedCaloCells::~CreatePositionedCaloCells() { delete m_decoder; }
 
 StatusCode CreatePositionedCaloCells::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   info() << "CreatePositionedCaloCells initialized" << endmsg;
   info() << "do calibration : " << m_doCellCalibration << endmsg;
@@ -92,7 +91,7 @@ StatusCode CreatePositionedCaloCells::initialize() {
   // Copy over the CellIDEncoding string from the input collection to the output collection
   auto hitsEncoding = m_hitsCellIDEncoding.get_optional();
   if (!hitsEncoding.has_value()) {
-    error () << "Missing cellID encoding for input collection" << endmsg;
+    error() << "Missing cellID encoding for input collection" << endmsg;
     return StatusCode::FAILURE;
   }
   m_cellsCellIDEncoding.put(hitsEncoding.value());
@@ -101,8 +100,8 @@ StatusCode CreatePositionedCaloCells::initialize() {
   // these variables will be initilized in the execute() method
   // once the system ID is extracted from one cell
   m_calotype = -99; // -99 not initialized, 1 unknown, 0 em, 1 had, 2 muon
-  m_caloid = 0 ;  // 0 unknown, 1 ecal, 2 hcal, 3 yoke
-  m_layout = 0 ; // 0 any, 1 barrel, 2 endcap
+  m_caloid = 0;     // 0 unknown, 1 ecal, 2 hcal, 3 yoke
+  m_layout = 0;     // 0 any, 1 barrel, 2 endcap
 
   return StatusCode::SUCCESS;
 }
@@ -140,14 +139,15 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   if (m_addCrosstalk) {
     // Derive the cross-talk contributions without affecting yet the nominal energy
     // (one has to emulate crosstalk based on cells free from any cross-talk contributions)
-    m_crosstalkCellsMap.clear(); // this is a temporary map to hold energy exchange due to cross-talk, without affecting yet the nominal energy
+    m_crosstalkCellsMap.clear(); // this is a temporary map to hold energy exchange due to cross-talk, without affecting
+                                 // yet the nominal energy
     // loop over cells with nominal energies
     for (const auto& this_cell : m_cellsMap) {
       uint64_t this_cellId = this_cell.first;
       auto vec_neighbours = m_crosstalkTool->getNeighbours(this_cellId); // a vector of neighbour IDs
       auto vec_crosstalks = m_crosstalkTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
       // loop over crosstalk neighbours of the cell under study
-      for (unsigned int i_cell=0; i_cell<vec_neighbours.size(); i_cell++) {
+      for (unsigned int i_cell = 0; i_cell < vec_neighbours.size(); i_cell++) {
         // signal transfer = energy deposit brought by EM shower hits * crosstalk coefficient
         double signal_transfer = this_cell.second * vec_crosstalks[i_cell];
         // for the cell under study, record the signal transfer that will be subtracted from its final cell energy
@@ -161,7 +161,6 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
     for (const auto& this_cell : m_crosstalkCellsMap) {
       m_cellsMap[this_cell.first] += this_cell.second;
     }
-    
   }
 
   // 3. Calibrate simulation energy to EM scale
@@ -180,45 +179,39 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   }
 
   // determine detector type (only once)
-  if (m_calotype==-99 && m_cellsMap.size()>0) {
+  if (m_calotype == -99 && m_cellsMap.size() > 0) {
     info() << "Determining calorimeter type for input collection " << m_hits.objKey() << endmsg;
     uint cellid = m_cellsMap.begin()->first;
     int system = m_decoder->get(cellid, "system");
     debug() << "System: " << system << endmsg;
     dd4hep::Detector* dd4hepgeo = &(dd4hep::Detector::getInstance());
     const dd4hep::Detector::HandleMap& children = dd4hepgeo->detectors();
-    for (dd4hep::Detector::HandleMap::const_iterator i=children.begin(); i!=children.end(); ++i) {
+    for (dd4hep::Detector::HandleMap::const_iterator i = children.begin(); i != children.end(); ++i) {
       dd4hep::DetElement det((*i).second);
       int id = det.id();
-      if (id==system) {
+      if (id == system) {
         dd4hep::DetType detType(det.typeFlag());
-        if ( detType.is( dd4hep::DetType::CALORIMETER ) ) {
-          if ( detType.is( dd4hep::DetType::ELECTROMAGNETIC ) ) {
+        if (detType.is(dd4hep::DetType::CALORIMETER)) {
+          if (detType.is(dd4hep::DetType::ELECTROMAGNETIC)) {
             m_calotype = 0;
             m_caloid = 1;
-          }
-          else if ( detType.is( dd4hep::DetType::HADRONIC ) ) {
+          } else if (detType.is(dd4hep::DetType::HADRONIC)) {
             m_calotype = 1;
             m_caloid = 2;
-          }
-          else if ( detType.is( dd4hep::DetType::MUON ) ) {
+          } else if (detType.is(dd4hep::DetType::MUON)) {
             m_calotype = 2;
             m_caloid = 3;
-          }
-          else {
+          } else {
             warning() << "Detector type is neither ELECTROMAGNETIC, HADRONIC nor MUON" << endmsg;
           }
-          if ( detType.is( dd4hep::DetType::BARREL ) ) {
+          if (detType.is(dd4hep::DetType::BARREL)) {
             m_layout = 1;
-          }
-          else if ( detType.is( dd4hep::DetType::ENDCAP ) ) {
+          } else if (detType.is(dd4hep::DetType::ENDCAP)) {
             m_layout = 2;
-          }
-          else {
+          } else {
             warning() << "Detector type is neither BARREL nor ENDCAP" << endmsg;
           }
-        }
-        else {
+        } else {
           warning() << "Detector type is not CALORIMETER" << endmsg;
           m_calotype = -1;
           m_caloid = 0;
@@ -242,7 +235,7 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
 
       // add cell position
       auto cached_pos = m_positions_cache.find(cellid);
-      if(cached_pos == m_positions_cache.end()) {
+      if (cached_pos == m_positions_cache.end()) {
         // retrieve position from tool
         dd4hep::Position posCell = m_cellPositionsTool->xyzPosition(cellid);
         edm4hep::Vector3f edmPos;
@@ -251,19 +244,18 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
         edmPos.z = posCell.z() / dd4hep::mm;
         m_positions_cache[cellid] = edmPos;
         newCell.setPosition(edmPos);
-      }
-      else {
+      } else {
         newCell.setPosition(cached_pos->second);
       }
 
       // add cell type (for Pandora) - see iLCSoft/MarlinUtil/source/include/CalorimeterHitType.h
       int layer = m_decoder->get(cellid, "layer");
-      newCell.setType(m_calotype + 10*m_caloid + 1000*m_layout + 10000*layer);
+      newCell.setType(m_calotype + 10 * m_caloid + 1000 * m_layout + 10000 * layer);
 
-      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID()  << "\tcellType " << newCell.getType() << endmsg;
-      debug() << "Position of cell (mm) : \t" << newCell.getPosition().x
-                                      << "\t" << newCell.getPosition().y
-                                      << "\t" << newCell.getPosition().z << endmsg;
+      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID() << "\tcellType "
+              << newCell.getType() << endmsg;
+      debug() << "Position of cell (mm) : \t" << newCell.getPosition().x << "\t" << newCell.getPosition().y << "\t"
+              << newCell.getPosition().z << endmsg;
     }
   }
 

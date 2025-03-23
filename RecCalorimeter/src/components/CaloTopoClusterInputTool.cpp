@@ -13,7 +13,8 @@
 
 DECLARE_COMPONENT(CaloTopoClusterInputTool)
 
-CaloTopoClusterInputTool::CaloTopoClusterInputTool(const std::string& type, const std::string& name, const IInterface* parent)
+CaloTopoClusterInputTool::CaloTopoClusterInputTool(const std::string& type, const std::string& name,
+                                                   const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareProperty("ecalBarrelCells", m_ecalBarrelCells, "");
   declareProperty("ecalEndcapCells", m_ecalEndcapCells, "");
@@ -35,7 +36,7 @@ StatusCode CaloTopoClusterInputTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  
+
   return StatusCode::SUCCESS;
 }
 
@@ -108,9 +109,9 @@ StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, doub
   }
   totalNumberOfCells += hcalFwdCells->size();
 
-  //if (totalNumberOfCells != aCells.size()){
-  //error() << "Map size != total number of cells! " << endmsg;
-  //return StatusCode::FAILURE;
-  //}
+  // if (totalNumberOfCells != aCells.size()){
+  // error() << "Map size != total number of cells! " << endmsg;
+  // return StatusCode::FAILURE;
+  // }
   return StatusCode::SUCCESS;
 }

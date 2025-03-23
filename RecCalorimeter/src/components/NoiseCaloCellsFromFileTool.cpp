@@ -10,10 +10,10 @@
 #include "DD4hep/Detector.h"
 
 // ROOT
-#include "TSystem.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
+#include "TSystem.h"
 
 DECLARE_COMPONENT(NoiseCaloCellsFromFileTool)
 
@@ -25,7 +25,7 @@ NoiseCaloCellsFromFileTool::NoiseCaloCellsFromFileTool(const std::string& type, 
 }
 
 StatusCode NoiseCaloCellsFromFileTool::initialize() {
-  
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
@@ -44,7 +44,6 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
     return StatusCode::FAILURE;
   }
 
-
   // open and check file, read the histograms with noise constants
   if (initNoiseFromFile().isFailure()) {
     error() << "Couldn't open file with noise constants!!!" << endmsg;
@@ -55,30 +54,31 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
     info() << "Unable to retrieve cell positions tool, try eta-phi segmentation." << endmsg;
     // Get PhiEta segmentation
     m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-									    m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (m_segmentationPhiEta == nullptr) {
       error() << "There is no phi-eta segmentation." << endmsg;
       return StatusCode::FAILURE;
-    }
-    else
+    } else
       info() << "Found phi-eta segmentation." << endmsg;
-  }    
+  }
   // Get PhiEta segmentation
   m_segmentationPhiEta = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-    m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentationPhiEta == nullptr) {
     m_segmentationMulti = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (m_segmentationMulti == nullptr) {
-      error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined." << endmsg;
+      error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined."
+              << endmsg;
       return StatusCode::FAILURE;
     } else {
       // check if multisegmentation contains only phi-eta sub-segmentations
       const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* subsegmentation = nullptr;
-      for (const auto& subSegm: m_segmentationMulti->subSegmentations()) {
+      for (const auto& subSegm : m_segmentationMulti->subSegmentations()) {
         subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
         if (subsegmentation == nullptr) {
-          error() << "At least one of the sub-segmentations in MultiSegmentation named " << m_readoutName << " is not a phi-eta grid." << endmsg;
+          error() << "At least one of the sub-segmentations in MultiSegmentation named " << m_readoutName
+                  << " is not a phi-eta grid." << endmsg;
           return StatusCode::FAILURE;
         }
       }
@@ -91,7 +91,8 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   return sc;
 }
@@ -106,7 +107,8 @@ void NoiseCaloCellsFromFileTool::filterCellNoise(std::unordered_map<uint64_t, do
   // Erase a cell if it has energy bellow a threshold from the vector
   auto it = aCells.begin();
   while ((it = std::find_if(it, aCells.end(), [this](std::pair<const uint64_t, double>& p) {
-            return m_useAbsInFilter ? bool(std::abs(p.second) < m_filterThreshold * getNoiseRMSPerCell(p.first)) : bool(p.second < m_filterThreshold * getNoiseRMSPerCell(p.first));
+            return m_useAbsInFilter ? bool(std::abs(p.second) < m_filterThreshold * getNoiseRMSPerCell(p.first))
+                                    : bool(p.second < m_filterThreshold * getNoiseRMSPerCell(p.first));
           })) != aCells.end()) {
     aCells.erase(it++);
   }
@@ -134,8 +136,7 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
     error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Using the following file with noise values: "
-           << m_noiseFileName.value() << endmsg;
+    info() << "Using the following file with noise values: " << m_noiseFileName.value() << endmsg;
   }
 
   std::string elecNoiseLayerHistoName, pileupLayerHistoName;
@@ -181,7 +182,8 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
 double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = m_segmentationPhiEta;
   if (segmentation == nullptr) {
-    segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti->subsegmentation(aCellId));
+    segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+        &m_segmentationMulti->subsegmentation(aCellId));
   }
 
   double elecNoiseRMS = 0.;
@@ -217,14 +219,14 @@ double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   // Total noise: electronics noise + pileup
   double totalNoiseRMS = 0;
   if (m_addPileup) {
-    totalNoiseRMS = sqrt(elecNoiseRMS*elecNoiseRMS + pileupNoiseRMS*pileupNoiseRMS) * m_scaleFactor;
-  }
-  else { // avoid useless math operations if no pileup
+    totalNoiseRMS = sqrt(elecNoiseRMS * elecNoiseRMS + pileupNoiseRMS * pileupNoiseRMS) * m_scaleFactor;
+  } else { // avoid useless math operations if no pileup
     totalNoiseRMS = elecNoiseRMS * m_scaleFactor;
   }
 
   if (totalNoiseRMS < 1e-6) {
-    warning() << "Zero noise RMS: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoiseRMS << endmsg;
+    warning() << "Zero noise RMS: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoiseRMS
+              << endmsg;
   }
 
   return totalNoiseRMS;

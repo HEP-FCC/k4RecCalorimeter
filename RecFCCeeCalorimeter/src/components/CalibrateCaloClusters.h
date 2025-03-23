@@ -9,23 +9,23 @@
 
 // Gaudi
 #include "GaudiKernel/Algorithm.h"
-#include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/ToolHandle.h"
 class IGeoSvc;
 
 // EDM4HEP
 namespace edm4hep {
-  class Cluster;
-  class ClusterCollection;
-  class CalorimeterHitCollection;
-}
+class Cluster;
+class ClusterCollection;
+class CalorimeterHitCollection;
+} // namespace edm4hep
 
 // DD4HEP
 namespace dd4hep {
-  namespace DDSegmentation {
-    class BitFieldCoder;
-  }
+namespace DDSegmentation {
+  class BitFieldCoder;
 }
+} // namespace dd4hep
 
 // ONNX
 #include "onnxruntime_cxx_api.h"
@@ -83,37 +83,25 @@ private:
    * @param[in]  cluster          Pointer to cluster of interest.
    * @param[out] energiesInLayer  Reference to vector that will contain the energies
    */
-  void calcEnergiesInLayers(edm4hep::Cluster cluster,
-                            std::vector<float>& energiesInLayer) const;
-
+  void calcEnergiesInLayers(edm4hep::Cluster cluster, std::vector<float>& energiesInLayer) const;
 
   /// Handle for input calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {
-    "inClusters", Gaudi::DataHandle::Reader, this
-  };
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
 
   /// Handle for corrected (output) calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters {
-    "outClusters", Gaudi::DataHandle::Writer, this
-  };
+  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer, this};
 
   /// Handles for the cluster shower shape metadata to read and to write
-  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
-    m_inClusters,
-    edm4hep::labels::ShapeParameterNames,
-    Gaudi::DataHandle::Reader};
+  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{m_inClusters, edm4hep::labels::ShapeParameterNames,
+                                                                    Gaudi::DataHandle::Reader};
   MetaDataHandle<std::vector<std::string>> m_outShapeParameterHandle{
-    m_outClusters,
-    edm4hep::labels::ShapeParameterNames,
-    Gaudi::DataHandle::Writer};
+      m_outClusters, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
 
   /// IDs of the detectors
-  Gaudi::Property<std::vector<int>> m_systemIDs {
-      this, "systemIDs", {4}, "IDs of systems"
-  };
+  Gaudi::Property<std::vector<int>> m_systemIDs{this, "systemIDs", {4}, "IDs of systems"};
   /// Name of the detectors (for the metadata)
   /// If the calibration inputs are saved in the cluster shapeParameters
   Gaudi::Property<std::vector<std::string>> m_detectorNames{
@@ -121,29 +109,24 @@ private:
   /// Names of the detector readouts, corresponding to system IDs
   /// Needed to calculate calibration inputs from cells if not
   /// present in cluster shapeParameters
-  Gaudi::Property<std::vector<std::string>> m_readoutNames {
-      this, "readoutNames", {"ECalBarrelModuleThetaMerged"},
-      "Names of the detector readout, corresponding to systemID"
-  };
+  Gaudi::Property<std::vector<std::string>> m_readoutNames{this,
+                                                           "readoutNames",
+                                                           {"ECalBarrelModuleThetaMerged"},
+                                                           "Names of the detector readout, corresponding to systemID"};
   /// Name of the layer field
-  Gaudi::Property<std::vector<std::string>> m_layerFieldNames {
-      this, "layerFieldNames", {"layer"},
-      "Identifier of layers, corresponding to systemID"
-  }; 
+  Gaudi::Property<std::vector<std::string>> m_layerFieldNames{
+      this, "layerFieldNames", {"layer"}, "Identifier of layers, corresponding to systemID"};
   /// Numbers of layers of the detectors
-  Gaudi::Property<std::vector<unsigned short int>> m_numLayers {
-      this, "numLayers", {12}, "Numbers of layers of the systems"
-  };
+  Gaudi::Property<std::vector<unsigned short int>> m_numLayers{
+      this, "numLayers", {12}, "Numbers of layers of the systems"};
   /// IDs of the first layers of the detectors
-  Gaudi::Property<std::vector<unsigned short int>> m_firstLayerIDs {
-      this, "firstLayerIDs", {0}, "IDs of first layers in the systems"
-  };
+  Gaudi::Property<std::vector<unsigned short int>> m_firstLayerIDs{
+      this, "firstLayerIDs", {0}, "IDs of first layers in the systems"};
 
-  /// File with the calibration model 
+  /// File with the calibration model
   // Gaudi::Property<std::vector<std::string>> m_calibrationFiles {
   //    this, "calibrationFiles", {}, "Files with the calibration parameters"};
-  Gaudi::Property<std::string> m_calibrationFile {
-      this, "calibrationFile", {}, "File with the calibration parameters"};
+  Gaudi::Property<std::string> m_calibrationFile{this, "calibrationFile", {}, "File with the calibration parameters"};
 
   // total number of layers summed over the various subsystems
   // should be equal to the number of input features of the MVA

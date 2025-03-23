@@ -5,15 +5,17 @@
 
 DECLARE_COMPONENT(CellPositionsECalBarrelPhiThetaSegTool)
 
-CellPositionsECalBarrelPhiThetaSegTool::CellPositionsECalBarrelPhiThetaSegTool(const std::string& type, const std::string& name,
-                                                         const IInterface* parent)
+CellPositionsECalBarrelPhiThetaSegTool::CellPositionsECalBarrelPhiThetaSegTool(const std::string& type,
+                                                                               const std::string& name,
+                                                                               const IInterface* parent)
     : AlgTool(type, name, parent) {
   declareInterface<ICellPositionsTool>(this);
 }
 
 StatusCode CellPositionsECalBarrelPhiThetaSegTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -42,7 +44,7 @@ StatusCode CellPositionsECalBarrelPhiThetaSegTool::initialize() {
 }
 
 void CellPositionsECalBarrelPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                               edm4hep::CalorimeterHitCollection& outputColl) {
+                                                          edm4hep::CalorimeterHitCollection& outputColl) {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
@@ -58,7 +60,8 @@ void CellPositionsECalBarrelPhiThetaSegTool::getPositions(const edm4hep::Calorim
     outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << "\n"
             << endmsg;
@@ -76,9 +79,9 @@ dd4hep::Position CellPositionsECalBarrelPhiThetaSegTool::xyzPosition(const uint6
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);
-  //debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-  //        << outGlobal[2] / dd4hep::mm << endmsg;
-  // radius calculated from segmentation + z position of volumes
+  // debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
+  //         << outGlobal[2] / dd4hep::mm << endmsg;
+  //  radius calculated from segmentation + z position of volumes
   auto inSeg = m_segmentation->position(aCellId);
   radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
   dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);

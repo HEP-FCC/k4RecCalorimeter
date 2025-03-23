@@ -38,21 +38,16 @@
 
 struct CreateTruthJet final
     : k4FWCore::MultiTransformer<
-          std::tuple<edm4hep::ReconstructedParticleCollection,
-                     edm4hep::RecoMCParticleLinkCollection>(
-              const edm4hep::MCParticleCollection &)> {
+          std::tuple<edm4hep::ReconstructedParticleCollection, edm4hep::RecoMCParticleLinkCollection>(
+              const edm4hep::MCParticleCollection&)> {
 
-  CreateTruthJet(const std::string &name, ISvcLocator *svcLoc)
-      : MultiTransformer(
-            name, svcLoc,
-            {KeyValues("InputMCParticleCollection", {"MCParticles"})},
-            {KeyValues("OutputJetCollection", {"TruthJets"}),
-             KeyValues("OutputAssociationsCollection",
-                       {"TruthJetParticleAssociations"})}) {}
+  CreateTruthJet(const std::string& name, ISvcLocator* svcLoc)
+      : MultiTransformer(name, svcLoc, {KeyValues("InputMCParticleCollection", {"MCParticles"})},
+                         {KeyValues("OutputJetCollection", {"TruthJets"}),
+                          KeyValues("OutputAssociationsCollection", {"TruthJetParticleAssociations"})}) {}
 
   StatusCode initialize() override {
-    m_clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius,
-                                              m_isExclusive, m_minPt);
+    m_clusterer = new k4::recCalo::ClusterJet(m_jetAlg, m_jetRadius, m_isExclusive, m_minPt);
     if (!m_clusterer->initialize()) {
       return StatusCode::FAILURE;
     }
@@ -60,23 +55,20 @@ struct CreateTruthJet final
     return StatusCode::SUCCESS;
   }
 
-  std::tuple<edm4hep::ReconstructedParticleCollection,
-             edm4hep::RecoMCParticleLinkCollection>
-  operator()(const edm4hep::MCParticleCollection &input) const override {
+  std::tuple<edm4hep::ReconstructedParticleCollection, edm4hep::RecoMCParticleLinkCollection>
+  operator()(const edm4hep::MCParticleCollection& input) const override {
 
     std::vector<fastjet::PseudoJet> clustersPJ;
     int i = 0;
     for (auto particle : input) {
-      fastjet::PseudoJet clusterPJ(
-          particle.getMomentum().x, particle.getMomentum().y,
-          particle.getMomentum().z, particle.getEnergy());
+      fastjet::PseudoJet clusterPJ(particle.getMomentum().x, particle.getMomentum().y, particle.getMomentum().z,
+                                   particle.getEnergy());
       clusterPJ.set_user_info(new k4::recCalo::ClusterInfo(i));
       clustersPJ.push_back(clusterPJ);
       i++;
     }
 
-    std::vector<fastjet::PseudoJet> inclusiveJets =
-        m_clusterer->cluster(clustersPJ);
+    std::vector<fastjet::PseudoJet> inclusiveJets = m_clusterer->cluster(clustersPJ);
 
     auto edmJets = edm4hep::ReconstructedParticleCollection();
     auto links = edm4hep::RecoMCParticleLinkCollection();
@@ -110,15 +102,11 @@ struct CreateTruthJet final
   }
 
 private:
-  Gaudi::Property<std::string> m_jetAlg{this, "JetAlg", "antikt",
-                                        "Name of jet clustering algorithm"};
-  Gaudi::Property<double> m_jetRadius{this, "JetRadius", 0.4,
-                                      "Jet clustering radius"};
-  Gaudi::Property<double> m_minPt{this, "MinPt", 1.,
-                                  "Minimum pT for saved jets"};
-  Gaudi::Property<bool> m_isExclusive{this, "isExclusiveClustering", false,
-                                      "true if exclusive, false if inclusive"};
-  k4::recCalo::ClusterJet *m_clusterer = nullptr;
+  Gaudi::Property<std::string> m_jetAlg{this, "JetAlg", "antikt", "Name of jet clustering algorithm"};
+  Gaudi::Property<double> m_jetRadius{this, "JetRadius", 0.4, "Jet clustering radius"};
+  Gaudi::Property<double> m_minPt{this, "MinPt", 1., "Minimum pT for saved jets"};
+  Gaudi::Property<bool> m_isExclusive{this, "isExclusiveClustering", false, "true if exclusive, false if inclusive"};
+  k4::recCalo::ClusterJet* m_clusterer = nullptr;
 };
 
 DECLARE_COMPONENT(CreateTruthJet)

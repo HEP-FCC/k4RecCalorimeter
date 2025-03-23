@@ -5,9 +5,9 @@
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
+#include "k4Interface/ICaloReadCrosstalkMap.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/INoiseCaloCellsTool.h"
-#include "k4Interface/ICaloReadCrosstalkMap.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
@@ -15,8 +15,8 @@
 
 // edm4hep
 #include "edm4hep/CalorimeterHitCollection.h"
-#include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/Constants.h"
+#include "edm4hep/SimCalorimeterHitCollection.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
@@ -62,7 +62,6 @@ public:
   StatusCode finalize();
 
 private:
-
   /// Handle for the calorimeter cells crosstalk tool
   mutable ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
@@ -90,7 +89,8 @@ private:
   MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
-  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
+  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding,
+                                                    Gaudi::DataHandle::Writer};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes

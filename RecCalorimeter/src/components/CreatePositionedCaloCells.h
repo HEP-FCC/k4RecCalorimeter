@@ -1,33 +1,32 @@
 #ifndef RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 #define RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 
-
 #include "edm4hep/Constants.h"
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
 #include "k4Interface/ICaloReadCrosstalkMap.h"
+#include "k4Interface/ICalorimeterTool.h"
+#include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/INoiseCaloCellsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // edm4hep
+#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
-#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 
 /** @class CreatePositionedCaloCells
  *
  *  Algorithm for creating positioned calorimeter cells from Geant4 hits.
  *  Based on CreateCaloCells, adding a positioning tool so that output
  *  cells from the digitisation contain the correct position in 3D space.
- * 
+ *
  *  Flow of the program:
  *  1/ Merge Geant4 energy deposits with same cellID
  *  2/ Emulate cross-talk (if switched on)
@@ -93,7 +92,8 @@ private:
   /// Handle for hit<->cell link (output collection)
   mutable DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_links{"links", Gaudi::DataHandle::Writer, this};
   /// Handle for the cellID encoding of the output cell collection
-  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
+  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding,
+                                                    Gaudi::DataHandle::Writer};
   /// Maps of cell IDs (corresponding to DD4hep IDs) vs digitised cell energies
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk

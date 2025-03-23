@@ -4,8 +4,8 @@
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
 
-#include "TSystem.h"
 #include "TFile.h"
+#include "TSystem.h"
 #include "TTree.h"
 
 DECLARE_COMPONENT(CreateFCChhCaloNoiseLevelMap)
@@ -14,7 +14,7 @@ CreateFCChhCaloNoiseLevelMap::CreateFCChhCaloNoiseLevelMap(const std::string& aN
     : base_class(aName, aSL) {
   declareProperty("ECalBarrelNoiseTool", m_ecalBarrelNoiseTool, "Handle for the cells noise tool of Barrel ECal");
   declareProperty("HCalBarrelNoiseTool", m_hcalBarrelNoiseTool, "Handle for the cells noise tool of Barrel HCal");
-  declareProperty( "outputFileName", m_outputFileName, "Name of the output file");
+  declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
 CreateFCChhCaloNoiseLevelMap::~CreateFCChhCaloNoiseLevelMap() {}
@@ -31,16 +31,17 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  std::unordered_map<uint64_t, std::pair<double,double>> map;
+  std::unordered_map<uint64_t, std::pair<double, double>> map;
 
   //////////////////////////////////
   /// SEGMENTED ETA-PHI VOLUMES  ///
   //////////////////////////////////
-  
+
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) ==
+        m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesSegmented[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
@@ -75,31 +76,34 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
       // Get number of segmentation cells within the active volume
       auto numCells = det::utils::numberOfCells(volumeId, *segmentation);
       extrema[1] = std::make_pair(0, numCells[0] - 1);
-      if(m_fieldNamesSegmented[iSys] == "system" &&
-	      m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId){
-	uint cellsEta = ceil(( 2*m_activeVolumesEta[ilayer] - segmentation->gridSizeEta() ) / 2 / segmentation->gridSizeEta()) * 2 + 1; //ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta());
-	uint minEtaID = int(floor(( - m_activeVolumesEta[ilayer] + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
-	numCells[1]=cellsEta;
-	numCells[2]=minEtaID;
+      if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId) {
+        uint cellsEta =
+            ceil((2 * m_activeVolumesEta[ilayer] - segmentation->gridSizeEta()) / 2 / segmentation->gridSizeEta()) * 2 +
+            1; // ceil( 2*m_activeVolumesRadii[ilayer] / segmentation->gridSizeEta());
+        uint minEtaID =
+            int(floor((-m_activeVolumesEta[ilayer] + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) /
+                      segmentation->gridSizeEta()));
+        numCells[1] = cellsEta;
+        numCells[2] = minEtaID;
       }
       debug() << "Number of segmentation cells in (phi,eta): " << numCells << endmsg;
       // Loop over segmenation cells
       for (unsigned int iphi = 0; iphi < numCells[0]; iphi++) {
         for (unsigned int ieta = 0; ieta < numCells[1]; ieta++) {
-	  dd4hep::DDSegmentation::CellID cellId = volumeId;
-	  decoder->set(cellId, "phi", iphi);
-	  decoder->set(cellId, "eta", ieta + numCells[2]);  // start from the minimum existing eta cell in this layer
-	  uint64_t id = cellId;
-	  double noiseRMS = 0.;
-	  double noiseOffset = 0.;
-	  if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId){
-	    noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
-	    noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
-	  } else if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId){
-	    noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
+          dd4hep::DDSegmentation::CellID cellId = volumeId;
+          decoder->set(cellId, "phi", iphi);
+          decoder->set(cellId, "eta", ieta + numCells[2]); // start from the minimum existing eta cell in this layer
+          uint64_t id = cellId;
+          double noiseRMS = 0.;
+          double noiseOffset = 0.;
+          if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId) {
+            noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
+            noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
+          } else if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
+            noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
             noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
-	  }
-          map.insert( std::pair<uint64_t, std::pair<double, double> >(id, std::make_pair(noiseRMS, noiseOffset) ) );
+          }
+          map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
         }
       }
     }
@@ -117,7 +121,8 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
     }
     // Check if readouts exist
     info() << "Readout: " << m_readoutNamesNested[iSys] << endmsg;
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesNested[iSys]) == m_geoSvc->getDetector()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesNested[iSys]) ==
+        m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesNested[iSys] << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
@@ -185,15 +190,15 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
       for (unsigned int iphi = 0; iphi < activeVolumesNumbersNested.find(m_activeFieldNamesNested[1])->second; iphi++) {
         for (unsigned int iz = 0; iz < activeVolumesNumbersNested.find(m_activeFieldNamesNested[2])->second; iz++) {
 
-	  dd4hep::DDSegmentation::CellID cID = volumeId;
+          dd4hep::DDSegmentation::CellID cID = volumeId;
           decoder->set(cID, m_activeFieldNamesNested[0], ilayer);
-	  decoder->set(cID, m_activeFieldNamesNested[1], iphi);
-	  decoder->set(cID, m_activeFieldNamesNested[2], iz);
-	  
-	  double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(cID);
-	  double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(cID);
-	  
-	  map.insert( std::pair<uint64_t, std::pair<double, double> >(cID, std::make_pair(noiseRMS, noiseOffset) ) );
+          decoder->set(cID, m_activeFieldNamesNested[1], iphi);
+          decoder->set(cID, m_activeFieldNamesNested[2], iz);
+
+          double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(cID);
+          double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(cID);
+
+          map.insert(std::pair<uint64_t, std::pair<double, double>>(cID, std::make_pair(noiseRMS, noiseOffset)));
         }
       }
     }
@@ -202,8 +207,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
   // Check if output directory exists
   std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
   if (!gSystem->OpenDirectory(outDirPath.c_str())) {
-    error() << "Output directory \"" << outDirPath
-            << "\" does not exists! Please create it." << endmsg;
+    error() << "Output directory \"" << outDirPath << "\" does not exists! Please create it." << endmsg;
     return StatusCode::FAILURE;
   }
 

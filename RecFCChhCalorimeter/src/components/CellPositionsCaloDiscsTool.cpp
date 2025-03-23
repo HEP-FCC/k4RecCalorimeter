@@ -12,7 +12,8 @@ CellPositionsCaloDiscsTool::CellPositionsCaloDiscsTool(const std::string& type, 
 
 StatusCode CellPositionsCaloDiscsTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -55,7 +56,8 @@ void CellPositionsCaloDiscsTool::getPositions(const edm4hep::CalorimeterHitColle
     positionedHit.setPosition(edmPos);
     outputColl.push_back(positionedHit);
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outPos.x() / dd4hep::mm << "\t" << outPos.y() / dd4hep::mm << "\t"
             << outPos.z() / dd4hep::mm << endmsg;
   }
@@ -69,7 +71,7 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId
   m_decoder->set(volumeId, "eta", 0);
   dd4hep::Position outPos;
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();  // m_volman.worldTransformation(volumeId);
+  const auto& transformMatrix = detelement.nominal().worldTransformation(); // m_volman.worldTransformation(volumeId);
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);
@@ -87,8 +89,8 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId
 
 int CellPositionsCaloDiscsTool::layerId(const uint64_t& aCellId) {
   int layer;
-dd4hep::DDSegmentation::CellID cID = aCellId;
- layer = m_decoder->get(cID, "layer");
+  dd4hep::DDSegmentation::CellID cID = aCellId;
+  layer = m_decoder->get(cID, "layer");
   return layer;
 }
 

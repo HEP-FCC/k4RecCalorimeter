@@ -3,16 +3,16 @@
 
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
-#include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
+#include "GaudiKernel/RndmGenerators.h"
 
 // k4geo
 // #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // k4FWCore
-#include "k4Interface/INoiseConstTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/INoiseCaloCellsTool.h"
+#include "k4Interface/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -38,7 +38,9 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsVsThetaFromFileTool : public AlgTool, virtual public INoiseCaloCellsTool, virtual public INoiseConstTool {
+class NoiseCaloCellsVsThetaFromFileTool : public AlgTool,
+                                          virtual public INoiseCaloCellsTool,
+                                          virtual public INoiseConstTool {
 public:
   NoiseCaloCellsVsThetaFromFileTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~NoiseCaloCellsVsThetaFromFileTool() = default;
@@ -92,15 +94,17 @@ private:
                                                             "Name of pileup noise offset histogram"};
 
   /// Energy threshold (cells with Ecell < filterThreshold*m_cellNoise removed)
-  Gaudi::Property<double> m_filterThreshold{this, "filterNoiseThreshold", 3,
-                                            "Energy threshold (cells with Ecell < offset + filterThreshold*m_cellNoise removed)"};
-  /// Change the cell filter condition to remove only cells with abs(Ecell) < offset + filterThreshold*m_cellNoise removed)
-  /// This avoids to keep only 'one side'  of the noise fluctuations and prevents biasing cluster energy towards higher energies
-  Gaudi::Property<bool> m_useAbsInFilter{this, "useAbsInFilter", false,
-                                         "If set, cell filtering condition becomes: drop cell if abs(Ecell-offset) < filterThreshold*m_cellNoise"};
+  Gaudi::Property<double> m_filterThreshold{
+      this, "filterNoiseThreshold", 3,
+      "Energy threshold (cells with Ecell < offset + filterThreshold*m_cellNoise removed)"};
+  /// Change the cell filter condition to remove only cells with abs(Ecell) < offset + filterThreshold*m_cellNoise
+  /// removed) This avoids to keep only 'one side'  of the noise fluctuations and prevents biasing cluster energy
+  /// towards higher energies
+  Gaudi::Property<bool> m_useAbsInFilter{
+      this, "useAbsInFilter", false,
+      "If set, cell filtering condition becomes: drop cell if abs(Ecell-offset) < filterThreshold*m_cellNoise"};
   /// Number of radial layers
-  Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3,
-                                          "Number of radial layers"};
+  Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
 
   /// Histograms with pileup noise RMS (index in array - radial layer)
   std::vector<TH1F> m_histoPileupNoiseRMS;

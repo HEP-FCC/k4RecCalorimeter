@@ -12,10 +12,10 @@
 #include "DDSegmentation/Segmentation.h"
 
 // ROOT
-#include "TSystem.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
+#include "TSystem.h"
 
 DECLARE_COMPONENT(ReadNoiseFromFileTool)
 
@@ -32,7 +32,8 @@ StatusCode ReadNoiseFromFileTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
@@ -48,7 +49,8 @@ StatusCode ReadNoiseFromFileTool::initialize() {
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
 
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   return sc;
 }
@@ -75,8 +77,7 @@ StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
     error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Using the following file with the noise values: "
-           << m_noiseFileName.value() << endmsg;
+    info() << "Using the following file with the noise values: " << m_noiseFileName.value() << endmsg;
   }
 
   std::string elecNoiseLayerHistoName, pileupLayerHistoName;
@@ -91,14 +92,14 @@ StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
               << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
       return StatusCode::FAILURE;
     }
-    if (m_setNoiseOffset){
+    if (m_setNoiseOffset) {
       elecNoiseOffsetLayerHistoName = m_elecNoiseOffsetHistoName + std::to_string(i + 1);
       debug() << "Getting histogram with a name " << elecNoiseOffsetLayerHistoName << endmsg;
       m_histoElecNoiseOffset.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(elecNoiseOffsetLayerHistoName.c_str())));
       if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
-	error() << "Histogram  " << elecNoiseOffsetLayerHistoName
-		<< " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
-	return StatusCode::FAILURE;
+        error() << "Histogram  " << elecNoiseOffsetLayerHistoName
+                << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
+        return StatusCode::FAILURE;
       }
     }
     if (m_addPileup) {
@@ -110,15 +111,15 @@ StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
                 << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
         return StatusCode::FAILURE;
       }
-      if (m_setNoiseOffset == true){
-	pileupOffsetLayerHistoName = m_pileupOffsetHistoName + std::to_string(i + 1);
-	debug() << "Getting histogram with a name " << pileupOffsetLayerHistoName << endmsg;
-	m_histoPileupOffset.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupOffsetLayerHistoName.c_str())));
-	if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
-	  error() << "Histogram  " << pileupOffsetLayerHistoName
-		  << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
-	  return StatusCode::FAILURE;
-	}
+      if (m_setNoiseOffset == true) {
+        pileupOffsetLayerHistoName = m_pileupOffsetHistoName + std::to_string(i + 1);
+        debug() << "Getting histogram with a name " << pileupOffsetLayerHistoName << endmsg;
+        m_histoPileupOffset.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupOffsetLayerHistoName.c_str())));
+        if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
+          error() << "Histogram  " << pileupOffsetLayerHistoName
+                  << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
+          return StatusCode::FAILURE;
+        }
       }
     }
   }
@@ -180,7 +181,7 @@ double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoiseRMS = sqrt(elecNoiseRMS*elecNoiseRMS + pileupNoiseRMS*pileupNoiseRMS) * m_scaleFactor;
+  double totalNoiseRMS = sqrt(elecNoiseRMS * elecNoiseRMS + pileupNoiseRMS * pileupNoiseRMS) * m_scaleFactor;
 
   if (totalNoiseRMS < 1e-6) {
     warning() << "Zero noise: cell eta " << cellEta << " layer " << cellLayer << " noise " << totalNoiseRMS << endmsg;
@@ -191,7 +192,8 @@ double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
 
 double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
 
-  if (!m_setNoiseOffset) return 0.;
+  if (!m_setNoiseOffset)
+    return 0.;
 
   double elecNoiseOffset = 0.;
   double pileupNoiseOffset = 0.;
@@ -233,7 +235,8 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
   }
 
   // Total noise: electronics noise + pileup
-  double totalNoiseOffset = sqrt(elecNoiseOffset*elecNoiseOffset + pileupNoiseOffset*pileupNoiseOffset) * m_scaleFactor; // shouldnt the offset be summed linearly?
+  double totalNoiseOffset = sqrt(elecNoiseOffset * elecNoiseOffset + pileupNoiseOffset * pileupNoiseOffset) *
+                            m_scaleFactor; // shouldnt the offset be summed linearly?
   // No warning is printed if offset is zero because that is the usual scenario
 
   return totalNoiseOffset;

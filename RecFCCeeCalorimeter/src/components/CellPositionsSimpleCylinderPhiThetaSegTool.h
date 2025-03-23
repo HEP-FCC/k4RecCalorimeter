@@ -7,44 +7,47 @@
 
 // FCCSW
 // #include "detectorCommon/DetUtils_k4geo.h"
-#include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
+#include "k4Interface/IGeoSvc.h"
 // #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
 // DD4hep
-//#include "DD4hep/Readout.h"
-//#include "DD4hep/Volumes.h"
+// #include "DD4hep/Readout.h"
+// #include "DD4hep/Volumes.h"
 #include "DDSegmentation/Segmentation.h"
 // #include "TGeoManager.h"
 
 class IGeoSvc;
 namespace DD4hep {
 namespace DDSegmentation {
-class Segmentation;
+  class Segmentation;
 }
-}
+} // namespace DD4hep
 
-/** @class CellPositionsSimpleCylinderPhiThetaSegTool k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CellPositionsSimpleCylinderPhiThetaSegTool.h
+/** @class CellPositionsSimpleCylinderPhiThetaSegTool
+ * k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CellPositionsSimpleCylinderPhiThetaSegTool.h
  * CellPositionsSimpleCylinderPhiThetaSegTool.h
  *
  *  Tool to determine cell positions for a simple cylinder volume with a phi-theta grid readout
  *  Uses layer information stored as CaloData to determine radius at which to position the hits
- * 
+ *
  *  @author Archil Durglishvili
  *  @author Giovanni Marchiori
  */
 
 class CellPositionsSimpleCylinderPhiThetaSegTool : public AlgTool, virtual public ICellPositionsTool {
 public:
-  CellPositionsSimpleCylinderPhiThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
+  CellPositionsSimpleCylinderPhiThetaSegTool(const std::string& type, const std::string& name,
+                                             const IInterface* parent);
   ~CellPositionsSimpleCylinderPhiThetaSegTool() = default;
 
   virtual StatusCode initialize() final;
 
   virtual StatusCode finalize() final;
 
-  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells, edm4hep::CalorimeterHitCollection& outputColl) final;
+  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
+                            edm4hep::CalorimeterHitCollection& outputColl) final;
 
   virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
 

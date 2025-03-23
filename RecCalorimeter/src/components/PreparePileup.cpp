@@ -28,7 +28,8 @@ PreparePileup::PreparePileup(const std::string& name, ISvcLocator* svcLoc) : Gau
 
 StatusCode PreparePileup::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
@@ -98,10 +99,11 @@ StatusCode PreparePileup::initialize() {
       return StatusCode::FAILURE;
     }
   }
-  m_energyVsAbsEtaClusterOptimised =  new TH2F((m_histogramName + "_optimisedCluster").c_str(),
-             "energy per optimised cluster vs fabs centre-cell eta ",
-             60, 0, 6.0, 5000, -1, m_maxEnergy);
-  if (m_histSvc->regHist("/rec/" + m_histogramName + "_optimisedCluster", m_energyVsAbsEtaClusterOptimised).isFailure()) {
+  m_energyVsAbsEtaClusterOptimised =
+      new TH2F((m_histogramName + "_optimisedCluster").c_str(), "energy per optimised cluster vs fabs centre-cell eta ",
+               60, 0, 6.0, 5000, -1, m_maxEnergy);
+  if (m_histSvc->regHist("/rec/" + m_histogramName + "_optimisedCluster", m_energyVsAbsEtaClusterOptimised)
+          .isFailure()) {
     error() << "Couldn't register hist" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -131,14 +133,15 @@ StatusCode PreparePileup::initialize() {
   debug() << "Number of calorimeter towers (eta x phi) : " << m_nEtaTower << " x " << m_nPhiTower << endmsg;
   // OPTIMISATION OF CLUSTER SIZE
   // sanity check
-  if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0) && !(m_nEtaFinal.size() == m_numLayers && m_nPhiFinal.size() == m_numLayers)) {
+  if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0) &&
+      !(m_nEtaFinal.size() == m_numLayers && m_nPhiFinal.size() == m_numLayers)) {
     error() << "Size of optimised window should be equal to number of layers or empty" << endmsg;
     return StatusCode::FAILURE;
   }
   if (m_nEtaFinal.size() == m_numLayers) {
     for (uint iLayer = 0; iLayer < m_numLayers; iLayer++) {
-      m_halfPhiFin.push_back(floor(m_nPhiFinal[iLayer]/2.));
-      m_halfEtaFin.push_back(floor(m_nEtaFinal[iLayer]/2.));
+      m_halfPhiFin.push_back(floor(m_nPhiFinal[iLayer] / 2.));
+      m_halfEtaFin.push_back(floor(m_nEtaFinal[iLayer] / 2.));
     }
   }
   return StatusCode::SUCCESS;
@@ -174,14 +177,16 @@ StatusCode PreparePileup::execute(const EventContext&) const {
     double cellEta = m_segmentation->eta(cID);
     m_energyVsAbsEta[layerId]->Fill(fabs(cellEta), cellEnergy);
     // add energy of this cell to any optimised cluster where it is included
-    if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0) ) {
+    if (!(m_nEtaFinal.size() == 0 && m_nPhiFinal.size() == 0)) {
       int etaId = m_decoder->get(cID, "eta");
       int phiId = m_decoder->get(cID, "phi");
-      for (int iEta = etaId - m_halfEtaFin[layerId]; iEta <  etaId + m_halfEtaFin[layerId] + 1; iEta++) {
-        for (int iPhi = phiId - m_halfPhiFin[layerId]; iPhi <  phiId + m_halfPhiFin[layerId] + 1; iPhi++) {
-          if (iEta > 0 && iEta < m_nEtaTower ) {
+      for (int iEta = etaId - m_halfEtaFin[layerId]; iEta < etaId + m_halfEtaFin[layerId] + 1; iEta++) {
+        for (int iPhi = phiId - m_halfPhiFin[layerId]; iPhi < phiId + m_halfPhiFin[layerId] + 1; iPhi++) {
+          if (iEta > 0 && iEta < m_nEtaTower) {
             if (m_ellipseCluster) {
-              if ( pow( (iEta - etaId) / (m_nEtaFinal[layerId] / 2.), 2) + pow( (iPhi - phiId) / (m_nPhiFinal[layerId] / 2.), 2) < 1) {
+              if (pow((iEta - etaId) / (m_nEtaFinal[layerId] / 2.), 2) +
+                      pow((iPhi - phiId) / (m_nPhiFinal[layerId] / 2.), 2) <
+                  1) {
                 m_energyOptimised[iEta][phiNeighbour(iPhi)] += cellEnergy;
               }
             } else {
@@ -195,9 +200,9 @@ StatusCode PreparePileup::execute(const EventContext&) const {
 
   double etaGridSize = m_segmentation->gridSizeEta();
   double etaGridOffset = m_segmentation->offsetEta();
-  for (int iEta = 0; iEta < m_nEtaTower ; iEta++) {
-    for (int iPhi = 0; iPhi < m_nPhiTower ; iPhi++) {
-      m_energyVsAbsEtaClusterOptimised->Fill(fabs(  iEta * etaGridSize + etaGridOffset ), m_energyOptimised[iEta][iPhi]);
+  for (int iEta = 0; iEta < m_nEtaTower; iEta++) {
+    for (int iPhi = 0; iPhi < m_nPhiTower; iPhi++) {
+      m_energyVsAbsEtaClusterOptimised->Fill(fabs(iEta * etaGridSize + etaGridOffset), m_energyOptimised[iEta][iPhi]);
     }
   }
 

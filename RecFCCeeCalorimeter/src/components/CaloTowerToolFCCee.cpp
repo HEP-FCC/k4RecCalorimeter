@@ -14,12 +14,11 @@
 #include "DDSegmentation/MultiSegmentation.h"
 
 // k4geo
+#include "detectorSegmentations/FCCSWEndcapTurbine_k4geo.h"
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
-#include "detectorSegmentations/FCCSWEndcapTurbine_k4geo.h"
-#include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
 #include "detectorSegmentations/FCCSWHCalPhiRow_k4geo.h"
-
+#include "detectorSegmentations/FCCSWHCalPhiTheta_k4geo.h"
 
 DECLARE_COMPONENT(CaloTowerToolFCCee)
 
@@ -39,7 +38,7 @@ StatusCode CaloTowerToolFCCee::initialize() {
   if (AlgTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
- 
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
@@ -90,35 +89,35 @@ StatusCode CaloTowerToolFCCee::initialize() {
   // number of phi bins
   m_nPhiTower = ceil(2 * (m_phiMax - epsilon) / m_deltaPhiTower);
   // number of theta bins
-  m_nThetaTower = ceil(2 * (fabs(m_thetaMax - M_PI/2.) - epsilon) / m_deltaThetaTower);
-  debug() << "Towers: thetaMax " << m_thetaMax << ", deltaThetaTower " << m_deltaThetaTower << ", nThetaTower " << m_nThetaTower
-          << endmsg;
+  m_nThetaTower = ceil(2 * (fabs(m_thetaMax - M_PI / 2.) - epsilon) / m_deltaThetaTower);
+  debug() << "Towers: thetaMax " << m_thetaMax << ", deltaThetaTower " << m_deltaThetaTower << ", nThetaTower "
+          << m_nThetaTower << endmsg;
   debug() << "Towers: phiMax " << m_phiMax << ", deltaPhiTower " << m_deltaPhiTower << ", nPhiTower " << m_nPhiTower
           << endmsg;
 
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTowerToolFCCee::finalize() { 
+StatusCode CaloTowerToolFCCee::finalize() {
   for (auto& towerInMap : m_cellsInTowers) {
     towerInMap.second.clear();
   }
   return AlgTool::finalize();
 }
 
-StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName, std::pair<double, double> &phiThetaPair) {
+StatusCode CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName,
+                                                       std::pair<double, double>& phiThetaPair) {
 
   double phiMax = -1;
   double thetaMax = -1;
 
-  
   // check if readout exists & retrieve Module-Theta segmentation
   // if readout does not exist, reconstruction without this calorimeter part will be performed
 
   std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> tmpPair;
   tmpPair = retrieveSegmentation(aReadoutName);
   dd4hep::DDSegmentation::Segmentation* aSegmentation = tmpPair.first;
-  SegmentationType aType= tmpPair.second;
+  SegmentationType aType = tmpPair.second;
   if (aSegmentation != nullptr && aType == SegmentationType::kWrong) {
     error() << "Wrong type of segmentation" << endmsg;
     return StatusCode::FAILURE;
@@ -126,35 +125,39 @@ StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName
   if (m_useHalfTower) {
     m_decoder = m_geoSvc->getDetector()->readout(aReadoutName).idSpec().decoder();
   }
-  
+
   if (aSegmentation != nullptr) {
-    
+
     switch (aType) {
     case SegmentationType::kModuleTheta: {
-      
-      dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
-      phiMax = M_PI - M_PI/segmentation->nModules();
+
+      dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation =
+          dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
+      phiMax = M_PI - M_PI / segmentation->nModules();
       thetaMax = M_PI - fabs(segmentation->offsetTheta()) + segmentation->gridSizeTheta() * .5;
       break;
     }
     case SegmentationType::kPhiTheta: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
-      dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(aSegmentation);
-      phiMax = M_PI - M_PI/segmentationHCal->phiBins();
+      dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* segmentationHCal =
+          dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(aSegmentation);
+      phiMax = M_PI - M_PI / segmentationHCal->phiBins();
       thetaMax = M_PI - fabs(segmentationHCal->offsetTheta()) + segmentationHCal->gridSizeTheta() * .5;
       break;
     }
     case SegmentationType::kHCalPhiTheta: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
-      dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(aSegmentation);
-      phiMax = M_PI - M_PI/segmentationHCal->phiBins();
+      dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo* segmentationHCal =
+          dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(aSegmentation);
+      phiMax = M_PI - M_PI / segmentationHCal->phiBins();
       thetaMax = M_PI - fabs(segmentationHCal->offsetTheta()) + segmentationHCal->gridSizeTheta() * .5;
       break;
     }
     case SegmentationType::kHCalPhiRow: {
       info() << "== Retrieving segmentation " << aSegmentation->name() << endmsg;
-      dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo* segmentationHCal = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(aSegmentation);
-      phiMax = M_PI - M_PI/segmentationHCal->phiBins();
+      dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo* segmentationHCal =
+          dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(aSegmentation);
+      phiMax = M_PI - M_PI / segmentationHCal->phiBins();
       thetaMax = segmentationHCal->thetaMax();
       break;
     }
@@ -162,21 +165,28 @@ StatusCode  CaloTowerToolFCCee::retrievePhiThetaExtrema(std::string aReadoutName
       double phi = -1;
       double theta = -1;
       info() << "== Retrieving multi segmentation " << aSegmentation->name() << endmsg;
-      for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation)->subSegmentations()) {
-	dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
-        phi = M_PI - M_PI/segmentation->nModules();
-	theta = M_PI - fabs(segmentation->offsetTheta()) + segmentation->gridSizeTheta() * .5;
-        if (theta > thetaMax) { thetaMax = theta;}
-        if (phi > phiMax) { phiMax = phi;}
+      for (const auto& subSegm :
+           dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(aSegmentation)->subSegmentations()) {
+        dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* segmentation =
+            dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
+        phi = M_PI - M_PI / segmentation->nModules();
+        theta = M_PI - fabs(segmentation->offsetTheta()) + segmentation->gridSizeTheta() * .5;
+        if (theta > thetaMax) {
+          thetaMax = theta;
+        }
+        if (phi > phiMax) {
+          phiMax = phi;
+        }
       }
       break;
     }
     case SegmentationType::kEndcapTurbine: {
-      dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo* ECTsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(aSegmentation);
+      dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo* ECTsegmentation =
+          dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(aSegmentation);
       thetaMax = M_PI - fabs(ECTsegmentation->offsetTheta());
       phiMax = M_PI;
       break;
-    } 
+    }
     case SegmentationType::kWrong: {
       info() << "== Retrieving WRONG segmentation" << endmsg;
       phiMax = -1;
@@ -211,7 +221,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* ecalBarrelCells = m_ecalBarrelCells.get();
   debug() << "Input Ecal barrel cell collection size: " << ecalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (ecalBarrelCells->size() >0) {
+  if (ecalBarrelCells->size() > 0) {
     CellsIntoTowers(aTowers, ecalBarrelCells, fillTowersCells);
     totalNumberOfCells += ecalBarrelCells->size();
   }
@@ -238,7 +248,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   const edm4hep::CalorimeterHitCollection* hcalBarrelCells = m_hcalBarrelCells.get();
   debug() << "Input hadronic barrel cell collection size: " << hcalBarrelCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
-  if (hcalBarrelCells->size()>0) {
+  if (hcalBarrelCells->size() > 0) {
     CellsIntoTowers(aTowers, hcalBarrelCells, fillTowersCells);
     totalNumberOfCells += hcalBarrelCells->size();
   }
@@ -257,7 +267,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   debug() << "Input Hcal endcap cell collection size: " << hcalEndcapCells->size() << endmsg;
   // Loop over a collection of calorimeter cells and build calo towers
   if (hcalEndcapCells->size() > 0) {
-    CellsIntoTowers(aTowers, hcalEndcapCells,  fillTowersCells);
+    CellsIntoTowers(aTowers, hcalEndcapCells, fillTowersCells);
     totalNumberOfCells += hcalEndcapCells->size();
   }
   /*
@@ -276,7 +286,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
 // Get the tower IDs in theta
 // aTheta Position of the calorimeter cell in theta
 uint CaloTowerToolFCCee::idTheta(float aTheta) const {
-  uint id = floor(( m_thetaMax - aTheta ) / m_deltaThetaTower);
+  uint id = floor((m_thetaMax - aTheta) / m_deltaThetaTower);
   return id;
 }
 
@@ -308,12 +318,13 @@ uint CaloTowerToolFCCee::phiNeighbour(int aIPhi) const {
   return aIPhi;
 }
 
-std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> CaloTowerToolFCCee::cellsInTowers() const { return m_cellsInTowers; }
+std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> CaloTowerToolFCCee::cellsInTowers() const {
+  return m_cellsInTowers;
+}
 
 // to fill the cell infomation into towers
 void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTowers,
-                                    const edm4hep::CalorimeterHitCollection* aCells,
-                                    bool fillTowersCells) {
+                                         const edm4hep::CalorimeterHitCollection* aCells, bool fillTowersCells) {
   // Loop over a collection of calorimeter cells and build calo towers
   // tower index of the borders of the cell
   int iTheta = 0;
@@ -323,98 +334,104 @@ void CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
   for (const auto& cell : *aCells) {
     pass = true;
     if (m_useHalfTower) {
-        uint layerId = m_decoder->get(cell.getCellID(), "layer");
-        if ( layerId > m_max_layer ) {
-          pass = false;
-        }
+      uint layerId = m_decoder->get(cell.getCellID(), "layer");
+      if (layerId > m_max_layer) {
+        pass = false;
+      }
     }
     if (pass) {
       float cellX = cell.getPosition().x;
       float cellY = cell.getPosition().y;
       float cellZ = cell.getPosition().z;
       float cellTheta = atan2(sqrt(cellX * cellX + cellY * cellY), cellZ);
-      float cellPhi   = atan2(cellY, cellX);
+      float cellPhi = atan2(cellY, cellX);
       iTheta = idTheta(cellTheta);
       iPhi = idPhi(cellPhi);
-      aTowers[iTheta][phiNeighbour(iPhi)] +=
-	cell.getEnergy() * sin(cellTheta);
+      aTowers[iTheta][phiNeighbour(iPhi)] += cell.getEnergy() * sin(cellTheta);
 
       if (fillTowersCells) {
         m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))].push_back(cell.clone());
-	int ncells = m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))].size();
+        int ncells = m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))].size();
 
-	if ( ncells > 5)
-	  verbose() << "NUM CELLs IN TOWER : " << ncells << endmsg;
+        if (ncells > 5)
+          verbose() << "NUM CELLs IN TOWER : " << ncells << endmsg;
       }
     }
   }
 }
 
-std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::SegmentationType> CaloTowerToolFCCee::retrieveSegmentation(std::string aReadoutName) {
+std::pair<dd4hep::DDSegmentation::Segmentation*, CaloTowerToolFCCee::SegmentationType>
+CaloTowerToolFCCee::retrieveSegmentation(std::string aReadoutName) {
   dd4hep::DDSegmentation::Segmentation* segmentation = nullptr;
   if (m_geoSvc->getDetector()->readouts().find(aReadoutName) == m_geoSvc->getDetector()->readouts().end()) {
     info() << "Readout does not exist! Please check if it is correct. Processing without it." << endmsg;
-  }
-  else
-  {
+  } else {
     info() << "Readout " << aReadoutName << " found." << endmsg;
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
-      m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-    if (segmentation == nullptr)
-    {
-      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-      if (segmentation == nullptr)
-      {
-        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-        if (segmentation == nullptr)
-        {
-          segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-          if (segmentation == nullptr)
-          {
-            segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-            if (segmentation == nullptr)
-            {
-              segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>( m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
-              if (segmentation == nullptr)
-              {
-                warning() << "There is no module-theta, phi-theta, phi-row, endcap turbine, or multi- segmentation for the readout " << aReadoutName << " defined." << endmsg;
-	        return std::make_pair(nullptr, SegmentationType::kWrong);
-              }
-              else
-              {
+        m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+    if (segmentation == nullptr) {
+      segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(
+          m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+      if (segmentation == nullptr) {
+        segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(
+            m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+        if (segmentation == nullptr) {
+          segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(
+              m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+          if (segmentation == nullptr) {
+            segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(
+                m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+            if (segmentation == nullptr) {
+              segmentation = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
+                  m_geoSvc->getDetector()->readout(aReadoutName).segmentation().segmentation());
+              if (segmentation == nullptr) {
+                warning() << "There is no module-theta, phi-theta, phi-row, endcap turbine, or multi- segmentation for "
+                             "the readout "
+                          << aReadoutName << " defined." << endmsg;
+                return std::make_pair(nullptr, SegmentationType::kWrong);
+              } else {
                 // check if multisegmentation contains only module-theta sub-segmentations
                 dd4hep::DDSegmentation::Segmentation* subsegmentation = nullptr;
-                for (const auto& subSegm: dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations())
-                {
-                  subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
-                  if (subsegmentation == nullptr)
-                  {
-                    warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName << " is not a module-theta grid." << endmsg;
+                for (const auto& subSegm :
+                     dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(segmentation)->subSegmentations()) {
+                  subsegmentation =
+                      dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(subSegm.segmentation);
+                  if (subsegmentation == nullptr) {
+                    warning() << "At least one of the sub-segmentations in MultiSegmentation named " << aReadoutName
+                              << " is not a module-theta grid." << endmsg;
                     return std::make_pair(nullptr, SegmentationType::kWrong);
                   }
-	        }
+                }
                 return std::make_pair(segmentation, SegmentationType::kMulti);
               }
-            } else return std::make_pair(segmentation, SegmentationType::kEndcapTurbine);
-          } else return std::make_pair(segmentation, SegmentationType::kHCalPhiRow);
-        } else return std::make_pair(segmentation, SegmentationType::kHCalPhiTheta);
-      } else return std::make_pair(segmentation, SegmentationType::kPhiTheta);
-    } else return std::make_pair(segmentation, SegmentationType::kModuleTheta);
+            } else
+              return std::make_pair(segmentation, SegmentationType::kEndcapTurbine);
+          } else
+            return std::make_pair(segmentation, SegmentationType::kHCalPhiRow);
+        } else
+          return std::make_pair(segmentation, SegmentationType::kHCalPhiTheta);
+      } else
+        return std::make_pair(segmentation, SegmentationType::kPhiTheta);
+    } else
+      return std::make_pair(segmentation, SegmentationType::kModuleTheta);
   }
   return std::make_pair(segmentation, SegmentationType::kWrong);
 }
 
-void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, uint halfPhiFin, edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
+void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, uint halfPhiFin,
+                                     edm4hep::MutableCluster& aEdmCluster,
+                                     edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse) {
   int thetaId = idTheta(theta);
   int phiId = idPhi(phi);
   std::vector<dd4hep::DDSegmentation::CellID> seen_cellIDs;
   if (aEllipse) {
     for (int iTheta = thetaId - halfThetaFin; iTheta <= int(thetaId + halfThetaFin); iTheta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= int(phiId + halfPhiFin); iPhi++) {
-        if (pow( (thetaId - iTheta) / (halfThetaFin + 0.5), 2) + pow( (phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
+        if (pow((thetaId - iTheta) / (halfThetaFin + 0.5), 2) + pow((phiId - iPhi) / (halfPhiFin + 0.5), 2) < 1) {
           for (auto cell : m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))]) {
-            if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
-               continue;
+            if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) !=
+                seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
+              continue;
             }
             seen_cellIDs.push_back(cell.getCellID());
             auto cellclone = cell.clone();
@@ -428,7 +445,8 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
     for (int iTheta = thetaId - halfThetaFin; iTheta <= int(thetaId + halfThetaFin); iTheta++) {
       for (int iPhi = phiId - halfPhiFin; iPhi <= int(phiId + halfPhiFin); iPhi++) {
         for (auto cell : m_cellsInTowers[std::make_pair(iTheta, phiNeighbour(iPhi))]) {
-          if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) != seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
+          if (std::find(seen_cellIDs.begin(), seen_cellIDs.end(), cell.getCellID()) !=
+              seen_cellIDs.end()) { // towers can be smaller than cells in which case a cell belongs to several towers
             continue;
           }
           seen_cellIDs.push_back(cell.getCellID());

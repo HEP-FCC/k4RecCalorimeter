@@ -15,7 +15,7 @@ namespace k4::recCalo {
 
 class ClusterInfo : public fastjet::PseudoJet::UserInfoBase {
 public:
-  explicit ClusterInfo(const int &index) : _index(index) {}
+  explicit ClusterInfo(const int& index) : _index(index) {}
   int index() const { return _index; }
 
 protected:
@@ -44,8 +44,7 @@ protected:
 
 class ClusterJet {
 public:
-  ClusterJet(const std::string &jetAlg, double jetRadius,
-             int isExclusiveClustering = 0, double minPt = 0,
+  ClusterJet(const std::string& jetAlg, double jetRadius, int isExclusiveClustering = 0, double minPt = 0,
              int clusterArgs = 0);
   bool initialize();
   ~ClusterJet() {
@@ -53,17 +52,13 @@ public:
     delete m_clustSeq;
   }
 
-  std::vector<fastjet::PseudoJet>
-  cluster(const std::vector<fastjet::PseudoJet> &clustersPJ);
+  std::vector<fastjet::PseudoJet> cluster(const std::vector<fastjet::PseudoJet>& clustersPJ);
 
 private:
   std::map<std::string, fastjet::JetAlgorithm> m_jetAlgMap = {
-      {"kt", fastjet::JetAlgorithm::kt_algorithm},
-      {"cambridge", fastjet::JetAlgorithm::cambridge_algorithm},
-      {"antikt", fastjet::JetAlgorithm::antikt_algorithm},
-      {"genkt", fastjet::JetAlgorithm::genkt_algorithm},
-      {"ee_kt", fastjet::JetAlgorithm::ee_kt_algorithm},
-      {"ee_genkt", fastjet::JetAlgorithm::ee_genkt_algorithm},
+      {"kt", fastjet::JetAlgorithm::kt_algorithm},         {"cambridge", fastjet::JetAlgorithm::cambridge_algorithm},
+      {"antikt", fastjet::JetAlgorithm::antikt_algorithm}, {"genkt", fastjet::JetAlgorithm::genkt_algorithm},
+      {"ee_kt", fastjet::JetAlgorithm::ee_kt_algorithm},   {"ee_genkt", fastjet::JetAlgorithm::ee_genkt_algorithm},
   };
 
   std::string m_jetAlg = "antikt";
@@ -72,8 +67,8 @@ private:
   double m_minPt = 10;             // Only relevant for inclusive clustering
   int m_njets = 0;                 // Only relevant for exclusive clustering
 
-  fastjet::JetDefinition *m_jetDef = nullptr;
-  fastjet::ClusterSequence *m_clustSeq = nullptr;
+  fastjet::JetDefinition* m_jetDef = nullptr;
+  fastjet::ClusterSequence* m_clustSeq = nullptr;
 };
 
 } /* namespace k4::recCalo */

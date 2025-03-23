@@ -3,7 +3,6 @@
 // k4FWCore
 #include "k4Interface/IGeoSvc.h"
 
-
 // DD4hep
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
@@ -44,8 +43,8 @@ StatusCode LayeredCaloTowerTool::initialize() {
     return StatusCode::FAILURE;
   }
   // Take readout bitfield decoder from GeoSvc
-  m_decoder =
-    std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder>(m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder());
+  m_decoder = std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder>(
+      m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder());
   // check if decoder contains "layer"
   std::vector<std::string> fields;
   for (uint itField = 0; itField < m_decoder->size(); itField++) {
@@ -81,8 +80,7 @@ void LayeredCaloTowerTool::towersNumber(int& nEta, int& nPhi) {
   nPhi = m_nPhiTower;
 }
 
-uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers,
-                                       [[maybe_unused]] bool fillTowerCells) {
+uint LayeredCaloTowerTool::buildTowers(std::vector<std::vector<float>>& aTowers, [[maybe_unused]] bool fillTowerCells) {
   // Get the input collection with cells from simulation + digitisation (after
   // calibration and with noise)
   const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
@@ -210,12 +208,14 @@ uint LayeredCaloTowerTool::phiNeighbour(int aIPhi) const {
 float LayeredCaloTowerTool::radiusForPosition() const { return m_radius; }
 
 void LayeredCaloTowerTool::attachCells(float eta, float phi, uint halfEtaFin, uint halfPhiFin,
-                                       edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool) {
+                                       edm4hep::MutableCluster& aEdmCluster,
+                                       edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool) {
   const edm4hep::CalorimeterHitCollection* cells = m_cells.get();
   for (const auto& cell : *cells) {
     float etaCell = m_segmentation->eta(cell.getCellID());
     float phiCell = m_segmentation->phi(cell.getCellID());
-    if ((std::abs(static_cast<long int>(idEta(etaCell)) - static_cast<long int>(idEta(eta))) <= halfEtaFin) && (std::abs(static_cast<long int>(idPhi(phiCell)) - static_cast<long int>(idPhi(phi))) <= halfPhiFin)) {
+    if ((std::abs(static_cast<long int>(idEta(etaCell)) - static_cast<long int>(idEta(eta))) <= halfEtaFin) &&
+        (std::abs(static_cast<long int>(idPhi(phiCell)) - static_cast<long int>(idPhi(phi))) <= halfPhiFin)) {
       aEdmClusterCells->push_back(cell);
       aEdmCluster.addToHits(aEdmClusterCells->at(aEdmClusterCells->size() - 1));
     }

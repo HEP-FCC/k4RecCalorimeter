@@ -6,9 +6,9 @@
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
-#include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/RndmGenerators.h"
+#include "GaudiKernel/ToolHandle.h"
 class IGeoSvc;
 class IRndmGenSvc;
 class ITHistSvc;
@@ -18,24 +18,24 @@ class ITHistSvc;
 
 // EDM4HEP
 namespace edm4hep {
-  class Cluster;
-  class MutableCluster;
-  class ClusterCollection;
-  class CalorimeterHitCollection;
-  class MCParticleCollection;
-  class VertexCollection;
-}
+class Cluster;
+class MutableCluster;
+class ClusterCollection;
+class CalorimeterHitCollection;
+class MCParticleCollection;
+class VertexCollection;
+} // namespace edm4hep
 
 // DD4HEP
 namespace dd4hep {
-  namespace DDSegmentation {
-    class FCCSWGridPhiEta_k4geo;
-    class FCCSWGridModuleThetaMerged_k4geo;
-    class FCCSWGridPhiTheta_k4geo; 
-    class MultiSegmentation;
-    class BitFieldCoder;
-  }
-}
+namespace DDSegmentation {
+  class FCCSWGridPhiEta_k4geo;
+  class FCCSWGridModuleThetaMerged_k4geo;
+  class FCCSWGridPhiTheta_k4geo;
+  class MultiSegmentation;
+  class BitFieldCoder;
+} // namespace DDSegmentation
+} // namespace dd4hep
 
 /** @class CorrectCaloClusters
  *
@@ -46,13 +46,14 @@ namespace dd4hep {
  *  * Downstream energy correction corrects for the energy lost due to punch trough. This energy is deposited in the
  *    instrumentation behind the active volume of the calorimeter. It is parametrized in one (cluster energy) or two
  *    variables (cluster energy, cluster angle)
- * * Benchmark calibration should be used for the combined simulation of ECal and HCal when using charged pions. 
- *    At the input level, the ECal should be calibrated to EM scale and HCal should be calibrated to HAD scale. 
+ * * Benchmark calibration should be used for the combined simulation of ECal and HCal when using charged pions.
+ *    At the input level, the ECal should be calibrated to EM scale and HCal should be calibrated to HAD scale.
  *    The aim of the benchmark calibration is to bring ECal to HAD scale and also to take into account
- *    the energy loss between the ECal and HCal (e.g. in cryostat) - for this, the energy from the last ECal layer and the first HCal layer is used. 
- *    While, downstream correction is part of the benchmark method (energy lost between ECal and HCal), as well as the upstream correction for ECal
- *    For standalone ECal, include upstream and downstream correction; for ECal+HCal simulation apply only benchmark correction should be applied
- *    To obtain the actual parameters run RecCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py which calls CalibrateBenchmarkMethod
+ *    the energy loss between the ECal and HCal (e.g. in cryostat) - for this, the energy from the last ECal layer and
+ * the first HCal layer is used. While, downstream correction is part of the benchmark method (energy lost between ECal
+ * and HCal), as well as the upstream correction for ECal For standalone ECal, include upstream and downstream
+ * correction; for ECal+HCal simulation apply only benchmark correction should be applied To obtain the actual
+ * parameters run RecCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py which calls CalibrateBenchmarkMethod
  *
  *  Based on similar corrections by Jana Faltova and Anna Zaborowska.
  *
@@ -134,10 +135,7 @@ private:
    *
    * @return                   Energy in layer.
    */
-  double getEnergyInLayer(edm4hep::Cluster cluster,
-                          const std::string& readoutName,
-                          int systemID,
-                          int layerID) const;
+  double getEnergyInLayer(edm4hep::Cluster cluster, const std::string& readoutName, int systemID, int layerID) const;
 
   /**
    * Get sum of energy from cells in the whole calorimeter.
@@ -149,9 +147,7 @@ private:
    *
    * @return                   Total energy.
    */
-  double getTotalEnergy(edm4hep::Cluster cluster,
-                        const std::string& readoutName,
-                        int systemID) const; 
+  double getTotalEnergy(edm4hep::Cluster cluster, const std::string& readoutName, int systemID) const;
 
   /**
    * Get the theta angle of the specified cluster.
@@ -163,13 +159,9 @@ private:
   double getClusterTheta(edm4hep::Cluster cluster) const;
 
   /// Handle for input calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters {
-    "inClusters", Gaudi::DataHandle::Reader, this
-  };
+  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected (output) calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters {
-    "outClusters", Gaudi::DataHandle::Writer, this
-  };
+  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer, this};
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
@@ -181,61 +173,55 @@ private:
   std::vector<std::vector<TF1*>> m_benchmarkFunctions;
 
   /// IDs of the detectors
-  Gaudi::Property<std::vector<int>> m_systemIDs {
-      this, "systemIDs", {4,8}, "IDs of systems"
-  };
+  Gaudi::Property<std::vector<int>> m_systemIDs{this, "systemIDs", {4, 8}, "IDs of systems"};
   Gaudi::Property<uint> m_systemIDECal{this, "systemIDECal", 4, "ID of ECal system"};
   Gaudi::Property<uint> m_systemIDHCal{this, "systemIDHCal", 8, "ID of the HCal system"};
   /// Names of the detector readouts, corresponding to system IDs
-  Gaudi::Property<std::vector<std::string>> m_readoutNames {
-      this, "readoutNames", {"ECalBarrelModuleThetaMerged","BarHCal_Readout_phitheta"},
-      "Names of the detector readout, corresponding to systemID"
-  };
+  Gaudi::Property<std::vector<std::string>> m_readoutNames{this,
+                                                           "readoutNames",
+                                                           {"ECalBarrelModuleThetaMerged", "BarHCal_Readout_phitheta"},
+                                                           "Names of the detector readout, corresponding to systemID"};
   /// Numbers of layers of the detectors
-  Gaudi::Property<std::vector<size_t>> m_numLayers {
-      this, "numLayers", {12,13}, "Numbers of layers of the systems"};
+  Gaudi::Property<std::vector<size_t>> m_numLayers{this, "numLayers", {12, 13}, "Numbers of layers of the systems"};
   /// IDs of the first layers of the detectors
-  Gaudi::Property<std::vector<int>> m_firstLayerIDs {
-      this, "firstLayerIDs", {0,0}, "IDs of first layers in the systems"
-  };
+  Gaudi::Property<std::vector<int>> m_firstLayerIDs{
+      this, "firstLayerIDs", {0, 0}, "IDs of first layers in the systems"};
   /// IDs of the last layers of the detectors
-  Gaudi::Property<std::vector<int>> m_lastLayerIDs {
-      this, "lastLayerIDs", {11,12}, "IDs of last layers in the systems"
-  };
+  Gaudi::Property<std::vector<int>> m_lastLayerIDs{this, "lastLayerIDs", {11, 12}, "IDs of last layers in the systems"};
 
   /// Upstream correction parameters (a, b, c, ...)
-  Gaudi::Property<std::vector<std::vector<double>>> m_upstreamParams {
+  Gaudi::Property<std::vector<std::vector<double>>> m_upstreamParams{
       this, "upstreamParameters", {}, "Upstream parameters"};
   /// Upstream correction formulas in ROOT notation
-  Gaudi::Property<std::vector<std::vector<std::string>>> m_upstreamFormulas {
+  Gaudi::Property<std::vector<std::vector<std::string>>> m_upstreamFormulas{
       this, "upstreamFormulas", {}, "Upstream formulas (in ROOT notation)"};
 
   /// Downstream correction parameters (a, b, c, ...)
-  Gaudi::Property<std::vector<std::vector<double>>> m_downstreamParams {
+  Gaudi::Property<std::vector<std::vector<double>>> m_downstreamParams{
       this, "downstreamParameters", {}, "Downstream parameters"};
   /// Downstream correction formulas in ROOT notation
-  Gaudi::Property<std::vector<std::vector<std::string>>> m_downstreamFormulas {
+  Gaudi::Property<std::vector<std::vector<std::string>>> m_downstreamFormulas{
       this, "downstreamFormulas", {}, "Downstream formulas (in ROOT notation)"};
-/// Benchmark method correction parameters (a, b, c, ...)
-  Gaudi::Property<std::vector<std::vector<double>>> m_benchmarkParametrization {
+  /// Benchmark method correction parameters (a, b, c, ...)
+  Gaudi::Property<std::vector<std::vector<double>>> m_benchmarkParametrization{
       this, "benchmarkParametrization", {}, "Benchmark formula parameters"};
   /// Benchmark correction formulas in ROOT notation
-  Gaudi::Property<std::vector<std::vector<std::string>>> m_benchmarkFormulas {
+  Gaudi::Property<std::vector<std::vector<std::string>>> m_benchmarkFormulas{
       this, "benchmarkFormulas", {}, "Benchmark formulas (in ROOT notation)"};
 
-  /// Possibility to use different parametrization for very low energies (<10GeV) for benchmark method 
-  /// For the energy (GeV) below this given threshold, the second energy formula in benchmarkFormulas is used 
-  Gaudi::Property<double> m_benchmarkEneSwitch {
-    this, "benchmarkEneSwitch", -1., 
-    "Energy threshold in GeV to use the second formula. Set to a negative value to disable using the second formula."
-};
+  /// Possibility to use different parametrization for very low energies (<10GeV) for benchmark method
+  /// For the energy (GeV) below this given threshold, the second energy formula in benchmarkFormulas is used
+  Gaudi::Property<double> m_benchmarkEneSwitch{this, "benchmarkEneSwitch", -1.,
+                                               "Energy threshold in GeV to use the second formula. Set to a negative "
+                                               "value to disable using the second formula."};
 
-  /// benchmarkParamsApprox are used for the first estimate of the energy 
+  /// benchmarkParamsApprox are used for the first estimate of the energy
   /// which is then used to obtain energy dependent benchmark parameters
   /// Parameters below were obtained by running a single benchmark calibration for 100 GeV pion
-  Gaudi::Property<std::vector<double>> m_benchmarkParamsApprox {
-      this, "benchmarkParamsApprox", {1.2281, 1, 1.07731, -0.00191622, 18.6772, 0.}, "Approximate benchmark parameters"
-  };
+  Gaudi::Property<std::vector<double>> m_benchmarkParamsApprox{this,
+                                                               "benchmarkParamsApprox",
+                                                               {1.2281, 1, 1.07731, -0.00191622, 18.6772, 0.},
+                                                               "Approximate benchmark parameters"};
   /// Flag if upstream correction should be applied
   Gaudi::Property<bool> m_upstreamCorr{this, "upstreamCorr", true};
   /// Flag if downstream correction should be applied

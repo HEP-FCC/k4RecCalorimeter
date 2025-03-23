@@ -17,14 +17,14 @@ namespace edm4hep {
 class CalorimeterHitCollection;
 class Cluster;
 class MutableCluster;
-}
+} // namespace edm4hep
 
 // DD4hep
 namespace dd4hep {
 namespace DDSegmentation {
-class Segmentation;
+  class Segmentation;
 }
-}
+} // namespace dd4hep
 
 /** @class LayeredCaloTowerTool
  * Reconstruction/RecCalorimeter/src/components/LayeredCaloTowerTool.h
@@ -78,7 +78,7 @@ public:
    *   @param[out] aTowers Calorimeter towers.
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells=true) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells = true) final;
   /**  Get the radius (in mm) for the position calculation.
    *   Reconstructed cluster has eta and phi position, without the radial
    * coordinate. The cluster in EDM contains
@@ -130,7 +130,8 @@ public:
    *   @param[out] aEdmCluster Cluster where cells are attached to
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
-                           edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
+                           edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells,
+                           bool aEllipse = false) final;
   std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;
 
 private:
@@ -159,7 +160,7 @@ private:
   // Maximum layer (130 = last layer in ECalBarrel inclined)
   Gaudi::Property<float> m_maximumLayer{this, "maximumLayer", 130, "Maximum cell layer"};
   // Restrict tower building in layers if bitfield: layer exists
-  
+
   Gaudi::Property<float> m_addLayerRestriction{this, "addLayerRestriction", true, "set layer restriction on/off"};
   /// number of towers in eta (calculated from m_deltaEtaTower and m_etaMax)
   int m_nEtaTower;

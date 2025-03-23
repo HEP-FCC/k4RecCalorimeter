@@ -5,10 +5,8 @@
 
 namespace k4::recCalo {
 
-ClusterJet::ClusterJet(const std::string &jetAlg, double jetRadius,
-                       int isExclusiveClustering, double minPt, int njets)
-    : m_jetAlg(jetAlg), m_jetRadius(jetRadius),
-      m_isExclusiveClustering(isExclusiveClustering), m_minPt(minPt),
+ClusterJet::ClusterJet(const std::string& jetAlg, double jetRadius, int isExclusiveClustering, double minPt, int njets)
+    : m_jetAlg(jetAlg), m_jetRadius(jetRadius), m_isExclusiveClustering(isExclusiveClustering), m_minPt(minPt),
       m_njets(njets) {}
 
 bool ClusterJet::initialize() {
@@ -22,8 +20,7 @@ bool ClusterJet::initialize() {
 
   if (m_isExclusiveClustering > 1) {
     std::cout << "ERROR: "
-              << "Clustering of " << m_isExclusiveClustering
-              << " is currently not supported" << std::endl;
+              << "Clustering of " << m_isExclusiveClustering << " is currently not supported" << std::endl;
     ;
     return false;
   }
@@ -31,8 +28,7 @@ bool ClusterJet::initialize() {
   return true;
 }
 
-std::vector<fastjet::PseudoJet>
-ClusterJet::cluster(const std::vector<fastjet::PseudoJet> &clustersPJ) {
+std::vector<fastjet::PseudoJet> ClusterJet::cluster(const std::vector<fastjet::PseudoJet>& clustersPJ) {
   // Deleting cluster sequence from previous event
   delete m_clustSeq;
 

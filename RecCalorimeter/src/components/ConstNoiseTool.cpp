@@ -13,7 +13,7 @@ DECLARE_COMPONENT(ConstNoiseTool)
 
 ConstNoiseTool::ConstNoiseTool(const std::string& type, const std::string& name, const IInterface* parent)
     : AlgTool(type, name, parent) {
-   declareInterface<INoiseConstTool>(this);
+  declareInterface<INoiseConstTool>(this);
 }
 
 StatusCode ConstNoiseTool::initialize() {
@@ -37,19 +37,19 @@ StatusCode ConstNoiseTool::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
- 
+
   // loop over the detectors
-  for (size_t iDet=0; iDet<m_detectors.size(); iDet++) {
+  for (size_t iDet = 0; iDet < m_detectors.size(); iDet++) {
     std::string detName = "DetID_" + m_detectors[iDet];
     try {
       int detID = m_geoSvc->getDetector()->constant<int>(detName);
       m_systemNoiseRMSMap.emplace(detID, m_detectorsNoiseRMS[iDet]);
-      debug() << "Set noise RMS for detector " << detName << " (ID=" << detID << ") to: "
-	      << m_detectorsNoiseRMS[iDet] << endmsg;
+      debug() << "Set noise RMS for detector " << detName << " (ID=" << detID << ") to: " << m_detectorsNoiseRMS[iDet]
+              << endmsg;
       if (m_setNoiseOffset) {
-	m_systemNoiseOffsetMap.emplace(detID, m_detectorsNoiseOffset[iDet]);
-	debug() << "Set noise offset for detector " << detName << " (ID=" << detID << ") to: "
-	        << m_detectorsNoiseOffset[iDet] << endmsg;
+        m_systemNoiseOffsetMap.emplace(detID, m_detectorsNoiseOffset[iDet]);
+        debug() << "Set noise offset for detector " << detName << " (ID=" << detID
+                << ") to: " << m_detectorsNoiseOffset[iDet] << endmsg;
       }
     } catch (const std::exception& e) {
       error() << "Error: detector with name " << detName << " not found, exception raised: " << e.what() << endmsg;
@@ -58,7 +58,8 @@ StatusCode ConstNoiseTool::initialize() {
   }
 
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   return sc;
 }

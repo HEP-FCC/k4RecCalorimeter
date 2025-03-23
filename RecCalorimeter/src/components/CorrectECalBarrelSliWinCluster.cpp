@@ -16,29 +16,25 @@
 #include "DDSegmentation/MultiSegmentation.h"
 
 // edm4hep
+#include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
-#include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/MCParticleCollection.h"
 #include "edm4hep/VertexCollection.h"
 
 // ROOT
-#include "TSystem.h"
 #include "TFile.h"
-#include "TLorentzVector.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
+#include "TLorentzVector.h"
+#include "TSystem.h"
 
 DECLARE_COMPONENT(CorrectECalBarrelSliWinCluster)
 
 CorrectECalBarrelSliWinCluster::CorrectECalBarrelSliWinCluster(const std::string& name, ISvcLocator* svcLoc)
-    : Gaudi::Algorithm(name, svcLoc),
-      m_histSvc("THistSvc", "CorrectECalBarrelSliWinCluster"),
-      m_geoSvc("GeoSvc", "CorrectECalBarrelSliWinCluster"),
-      m_hEnergyPreAnyCorrections(nullptr),
-      m_hEnergyPostAllCorrections(nullptr),
-      m_hPileupEnergy(nullptr),
-      m_hUpstreamEnergy(nullptr) {
+    : Gaudi::Algorithm(name, svcLoc), m_histSvc("THistSvc", "CorrectECalBarrelSliWinCluster"),
+      m_geoSvc("GeoSvc", "CorrectECalBarrelSliWinCluster"), m_hEnergyPreAnyCorrections(nullptr),
+      m_hEnergyPostAllCorrections(nullptr), m_hPileupEnergy(nullptr), m_hUpstreamEnergy(nullptr) {
   declareProperty("clusters", m_inClusters, "Input clusters (input)");
   declareProperty("correctedClusters", m_correctedClusters, "Corrected clusters (output)");
   declareProperty("particle", m_particle, "Generated single-particle event (input)");
@@ -48,12 +44,13 @@ CorrectECalBarrelSliWinCluster::CorrectECalBarrelSliWinCluster(const std::string
 StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   {
     StatusCode sc = Gaudi::Algorithm::initialize();
-    if (sc.isFailure()) return sc;
+    if (sc.isFailure())
+      return sc;
   }
 
   int energyStart = 0;
   int energyEnd = 0;
-  if( m_energy == 0 ) {
+  if (m_energy == 0) {
     energyStart = 0;
     energyEnd = 1000;
   } else {
@@ -62,76 +59,83 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   }
 
   // create control histograms
-  m_hEnergyPreAnyCorrections = new TH1F(
-      "energyPreAnyCorrections", "Energy of cluster before any correction", 3000, energyStart, energyEnd);
+  m_hEnergyPreAnyCorrections =
+      new TH1F("energyPreAnyCorrections", "Energy of cluster before any correction", 3000, energyStart, energyEnd);
   if (m_histSvc->regHist("/rec/energyPreAnyCorrections", m_hEnergyPreAnyCorrections).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hEnergyPostAllCorrections = new TH1F(
-      "energyPostAllCorrections", "Energy of cluster after all corrections", 3000, energyStart, energyEnd);
+  m_hEnergyPostAllCorrections =
+      new TH1F("energyPostAllCorrections", "Energy of cluster after all corrections", 3000, energyStart, energyEnd);
   if (m_histSvc->regHist("/rec/energyPostAllCorrections", m_hEnergyPostAllCorrections).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hEnergyPostAllCorrectionsAndScaling = new TH1F(
-      "energyPostAllCorrectionsAndScaling", "Energy of cluster after all corrections and scaling", 3000, energyStart, energyEnd);
-  if (m_histSvc->regHist("/rec/energyPostAllCorrectionsAndScaling", m_hEnergyPostAllCorrectionsAndScaling).isFailure()) {
+  m_hEnergyPostAllCorrectionsAndScaling =
+      new TH1F("energyPostAllCorrectionsAndScaling", "Energy of cluster after all corrections and scaling", 3000,
+               energyStart, energyEnd);
+  if (m_histSvc->regHist("/rec/energyPostAllCorrectionsAndScaling", m_hEnergyPostAllCorrectionsAndScaling)
+          .isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hEnergyFractionInLayers = new TH1F(
-    "energyFractionInLayers", "Fraction of energy deposited in given layer", m_numLayers, 0.5, m_numLayers + 0.5);
+  m_hEnergyFractionInLayers = new TH1F("energyFractionInLayers", "Fraction of energy deposited in given layer",
+                                       m_numLayers, 0.5, m_numLayers + 0.5);
   if (m_histSvc->regHist("/rec/energyFractionInLayers", m_hEnergyFractionInLayers).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hPileupEnergy = new TH1F(
-      "pileupCorrectionEnergy", "Energy added to a cluster as a correction for correlated noise", 1000, -10, 10);
+  m_hPileupEnergy = new TH1F("pileupCorrectionEnergy", "Energy added to a cluster as a correction for correlated noise",
+                             1000, -10, 10);
   if (m_histSvc->regHist("/rec/pileupCorrectionEnergy", m_hPileupEnergy).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hUpstreamEnergy = new TH1F(
-    "upstreamCorrectionEnergy", "Energy added to a cluster as a correction for upstream material", 1000, -10, 10);
+  m_hUpstreamEnergy = new TH1F("upstreamCorrectionEnergy",
+                               "Energy added to a cluster as a correction for upstream material", 1000, -10, 10);
   if (m_histSvc->regHist("/rec/upstreamCorrectionEnergy", m_hUpstreamEnergy).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hDiffEta = new TH1F("diffEta", "#eta resolution", 10 * ceil(2 * m_etaMax / m_dEta), - m_etaMax / 10., m_etaMax / 10.);
+  m_hDiffEta =
+      new TH1F("diffEta", "#eta resolution", 10 * ceil(2 * m_etaMax / m_dEta), -m_etaMax / 10., m_etaMax / 10.);
   if (m_histSvc->regHist("/rec/diffEta", m_hDiffEta).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hDiffEtaResWeight = new TH1F("diffEtaResWeight", "#eta resolution", 10 * ceil(2 * m_etaMax / m_dEta), - m_etaMax / 10., m_etaMax / 10.);
+  m_hDiffEtaResWeight = new TH1F("diffEtaResWeight", "#eta resolution", 10 * ceil(2 * m_etaMax / m_dEta),
+                                 -m_etaMax / 10., m_etaMax / 10.);
   if (m_histSvc->regHist("/rec/diffEtaResWeight", m_hDiffEtaResWeight).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hDiffEtaResWeight2point = new TH1F("diffEtaResWeight2point", "#eta resolution", 10 * ceil(2 * m_etaMax / m_dEta), - m_etaMax / 10., m_etaMax / 10.);
+  m_hDiffEtaResWeight2point = new TH1F("diffEtaResWeight2point", "#eta resolution", 10 * ceil(2 * m_etaMax / m_dEta),
+                                       -m_etaMax / 10., m_etaMax / 10.);
   if (m_histSvc->regHist("/rec/diffEtaResWeight2point", m_hDiffEtaResWeight2point).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
   for (uint i = 0; i < m_numLayers; i++) {
-    m_hDiffEtaLayer.push_back(new TH1F(("diffEtaLayer"+std::to_string(i)).c_str(), ("#eta resolution for layer "+std::to_string(i)).c_str(),
-                                       10 * ceil(2 * m_etaMax / m_dEta), - m_etaMax / 10., m_etaMax / 10.));
+    m_hDiffEtaLayer.push_back(new TH1F(("diffEtaLayer" + std::to_string(i)).c_str(),
+                                       ("#eta resolution for layer " + std::to_string(i)).c_str(),
+                                       10 * ceil(2 * m_etaMax / m_dEta), -m_etaMax / 10., m_etaMax / 10.));
     if (m_histSvc->regHist("/rec/diffEta_layer" + std::to_string(i), m_hDiffEtaLayer.back()).isFailure()) {
       error() << "Couldn't register histogram" << endmsg;
       return StatusCode::FAILURE;
     }
   }
-  m_hEta = new TH1F("eta", "#eta", 1000, - m_etaMax, m_etaMax);
+  m_hEta = new TH1F("eta", "#eta", 1000, -m_etaMax, m_etaMax);
   if (m_histSvc->regHist("/rec/eta", m_hEta).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hDiffPhi = new TH1F("diffPhi", "#varphi resolution", 10 * ceil(2 * m_phiMax / m_dPhi), - m_phiMax / 10., m_phiMax / 10.);
+  m_hDiffPhi =
+      new TH1F("diffPhi", "#varphi resolution", 10 * ceil(2 * m_phiMax / m_dPhi), -m_phiMax / 10., m_phiMax / 10.);
   if (m_histSvc->regHist("/rec/diffPhi", m_hDiffPhi).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_hPhi = new TH1F("phi", "#varphi", 1000, - m_phiMax, m_phiMax);
+  m_hPhi = new TH1F("phi", "#varphi", 1000, -m_phiMax, m_phiMax);
   if (m_histSvc->regHist("/rec/phi", m_hPhi).isFailure()) {
     error() << "Couldn't register histogram" << endmsg;
     return StatusCode::FAILURE;
@@ -160,7 +164,8 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
       error() << "There is no phi-eta or multi- segmentation." << endmsg;
       return StatusCode::FAILURE;
     }
-    m_decoder.insert (std::make_pair(m_systemId[iSys], m_geoSvc->getDetector()->readout(m_readoutName[iSys]).idSpec().decoder()));
+    m_decoder.insert(
+        std::make_pair(m_systemId[iSys], m_geoSvc->getDetector()->readout(m_readoutName[iSys]).idSpec().decoder()));
   }
   // Initialize random service
   m_randSvc = service("RndmGenSvc", false);
@@ -208,8 +213,8 @@ StatusCode CorrectECalBarrelSliWinCluster::initialize() {
   }
   if (m_nEtaFinal.size() == m_numLayers) {
     for (uint iLayer = 0; iLayer < m_numLayers; iLayer++) {
-      m_halfPhiFin.push_back(floor(m_nPhiFinal[iLayer]/2));
-      m_halfEtaFin.push_back(floor(m_nEtaFinal[iLayer]/2));
+      m_halfPhiFin.push_back(floor(m_nPhiFinal[iLayer] / 2));
+      m_halfEtaFin.push_back(floor(m_nEtaFinal[iLayer] / 2));
     }
   }
   return StatusCode::SUCCESS;
@@ -229,14 +234,15 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
   const auto particle = m_particle.get();
   const auto vertex = m_vertex.get();
   if (particle->size() == 1 && vertex->size() == 1) {
-    for(const auto& part : *particle) {
+    for (const auto& part : *particle) {
       momentum = TVector3(part.getMomentum().x, part.getMomentum().y, part.getMomentum().z);
       etaVertex = momentum.Eta();
       phiVertex = momentum.Phi();
-      zVertex =  vertex->begin()->getPosition().z;
-      thetaVertex = 2 * atan( exp( - etaVertex ) );
-    verbose() << " vertex eta " << etaVertex << "   phi = " << phiVertex << " theta = " << thetaVertex << " z = " << zVertex << endmsg;
-   }
+      zVertex = vertex->begin()->getPosition().z;
+      thetaVertex = 2 * atan(exp(-etaVertex));
+      verbose() << " vertex eta " << etaVertex << "   phi = " << phiVertex << " theta = " << thetaVertex
+                << " z = " << zVertex << endmsg;
+    }
   }
 
   // TODO change that so all systems can be used
@@ -263,8 +269,10 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
     double oldEtaId = -1;
     double oldPhiId = -1;
     if (m_segmentationPhiEta[systemId] != nullptr) {
-      oldEtaId = int(floor((oldEta + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
-      oldPhiId = int(floor((oldPhi + 0.5 * segmentation->gridSizePhi() - segmentation->offsetPhi()) / segmentation->gridSizePhi()));
+      oldEtaId = int(floor((oldEta + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) /
+                           segmentation->gridSizeEta()));
+      oldPhiId = int(floor((oldPhi + 0.5 * segmentation->gridSizePhi() - segmentation->offsetPhi()) /
+                           segmentation->gridSizePhi()));
     }
 
     // 0. Create new cluster, copy information from input
@@ -273,19 +281,25 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
     newCluster.setPosition(cluster.getPosition());
     for (auto cell = cluster.hits_begin(); cell != cluster.hits_end(); cell++) {
       if (m_segmentationMulti[systemId] != nullptr) {
-        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
-        oldEtaId = int(floor((oldEta + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) / segmentation->gridSizeEta()));
-        oldPhiId = int(floor((oldPhi + 0.5 * segmentation->gridSizePhi() - segmentation->offsetPhi()) / segmentation->gridSizePhi()));
+        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+            &m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
+        oldEtaId = int(floor((oldEta + 0.5 * segmentation->gridSizeEta() - segmentation->offsetEta()) /
+                             segmentation->gridSizeEta()));
+        oldPhiId = int(floor((oldPhi + 0.5 * segmentation->gridSizePhi() - segmentation->offsetPhi()) /
+                             segmentation->gridSizePhi()));
       }
       if (m_decoder[systemId]->get(cell->getCellID(), "system") == systemId) {
         uint layerId = m_decoder[systemId]->get(cell->getCellID(), "layer");
-        if(m_nPhiFinal[layerId] > 0 && m_nEtaFinal[layerId] > 0) {
+        if (m_nPhiFinal[layerId] > 0 && m_nEtaFinal[layerId] > 0) {
           uint etaId = m_decoder[systemId]->get(cell->getCellID(), "eta");
           uint phiId = m_decoder[systemId]->get(cell->getCellID(), "phi");
-          if ( etaId >= (oldEtaId - m_halfEtaFin[layerId]) &&  etaId <= (oldEtaId + m_halfEtaFin[layerId]) &&
-               phiId >= phiNeighbour((oldPhiId - m_halfPhiFin[layerId]), segmentation->phiBins()) &&  phiId <= phiNeighbour((oldPhiId + m_halfPhiFin[layerId]), segmentation->phiBins()) ) {
+          if (etaId >= (oldEtaId - m_halfEtaFin[layerId]) && etaId <= (oldEtaId + m_halfEtaFin[layerId]) &&
+              phiId >= phiNeighbour((oldPhiId - m_halfPhiFin[layerId]), segmentation->phiBins()) &&
+              phiId <= phiNeighbour((oldPhiId + m_halfPhiFin[layerId]), segmentation->phiBins())) {
             if (m_ellipseFinalCluster) {
-              if ( pow( (etaId - oldEtaId) / (m_nEtaFinal[layerId] / 2.), 2) + pow( (phiId - oldPhiId) / (m_nPhiFinal[layerId] / 2.), 2) < 1) {
+              if (pow((etaId - oldEtaId) / (m_nEtaFinal[layerId] / 2.), 2) +
+                      pow((phiId - oldPhiId) / (m_nPhiFinal[layerId] / 2.), 2) <
+                  1) {
                 newCluster.addToHits(*cell);
                 energy += cell->getEnergy();
               }
@@ -320,12 +334,13 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
     for (uint iLayer = 0; iLayer < m_numLayers; iLayer++) {
       sumEnLayerSorted[iLayer] = sumEnLayer[iLayer];
     }
-    std::sort(sumEnLayerSorted.begin(),sumEnLayerSorted.end(),std::greater<double>());
+    std::sort(sumEnLayerSorted.begin(), sumEnLayerSorted.end(), std::greater<double>());
     sumEnFirstLayer = sumEnLayer[0];
     // repeat but calculating eta barycentre in each layer
     for (auto cell = newCluster.hits_begin(); cell != newCluster.hits_end(); cell++) {
       if (m_segmentationMulti[systemId] != nullptr) {
-        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
+        segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+            &m_segmentationMulti[systemId]->subsegmentation(cell->getCellID()));
       }
       dd4hep::DDSegmentation::CellID cID = cell->getCellID();
       uint layer = m_decoder[systemId]->get(cID, m_layerFieldName) + m_firstLayerId;
@@ -346,7 +361,8 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
       if (sumWeightLayer[iLayer] > 1e-10) {
         sumEtaLayer[iLayer] /= sumWeightLayer[iLayer];
         newEta += sumEtaLayer[iLayer] * sumEnLayer[iLayer];
-        layerWeight = 1. / (pow(m_etaLayerResolutionSampling[iLayer], 2) / energy +  pow(m_etaLayerResolutionConst[iLayer], 2));
+        layerWeight =
+            1. / (pow(m_etaLayerResolutionSampling[iLayer], 2) / energy + pow(m_etaLayerResolutionConst[iLayer], 2));
         sumLayerWeight += layerWeight;
         newEtaErrorRes += sumEtaLayer[iLayer] * layerWeight;
         if (iLayer == 1 || iLayer == 2) {
@@ -370,7 +386,8 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
     if (m_constPileupNoise == 0) {
       noise = getNoiseRMSPerCluster(newEta, numCells) * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
       verbose() << " NUM CELLS = " << numCells << "   cluster noise const = " << getNoiseRMSPerCluster(newEta, numCells)
-                << " scaled to PU " << m_mu<< "  = " << getNoiseRMSPerCluster(newEta, numCells)* std::sqrt(static_cast<int>(m_mu)) << endmsg;
+                << " scaled to PU " << m_mu << "  = "
+                << getNoiseRMSPerCluster(newEta, numCells) * std::sqrt(static_cast<int>(m_mu)) << endmsg;
     } else {
       noise = m_constPileupNoise * m_gauss.shoot() * std::sqrt(static_cast<int>(m_mu));
     }
@@ -393,7 +410,7 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
     // if eta is larger than the last available eta values, take the last known parameters
     if (fabs(newEta) > m_etaBorders.back()) {
       warning() << "cluster eta = " << newEta << " is larger than last defined eta values." << endmsg;
-      //return StatusCode::FAILURE;
+      // return StatusCode::FAILURE;
     }
     double presamplerShift = P00 + P01 * cluster.getEnergy();
     double presamplerScale = P10 + P11 * sqrt(cluster.getEnergy());
@@ -409,18 +426,18 @@ StatusCode CorrectECalBarrelSliWinCluster::execute(const EventContext&) const {
     // Position resolution
     m_hEta->Fill(newEta);
     m_hPhi->Fill(phi);
-    verbose() << " energy " << energy << "   numCells = " << numCells << " old energy = " << oldEnergy <<
-      " newEta " << newEta << "   phi = " << phi << " theta = " << 2 * atan( exp( - newEta ) ) << endmsg;
+    verbose() << " energy " << energy << "   numCells = " << numCells << " old energy = " << oldEnergy << " newEta "
+              << newEta << "   phi = " << phi << " theta = " << 2 * atan(exp(-newEta)) << endmsg;
     m_hNumCells->Fill(numCells);
     // Fill histograms for single particle events
     if (particle->size() == 1) {
       m_hDiffEta->Fill(newEta - etaVertex);
       m_hDiffEtaResWeight->Fill(newEtaErrorRes - etaVertex);
       m_hDiffEtaResWeight2point->Fill(newEtaErrorRes2point - etaVertex);
-      for(uint iLayer = 0; iLayer < m_numLayers; iLayer++) {
+      for (uint iLayer = 0; iLayer < m_numLayers; iLayer++) {
         m_hDiffEtaLayer[iLayer]->Fill(sumEtaLayer[iLayer] - etaVertex);
         if (energy > 0)
-          m_hEnergyFractionInLayers->Fill(iLayer+1, sumEnLayer[iLayer] / energy);
+          m_hEnergyFractionInLayers->Fill(iLayer + 1, sumEnLayer[iLayer] / energy);
       }
       m_hDiffPhi->Fill(phi - phiVertex);
     }
@@ -448,8 +465,7 @@ StatusCode CorrectECalBarrelSliWinCluster::initNoiseFromFile() {
     error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
   } else {
-    info() << "Using the following file with the noise values: "
-           << m_noiseFileName.value() << endmsg;
+    info() << "Using the following file with the noise values: " << m_noiseFileName.value() << endmsg;
   }
 
   std::string pileupParamHistoName;

@@ -16,8 +16,8 @@
 
 DECLARE_COMPONENT(CreateCaloCells)
 
-CreateCaloCells::CreateCaloCells(const std::string& name, ISvcLocator* svcLoc) :
-Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
+CreateCaloCells::CreateCaloCells(const std::string& name, ISvcLocator* svcLoc)
+    : Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
   declareProperty("hits", m_hits, "Hits from which to create cells (input)");
   declareProperty("cells", m_cells, "The created calorimeter cells (output)");
 
@@ -29,7 +29,8 @@ Gaudi::Algorithm(name, svcLoc), m_geoSvc("GeoSvc", name) {
 
 StatusCode CreateCaloCells::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
 
   info() << "CreateCaloCells initialized" << endmsg;
   info() << "do calibration : " << m_doCellCalibration << endmsg;
@@ -77,14 +78,14 @@ StatusCode CreateCaloCells::initialize() {
       m_emptyCellsMap = m_cellsMap;
     }
   }
-  if (m_addPosition){
+  if (m_addPosition) {
     m_volman = m_geoSvc->getDetector()->volumeManager();
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
   auto hitsEncoding = m_hitsCellIDEncoding.get_optional();
   if (!hitsEncoding.has_value()) {
-    error () << "Missing cellID encoding for input collection" << endmsg;
+    error() << "Missing cellID encoding for input collection" << endmsg;
     return StatusCode::FAILURE;
   }
   m_cellsCellIDEncoding.put(hitsEncoding.value());
@@ -111,7 +112,6 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
     m_cellsMap.clear();
   }
 
-
   // 1. Merge energy deposits into cells
   // If running with noise map already was prepared. Otherwise it is being
   // created below
@@ -122,17 +122,18 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
   // 2. Emulate cross-talk (if asked)
-  if(m_addCrosstalk) {
+  if (m_addCrosstalk) {
     // Derive the cross-talk contributions without affecting yet the nominal energy
     // (one has to emulate crosstalk based on cells free from any cross-talk contributions)
-    m_CrosstalkCellsMap.clear(); // this is a temporary map to hold energy exchange due to cross-talk, without affecting yet the nominal energy
+    m_CrosstalkCellsMap.clear(); // this is a temporary map to hold energy exchange due to cross-talk, without affecting
+                                 // yet the nominal energy
     // loop over cells with nominal energies
     for (const auto& this_cell : m_cellsMap) {
       uint64_t this_cellId = this_cell.first;
       auto vec_neighbours = m_crosstalksTool->getNeighbours(this_cellId); // a vector of neighbour IDs
       auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
       // loop over crosstalk neighbours of the cell under study
-      for (unsigned int i_cell=0; i_cell<vec_neighbours.size(); i_cell++) {
+      for (unsigned int i_cell = 0; i_cell < vec_neighbours.size(); i_cell++) {
         // signal transfer = energy deposit brought by EM shower hits * crosstalk coefficient
         double signal_transfer = this_cell.second * vec_crosstalks[i_cell];
         // for the cell under study, record the signal transfer that will be subtracted from its final cell energy
@@ -146,7 +147,6 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
     for (const auto& this_cell : m_CrosstalkCellsMap) {
       m_cellsMap[this_cell.first] += this_cell.second;
     }
-    
   }
 
   // 3. Calibrate simulation energy to EM scale
@@ -172,13 +172,14 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
       newCell.setEnergy(cell.second);
       uint64_t cellid = cell.first;
       newCell.setCellID(cellid);
-      if (m_addPosition){
+      if (m_addPosition) {
         auto detelement = m_volman.lookupDetElement(cellid);
         const auto& transformMatrix = detelement.nominal().worldTransformation();
         double outGlobal[3];
         double inLocal[] = {0, 0, 0};
         transformMatrix.LocalToMaster(inLocal, outGlobal);
-        edm4hep::Vector3f position = edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
+        edm4hep::Vector3f position =
+            edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
         newCell.setPosition(position);
       }
     }

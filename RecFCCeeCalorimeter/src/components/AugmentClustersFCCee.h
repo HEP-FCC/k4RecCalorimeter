@@ -13,23 +13,20 @@ class IGeoSvc;
 #include "GaudiKernel/ToolHandle.h"
 
 // DD4HEP
-//#include "DDSegmentation/Segmentation.h"
+// #include "DDSegmentation/Segmentation.h"
 
 // EDM4HEP
-namespace edm4hep
-{
-  class ClusterCollection;
+namespace edm4hep {
+class ClusterCollection;
 }
 
 // DD4HEP
-namespace dd4hep
-{
-  namespace DDSegmentation
-  {
-    class BitFieldCoder;
-    class Segmentation;
-  }
-}
+namespace dd4hep {
+namespace DDSegmentation {
+  class BitFieldCoder;
+  class Segmentation;
+} // namespace DDSegmentation
+} // namespace dd4hep
 
 /** @class AugmentClustersFCCee
  *
@@ -41,13 +38,12 @@ namespace dd4hep
  *  @author Tong Li
  */
 
-class AugmentClustersFCCee : public Gaudi::Algorithm
-{
+class AugmentClustersFCCee : public Gaudi::Algorithm {
 
 public:
-  AugmentClustersFCCee(const std::string &name, ISvcLocator *svcLoc);
+  AugmentClustersFCCee(const std::string& name, ISvcLocator* svcLoc);
   StatusCode initialize();
-  StatusCode execute(const EventContext &evtCtx) const;
+  StatusCode execute(const EventContext& evtCtx) const;
   StatusCode finalize();
 
 private:
@@ -56,28 +52,22 @@ private:
   /// Handle for output clusters
   mutable DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for the cluster shape metadata to read and to write
-  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
-    m_inClusters,
-    edm4hep::labels::ShapeParameterNames,
-    Gaudi::DataHandle::Reader};
-  MetaDataHandle<std::vector<std::string>> m_showerShapeHandle{
-    m_outClusters,
-    edm4hep::labels::ShapeParameterNames,
-    Gaudi::DataHandle::Writer};
+  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{m_inClusters, edm4hep::labels::ShapeParameterNames,
+                                                                    Gaudi::DataHandle::Reader};
+  MetaDataHandle<std::vector<std::string>> m_showerShapeHandle{m_outClusters, edm4hep::labels::ShapeParameterNames,
+                                                               Gaudi::DataHandle::Writer};
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   /// ID of the detectors
-  Gaudi::Property<std::vector<int>> m_systemIDs{
-      this, "systemIDs", {4}, "IDs of systems"};
-  /// Name of the detectors (for the metadata)  
+  Gaudi::Property<std::vector<int>> m_systemIDs{this, "systemIDs", {4}, "IDs of systems"};
+  /// Name of the detectors (for the metadata)
   Gaudi::Property<std::vector<std::string>> m_detectorNames{
       this, "systemNames", {"EMB"}, "Names of the detectors, corresponding to systemIDs"};
   /// systemID of EMB, should be retrieved from mydetector.constantAsDouble("DetID_ECAL_Barrel")
   int systemID_EMB;
   /// Numbers of layers of the detectors
-  Gaudi::Property<std::vector<size_t>> m_numLayers{
-      this, "numLayers", {11}, "Numbers of layers of the systems"};
+  Gaudi::Property<std::vector<size_t>> m_numLayers{this, "numLayers", {11}, "Numbers of layers of the systems"};
   /// Weights for each detector layer for theta position log-weighting
   Gaudi::Property<std::vector<std::vector<double>>> m_thetaRecalcLayerWeights{
       this,
@@ -86,7 +76,10 @@ private:
       "Weights for each detector layer for theta position log-weighting. If negative use linear weight."};
   /// Name of the detector readouts, corresponding to system IDs in m_systemIDs
   Gaudi::Property<std::vector<std::string>> m_readoutNames{
-      this, "readoutNames", {"ECalBarrelModuleThetaMerged"}, "Names of the detector readouts, corresponding to systemIDs"};
+      this,
+      "readoutNames",
+      {"ECalBarrelModuleThetaMerged"},
+      "Names of the detector readouts, corresponding to systemIDs"};
   /// Name of the layer/cell field
   Gaudi::Property<std::vector<std::string>> m_layerFieldNames{
       this, "layerFieldNames", {"layer"}, "Identifiers of layers, corresponding to systemIDs"};
@@ -96,8 +89,8 @@ private:
       this, "moduleFieldNames", {"module"}, "Identifiers of module, corresponding to systemIDs"};
   Gaudi::Property<bool> m_do_photon_shapeVar{
       this, "do_photon_shapeVar", false, "Calculate shape variables for pi0/photon separation: E_ratio, Delta_E etc."};
-  Gaudi::Property<bool> m_do_widthTheta_logE_weights{
-      this, "do_widthTheta_logE_weights", false, "Calculate width in theta using logE weights in shape variables"};
+  Gaudi::Property<bool> m_do_widthTheta_logE_weights{this, "do_widthTheta_logE_weights", false,
+                                                     "Calculate width in theta using logE weights in shape variables"};
 
   // the number of grouped theta and phi cells
   std::vector<int> nMergedThetaCells;
@@ -107,7 +100,8 @@ private:
 
   /// Limit of debug printing
   mutable uint debugIter = 0;
-  Gaudi::Property<uint> m_maxDebugPrint{this, "maxDebugPrint", 10, "maximum number of debug/warning messages from execute()"};
+  Gaudi::Property<uint> m_maxDebugPrint{this, "maxDebugPrint", 10,
+                                        "maximum number of debug/warning messages from execute()"};
 
   void PrintDebugMessage(MsgStream stream, const std::string& text) const;
 };

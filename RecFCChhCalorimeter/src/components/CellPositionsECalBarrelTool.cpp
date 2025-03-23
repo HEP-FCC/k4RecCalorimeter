@@ -13,7 +13,8 @@ CellPositionsECalBarrelTool::CellPositionsECalBarrelTool(const std::string& type
 
 StatusCode CellPositionsECalBarrelTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -58,7 +59,8 @@ void CellPositionsECalBarrelTool::getPositions(const edm4hep::CalorimeterHitColl
     outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << "\n"
             << endmsg;
@@ -76,9 +78,9 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);
-  //debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-  //        << outGlobal[2] / dd4hep::mm << endmsg;
-  // radius calculated from segmenation + z postion of volumes
+  // debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
+  //         << outGlobal[2] / dd4hep::mm << endmsg;
+  //  radius calculated from segmenation + z postion of volumes
   auto inSeg = m_segmentation->position(aCellId);
   radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
   dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);

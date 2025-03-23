@@ -3,8 +3,8 @@
 
 // Gaudi
 #include "GaudiKernel/AlgTool.h"
-#include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/IRndmGenSvc.h"
+#include "GaudiKernel/RndmGenerators.h"
 
 // k4FWCore
 #include "k4Interface/INoiseCaloCellsTool.h"
@@ -43,9 +43,8 @@ private:
   /// Offset of noise -- uniform offset per cell in GeV
   Gaudi::Property<double> m_cellNoiseOffset{this, "cellNoiseOffset", 0.0, "uniform noise offset per cell in GeV"};
   /// Energy threshold (Ecell < m_cellNoiseOffset + filterThreshold*m_cellNoiseRMS removed)
-  Gaudi::Property<double> m_filterThreshold{
-      this, "filterNoiseThreshold", 3,
-      "remove cells with energy below offset + threshold * noise RMS"};
+  Gaudi::Property<double> m_filterThreshold{this, "filterNoiseThreshold", 3,
+                                            "remove cells with energy below offset + threshold * noise RMS"};
   /// Random Number Service
   SmartIF<IRndmGenSvc> m_randSvc;
   /// Gaussian random number generator used for smearing with a constant resolution (m_sigma)

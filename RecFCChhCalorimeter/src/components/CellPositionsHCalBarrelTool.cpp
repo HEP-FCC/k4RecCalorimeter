@@ -12,7 +12,8 @@ CellPositionsHCalBarrelTool::CellPositionsHCalBarrelTool(const std::string& type
 
 StatusCode CellPositionsHCalBarrelTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   m_geoSvc = service("GeoSvc");
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry service." << endmsg;
@@ -57,7 +58,8 @@ void CellPositionsHCalBarrelTool::getPositions(const edm4hep::CalorimeterHitColl
     outputColl.push_back(positionedHit);
 
     // Debug information about cell position
-    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID() << endmsg;
+    debug() << "Cell energy (GeV) : " << positionedHit.getEnergy() << "\tcellID " << positionedHit.getCellID()
+            << endmsg;
     debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
             << outSeg.z() / dd4hep::mm << endmsg;
   }
@@ -66,11 +68,11 @@ void CellPositionsHCalBarrelTool::getPositions(const edm4hep::CalorimeterHitColl
 
 dd4hep::Position CellPositionsHCalBarrelTool::xyzPosition(const uint64_t& aCellId) const {
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
-  m_decoder->set(volumeId,"phi",0);
-  m_decoder->set(volumeId,"eta",0);
+  m_decoder->set(volumeId, "phi", 0);
+  m_decoder->set(volumeId, "eta", 0);
 
   int layer = m_decoder->get(volumeId, "layer");
-    
+
   // radius calculated from segmenation + z postion of volumes
   auto inSeg = m_segmentation->position(aCellId);
   // get radius in cm
@@ -81,7 +83,7 @@ dd4hep::Position CellPositionsHCalBarrelTool::xyzPosition(const uint64_t& aCellI
 
 int CellPositionsHCalBarrelTool::layerId(const uint64_t& aCellId) {
   int layer;
-  layer = m_decoder->get(aCellId,"layer");
+  layer = m_decoder->get(aCellId, "layer");
   return layer;
 }
 

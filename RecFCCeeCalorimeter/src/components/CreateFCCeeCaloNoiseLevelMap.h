@@ -4,8 +4,8 @@
 // Gaudi
 #include "GaudiKernel/Service.h"
 #include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -55,15 +55,21 @@ private:
   Gaudi::Property<uint> m_hcalEndcapSysId{this, "hcalEndcapSysId", 9};
 
   /// Names of the detector readout for the volumes
-  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNames", {"ECalBarrelModuleThetaMerged", "ECalEndcapTurbine", "HCalBarrelReadout","HCalEndcapReadout"}};
+  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{
+      this,
+      "readoutNames",
+      {"ECalBarrelModuleThetaMerged", "ECalEndcapTurbine", "HCalBarrelReadout", "HCalEndcapReadout"}};
   /// Name of the fields describing the segmented volume
-  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system", "system", "system", "system"}};
+  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{
+      this, "systemNames", {"system", "system", "system", "system"}};
   /// Values of the fields describing the segmented volume
   Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {4, 5, 8, 9}};
   /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module" or "phi", "theta"
-  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer", "layer", "layer", "layer"}};
+  Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{
+      this, "activeFieldNames", {"layer", "layer", "layer", "layer"}};
   /// Number of layers in the segmented volumes
-  Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {11, 98, 13, 37}};
+  Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{
+      this, "activeVolumesNumbers", {11, 98, 13, 37}};
   // Theta ranges of layers in the segmented volumes (if needed)
   Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
 

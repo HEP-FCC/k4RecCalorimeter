@@ -5,10 +5,10 @@
 #include "GaudiKernel/Service.h"
 
 // k4FWCore
-#include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/IGeoSvc.h"
 #include "k4FWCore/DataHandle.h"
+#include "k4Interface/ICaloCreateMap.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/IGeoSvc.h"
 
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
@@ -52,7 +52,8 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Names of the detector readout for the volumes
-  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{this, "readoutNames", {"ECalBarrelModuleThetaMerged", "BarHCal_Readout_phitheta"}};
+  Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{
+      this, "readoutNames", {"ECalBarrelModuleThetaMerged", "BarHCal_Readout_phitheta"}};
   /// Name of the fields describing the segmented volume
   Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system", "system"}};
   /// Values of the fields describing the segmented volume

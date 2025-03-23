@@ -26,17 +26,13 @@
  */
 
 struct FilterTruthParticlesForGenJets final
-    : k4FWCore::Transformer<edm4hep::MCParticleCollection(
-          const edm4hep::MCParticleCollection &)> {
+    : k4FWCore::Transformer<edm4hep::MCParticleCollection(const edm4hep::MCParticleCollection&)> {
 
-  FilterTruthParticlesForGenJets(const std::string &name, ISvcLocator *svcLoc)
-      : Transformer(name, svcLoc,
-                    {KeyValues("InputMCParticleCollection", {"MCParticles"})},
-                    {KeyValues("OutputMCParticleCollection",
-                               {"FilteredMCParticles"})}) {}
+  FilterTruthParticlesForGenJets(const std::string& name, ISvcLocator* svcLoc)
+      : Transformer(name, svcLoc, {KeyValues("InputMCParticleCollection", {"MCParticles"})},
+                    {KeyValues("OutputMCParticleCollection", {"FilteredMCParticles"})}) {}
 
-  edm4hep::MCParticleCollection
-  operator()(const edm4hep::MCParticleCollection &input) const override {
+  edm4hep::MCParticleCollection operator()(const edm4hep::MCParticleCollection& input) const override {
 
     debug() << "Number of input particles: " << input.size() << endmsg;
 
@@ -54,9 +50,8 @@ struct FilterTruthParticlesForGenJets final
         continue;
 
       // We may want to impose a minimum pT requirement
-      double input_particle_pt =
-          std::sqrt(particle.getMomentum().x * particle.getMomentum().x +
-                    particle.getMomentum().y * particle.getMomentum().y);
+      double input_particle_pt = std::sqrt(particle.getMomentum().x * particle.getMomentum().x +
+                                           particle.getMomentum().y * particle.getMomentum().y);
       if (input_particle_pt < m_minPt)
         continue;
 
@@ -64,17 +59,14 @@ struct FilterTruthParticlesForGenJets final
       filteredParticles.push_back(filteredParticle);
     }
 
-    debug() << "Number of filtered particles: " << filteredParticles.size()
-            << endmsg;
+    debug() << "Number of filtered particles: " << filteredParticles.size() << endmsg;
 
     return filteredParticles;
   }
 
 private:
-  Gaudi::Property<bool> m_keepMuons{this, "SaveMuons", 0,
-                                    "Bool for if muons are kept"};
-  Gaudi::Property<double> m_minPt{this, "MinPt", 0.,
-                                  "Minimum pT for filtered particles"};
+  Gaudi::Property<bool> m_keepMuons{this, "SaveMuons", 0, "Bool for if muons are kept"};
+  Gaudi::Property<double> m_minPt{this, "MinPt", 0., "Minimum pT for filtered particles"};
 };
 
 DECLARE_COMPONENT(FilterTruthParticlesForGenJets)

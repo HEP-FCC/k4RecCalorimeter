@@ -13,15 +13,16 @@
 DECLARE_COMPONENT(TubeLayerModuleThetaCaloTool)
 
 TubeLayerModuleThetaCaloTool::TubeLayerModuleThetaCaloTool(const std::string& type, const std::string& name,
-                                                 const IInterface* parent)
+                                                           const IInterface* parent)
     : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareInterface<ICalorimeterTool>(this);
 }
 
 StatusCode TubeLayerModuleThetaCaloTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
-  
+  if (sc.isFailure())
+    return sc;
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
@@ -46,16 +47,18 @@ StatusCode TubeLayerModuleThetaCaloTool::prepareEmptyCells(std::unordered_map<ui
   info() << "Number of active layers " << numLayers << endmsg;
 
   // get segmentation
-  dd4hep::DDSegmentation::Segmentation *aSegmentation = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation();
+  dd4hep::DDSegmentation::Segmentation* aSegmentation =
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation();
   std::string segmentationType = aSegmentation->type();
   info() << "Segmentation type : " << segmentationType << endmsg;
-  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *moduleThetaSegmentation = nullptr;
+  dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* moduleThetaSegmentation = nullptr;
   if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
-    moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo *>(aSegmentation);
+    moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
     info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
-  }
-  else {
-    error() << "Unable to cast segmentation pointer!!!! Tool only applicable to FCCSWGridModuleThetaMerged_k4geo segmentation." << endmsg;
+  } else {
+    error() << "Unable to cast segmentation pointer!!!! Tool only applicable to FCCSWGridModuleThetaMerged_k4geo "
+               "segmentation."
+            << endmsg;
     return StatusCode::FAILURE;
   }
 
@@ -79,15 +82,18 @@ StatusCode TubeLayerModuleThetaCaloTool::prepareEmptyCells(std::unordered_map<ui
     // extrema[1]: Range of module ID (0, max module ID)
     extrema[1] = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(ilayer));
     // extrema[2]: Range of theta ID (min theta ID, max theta ID
-    extrema[2] = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(ilayer));
+    extrema[2] = std::make_pair(numCells[2],
+                                numCells[2] + (numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(ilayer));
     debug() << "Layer: " << ilayer << endmsg;
     debug() << "Number of segmentation cells in (module, theta): " << numCells << endmsg;
     // Loop over segmentation cells
     for (unsigned int imodule = 0; imodule < numCells[0]; imodule++) {
       for (unsigned int itheta = 0; itheta < numCells[1]; itheta++) {
-        dd4hep::DDSegmentation::CellID cellId = volumeId; 
-	decoder->set(cellId, "module", imodule * moduleThetaSegmentation->mergedModules(ilayer));
-        decoder->set(cellId, "theta", numCells[2] + itheta * moduleThetaSegmentation->mergedThetaCells(ilayer)); // start from the minimum existing theta cell in this layer
+        dd4hep::DDSegmentation::CellID cellId = volumeId;
+        decoder->set(cellId, "module", imodule * moduleThetaSegmentation->mergedModules(ilayer));
+        decoder->set(cellId, "theta",
+                     numCells[2] + itheta * moduleThetaSegmentation->mergedThetaCells(
+                                                ilayer)); // start from the minimum existing theta cell in this layer
         aCells.insert(std::pair<dd4hep::DDSegmentation::CellID, double>(cellId, 0));
       }
     }

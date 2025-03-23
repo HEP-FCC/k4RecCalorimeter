@@ -12,7 +12,8 @@
 
 DECLARE_COMPONENT(CreateCellPositions)
 
-CreateCellPositions::CreateCellPositions(const std::string& name, ISvcLocator* svcLoc) : Gaudi::Algorithm(name, svcLoc) {
+CreateCellPositions::CreateCellPositions(const std::string& name, ISvcLocator* svcLoc)
+    : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("hits", m_hits, "Hit collection (input)");
   declareProperty("positionsTool", m_cellPositionsTool, "Handle for tool to retrieve cell positions");
   declareProperty("positionedHits", m_positionedHits, "Output cell positions collection");
@@ -20,7 +21,8 @@ CreateCellPositions::CreateCellPositions(const std::string& name, ISvcLocator* s
 
 StatusCode CreateCellPositions::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+  if (sc.isFailure())
+    return sc;
   if (!m_cellPositionsTool.retrieve()) {
     error() << "Unable to retrieve the cell positions tool!!!" << endmsg;
     return StatusCode::FAILURE;

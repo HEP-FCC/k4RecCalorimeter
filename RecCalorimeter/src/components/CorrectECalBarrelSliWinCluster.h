@@ -9,8 +9,8 @@ class ITHistSvc;
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
-#include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/RndmGenerators.h"
+#include "GaudiKernel/ToolHandle.h"
 
 // EDM4HEP
 namespace edm4hep {
@@ -18,15 +18,15 @@ class ClusterCollection;
 class CalorimeterHitCollection;
 class MCParticleCollection;
 class VertexCollection;
-}
+} // namespace edm4hep
 
 namespace dd4hep {
 namespace DDSegmentation {
-class FCCSWGridPhiEta_k4geo;
-class MultiSegmentation;
-class BitFieldCoder;
-}
-}
+  class FCCSWGridPhiEta_k4geo;
+  class MultiSegmentation;
+  class BitFieldCoder;
+} // namespace DDSegmentation
+} // namespace dd4hep
 
 #include "TH1F.h"
 
@@ -39,9 +39,9 @@ class BitFieldCoder;
  *  Corrections:
  *  1) Pseudorapidity position (correction for finite granularity of detector using log-weighting)
  *      Correction uses only cells from the first defined detector in m_systemId (default ECal Barrel). The number of
- *      layers used for this correction is specified in *numLayers*. Weights are defined for each layer in *etaRecalcWeights*.
- *  2) Energy correction for pileup noise, which is parametrised per cluster as  P0 * number_of_cells ^P1. Parameters
- *      are eta-dependent and read from file *noiseFileName* as histograms called as in *pileupHistoName*
+ *      layers used for this correction is specified in *numLayers*. Weights are defined for each layer in
+ * *etaRecalcWeights*. 2) Energy correction for pileup noise, which is parametrised per cluster as  P0 * number_of_cells
+ * ^P1. Parameters are eta-dependent and read from file *noiseFileName* as histograms called as in *pileupHistoName*
  *      (+ 0/1 respectively).
  *  3) Energy correction for the upstream material. The energy upstream is calculated as (P00 + P01 * E_clu) + (P10 +
  *      P11 * sqrt(E_clu) ) * E_firstLayer. Parameters P00, P01, P10 and P11 are eta-dependent and specified in
@@ -90,7 +90,8 @@ private:
   /// Handle for clusters (input collection)
   mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for corrected clusters (output collection)
-  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::ClusterCollection> m_correctedClusters{"correctedClusters", Gaudi::DataHandle::Writer,
+                                                                     this};
   /// Handle for particles with truth position and energy information: for SINGLE PARTICLE EVENTS (input collection)
   mutable DataHandle<edm4hep::MCParticleCollection> m_particle{"particles", Gaudi::DataHandle::Reader, this};
   /// Handle for the genvertices to read vertex position information
@@ -127,20 +128,16 @@ private:
   Gaudi::Property<double> m_energy{this, "energyAxis", 500, "Energy of the centre of energy distribution histograms"};
   /// Weights for each detector layer for eta position log-weighting
   Gaudi::Property<std::vector<double>> m_etaRecalcLayerWeights{
-    this,
+      this,
       "etaRecalcWeights",
-        {3.5, 5.5, 4.75, 4, 3.75, 3.5, 7, 7},
+      {3.5, 5.5, 4.75, 4, 3.75, 3.5, 7, 7},
       "Weights for each detector layer for eta position log-weighting"};
-  Gaudi::Property<std::vector<double>> m_etaLayerResolutionSampling{
-    this,
-      "etaLayerResolutionSampling",
-        {0, 1.405, 2.051, 3.195, 5.791, 10.28, 17.54, 30.5},
-      "sampling term of eta resolution"};
+  Gaudi::Property<std::vector<double>> m_etaLayerResolutionSampling{this,
+                                                                    "etaLayerResolutionSampling",
+                                                                    {0, 1.405, 2.051, 3.195, 5.791, 10.28, 17.54, 30.5},
+                                                                    "sampling term of eta resolution"};
   Gaudi::Property<std::vector<double>> m_etaLayerResolutionConst{
-    this,
-      "etaLayerResolutionConst",
-        {2.623, 0.1083, 0.1152, 0, 0, 0, 0, 0},
-      "const term of eta resolution"};
+      this, "etaLayerResolutionConst", {2.623, 0.1083, 0.1152, 0, 0, 0, 0, 0}, "const term of eta resolution"};
   /// number of layers in the systems as in m_systemId
   Gaudi::Property<uint> m_numLayers{this, "numLayers", 8, "Number of layers for which the eta position is calculated"};
   /// Name of the layer/cell field
@@ -203,7 +200,7 @@ private:
   /// segmentation of detetor in eta (for number of bins in histograms)
   Gaudi::Property<double> m_dEta{this, "dEta", 0.01, "Segmentation in eta"};
   /// segmentation of detetor in phi (for number of bins in histograms)
-  Gaudi::Property<double> m_dPhi{this, "dPhi", 2*M_PI/704, "Segmentation in phi"};
+  Gaudi::Property<double> m_dPhi{this, "dPhi", 2 * M_PI / 704, "Segmentation in phi"};
   /// Histogram of upstream energy added to energy of clusters
   mutable TH1F* m_hUpstreamEnergy;
   /// Size of the window in phi for the final cluster building, optimised for each layer  (in units of cell size)

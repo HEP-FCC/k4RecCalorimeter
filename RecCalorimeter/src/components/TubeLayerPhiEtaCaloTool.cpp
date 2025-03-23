@@ -16,8 +16,9 @@ TubeLayerPhiEtaCaloTool::TubeLayerPhiEtaCaloTool(const std::string& type, const 
 
 StatusCode TubeLayerPhiEtaCaloTool::initialize() {
   StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure()) return sc;
-  
+  if (sc.isFailure())
+    return sc;
+
   if (!m_geoSvc) {
     error() << "Unable to locate Geometry Service. "
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
@@ -55,28 +56,33 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (segmentation == nullptr) {
     segmentationMulti = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+        m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
     if (segmentationMulti == nullptr) {
-      error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined." << endmsg;
+      error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined."
+              << endmsg;
       return StatusCode::FAILURE;
     } else {
       // check if multisegmentation contains only phi-eta sub-segmentations
       const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* subsegmentation = nullptr;
-      for (const auto& subSegm: segmentationMulti->subSegmentations()) {
+      for (const auto& subSegm : segmentationMulti->subSegmentations()) {
         subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
         if (subsegmentation == nullptr) {
-          error() << "At least one of the sub-segmentations in MultiSegmentation named " << m_readoutName << " is not a phi-eta grid." << endmsg;
+          error() << "At least one of the sub-segmentations in MultiSegmentation named " << m_readoutName
+                  << " is not a phi-eta grid." << endmsg;
           return StatusCode::FAILURE;
         } else {
-          info() << "subsegmentation for " << segmentationMulti->discriminatorName() << " from " << subSegm.key_min << " to " << subSegm.key_max  << endmsg;
-          info() << "size in eta " << subsegmentation->gridSizeEta() << " , bins in phi " << subsegmentation->phiBins()  << endmsg;
-          info() << "offset in eta " << subsegmentation->offsetEta() << " , offset in phi " << subsegmentation->offsetPhi() << endmsg;
+          info() << "subsegmentation for " << segmentationMulti->discriminatorName() << " from " << subSegm.key_min
+                 << " to " << subSegm.key_max << endmsg;
+          info() << "size in eta " << subsegmentation->gridSizeEta() << " , bins in phi " << subsegmentation->phiBins()
+                 << endmsg;
+          info() << "offset in eta " << subsegmentation->offsetEta() << " , offset in phi "
+                 << subsegmentation->offsetPhi() << endmsg;
         }
       }
     }
   } else {
-    info() << "FCCSWGridPhiEta_k4geo: size in eta " << segmentation->gridSizeEta() << " , bins in phi " << segmentation->phiBins()
-           << endmsg;
+    info() << "FCCSWGridPhiEta_k4geo: size in eta " << segmentation->gridSizeEta() << " , bins in phi "
+           << segmentation->phiBins() << endmsg;
     info() << "FCCSWGridPhiEta_k4geo: offset in eta " << segmentation->offsetEta() << " , offset in phi "
            << segmentation->offsetPhi() << endmsg;
   }
@@ -100,7 +106,8 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
     decoder->set(volumeID, "phi", 0);
 
     if (segmentationMulti != nullptr) {
-      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(&segmentationMulti->subsegmentation(volumeID));
+      segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+          &segmentationMulti->subsegmentation(volumeID));
     }
 
     // Get number of segmentation cells within the active volume

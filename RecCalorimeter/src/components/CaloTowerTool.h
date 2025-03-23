@@ -17,18 +17,17 @@ class IGeoSvc;
 
 namespace dd4hep {
 namespace DDSegmentation {
-class Segmentation;
-class BitFieldCoder;
-}
-}
+  class Segmentation;
+  class BitFieldCoder;
+} // namespace DDSegmentation
+} // namespace dd4hep
 
 // edm4hep
 namespace edm4hep {
 class CalorimeterHitCollection;
 class CalorimeterHit;
 class Cluster;
-}
-
+} // namespace edm4hep
 
 /** @class CaloTowerTool Reconstruction/RecCalorimeter/src/components/CaloTowerTool.h
  * CaloTowerTool.h
@@ -75,7 +74,7 @@ public:
    *   @param[in] fillTowersCells Whether to fill maps of cells into towers, for later use in attachCells
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells=true) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells = true) final;
 
   /**  Get the radius for the position calculation.
    *   @return Radius
@@ -109,11 +108,12 @@ public:
    *   @param[out] aEdmCluster Cluster where cells are attached to
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
-                           edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells, bool aEllipse = false) final;
+                           edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells,
+                           bool aEllipse = false) final;
 
 private:
   /// Type of the segmentation
-  enum class SegmentationType {kWrong, kPhiEta, kMulti};
+  enum class SegmentationType { kWrong, kPhiEta, kMulti };
   /**  Correct way to access the neighbour of the phi tower, taking into account
    * the full coverage in phi.
    *   Full coverage means that first tower in phi, with ID = 0 is a direct
@@ -135,20 +135,26 @@ private:
   /**  Check if the readout name exists. If so, it returns the eta-phi segmentation.
    *   @param[in] aReadoutName Readout name to be retrieved
    */
-  std::pair<double, double> retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation, SegmentationType aType);
+  std::pair<double, double> retrievePhiEtaExtrema(dd4hep::DDSegmentation::Segmentation* aSegmentation,
+                                                  SegmentationType aType);
   std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> retrieveSegmentation(std::string aReadoutName);
   /// Handle for electromagnetic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader,
+                                                                          this};
   /// Handle for ecal endcap calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalEndcapCells{"ecalEndcapCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalEndcapCells{"ecalEndcapCells", Gaudi::DataHandle::Reader,
+                                                                          this};
   /// Handle for ecal forward calorimeter cells (input collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalFwdCells{"ecalFwdCells", Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader,
+                                                                          this};
   /// Handle for hadronic extended barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells",
+                                                                             Gaudi::DataHandle::Reader, this};
   /// Handle for hcal endcap calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalEndcapCells{"hcalEndcapCells", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalEndcapCells{"hcalEndcapCells", Gaudi::DataHandle::Reader,
+                                                                          this};
   /// Handle for hcal forward calorimeter cells (input collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalFwdCells{"hcalFwdCells", Gaudi::DataHandle::Reader, this};
   /// Pointer to the geometry service
@@ -171,8 +177,7 @@ private:
   Gaudi::Property<std::string> m_hcalEndcapReadoutName{this, "hcalEndcapReadoutName", "",
                                                        "name of the hcal endcap readout"};
   /// Name of the hcal forward calorimeter readout
-  Gaudi::Property<std::string> m_hcalFwdReadoutName{this, "hcalFwdReadoutName", "",
-                                                    "name of the hcal fwd readout"};
+  Gaudi::Property<std::string> m_hcalFwdReadoutName{this, "hcalFwdReadoutName", "", "name of the hcal fwd readout"};
   /// PhiEta segmentation of the electromagnetic barrel (owned by DD4hep)
   dd4hep::DDSegmentation::Segmentation* m_ecalBarrelSegmentation;
   /// PhiEta segmentation of the ecal endcap calorimeter (owned by DD4hep)
@@ -223,7 +228,9 @@ private:
   std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> m_cellsInTowers;
   /// Use only a part of the calorimeter (in depth)
   Gaudi::Property<bool> m_useHalfTower{this, "halfTower", false, "Use half tower"};
-  Gaudi::Property<uint> m_max_layer{this, "max_layer", 6, "Specify which radial layer are used. The condition is 'if(cellLayer > m_max_layer) skip this cell'."};
+  Gaudi::Property<uint> m_max_layer{
+      this, "max_layer", 6,
+      "Specify which radial layer are used. The condition is 'if(cellLayer > m_max_layer) skip this cell'."};
 };
 
 #endif /* RECCALORIMETER_CALOTOWERTOOL_H */

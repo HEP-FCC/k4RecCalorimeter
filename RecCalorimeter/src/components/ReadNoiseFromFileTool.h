@@ -8,8 +8,8 @@
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/INoiseConstTool.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
@@ -65,9 +65,10 @@ private:
                                                     "Name of electronics noise histogram"};
   /// Name of electronics noise offset histogram
   Gaudi::Property<std::string> m_elecNoiseOffsetHistoName{this, "elecNoiseOffsetHistoName", "h_mean_pileup_layer",
-                                                    "Name of electronics noise offset histogram"};
+                                                          "Name of electronics noise offset histogram"};
   /// Name of pileup offset histogram
-  Gaudi::Property<std::string> m_pileupOffsetHistoName{this, "pileupOffsetHistoName", "h_pileup_layer", "Name of pileup offset histogram"};
+  Gaudi::Property<std::string> m_pileupOffsetHistoName{this, "pileupOffsetHistoName", "h_pileup_layer",
+                                                       "Name of pileup offset histogram"};
 
   /// Number of radial layers
   Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
@@ -91,7 +92,6 @@ private:
   dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   // Decoder
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
-
 };
 
 #endif /* RECCALORIMETER_READNOISEFROMFILETOOL_H */

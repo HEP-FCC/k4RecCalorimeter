@@ -7,10 +7,10 @@
 
 // FCCSW
 #include "detectorCommon/DetUtils_k4geo.h"
-#include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
+#include "k4Interface/IGeoSvc.h"
 
 // DD4hep
 #include "DD4hep/Readout.h"
@@ -21,17 +21,18 @@
 class IGeoSvc;
 namespace DD4hep {
 namespace DDSegmentation {
-class Segmentation;
+  class Segmentation;
 }
-}
+} // namespace DD4hep
 
-/** @class CellPositionsECalBarrelPhiThetaSegTool k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CellPositionsECalBarrelPhiThetaSegTool.h
+/** @class CellPositionsECalBarrelPhiThetaSegTool
+ * k4RecCalorimeter/RecFCCeeCalorimeter/src/components/CellPositionsECalBarrelPhiThetaSegTool.h
  * CellPositionsECalBarrelPhiThetaSegTool.h
  *
  *  Tool to determine each Calorimeter cell position.
  *
- *   For the FCCee Barrel ECAL with phi-theta segmentation, determined from the placed volumes and the segmentation.   
- * 
+ *   For the FCCee Barrel ECAL with phi-theta segmentation, determined from the placed volumes and the segmentation.
+ *
  *  @author Giovanni Marchiori
  */
 
@@ -44,7 +45,8 @@ public:
 
   virtual StatusCode finalize() final;
 
-  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells, edm4hep::CalorimeterHitCollection& outputColl) final;
+  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
+                            edm4hep::CalorimeterHitCollection& outputColl) final;
 
   virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
 
