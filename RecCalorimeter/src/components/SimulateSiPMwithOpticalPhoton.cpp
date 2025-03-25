@@ -6,7 +6,7 @@
 // DECLARE_COMPONENT macro connects the algorithm to the framework
 DECLARE_COMPONENT(SimulateSiPMwithOpticalPhoton)
 
-SimulateSiPMwithOpticalPhoton::SimulateSiPMwithOpticalPhoton(const std::string& aName, ISvcLocator* aSvcLoc) 
+SimulateSiPMwithOpticalPhoton::SimulateSiPMwithOpticalPhoton(const std::string& aName, ISvcLocator* aSvcLoc)
   : Gaudi::Algorithm(aName, aSvcLoc) {
   // Constructor doesn't need to do anything special
 }
@@ -17,13 +17,13 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   if (sc.isFailure()) return sc;
 
   if (m_wavelen.size() < 2) {
-    error() << "SimulateSiPMwithEdep: "
+    error() << "SimulateSiPMwithOpticalPhoton: "
             << "The wavelength vector size must be greater or equal than 2" << endmsg;
     return StatusCode::FAILURE;
   }
 
   if (m_wavelen.size()!=m_sipmEff.size()) {
-    error() << "SimulateSiPMwithEdep: "
+    error() << "SimulateSiPMwithOpticalPhoton: "
             << "The SiPM efficiency vector size should be equal to the wavelength vector size" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -60,7 +60,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
   const edm4hep::RawTimeSeriesCollection* timeStructs = m_timeStruct.get();
   const edm4hep::RawTimeSeriesCollection* waveLenStructs = m_waveLen.get();
   const edm4hep::RawCalorimeterHitCollection* rawHits = m_rawHits.get();
-  
+
   // Create output collections
   edm4hep::TimeSeriesCollection* waveforms = m_waveforms.createAndPut();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
