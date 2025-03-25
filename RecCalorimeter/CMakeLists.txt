@@ -18,7 +18,6 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
                       RecCaloCommon
-                      sipm::sipm # Digitizer package for FiberDRCaloDigitizer
                       ${FASTJET_LIBRARIES}
                       )
 
