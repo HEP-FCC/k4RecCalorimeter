@@ -23,6 +23,7 @@ find_package(EDM4HEP) # implicit: Podio
 find_package(DD4hep)
 find_package(k4geo)
 find_package(FastJet)
+find_package(sipm)
 # New versions of ONNRuntime package provide onnxruntime-Config.cmake
 # and use the name onnxruntime
 find_package(onnxruntime)
