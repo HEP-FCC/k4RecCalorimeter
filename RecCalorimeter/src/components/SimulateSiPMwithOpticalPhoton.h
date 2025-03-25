@@ -1,5 +1,5 @@
-#ifndef RECCALORIMETER_FIBERDRCALODIGITIZER_H
-#define RECCALORIMETER_FIBERDRCALODIGITIZER_H
+#ifndef RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H
+#define RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H
 
 // EDM4HEP includes
 #include "edm4hep/RawCalorimeterHitCollection.h"
@@ -21,7 +21,7 @@
 #include "sipm/SiPMSensor.h"
 #endif
 
-/** @class FiberDRCaloDigitizer
+/** @class SimulateSiPMwithOpticalPhoton
  *
  *  Algorithm for digitizing the SiPM response in dual-readout calorimeter.
  *  This digitizer takes RawTimeSeriesCollection and RawCalorimeterHitCollection as input
@@ -39,10 +39,10 @@
  *  @date   2025-03-18
  */
 
-class FiberDRCaloDigitizer : public Gaudi::Algorithm {
+class SimulateSiPMwithOpticalPhoton : public Gaudi::Algorithm {
 public:
-  FiberDRCaloDigitizer(const std::string& name, ISvcLocator* svcLoc);
-  virtual ~FiberDRCaloDigitizer() {};
+  SimulateSiPMwithOpticalPhoton(const std::string& name, ISvcLocator* svcLoc);
+  virtual ~SimulateSiPMwithOpticalPhoton() {};
 
   StatusCode initialize() override;
   StatusCode execute(const EventContext&) const override;
@@ -52,6 +52,7 @@ private:
   // Input collections
   mutable DataHandle<edm4hep::RawCalorimeterHitCollection> m_rawHits{"DRcaloSiPMreadoutRawHit", Gaudi::DataHandle::Reader, this};
   mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{"DRcaloSiPMreadoutTimeStruct", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_waveLen{"DRcaloSiPMreadoutWaveLen", Gaudi::DataHandle::Reader, this};
 
   // Output collections
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"DRcaloSiPMreadoutDigiHit", Gaudi::DataHandle::Writer, this};
@@ -82,6 +83,11 @@ private:
   Gaudi::Property<double> m_gateStart{this, "gateStart", 5., "Integration gate starting time in ns"};
   Gaudi::Property<double> m_gateL{this, "gateLength", 95., "Integration gate length in ns"};
   Gaudi::Property<double> m_thres{this, "threshold", 1.5, "Integration threshold in photoelectrons"};
+
+  // SiPM efficiency
+  Gaudi::Property<std::vector<double>> m_wavelen{this, "wavelength", {1000., 100.}, "wavelength vector in nm"};
+  Gaudi::Property<std::vector<double>> m_sipmEff{this, "sipmEfficiency", {0.1, 0.1}, "SiPM efficiency vs wavelength"};
+
 };
 
-#endif // RECCALORIMETER_FIBERDRCALODIGITIZER_H
+#endif // RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H

@@ -1,20 +1,32 @@
-#include "FiberDRCaloDigitizer.h"
+#include "SimulateSiPMwithOpticalPhoton.h"
 
 #include <cmath>
 #include <stdexcept>
 
 // DECLARE_COMPONENT macro connects the algorithm to the framework
-DECLARE_COMPONENT(FiberDRCaloDigitizer)
+DECLARE_COMPONENT(SimulateSiPMwithOpticalPhoton)
 
-FiberDRCaloDigitizer::FiberDRCaloDigitizer(const std::string& aName, ISvcLocator* aSvcLoc) 
+SimulateSiPMwithOpticalPhoton::SimulateSiPMwithOpticalPhoton(const std::string& aName, ISvcLocator* aSvcLoc) 
   : Gaudi::Algorithm(aName, aSvcLoc) {
   // Constructor doesn't need to do anything special
 }
 
-StatusCode FiberDRCaloDigitizer::initialize() {
+StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   // First call the base class initialization
   StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure()) return sc;
+
+  if (m_wavelen.size() < 2) {
+    error() << "SimulateSiPMwithEdep: "
+            << "The wavelength vector size must be greater or equal than 2" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  if (m_wavelen.size()!=m_sipmEff.size()) {
+    error() << "SimulateSiPMwithEdep: "
+            << "The SiPM efficiency vector size should be equal to the wavelength vector size" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   // Create and initialize SiPM sensor with the properties from job options
   sipm::SiPMProperties properties;
@@ -29,24 +41,26 @@ StatusCode FiberDRCaloDigitizer::initialize() {
   properties.setFallTimeFast(m_falltimeFast);
   properties.setRiseTime(m_risetime);
   properties.setSnr(m_snr);
+  // Set the PDE type to spectrum PDE
+  properties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
+  // Set the PDE spectrum
+  properties.setPdeSpectrum(m_wavelen,m_sipmEff);
 
   // Create the SiPM sensor model
   m_sensor = std::make_unique<sipm::SiPMSensor>(properties);
 
-  info() << "FiberDRCaloDigitizer initialized with: " << endmsg
-         << "  - SiPM size: " << m_sipmSize << " mm" << endmsg
-         << "  - DCR: " << m_Dcr << " Hz" << endmsg
-         << "  - Crosstalk: " << m_Xt << endmsg
-         << "  - Integration window: [" << m_gateStart << ", " << m_gateStart.value() + m_gateL.value() << "] ns" << endmsg;
+  info() << "SimulateSiPMwithOpticalPhoton initialized" << endmsg;
+  info() << properties << endmsg; // sipm::SiPMProperties has std::ostream& operator<<
 
   return StatusCode::SUCCESS;
 }
 
-StatusCode FiberDRCaloDigitizer::execute(const EventContext&) const {
+StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
   // Get input collections
   const edm4hep::RawTimeSeriesCollection* timeStructs = m_timeStruct.get();
+  const edm4hep::RawTimeSeriesCollection* waveLenStructs = m_waveLen.get();
   const edm4hep::RawCalorimeterHitCollection* rawHits = m_rawHits.get();
-
+  
   // Create output collections
   edm4hep::TimeSeriesCollection* waveforms = m_waveforms.createAndPut();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
@@ -54,6 +68,7 @@ StatusCode FiberDRCaloDigitizer::execute(const EventContext&) const {
   // Process each hit
   for (unsigned int idx = 0; idx < timeStructs->size(); idx++) {
     const auto& timeStruct = timeStructs->at(idx);
+    const auto& waveLength = waveLenStructs->at(idx);
     const auto& rawhit = rawHits->at(idx);
 
     // Validate that both collections have matching CellIDs
@@ -64,8 +79,10 @@ StatusCode FiberDRCaloDigitizer::execute(const EventContext&) const {
     }
 
     // Extract photon arrival times from the time structure
-    std::vector<double> times;
-    times.reserve(rawhit.getAmplitude());
+    std::vector<double> vecTimes;
+    std::vector<double> vecWavelengths;
+    vecTimes.reserve(rawhit.getAmplitude());
+    vecWavelengths.reserve(rawhit.getAmplitude());
 
     for (unsigned int bin = 0; bin < timeStruct.adcCounts_size(); bin++) {
       int counts = static_cast<int>(timeStruct.getAdcCounts(bin));
@@ -73,13 +90,24 @@ StatusCode FiberDRCaloDigitizer::execute(const EventContext&) const {
 
       // Add a photon arrival time for each count in this bin
       for (int num = 0; num < counts; num++) {
-        times.emplace_back(timeBin);
+        vecTimes.emplace_back(timeBin);
+      }
+    }
+
+    // Extract photon wavelengths from the wave length structure
+    for (unsigned int bin = 0; bin < waveLength.adcCounts_size(); bin++) {
+      int counts = static_cast<int>(waveLength.getAdcCounts(bin));
+      double waveLenBin = waveLength.getTime() + waveLength.getInterval() * (static_cast<float>(bin) + 0.5);
+
+      // Add a photon arrival time for each count in this bin
+      for (int num = 0; num < counts; num++) {
+        vecWavelengths.emplace_back(waveLenBin);
       }
     }
 
     // Reset the SiPM state and run the simulation
     m_sensor->resetState();
-    m_sensor->addPhotons(times); // Sets photon arrival times (in ns)
+    m_sensor->addPhotons(vecTimes, vecWavelengths); // Sets photon arrival times (in ns) & wavelengths (in nm)
     m_sensor->runEvent();        // Runs the SiPM simulation
 
     auto digiHit = digiHits->create();
@@ -126,7 +154,7 @@ StatusCode FiberDRCaloDigitizer::execute(const EventContext&) const {
   return StatusCode::SUCCESS;
 }
 
-StatusCode FiberDRCaloDigitizer::finalize() {
+StatusCode SimulateSiPMwithOpticalPhoton::finalize() {
   // Just delegate to the base class
   return Gaudi::Algorithm::finalize();
 }
