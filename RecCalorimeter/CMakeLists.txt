@@ -14,6 +14,7 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       EDM4HEP::edm4hep
                       ROOT::Core
                       ROOT::Hist
+                      sipm::sipm
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
                       RecCaloCommon
