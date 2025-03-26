@@ -1,10 +1,6 @@
 #include "SimulateSiPMwithEdep.h"
-
-#include "DDG4/Geant4Random.h"
 #include "DD4hep/DD4hepUnits.h"
-
 #include <cmath>
-#include <stdexcept>
 
 DECLARE_COMPONENT(SimulateSiPMwithEdep)
 
@@ -129,7 +125,9 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
       npe = static_cast<unsigned>(std::floor(rnd.shoot() + 0.5));
     } else {
       Rndm::Numbers rnd(m_randSvc, Rndm::Gauss(avgNphoton,std::sqrt(avgNphoton)));
-      npe = static_cast<unsigned>(std::floor(rnd.shoot() + 0.5));
+      // prevent underflow since Gaussian can shoot negative in rare case
+      double val = std::floor(rnd.shoot() + 0.5);
+      npe = static_cast<unsigned>(std::max(val, 0.));
     }
 
     std::vector<double> vecTimes;
@@ -143,7 +141,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
       const double randval = m_integral.back()*m_rndmUniform.shoot();
       unsigned xhigh = 1;
 
-      for (xhigh = 1; xhigh < m_integral.size(); xhigh++) {
+      for (xhigh = 1; xhigh < m_integral.size()-1; xhigh++) {
         if (randval < m_integral.at(xhigh))
           break;
       }
@@ -172,7 +170,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
     const double integral = anaSignal.integral(m_gateStart,m_gateL,m_thres); // (intStart, intGate, threshold)
     const double toa = anaSignal.toa(m_gateStart,m_gateL,m_thres);           // (intStart, intGate, threshold)
 
-    digiHit.setEnergy( integral );
+    digiHit.setEnergy( integral*m_scaleADC.value() );
     digiHit.setCellID( scintHit.getCellID() );
     // Toa and m_gateStart are in ns
     digiHit.setTime( toa+m_gateStart );
