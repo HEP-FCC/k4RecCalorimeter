@@ -5,11 +5,20 @@ from Configurables import k4DataSvc
 dataservice = k4DataSvc("EventDataSvc", input="testIDEA_o1_v03.root")
 
 from Configurables import PodioInput
-podioinput = PodioInput("PodioInput", collections = ["DRcaloSiPMreadout_scint", "DRcaloSiPMreadoutRawHit", "DRcaloSiPMreadoutTimeStruct", "DRcaloSiPMreadoutWaveLen"], OutputLevel = DEBUG)
+podioinput = PodioInput("PodioInput",
+    collections = [
+        "DRcaloSiPMreadout_scint",
+        "DRcaloSiPMreadoutRawHit",
+        "DRcaloSiPMreadoutTimeStruct",
+        "DRcaloSiPMreadoutWaveLen"
+    ],
+    OutputLevel = DEBUG
+)
 
 from Configurables import SimulateSiPMwithEdep
 sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
     OutputLevel=DEBUG,
+    # wavelength in nm (decreasing order)
     wavelength = [
         900., 850., 800., 750., 725.,
         700., 675., 650., 625., 600.,
@@ -19,6 +28,7 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
         440., 430., 420., 400., 350.,
         300.
     ],
+    # Hamamatsu S14160-1310PS
     sipmEfficiency = [
         0.02, 0.025, 0.045, 0.06, 0.0675,
         0.075, 0.0925, 0.11, 0.125, 0.14,
@@ -28,6 +38,7 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
         0.173, 0.166, 0.158, 0.15, 0.12,
         0.05
     ],
+    # Kuraray SCSF-78
     scintSpectrum = [
         0., 0., 0., 0., 0.,
         0., 0., 0.0003, 0.0008, 0.0032,
@@ -37,6 +48,7 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
         0.8676, 0.2311, 0.0033, 0.0012, 0.,
         0.
     ],
+    # Kodak Wratten 9
     filterEfficiency = [
         0.903, 0.903, 0.903, 0.903, 0.903,
         0.903, 0.902, 0.901, 0.898, 0.895,
@@ -46,7 +58,33 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
         0., 0., 0., 0., 0.,
         0.
     ],
-    scintYield = 2.5 # empirical value to keep (scint npe / ceren npe) =~ 5
+    # empirical value to keep (scint npe / ceren npe) =~ 5
+    scintYield = 2.5
+)
+
+from Configurables import SimulateSiPMwithOpticalPhoton
+sipmOptical = SimulateSiPMwithOpticalPhoton("SimulateSiPMwithOpticalPhoton",
+    OutputLevel=DEBUG,
+    # wavelength in nm (decreasing order)
+    wavelength = [
+        900., 850., 800., 750., 725.,
+        700., 675., 650., 625., 600.,
+        590., 580., 570., 560., 550.,
+        540., 530., 520., 510., 500.,
+        490., 480., 470., 460., 450.,
+        440., 430., 420., 400., 350.,
+        300.
+    ],
+    # Hamamatsu S14160-1310PS
+    sipmEfficiency = [
+        0.02, 0.025, 0.045, 0.06, 0.0675,
+        0.075, 0.0925, 0.11, 0.125, 0.14,
+        0.146, 0.152, 0.158, 0.164, 0.17,
+        0.173, 0.176, 0.178, 0.179, 0.18,
+        0.181, 0.182, 0.183, 0.184, 0.18,
+        0.173, 0.166, 0.158, 0.15, 0.12,
+        0.05
+    ]
 )
 
 from Configurables import PodioOutput
@@ -68,6 +106,7 @@ ApplicationMgr(
     TopAlg = [
         podioinput,
         sipmEdep,
+        sipmOptical,
         podiooutput
     ],
     EvtSel = 'NONE',
