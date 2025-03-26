@@ -9,7 +9,7 @@ DECLARE_COMPONENT(TopoCaloNoisyCells)
 
 TopoCaloNoisyCells::TopoCaloNoisyCells(const std::string& type, const std::string& name, const IInterface* parent)
     : AlgTool(type, name, parent) {
-  declareInterface<ICaloReadCellNoiseMap>(this);
+  declareInterface<INoiseConstTool>(this);
 }
 
 StatusCode TopoCaloNoisyCells::initialize() {
@@ -60,5 +60,5 @@ StatusCode TopoCaloNoisyCells::initialize() {
 
 StatusCode TopoCaloNoisyCells::finalize() { return AlgTool::finalize(); }
 
-double TopoCaloNoisyCells::noiseRMS(uint64_t aCellId) { return m_map[aCellId].first; }
-double TopoCaloNoisyCells::noiseOffset(uint64_t aCellId) { return m_map[aCellId].second; }
+double TopoCaloNoisyCells::getNoiseRMSPerCell(uint64_t aCellId) { return m_map[aCellId].first; }
+double TopoCaloNoisyCells::getNoiseOffsetPerCell(uint64_t aCellId) { return m_map[aCellId].second; }
