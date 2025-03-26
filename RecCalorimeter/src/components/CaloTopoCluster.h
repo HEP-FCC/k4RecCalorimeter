@@ -10,7 +10,7 @@
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ICaloReadCellNoiseMap.h"
+#include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/ICellPositionsTool.h"
@@ -115,7 +115,7 @@ private:
   /// Handle for the input tool
   mutable ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
   /// Handle for the cells noise tool
-  mutable ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
+  mutable ToolHandle<INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
   mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel

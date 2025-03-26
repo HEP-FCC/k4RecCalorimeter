@@ -5,7 +5,7 @@
 #include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
-#include "k4Interface/ICaloReadCellNoiseMap.h"
+#include "k4Interface/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -18,7 +18,7 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class TopoCaloNoisyCells : public AlgTool, virtual public ICaloReadCellNoiseMap {
+class TopoCaloNoisyCells : public AlgTool, virtual public INoiseConstTool {
 public:
   TopoCaloNoisyCells(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~TopoCaloNoisyCells() = default;
@@ -32,13 +32,13 @@ public:
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double noiseRMS(uint64_t aCellId) final;
+  virtual double getNoiseRMSPerCell(uint64_t aCellId) final;
 
   /** Expected noise per cell in terms of mean of distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double noiseOffset(uint64_t aCellId) final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellId) final;
 
 private:
   /// Name

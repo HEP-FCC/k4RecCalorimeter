@@ -16,7 +16,7 @@
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ICaloReadCellNoiseMap.h"
+#include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
 
 // EDM4HEP
@@ -116,7 +116,7 @@ private:
   MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
       m_clusterCollection, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
   /// Handle for the cells noise tool
-  mutable ToolHandle<ICaloReadCellNoiseMap> m_noiseTool{"TopoCaloNoisyCells", this};
+  mutable ToolHandle<INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
   mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 
