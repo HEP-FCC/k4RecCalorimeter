@@ -1,8 +1,5 @@
 #include "SimulateSiPMwithOpticalPhoton.h"
 
-#include <cmath>
-#include <stdexcept>
-
 // DECLARE_COMPONENT macro connects the algorithm to the framework
 DECLARE_COMPONENT(SimulateSiPMwithOpticalPhoton)
 
@@ -14,7 +11,22 @@ SimulateSiPMwithOpticalPhoton::SimulateSiPMwithOpticalPhoton(const std::string& 
 StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   // First call the base class initialization
   StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure()) return sc;
+
+  if (sc.isFailure())
+    return sc;
+
+  // Initialize random services
+  m_randSvc = service("RndmGenSvc", false);
+
+  if (!m_randSvc) {
+    error() << "Couldn't get RndmGenSvc!" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  if (m_rndmUniform.initialize(m_randSvc, Rndm::Flat(0.,1.)).isFailure()) {
+    error() << "Couldn't initialize RndmGenSvc!" << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   if (m_wavelen.size() < 2) {
     error() << "SimulateSiPMwithOpticalPhoton: "
@@ -44,7 +56,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   // Set the PDE type to spectrum PDE
   properties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
   // Set the PDE spectrum
-  properties.setPdeSpectrum(m_wavelen,m_sipmEff);
+  properties.setPdeSpectrum(m_wavelen.value(),m_sipmEff.value());
 
   // Create the SiPM sensor model
   m_sensor = std::make_unique<sipm::SiPMSensor>(properties);
@@ -55,10 +67,26 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   return StatusCode::SUCCESS;
 }
 
+std::vector<double> SimulateSiPMwithOpticalPhoton::integral(const std::vector<double>& wavelen, const std::vector<double>& yval) const {
+  double val = 0.;
+  double prevXval = wavelen.front();
+  std::vector<double> result = {0.};
+  result.reserve(wavelen.size());
+
+  for (unsigned idx = 1; idx < wavelen.size(); idx++) {
+    double intervalX = std::abs(prevXval - wavelen.at(idx));
+    double avgY = (yval.at(idx) + yval.at(idx-1))/2.;
+    val += intervalX*avgY;
+    result.push_back(val);
+  }
+
+  return result;
+}
+
 StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
   // Get input collections
   const edm4hep::RawTimeSeriesCollection* timeStructs = m_timeStruct.get();
-  const edm4hep::RawTimeSeriesCollection* waveLenStructs = m_waveLen.get();
+  const edm4hep::RawTimeSeriesCollection* waveLenStructs = m_wavelenStruct.get();
   const edm4hep::RawCalorimeterHitCollection* rawHits = m_rawHits.get();
 
   // Create output collections
@@ -78,7 +106,32 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
       return StatusCode::FAILURE;
     }
 
-    // Extract photon arrival times from the time structure
+    // Validate that both collections have matching CellIDs
+    if (waveLength.getCellID() != rawhit.getCellID()) {
+      error() << "CellIDs of RawCalorimeterHits & RawTimeSeries are different! "
+              << "This should never happen." << endmsg;
+      return StatusCode::FAILURE;
+    }
+
+    // extract wavelength randomly according to the wavelength distribution
+    // where we used edm4hep::TimeSeries to store the distribution in the SD
+    std::vector<double> vecWavelenEdm;
+    std::vector<double> vecSpectrum;
+    vecWavelenEdm.reserve(waveLength.adcCounts_size());
+    vecSpectrum.reserve(waveLength.adcCounts_size());
+    // be aware that we loop in the decreasing order!
+    for (unsigned bin = waveLength.adcCounts_size(); bin != 1; bin--) {
+      double wavlenBinCenter = waveLength.getTime() + waveLength.getInterval() * (static_cast<float>(bin-1) + 0.5);
+      double spectrum = static_cast<double>(waveLength.getAdcCounts(bin-1));
+
+      vecWavelenEdm.push_back(wavlenBinCenter);
+      vecSpectrum.push_back(spectrum);
+    }
+
+    std::vector<double> integralSpectrum = integral(vecWavelenEdm,vecSpectrum);
+
+    // extract photon arrival times from the time structure
+    // and generate wavelength according to the pdf
     std::vector<double> vecTimes;
     std::vector<double> vecWavelengths;
     vecTimes.reserve(rawhit.getAmplitude());
@@ -91,17 +144,23 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
       // Add a photon arrival time for each count in this bin
       for (int num = 0; num < counts; num++) {
         vecTimes.emplace_back(timeBin);
-      }
-    }
 
-    // Extract photon wavelengths from the wave length structure
-    for (unsigned int bin = 0; bin < waveLength.adcCounts_size(); bin++) {
-      int counts = static_cast<int>(waveLength.getAdcCounts(bin));
-      double waveLenBin = waveLength.getTime() + waveLength.getInterval() * (static_cast<float>(bin) + 0.5);
+        // generate wavelength
+        const double randval = integralSpectrum.back()*m_rndmUniform.shoot();
+        unsigned xhigh = 1;
 
-      // Add a photon arrival time for each count in this bin
-      for (int num = 0; num < counts; num++) {
-        vecWavelengths.emplace_back(waveLenBin);
+        for (; xhigh < integralSpectrum.size()-1; xhigh++) {
+          if (randval < integralSpectrum.at(xhigh))
+            break;
+        }
+
+        const unsigned xlow = xhigh - 1;
+        const double xdiff = vecWavelenEdm.at(xhigh) - vecWavelenEdm.at(xlow);
+        const double ydiff = integralSpectrum.at(xhigh) - integralSpectrum.at(xlow);
+        const double ydiffInv = (ydiff==0.) ? 0. : 1./ydiff;
+        double valWav = vecWavelenEdm.at(xlow) + xdiff*(randval-integralSpectrum.at(xlow))*ydiffInv;
+
+        vecWavelengths.emplace_back(valWav);
       }
     }
 
@@ -122,7 +181,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
     const double gateEnd = m_gateStart.value() + m_gateL.value();
 
     // Set digitized hit properties
-    digiHit.setEnergy(integral);
+    digiHit.setEnergy(integral*m_scaleADC.value());
     digiHit.setCellID(rawhit.getCellID());
     digiHit.setTime(toa + m_gateStart); // Toa and m_gateStart are in ns
 

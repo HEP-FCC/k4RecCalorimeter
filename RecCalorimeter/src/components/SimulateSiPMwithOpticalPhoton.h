@@ -13,6 +13,8 @@
 // Gaudi includes
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
+#include "GaudiKernel/IRndmGenSvc.h"
+#include "GaudiKernel/RndmGenerators.h"
 
 // Check for SiPMSensor header location (similar to how DigiSiPM handles this)
 #if __has_include("SiPMSensor.h")
@@ -23,7 +25,7 @@
 
 /** @class SimulateSiPMwithOpticalPhoton
  *
- *  Algorithm for digitizing the SiPM response in dual-readout calorimeter.
+ *  Algorithm for digitizing the SiPM response
  *  This digitizer takes RawTimeSeriesCollection and RawCalorimeterHitCollection as input
  *  and produces TimeSeriesCollection and CalorimeterHitCollection as output.
  *
@@ -49,10 +51,17 @@ public:
   StatusCode finalize() override;
 
 private:
+  // integral function for the wavelength random generation
+  std::vector<double> integral(const std::vector<double>& wavelen, const std::vector<double>& yval) const;
+
+  // Random Number Service
+  SmartIF<IRndmGenSvc> m_randSvc;
+  Rndm::Numbers m_rndmUniform;
+
   // Input collections
   mutable DataHandle<edm4hep::RawCalorimeterHitCollection> m_rawHits{"DRcaloSiPMreadoutRawHit", Gaudi::DataHandle::Reader, this};
   mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{"DRcaloSiPMreadoutTimeStruct", Gaudi::DataHandle::Reader, this};
-  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_waveLen{"DRcaloSiPMreadoutWaveLen", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_wavelenStruct{"DRcaloSiPMreadoutWaveLen", Gaudi::DataHandle::Reader, this};
 
   // Output collections
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"DRcaloSiPMreadoutDigiHit", Gaudi::DataHandle::Writer, this};
@@ -67,12 +76,12 @@ private:
   Gaudi::Property<double> m_sampling{this, "sampling", 0.1, "SiPM sampling rate in ns"};
   Gaudi::Property<double> m_risetime{this, "risetime", 1., "Signal rise time in ns"};
   Gaudi::Property<double> m_falltimeFast{this, "falltimeFast", 6.5, "Signal fast component decay time in ns"};
-  
+
   // SiPM physical properties
   Gaudi::Property<double> m_sipmSize{this, "SiPMsize", 1.3, "Width of photosensitive area in mm"};
   Gaudi::Property<double> m_cellPitch{this, "cellpitch", 10., "SiPM cell size in um"};
   Gaudi::Property<double> m_recovery{this, "recovery", 10., "SiPM cell recovery time in ns"};
-  
+
   // Noise parameters
   Gaudi::Property<double> m_Dcr{this, "DCR", 120e3, "SiPM dark count rate in Hz"};
   Gaudi::Property<double> m_Xt{this, "Xtalk", 0.01, "SiPM optical crosstalk probability"};
@@ -85,9 +94,11 @@ private:
   Gaudi::Property<double> m_thres{this, "threshold", 1.5, "Integration threshold in photoelectrons"};
 
   // SiPM efficiency
-  Gaudi::Property<std::vector<double>> m_wavelen{this, "wavelength", {1000., 100.}, "wavelength vector in nm"};
+  Gaudi::Property<std::vector<double>> m_wavelen{this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
   Gaudi::Property<std::vector<double>> m_sipmEff{this, "sipmEfficiency", {0.1, 0.1}, "SiPM efficiency vs wavelength"};
 
+  // scale ADC to energy
+  Gaudi::Property<double> m_scaleADC{this, "scaleADC", 1., "calibration factor for scaling ADC to energy"};
 };
 
 #endif // RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H
