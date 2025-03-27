@@ -44,12 +44,6 @@ add_test(NAME FCC_createTruthJets
 )
 set_test_env(FCC_createTruthJets)
 
-add_test(NAME FCC_createTruthJets
-  COMMAND k4run RecCalorimeter/tests/options/runTruthJetReco.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-set_test_env(FCC_createTruthJets)
-
 add_test(NAME simulateSiPM
   COMMAND sh RecCalorimeter/tests/scripts/testSiPM.sh
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
