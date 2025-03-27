@@ -19,6 +19,23 @@
 #include "sipm/SiPMSensor.h"
 #endif
 
+/** @class SimulateSiPMwithEdep
+ *
+ *  Algorithm for digitizing the SiPM response using SIM energy deposits,
+ *  taking SimCalorimeterHitCollection (energy deposited in scintillators) as input
+ *  and produces CalorimeterHitCollection (ADC count from SiPM) as output.
+ *
+ *  The algorithm simulates SiPM response including effects like:
+ *  - Dark count rate (DCR)
+ *  - Crosstalk (Xt)
+ *  - Afterpulsing
+ *  - Cell recovery time
+ *  - Signal rise and fall times
+ *
+ *  @author Sanghyun Ko
+ *  @date   2025-03-27
+ */
+
 class SimulateSiPMwithEdep : public Gaudi::Algorithm {
 public:
   SimulateSiPMwithEdep(const std::string& name, ISvcLocator* svcLoc);
