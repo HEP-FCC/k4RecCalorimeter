@@ -18,6 +18,8 @@ podioinput = PodioInput("PodioInput",
 from Configurables import SimulateSiPMwithEdep
 sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
     OutputLevel=DEBUG,
+    inputHitCollection = "DRcaloSiPMreadout_scint",
+    outputHitCollection = "DRcaloSiPMreadoutDigiHit_scint",
     # wavelength in nm (decreasing order)
     wavelength = [
         900., 850., 800., 750., 725.,
@@ -65,6 +67,11 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
 from Configurables import SimulateSiPMwithOpticalPhoton
 sipmOptical = SimulateSiPMwithOpticalPhoton("SimulateSiPMwithOpticalPhoton",
     OutputLevel=DEBUG,
+    inputHitCollection = "DRcaloSiPMreadoutRawHit",
+    inputTimeStructCollection = "DRcaloSiPMreadoutTimeStruct",
+    inputWavlenCollection = "DRcaloSiPMreadoutWaveLen",
+    outputHitCollection = "DRcaloSiPMreadoutDigiHit",
+    outputTimeStructCollection = "DRcaloSiPMreadoutDigiWaveform",
     # wavelength in nm (decreasing order)
     wavelength = [
         900., 850., 800., 750., 725.,

@@ -58,14 +58,22 @@ private:
   SmartIF<IRndmGenSvc> m_randSvc;
   Rndm::Numbers m_rndmUniform;
 
+  // input collection names
+  Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadoutRawHit", "input calo collection name"};
+  Gaudi::Property<std::string> m_outColl{this, "outputHitCollection", "DRcaloSiPMreadoutDigiHit", "output calo collection name"};
+
+  Gaudi::Property<std::string> m_inTimeColl{this, "inputTimeStructCollection", "DRcaloSiPMreadoutTimeStruct", "input time structure collection name"};
+  Gaudi::Property<std::string> m_inWavlenColl{this, "inputWavlenCollection", "DRcaloSiPMreadoutWaveLen", "input wavelength collection name"};
+  Gaudi::Property<std::string> m_outTimeColl{this, "outputTimeStructCollection", "DRcaloSiPMreadoutDigiWaveform", "output waveform collection name"};
+
   // Input collections
-  mutable DataHandle<edm4hep::RawCalorimeterHitCollection> m_rawHits{"DRcaloSiPMreadoutRawHit", Gaudi::DataHandle::Reader, this};
-  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{"DRcaloSiPMreadoutTimeStruct", Gaudi::DataHandle::Reader, this};
-  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_wavelenStruct{"DRcaloSiPMreadoutWaveLen", Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::RawCalorimeterHitCollection> m_rawHits{m_hitColl, Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{m_inTimeColl, Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_wavelenStruct{m_inWavlenColl, Gaudi::DataHandle::Reader, this};
 
   // Output collections
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"DRcaloSiPMreadoutDigiHit", Gaudi::DataHandle::Writer, this};
-  mutable DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{"DRcaloSiPMreadoutDigiWaveform", Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{m_outColl, Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{m_outTimeColl, Gaudi::DataHandle::Writer, this};
 
   // SiPM sensor model
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
