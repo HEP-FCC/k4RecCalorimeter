@@ -10,6 +10,7 @@ PairCaloClustersPi0::PairCaloClustersPi0(const std::string& name, ISvcLocator* s
   declareProperty("inClusters", m_inClusters, "Input cluster collection");
   declareProperty("pairedClusters", m_pairedClusters, "Outpu1: Paired cluster collection");
   declareProperty("unpairedClusters", m_unpairedClusters, "Output2: Unpaired cluster collection");
+  declareProperty("reconstructedPi0", m_reconstructedPi0, "Output2: Reconstructed pi0 collection");
 }
 
 StatusCode PairCaloClustersPi0::initialize() {
@@ -95,6 +96,7 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
 
   edm4hep::ClusterCollection* pairedClusters = m_pairedClusters.createAndPut();
   edm4hep::ClusterCollection* unpairedClusters = m_unpairedClusters.createAndPut();
+  edm4hep::ReconstructedParticleCollection* reconstructedPi0 = m_reconstructedPi0.createAndPut();
 
   // ***** Step 1: Get all possible cluster pairs in the mass window, overlap of clusters allowed *****
   verbose() << "We are in cluster pairing, step 1" <<endmsg;
@@ -226,6 +228,26 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
     auto outCluster2 = inClusters->at(bestcombi_pairs[i].second).clone();
     pairedClusters->push_back(outCluster2);
     vec_index_paired_clusters.push_back(bestcombi_pairs[i].second);
+    // reconstruct pi0 from these two clusters
+    edm4hep::Vector3d position1(outCluster1.getPosition().x, outCluster1.getPosition().y, outCluster1.getPosition().z);
+    edm4hep::Vector3d position2(outCluster2.getPosition().x, outCluster2.getPosition().y, outCluster2.getPosition().z);
+    edm4hep::Vector3d momentum1=PairCaloClustersPi0::projectMomentum( outCluster1.getEnergy(), position1, edm4hep::Vector3d(0,0,0));
+    edm4hep::Vector3d momentum2=PairCaloClustersPi0::projectMomentum( outCluster2.getEnergy(), position2, edm4hep::Vector3d(0,0,0));
+    
+    //edm4hep::Vector3f pi0_momentum(momentum1.x+momentum2.x, momentum1.y+momentum2.y, momentum1.z+momentum2.z);
+    edm4hep::MutableReconstructedParticle this_pi0(
+	111,
+	outCluster1.getEnergy()+outCluster2.getEnergy(),
+	edm4hep::Vector3f(momentum1.x+momentum2.x, momentum1.y+momentum2.y, momentum1.z+momentum2.z),
+	edm4hep::Vector3f(0,0,0),
+	0.,
+	0.135,
+	0.,
+	edm4hep::CovMatrix4f()
+	);
+    this_pi0.addToClusters(outCluster1);
+    this_pi0.addToClusters(outCluster2);
+    reconstructedPi0->push_back(this_pi0);
   }
   for (size_t i=0; i<inClusters->size(); ++i){
     bool IsPaired=false;

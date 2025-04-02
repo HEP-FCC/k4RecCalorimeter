@@ -14,6 +14,8 @@
 // our edm
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
+#include "edm4hep/ReconstructedParticle.h"
+#include "edm4hep/ReconstructedParticleCollection.h"
 #include "edm4hep/Vector3d.h"
 
 //class IRndmGenSvc;
@@ -23,30 +25,19 @@ namespace edm4hep {
 class Cluster;
 class MutableCluster;
 class ClusterCollection;
+class ReconstructedParticle;
+class MutableReconstructedParticle;
+class ReconstructedParticleCollection;
 class Vector3d;
 } // namespace edm4hep
 
-/** @class CorrectCaloClusters
+/** @class PairCaloClustersPi0
  *
- *  Apply corrections to the clusters reconstructed in ECAL.
- *  * Upstream energy correction corrects for the energy lost by the particles in the material before they enter
- *    active volume of the calorimeter. The correction is parametrized in one (cluster energy) or two variables (cluster
- *    energy, cluster angle)
- *  * Downstream energy correction corrects for the energy lost due to punch trough. This energy is deposited in the
- *    instrumentation behind the active volume of the calorimeter. It is parametrized in one (cluster energy) or two
- *    variables (cluster energy, cluster angle)
- * * Benchmark calibration should be used for the combined simulation of ECal and HCal when using charged pions.
- *    At the input level, the ECal should be calibrated to EM scale and HCal should be calibrated to HAD scale.
- *    The aim of the benchmark calibration is to bring ECal to HAD scale and also to take into account
- *    the energy loss between the ECal and HCal (e.g. in cryostat) - for this, the energy from the last ECal layer and
- * the first HCal layer is used. While, downstream correction is part of the benchmark method (energy lost between ECal
- * and HCal), as well as the upstream correction for ECal For standalone ECal, include upstream and downstream
- * correction; for ECal+HCal simulation apply only benchmark correction should be applied To obtain the actual
- * parameters run RecCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py which calls CalibrateBenchmarkMethod
- *
- *  Based on similar corrections by Jana Faltova and Anna Zaborowska.
- *
- *  @author Juraj Smiesko, benchmark calibration added by Michaela Mlynarikova
+ *  Make pi0 candidate (reconstructed particle) from cluster pairs, according tothe definition of a pi0 mass window
+ *  Output1: A list of reconstructed particles, with energy, momentum, and pointers to a pair of clusters
+ *  Output2: The rest of clusters not involved in the reconstructioni of pi0 candidate through the pairing.
+ *  
+ *  @author Zhibo Wu
  */
 
 class PairCaloClustersPi0 : public Gaudi::Algorithm {
@@ -103,6 +94,8 @@ private:
   /// Handle for unpaired (output2) calorimeter clusters collection
   mutable DataHandle<edm4hep::ClusterCollection> m_unpairedClusters{"unpairedClusters", Gaudi::DataHandle::Writer, this};
 
+  mutable DataHandle<edm4hep::ReconstructedParticleCollection> m_reconstructedPi0{"reconstructedPi0", Gaudi::DataHandle::Writer, this};
+  
   // pi0 mass window
   Gaudi::Property<double> m_massPeak{this, "massPeak", 0.135, "pi0 mass peak [GeV]"};
   Gaudi::Property<double> m_massLow{this, "massLow", 0.0, "lower boundary of pi0 mass window [GeV]"};
