@@ -89,12 +89,13 @@ private:
 
   /// Handle for input calorimeter clusters collection
   mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
-  /// Handle for paired (output1) calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_pairedClusters{"pairedClusters", Gaudi::DataHandle::Writer, this};
+  /// Handle for reconstructed pi0 particles (output1) collection
+  mutable DataHandle<edm4hep::ReconstructedParticleCollection> m_reconstructedPi0{"reconstructedPi0", Gaudi::DataHandle::Writer, this};
   /// Handle for unpaired (output2) calorimeter clusters collection
   mutable DataHandle<edm4hep::ClusterCollection> m_unpairedClusters{"unpairedClusters", Gaudi::DataHandle::Writer, this};
+  /// Handle for paired (output3) calorimeter clusters collection
+  mutable DataHandle<edm4hep::ClusterCollection> m_pairedClusters{"pairedClusters", Gaudi::DataHandle::Writer, this};
 
-  mutable DataHandle<edm4hep::ReconstructedParticleCollection> m_reconstructedPi0{"reconstructedPi0", Gaudi::DataHandle::Writer, this};
   
   // pi0 mass window
   Gaudi::Property<double> m_massPeak{this, "massPeak", 0.135, "pi0 mass peak [GeV]"};
