@@ -229,7 +229,8 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
     edm4hep::Vector3d position2(outCluster2.getPosition().x, outCluster2.getPosition().y, outCluster2.getPosition().z);
     edm4hep::Vector3d momentum1=PairCaloClustersPi0::projectMomentum( outCluster1.getEnergy(), position1, edm4hep::Vector3d(0,0,0));
     edm4hep::Vector3d momentum2=PairCaloClustersPi0::projectMomentum( outCluster2.getEnergy(), position2, edm4hep::Vector3d(0,0,0));
-    verbose() << "Final pairing " << i << " first cluster = " << bestcombi_pairs[i].first << ", second cluster =  " << bestcombi_pairs[i].second << ", invariant mass [GeV] = " << PairCaloClustersPi0::getInvariantMass( outCluster1.getEnergy(), momentum1, outCluster2.getEnergy(), momentum2 ) <<endmsg;
+    double this_pi0_invM=PairCaloClustersPi0::getInvariantMass( outCluster1.getEnergy(), momentum1, outCluster2.getEnergy(), momentum2 );
+    verbose() << "Final pairing " << i << " first cluster = " << bestcombi_pairs[i].first << ", second cluster =  " << bestcombi_pairs[i].second << ", invariant mass [GeV] = " <<  this_pi0_invM <<endmsg;
     
     //edm4hep::Vector3f pi0_momentum(momentum1.x+momentum2.x, momentum1.y+momentum2.y, momentum1.z+momentum2.z);
     edm4hep::MutableReconstructedParticle this_pi0(
@@ -238,7 +239,7 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
 	edm4hep::Vector3f(momentum1.x+momentum2.x, momentum1.y+momentum2.y, momentum1.z+momentum2.z),
 	edm4hep::Vector3f(0,0,0),
 	0.,
-	0.1349770, // pi0 mass taken from https://pdg.lbl.gov/2018/listings/rpp2018-list-pi-zero.pdf
+	this_pi0_invM,
 	0.,
 	edm4hep::CovMatrix4f()
 	);
