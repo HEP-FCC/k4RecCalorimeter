@@ -33,9 +33,10 @@ class Vector3d;
 
 /** @class PairCaloClustersPi0
  *
- *  Make pi0 candidate (reconstructed particle) from cluster pairs, according tothe definition of a pi0 mass window
+ *  Make pi0 candidate (reconstructed particle) from cluster pairs, according to the definition of a pi0 mass window
  *  Output1: A list of reconstructed particles, with energy, momentum, and pointers to a pair of clusters
  *  Output2: The rest of clusters not involved in the reconstructioni of pi0 candidate through the pairing.
+ *  Output3: Clusters used in the reconstructioni of pi0 candidate.
  *  
  *  @author Zhibo Wu
  */

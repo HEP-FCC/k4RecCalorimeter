@@ -10,7 +10,7 @@ PairCaloClustersPi0::PairCaloClustersPi0(const std::string& name, ISvcLocator* s
   declareProperty("inClusters", m_inClusters, "Input cluster collection");
   declareProperty("reconstructedPi0", m_reconstructedPi0, "Output1: Reconstructed pi0 collection");
   declareProperty("unpairedClusters", m_unpairedClusters, "Output2: Unpaired cluster collection");
-  declareProperty("pairedClusters", m_pairedClusters, "Outpu3: Paired cluster collection");
+  declareProperty("pairedClusters", m_pairedClusters, "Output3: Paired cluster collection");
 }
 
 StatusCode PairCaloClustersPi0::initialize() {
