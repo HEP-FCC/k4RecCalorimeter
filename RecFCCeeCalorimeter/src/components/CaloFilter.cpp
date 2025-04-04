@@ -59,18 +59,11 @@ struct CaloFilterFunc final
 
     StatusCode initialize() override{
         // Get matched filter template
-        std::vector<float> PulseShape;
         if (m_filterName.value() == "MatchedDirac") {
             info() << "Using the matched filter: Matched Dirac" << endmsg;
             FilterTemplate = {0.0, 1.0, 0.0};
         } else if (m_filterName.value() == "Matched_Gaussian"){
-            info() << "Using the matched filter: Matched Gaussian" << endmsg;
-            // Set shape of FilterTemplate vector and set it to 0
-            FilterTemplate.resize(m_filterTemplateSize.value());
-            std::fill(FilterTemplate.begin(), FilterTemplate.end(), 0.0);
-
-
-
+            info() << "Using the matched filter: Matched Gaussian" << endmsg;          
 
             // Number of samples you want the known pulse (i.e. filter) to consider
             // Note that an odd number of samples > 1 is the best for a Gaussian. Otherwise, migration effects will happen
@@ -80,9 +73,11 @@ struct CaloFilterFunc final
             int UpCnt = m_filterTemplateSize.value() - DownCnt - 1;
 
             // We will create a Gaussian shape w/ mean = m_mu and sigma = m_sigma. The filter will be defined as e^(-0.5 * ((x - m_mu)/m_sigma)^2) for x in [maximum - DownCnt, maximum + UpCnt].
+            
             int samplingInterval = (m_pulseEndTime.value() - m_pulseInitTime.value()) / m_lenSample.value();
+            std::vector<float> PulseShape(m_lenSample.value(), 0.0);
             for (int i = 0; i < m_lenSample.value(); ++i) {
-                PulseShape.push_back(Gaussian(i * samplingInterval, m_mu.value(), m_sigma.value()));
+                PulseShape[i] = Gaussian(i * samplingInterval, m_mu.value(), m_sigma.value());
             }
 
             // Get the filter template between MaxIdx - DownCnt and MaxIdx + UpCnt
@@ -90,21 +85,24 @@ struct CaloFilterFunc final
 
             int DownIdx = MaxIdx - DownCnt;
             int UpIdx = MaxIdx + UpCnt;
-            if (DownIdx < 0) {
-                error() << "DownIdx is out of bounds: " << DownIdx << " < " << PulseShape.size() << endmsg;
+            // Validate indices
+            if (DownIdx < 0 || UpIdx >= static_cast<int>(PulseShape.size())) {
+                error() << "Index out of bounds: DownIdx=" << DownIdx << ", UpIdx=" << UpIdx
+                        << ", PulseShape.size()=" << PulseShape.size() << endmsg;
+                return StatusCode::FAILURE;
             }
-            if (UpIdx > PulseShape.size()) {
-                error() << "UpIdx is out of bounds: " << UpIdx << " > " << PulseShape.size() << endmsg;
-            }
+            // Resize FilterTemplate to fit the range [DownIdx, UpIdx]
+            FilterTemplate.resize(UpIdx - DownIdx + 1, 0.0);
+
             info() << "MaxIdx: " << MaxIdx << ", DownIdx: " << DownIdx << ", UpIdx: " << UpIdx << endmsg;
             // Get the filter template and calculate SumSquared for normalization
-            for (int i = DownIdx; i <= UpIdx; i++) {
-                FilterTemplate[i] = (PulseShape[i]);
+            for (int i = DownIdx; i <= UpIdx; ++i) {
+                FilterTemplate[i - DownIdx] = PulseShape[i]; // Use relative indexing for FilterTemplate
                 SumSquared += PulseShape[i] * PulseShape[i];
-                info() << "FilterTemplate[" << i << "]: " << FilterTemplate[i] << endmsg;
             }
         } else {
             error() << "Unknown filter name: " << m_filterName.value() << endmsg;
+            return StatusCode::FAILURE;
         }
         
         return StatusCode::SUCCESS;
@@ -122,7 +120,6 @@ struct CaloFilterFunc final
     
     // Loop over DigitsPulse to extract the pulse amplitudes
     for (const auto& Digit : DigitsPulse) {
-        std::vector<double> amplitude;
         const auto InputPulse = Digit.getAmplitude();
 
         auto FilteredDigit = FilteredDigitsCollection.create();
