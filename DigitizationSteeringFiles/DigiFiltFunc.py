@@ -3,9 +3,15 @@ from Configurables import CaloDigitizerFunc, CaloFilterFunc
 from k4FWCore import ApplicationMgr, IOSvc
 
 Nevts = 10                              # -1 means all events
-SamplingInterval = 25.0                 # ns
+DigitInitTime = 0.0
+DigitEndTime = 775.0                  # time range of the digitization
+PulseSampleLen = 31                   # number of samples in the signal pulse shape
 ecalBarrelInputName = "ECalBarrelModuleThetaMerged"  # name of the ECal barrel readout in input file
 ecalBarrelSignalShapePath = "SignalPulseShapes.root"  # path to the root file with the signal pulse shapes
+PulseShapeName = "Gaussian"             # name of the signal pulse shape
+GaussianMean = 100.0
+GaussianSigma = 20.0
+FilterSize = 7
 
 
 io_svc = IOSvc()
@@ -26,13 +32,28 @@ CaloDigitizer = CaloDigitizerFunc("CaloDigitizerFunc",
                                 signalFileName=ecalBarrelSignalShapePath,
                                 treename="Signal_shape",
                                 InputCollection=[ecalBarrelInputName],
-                                samplingInterval = SamplingInterval,
+                                pulseInitTime = DigitInitTime,
+                                pulseEndTime = DigitEndTime,
+                                pulseSamplingLength = PulseSampleLen,
+                                pulseType = PulseShapeName,
+                                mu = GaussianMean,
+                                sigma = GaussianSigma,
                                 OutputCollection=["ECalBarrelDigitized"],)
 
 CaloFilter = CaloFilterFunc("CaloFilterFunc",
                             InputCollection = ["ECalBarrelDigitized"],
-                            OutputCollection = ["ECalBarrelFiltered"],
-                            filterName = "MatchedDirac")
+                            OutputCollectionFilteredPulse = ["ECalBarrelMatchedFilterPulse"], 
+                            OutputCollectionMatchedSampleIdx = ["ECalBarrelMatchedFilterSampleIdx"],
+                            OutputCollectionMatchedSampleEnergy = ["ECalBarrelMatchedFilterSampleEnergy"],
+                            
+                            filterName = "Matched_%s" % PulseShapeName,
+                            pulseInitTime = DigitInitTime,
+                            pulseEndTime = DigitEndTime,
+                            pulseSamplingLength = PulseSampleLen,
+                            filterTemplateSize = FilterSize,
+                            mu = GaussianMean,
+                            sigma = GaussianSigma,
+                            )
 
 ApplicationMgr(TopAlg=[CaloDigitizer, 
                        CaloFilter,
