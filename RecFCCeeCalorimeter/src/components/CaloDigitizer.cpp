@@ -29,7 +29,9 @@
 
 #include "k4FWCore/Transformer.h"
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -53,6 +55,8 @@
             error() << "File path: " << m_SignalFileName.value() << endmsg;
             return StatusCode::FAILURE;
         }
+
+        // Open the file with the pulse shape values
         std::unique_ptr<TFile> pulseShapesFile(TFile::Open(m_SignalFileName.value().c_str(), "READ"));
         if (pulseShapesFile->IsZombie()) {
             error() << "Unable to open the file with the pulse shape values!" << endmsg;
@@ -69,9 +73,6 @@
         ULong64_t readCellId;
         std::vector<float>* readPulse = nullptr;
 
-        tree->Print("all");
-        tree->Show(0);
-
         tree->SetBranchStatus("cellId", 1); tree->SetBranchAddress("cellId", &readCellId);
         tree->SetBranchStatus("PulseAmplitude", 1); tree->SetBranchAddress("PulseAmplitude", &readPulse);
 
@@ -79,23 +80,38 @@
             tree->GetEntry(i);
             debug() << "cell ID: " << readCellId << endmsg;
             debug() << "PulseAmplitude size: " << readPulse->size() << endmsg;
-            m_map.insert(std::pair<uint64_t, std::vector<float>>(readCellId, *readPulse));
+            m_map_pulseShape[readCellId] = *readPulse;
         }
 
-        info() << "Read " << m_map.size() << " cellIDs with pulse shapes from the file." << endmsg;
+        info() << "Read " << m_map_pulseShape.size() << " cellIDs with pulse shapes from the file." << endmsg;
         info() << "Nentries in tree: " << tree->GetEntries() << endmsg;
-        if (m_map.size() != static_cast<std::unordered_map<uint64_t, std::vector<float>>::size_type>(tree->GetEntries())) {
+        if (m_map_pulseShape.size() != static_cast<std::unordered_map<uint64_t, std::vector<float>>::size_type>(tree->GetEntries())) {
             error() << "Number of entries in the tree does not match the number of cellIDs read!" << endmsg;
             return StatusCode::FAILURE;
         }
 
-
+        // Delete the tree and close the file
         delete tree;
         pulseShapesFile->Close();
+
+        // Decide which pulse shape to use and create the pulse shape and derivative vectors on the fly
+        m_samplingInterval = (m_pulseEndTime.value() - m_pulseInitTime.value()) / m_lenSample.value();
+        
+        if (std::strcmp(m_pulseType.value().c_str(), "Gaussian") == 0) {
+            debug() << "Using Gaussian pulse shape!" << endmsg;
+
+            for (size_t i = 0; i < m_lenSample.value(); ++i) {
+                PulseShape.push_back(Gaussian(i * m_samplingInterval, m_mu.value(), m_sigma.value()));
+                PulseShapeDeriv.push_back(GaussianDerivative(i * m_samplingInterval, m_mu.value(), m_sigma.value()));
+                info() << "PulseShape[" << i * m_samplingInterval << "]: " << PulseShape[i] << ", PulseShapeDeriv[" << i * m_samplingInterval << "]: " << PulseShapeDeriv[i] << endmsg;
+            }
+        } else {
+            error() << "Unknown pulse type: " << m_pulseType.value() << endmsg;
+        }
         return StatusCode::SUCCESS;
     }
    
-    // This is the function that will be called to transform the data
+   // This is the function that will be called to transform the data
    // Note that the function has to be const, as well as all pointers to collections
    // we get from the input
    edm4hep::TimeSeriesCollection operator()(const edm4hep::SimCalorimeterHitCollection& CaloHits) const override {
@@ -103,56 +119,73 @@
 
      edm4hep::TimeSeriesCollection DigitsCollection;
 
-     // Initialize a new map with the same keys as m_map but with values set to zero
-    std::unordered_map<uint64_t, float> energyMap;
-    for (const auto& entry : m_map) {
-        energyMap[entry.first] = 0.0f;
-    }
-
-    if (m_map.size() != energyMap.size()) {
-        error() << "Size of the map with pulse shapes does not match the size of the map with cellIDs!" << endmsg;
-    }
-
     // Loop over CaloHits to accumulate energy
     for (const auto& hit : CaloHits) {
         uint64_t cellID = hit.getCellID();
         float energy = hit.getEnergy();
+        debug() << "Hit energy: " << energy << endmsg;
+        auto Contributions = hit.getContributions();   
+
+        // If cellID exists then create DigitVectorSum
+        if (m_map_pulseShape.find(cellID) != m_map_pulseShape.end()) {
+            std::vector<float> DigitVectorSum(PulseShape.size(), 0.0f);
+
+            // Loop over contributions to get the energy and time
+            for (const auto& contribution : Contributions) {
+                auto DigitVector = Hit2DigitFloat(contribution.getEnergy(), contribution.getTime(), PulseShape, PulseShapeDeriv);
+                
+                // Sum the contributions
+                std::transform(DigitVectorSum.begin(), DigitVectorSum.end(), DigitVector.begin(), DigitVectorSum.begin(), std::plus<float>());
+
+                // Print the contribution info
+                debug() << "Contribution (energy, time): (" << contribution.getEnergy() << ", " << contribution.getTime() << ")" << endmsg;
+            }
+            auto Digit = DigitsCollection.create();
+            Digit.setCellID(cellID);
+            Digit.setTime(0.0); // Placeholder for time info
+            Digit.setInterval(m_samplingInterval); // Set the interval for the digitized pulse in ns
+
+            for (unsigned int i = 0; i < DigitVectorSum.size(); i++) {
+                Digit.addToAmplitude(DigitVectorSum[i]);
+            }
+
+            
         
-        if (energyMap.find(cellID) != energyMap.end()) {
-            energyMap[cellID] += energy;
         } else {
             // If cellID is not in m_map, error!!
             error() << "CellID " << cellID << " not found in the map with pulse shapes!" << endmsg;
         }
     }
-
-
-    // Loop over all hits and sum up the energy in the cells -> CaloHitContribution has timing info + energy from particle interactions + position of interaction -> but no cellID info.... DISCUSS w/ DENIS!!!!! No idea what the best way to include timing info is.... I would think that the timing info should be included in the digitized pulse (i.e. if within 25ns, it is in the first bin of the pulse but if within 50ns, it is in the second bin of the pulse, etc.). Not sure what the best way to code this would be.... maybe we calculate pulses on the fly? Or perhaps we need to create a vector of energy hits <E_t0, E_t1, E_t2, ...> where E_t0 is the summed energy within the t0 bin (first XX ns of sampling fraction), E_t1 is the summed energy within the t1 bin (second XX ns of sampling fraction), etc. Then, it is a matter of taking a dot product with a vector representing the pulse. However, one would have to take care to ensure that the pulse we create has the correct timing interval (or would it even matter since it is arbritary?)........
-
-    // Loop over m_map to create DigitsCollection
-    for (const auto& entry : energyMap) {
-        uint64_t cellID = entry.first;
-        float totalEnergy = entry.second;
-
-        auto Digit = DigitsCollection.create();
-        Digit.setCellID(cellID);
-        Digit.setTime(0.0); // Placeholder for time info
-        Digit.setInterval(m_samplingInterval); // Set the interval for the digitized pulse in ns
-
-        const std::vector<float>& pulseAmplitudes = m_map.at(cellID);
-        debug() << "cell ID: " << cellID << ", PulseAmplitude size: " << pulseAmplitudes.size() << endmsg;
-
-        for (unsigned int i = 0; i < pulseAmplitudes.size(); i++) {
-            Digit.addToAmplitude(totalEnergy * pulseAmplitudes[i]);
-        }
-
-       
-    }
-
      return DigitsCollection;
    }
 
+   std::vector<float> Hit2DigitFloat(float Energy, float time, const std::vector<float>& pulseShape, const std::vector<float>& pulseShapeDeriv) const
+   {     
+        // Basing this off of LArDigitization pub note: https://inspirehep.net/files/8b92316ea8786d3954cccbfaa0d10ada
+        std::vector<float> DigitVector(pulseShape.size(), 0.0f);
+
+        // Loop over the DigitVector
+        for (unsigned int i = 0; i < DigitVector.size(); ++i) {
+            int j = i - std::rint(time / m_samplingInterval);
+            // if j < 0, it means the pulse is not in the time window so set it to 0
+            if (j >= 0) {
+                float DeltaT = time - m_samplingInterval * std::rint(time / m_samplingInterval);
+                                
+                DigitVector[i] = Energy * (pulseShape[j] - DeltaT * pulseShapeDeriv[j]);
+            }
+        }
+        return DigitVector;
+   }
+
    StatusCode finalize() override{return StatusCode::SUCCESS;}
+
+   float Gaussian(float x, float mu = 0.0, float sigma = 1.0) const {
+        return (1.0 / (sigma * sqrt(2 * M_PI))) * exp(-0.5 * pow((x - mu) / sigma, 2));
+    }
+
+    float GaussianDerivative(float x, float mu = 0.0, float sigma = 1.0) const {
+        return - (x - mu) / (sigma * sigma) * Gaussian(x, mu, sigma);
+    }
 
 
  
@@ -161,10 +194,27 @@
   Gaudi::Property<std::string> m_SignalFileName{this, "signalFileName", "PulseShape_map.root"};
   /// Name of the TTree in the input root file
   Gaudi::Property<std::string> m_treename{this, "treename", "Signal_shape"};
-  /// Map to be used for the lookup of the pulse shapes
-  Gaudi::Property<float> m_samplingInterval {this, "samplingInterval", 25.0, "Sampling interval in [ns]" };
+
+  // Type of pulse to create
+  Gaudi::Property<std::string> m_pulseType {this, "pulseType", "Gaussian", "Type of pulse to create" };
+  // Initial time of the pulse
+  Gaudi::Property<float> m_pulseInitTime {this, "pulseInitTime", 0.0, "Initial time of the pulse" };
+  // End time of the pulse
+  Gaudi::Property<float> m_pulseEndTime {this, "pulseEndTime", 750.0, "End time of the pulse" };
+  // Number of samples in pulse
+  Gaudi::Property<int> m_lenSample {this, "pulseSamplingLength", 30, "Number of samples in pulse" };
+  // Gaussian pulse properties
+  Gaudi::Property<float> m_mu {this, "mu", 100.0, "Mean of Gaussian pulse" };
+  Gaudi::Property<float> m_sigma {this, "sigma", 20.0, "Sigma of Gaussian pulse" };
+
   
-  std::unordered_map<uint64_t, std::vector<float>> m_map;
+  std::unordered_map<uint64_t, std::vector<float>> m_map_pulseShape;
+  std::unordered_map<uint64_t, std::vector<float>> m_map_pulseShapeDeriv;
+  
+  std::vector<float> PulseShape;
+  std::vector<float> PulseShapeDeriv;
+
+  float m_samplingInterval;
 
  };
  
