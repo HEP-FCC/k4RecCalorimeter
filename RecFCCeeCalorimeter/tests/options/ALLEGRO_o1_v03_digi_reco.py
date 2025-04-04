@@ -892,7 +892,7 @@ if doSWClustering or doTopoClustering:
             augmentECalBarrelTopoClusters.AuditExecute = True
 
             if addPi0RecoTool:
-                TopAlg + =[Pi0RecoAlg]
+                TopAlg += [Pi0RecoAlg]
                 Pi0RecoAlg.AuditExecute = True
 
         if applyMVAClusterEnergyCalibration:
