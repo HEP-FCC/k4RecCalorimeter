@@ -70,6 +70,9 @@ ecalBarrelThetaWeights = [-1, 3.0, 3.0, 3.0, 4.25, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]
 runPhotonIDTool = False
 logEWeightInPhotonID = False
 
+# resolved pi0 reconstruction by cluster pairing
+addPi0RecoTool = True
+
 #
 # ALGORITHMS AND SERVICES SETUP
 #
@@ -666,6 +669,18 @@ if doTopoClustering:
                                                              do_photon_shapeVar=runPhotonIDTool,
                                                              do_widthTheta_logE_weights=logEWeightInPhotonID,
                                                              OutputLevel=INFO)
+        if addPi0RecoTool:
+            from Configurables import PairCaloClustersPi0
+            Pi0RecoAlg = PairCaloClustersPi0(
+                "resolvedPi0FromClusterPair",
+                inClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path,
+                unpairedClusters="Unpaired" + "Augmented" + createECalBarrelTopoClusters.clusters.Path,
+                reconstructedPi0="ResolvedPi0Particle",
+                massPeak=0.122201,
+                massLow=0.0754493,
+                massHigh=0.153543,
+                OutputLevel=INFO
+            )
 
     if applyMVAClusterEnergyCalibration:
         inClusters = ""
@@ -875,6 +890,10 @@ if doSWClustering or doTopoClustering:
         if addShapeParameters:
             TopAlg += [augmentECalBarrelTopoClusters]
             augmentECalBarrelTopoClusters.AuditExecute = True
+
+            if addPi0RecoTool:
+                TopAlg + =[Pi0RecoAlg]
+                Pi0RecoAlg.AuditExecute = True
 
         if applyMVAClusterEnergyCalibration:
             TopAlg += [calibrateECalBarrelTopoClusters]
