@@ -610,6 +610,7 @@ if doTopoClustering:
                                                         seedSigma=4,
                                                         neighbourSigma=2,
                                                         lastNeighbourSigma=0,
+                                                        minClusterEnergy=0.2,
                                                         OutputLevel=INFO)
 
     # Neighbours map
@@ -676,7 +677,7 @@ if doTopoClustering:
                 inClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path,
                 unpairedClusters="Unpaired" + "Augmented" + createECalBarrelTopoClusters.clusters.Path,
                 reconstructedPi0="ResolvedPi0Particle",
-                massPeak=0.122201,
+                massPeak=0.122201, # values determined from a dedicated study
                 massLow=0.0754493,
                 massHigh=0.153543,
                 OutputLevel=INFO
