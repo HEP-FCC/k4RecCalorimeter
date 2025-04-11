@@ -3,6 +3,7 @@
 
 #include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/TimeSeriesCollection.h"
 #include "edm4hep/EventHeaderCollection.h"
 
 #include "k4FWCore/DataHandle.h"
@@ -56,9 +57,11 @@ private:
   // input collection names
   Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadout_scint", "input calo collection name"};
   Gaudi::Property<std::string> m_outColl{this, "outputHitCollection", "DRcaloSiPMreadoutDigiHit_scint", "output calo collection name"};
+  Gaudi::Property<std::string> m_outTimeColl{this, "outputTimeStructCollection", "DRcaloSiPMreadoutDigiWaveform_scint", "output waveform collection name"};
 
   mutable DataHandle<edm4hep::SimCalorimeterHitCollection> m_scintHits{m_hitColl, Gaudi::DataHandle::Reader, this};
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{m_outColl, Gaudi::DataHandle::Writer, this};
+  mutable DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{m_outTimeColl, Gaudi::DataHandle::Writer, this};
 
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
 
@@ -86,17 +89,21 @@ private:
   Gaudi::Property<double> m_thres{this, "threshold", 1.5, "Integration threshold"};  // Threshold in p.e. (1.5 to suppress DCR)
 
   // SiPM efficiency, filter efficiency
-  Gaudi::Property<std::vector<double>> m_wavelen{this, "wavelength", {1000., 100.}, "wavelength vector in nm"};
+  Gaudi::Property<std::vector<double>> m_wavelen{this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
   Gaudi::Property<std::vector<double>> m_sipmEff{this, "sipmEfficiency", {0.1, 0.1}, "SiPM efficiency vs wavelength"};
   Gaudi::Property<std::vector<double>> m_filterEff{this, "filterEfficiency", {0.1, 0.1}, "optical filter efficiency vs wavelength"};
+
+  // scintillator optical properties
+  Gaudi::Property<double> m_refractiveIndex{this, "refractiveIndex", 1.6, "scintillator refractive index"};
+  Gaudi::Property<std::vector<double>> m_absLen{this, "absorptionLength", {9999., 9999.}, "scintillator absorption length in meter"};
 
   // Scintillation spectrum and decay time
   Gaudi::Property<std::vector<double>> m_scintSpectrum{this, "scintSpectrum", {1., 1.}, "scintillation spectrum vs wavelength"};
   Gaudi::Property<double> m_scintDecaytime{this, "scintDecaytime", 2.8, "scintillation decay time in ns"};
 
   // TB-based empirical values after considering attenuation, NIM time window, etc.
+  // set yield to 10^-6 (i.e. keV/GeV) if the stored Edep is equal to the number of photon
   Gaudi::Property<double> m_scintYield{this, "scintYield", 2.5, "scintillation yield in /keV"};
-  Gaudi::Property<double> m_timeInterval{this, "timeInterval", 15., "time to the first signal in ns"};
 
   // scale ADC to energy
   Gaudi::Property<double> m_scaleADC{this, "scaleADC", 1., "calibration factor for scaling ADC to energy"};
