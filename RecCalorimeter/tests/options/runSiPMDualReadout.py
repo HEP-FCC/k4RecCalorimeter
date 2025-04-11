@@ -8,7 +8,8 @@ from Configurables import PodioInput
 podioinput = PodioInput("PodioInput",
     collections = [
         "DRcaloSiPMreadout_scint",
-        "DRcaloSiPMreadoutRawHit",
+        "DRcaloSiPMreadout_scintContributions",
+        "DRcaloSiPMreadoutSimHit",
         "DRcaloSiPMreadoutTimeStruct",
         "DRcaloSiPMreadoutWaveLen"
     ],
@@ -20,6 +21,7 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
     OutputLevel=DEBUG,
     inputHitCollection = "DRcaloSiPMreadout_scint",
     outputHitCollection = "DRcaloSiPMreadoutDigiHit_scint",
+    outputTimeStructCollection = "DRcaloSiPMreadoutDigiWaveform_scint",
     # wavelength in nm (decreasing order)
     wavelength = [
         900., 850., 800., 750., 725.,
@@ -50,6 +52,16 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
         0.8676, 0.2311, 0.0033, 0.0012, 0.,
         0.
     ],
+    # Kuraray SCSF-78
+    absorptionLength = [
+        2.714, 3.619, 5.791, 4.343, 7.896,
+        5.429, 36.19, 17.37, 36.19, 5.429,
+        13., 14.5, 16., 18., 16.5,
+        17., 14., 16., 15., 14.5,
+        13., 12., 10., 8., 7.238,
+        4., 1.2, 0.5, 0.2, 0.2,
+        0.1
+    ],
     # Kodak Wratten 9
     filterEfficiency = [
         0.903, 0.903, 0.903, 0.903, 0.903,
@@ -67,7 +79,7 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
 from Configurables import SimulateSiPMwithOpticalPhoton
 sipmOptical = SimulateSiPMwithOpticalPhoton("SimulateSiPMwithOpticalPhoton",
     OutputLevel=DEBUG,
-    inputHitCollection = "DRcaloSiPMreadoutRawHit",
+    inputHitCollection = "DRcaloSiPMreadoutSimHit",
     inputTimeStructCollection = "DRcaloSiPMreadoutTimeStruct",
     inputWavlenCollection = "DRcaloSiPMreadoutWaveLen",
     outputHitCollection = "DRcaloSiPMreadoutDigiHit",

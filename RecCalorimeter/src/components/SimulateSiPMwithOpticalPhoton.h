@@ -2,7 +2,7 @@
 #define RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H
 
 // EDM4HEP includes
-#include "edm4hep/RawCalorimeterHitCollection.h"
+#include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/RawTimeSeriesCollection.h"
 #include "edm4hep/TimeSeriesCollection.h"
@@ -59,7 +59,7 @@ private:
   Rndm::Numbers m_rndmUniform;
 
   // input collection names
-  Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadoutRawHit", "input calo collection name"};
+  Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadoutSimHit", "input calo collection name"};
   Gaudi::Property<std::string> m_outColl{this, "outputHitCollection", "DRcaloSiPMreadoutDigiHit", "output calo collection name"};
 
   Gaudi::Property<std::string> m_inTimeColl{this, "inputTimeStructCollection", "DRcaloSiPMreadoutTimeStruct", "input time structure collection name"};
@@ -67,7 +67,7 @@ private:
   Gaudi::Property<std::string> m_outTimeColl{this, "outputTimeStructCollection", "DRcaloSiPMreadoutDigiWaveform", "output waveform collection name"};
 
   // Input collections
-  mutable DataHandle<edm4hep::RawCalorimeterHitCollection> m_rawHits{m_hitColl, Gaudi::DataHandle::Reader, this};
+  mutable DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{m_hitColl, Gaudi::DataHandle::Reader, this};
   mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{m_inTimeColl, Gaudi::DataHandle::Reader, this};
   mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_wavelenStruct{m_inWavlenColl, Gaudi::DataHandle::Reader, this};
 

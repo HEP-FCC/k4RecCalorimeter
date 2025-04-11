@@ -109,71 +109,150 @@ std::vector<double> SimulateSiPMwithEdep::integral(const std::vector<double>& wa
 StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
   const edm4hep::SimCalorimeterHitCollection* scintHits = m_scintHits.get();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
+  edm4hep::TimeSeriesCollection* waveforms = m_waveforms.createAndPut();
+
+  const double yield = m_scintYield.value()/dd4hep::keV;
 
   for (unsigned int idx = 0; idx < scintHits->size(); idx++) {
     const auto& scintHit = scintHits->at(idx);
-    const double edep = scintHit.getEnergy()*dd4hep::GeV;
-    const double yield = m_scintYield.value()/dd4hep::keV;
-
-    double avgNphoton = edep*yield*m_efficiency;
-
-    // generate the number of p.e. (npe)
-    unsigned npe = 0;
-
-    if (avgNphoton < 10.) {
-      Rndm::Numbers rnd(m_randSvc, Rndm::Poisson(avgNphoton));
-      npe = static_cast<unsigned>(std::floor(rnd.shoot() + 0.5));
-    } else {
-      Rndm::Numbers rnd(m_randSvc, Rndm::Gauss(avgNphoton,std::sqrt(avgNphoton)));
-      // prevent underflow since Gaussian can shoot negative in rare case
-      double val = std::floor(rnd.shoot() + 0.5);
-      npe = static_cast<unsigned>(std::max(val, 0.));
-    }
+    const auto sipmPos = scintHit.getPosition(); // assume hit position = SiPM position!!!
 
     std::vector<double> vecTimes;
     std::vector<double> vecWavelens;
-    vecTimes.reserve(npe);
-    vecWavelens.reserve(npe);
 
-    for (unsigned ipho = 0; ipho < npe; ipho++) {
-      // get photon wavelength
-      // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/electromagnetic/xrays/src/G4Scintillation.cc
-      const double randval = m_integral.back()*m_rndmUniform.shoot();
-      unsigned xhigh = 1;
+    for (auto contrib = scintHit.contributions_begin(); contrib!=scintHit.contributions_end(); ++contrib) {
+      const double edep = contrib->getEnergy()*dd4hep::GeV;
+      double avgNphoton = edep*yield*m_efficiency;
 
-      for (xhigh = 1; xhigh < m_integral.size()-1; xhigh++) {
-        if (randval < m_integral.at(xhigh))
-          break;
+      // generate the number of p.e. (npe)
+      unsigned npe = 0;
+
+      if (avgNphoton < 10.) {
+        Rndm::Numbers rnd(m_randSvc, Rndm::Poisson(avgNphoton));
+        npe = static_cast<unsigned>(std::floor(rnd.shoot() + 0.5));
+      } else {
+        Rndm::Numbers rnd(m_randSvc, Rndm::Gauss(avgNphoton,std::sqrt(avgNphoton)));
+        // prevent underflow since Gaussian can shoot negative in rare case
+        double val = std::floor(rnd.shoot() + 0.5);
+        npe = static_cast<unsigned>(std::max(val, 0.));
       }
 
-      const unsigned xlow = xhigh - 1;
-      const double xdiff = m_wavelen.value().at(xhigh) - m_wavelen.value().at(xlow);
-      const double ydiff = m_integral.at(xhigh) - m_integral.at(xlow);
-      const double ydiffInv = (ydiff==0.) ? 0. : 1./ydiff;
-      double valWav = m_wavelen.value().at(xlow) + xdiff*(randval-m_integral.at(xlow))*ydiffInv;
+      vecTimes.reserve(vecTimes.size()+npe);
+      vecWavelens.reserve(vecTimes.size()+npe);
 
-      double scintTime = m_timeInterval.value() + m_rndmExp.shoot();
+      // calculate photon arrival time at SiPM
+      // using the distance from the step to the SiPM
+      const double initialTime = contrib->getTime(); // in ns
+      const auto stepPos = contrib->getStepPosition();
 
-      vecTimes.push_back(scintTime);
-      vecWavelens.push_back(valWav);
-    }
+      const float relX = sipmPos.x - stepPos.x;
+      const float relY = sipmPos.y - stepPos.y;
+      const float relZ = sipmPos.z - stepPos.z;
+      const float dist = std::sqrt(relX*relX + relY*relY + relZ*relZ)*dd4hep::mm; // in mm (edm4hep unit)
+
+      const double effSpeedOfLight = dd4hep::c_light/m_refractiveIndex.value();
+      const double distTime = dist/effSpeedOfLight;
+      const double arrivalTime = initialTime + distTime/dd4hep::nanosecond; // in ns
+
+      for (unsigned ipho = 0; ipho < npe; ipho++) {
+        // get photon wavelength
+        // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/electromagnetic/xrays/src/G4Scintillation.cc
+        const double randval = m_integral.back()*m_rndmUniform.shoot();
+        unsigned xhigh = 1;
+
+        for (xhigh = 1; xhigh < m_integral.size()-1; xhigh++) {
+          if (randval < m_integral.at(xhigh))
+            break;
+        }
+
+        // linear interpolation
+        const unsigned xlow = xhigh - 1;
+        const double xdiff = m_wavelen.value().at(xhigh) - m_wavelen.value().at(xlow);
+        const double ydiff = m_integral.at(xhigh) - m_integral.at(xlow);
+        const double ydiffInv = (ydiff==0.) ? 0. : 1./ydiff;
+        double valWav = m_wavelen.value().at(xlow) + xdiff*(randval-m_integral.at(xlow))*ydiffInv;
+
+        // get absorption length
+        unsigned iwave = 1;
+
+        for (iwave = 1; iwave < m_wavelen.value().size()-1; iwave++) { // decreasing order
+          if (valWav > m_wavelen.value().at(iwave))
+            break;
+        }
+
+        // linear interpolation
+        const unsigned waveLow = iwave -1;
+        const double waveDiff = m_wavelen.value().at(iwave) - m_wavelen.value().at(waveLow);
+        const double waveDiffInv = (waveDiff==0.) ? 0. : 1./waveDiff;
+        const double abslenDiff = m_absLen.value().at(iwave) - m_absLen.value().at(waveLow);
+        double absLen = m_absLen.value().at(waveLow) + abslenDiff*waveDiffInv*(valWav - m_wavelen.value().at(waveLow));
+
+        // check absorption
+        // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/management/src/G4VProcess.cc
+        const double nInteractionLengthLeft = -std::log( m_rndmUniform.shoot() );
+        const double nInteractionLength = dist/(absLen*dd4hep::meter);
+
+        // absorb photons
+        if ( nInteractionLength > nInteractionLengthLeft )
+          continue;
+
+        // get scintillation time
+        double scintTime = arrivalTime + m_rndmExp.shoot();
+
+        vecTimes.push_back(scintTime);
+        vecWavelens.push_back(valWav);
+      } // ipho
+    } // contrib
 
     m_sensor->resetState();
     m_sensor->addPhotons(vecTimes,vecWavelens); // Sets photon times & wavelengths
     m_sensor->runEvent(); // Runs the simulation
 
     auto digiHit = digiHits->create();
+    auto waveform = waveforms->create();
 
     // Using only analog signal (ADC conversion is still experimental)
     const sipm::SiPMAnalogSignal anaSignal = m_sensor->signal();
 
-    const double integral = anaSignal.integral(m_gateStart,m_gateL,m_thres); // (intStart, intGate, threshold)
-    const double toa = anaSignal.toa(m_gateStart,m_gateL,m_thres);           // (intStart, intGate, threshold)
+    // if the signal never exceeds the threshold, it will return -1.
+    const double integral = std::max(0., anaSignal.integral(m_gateStart,m_gateL,m_thres)); // (intStart, intGate, threshold)
+    const double toa = std::max(0., anaSignal.toa(m_gateStart,m_gateL,m_thres));           // (intStart, intGate, threshold)
+    const double gateEnd = m_gateStart.value() + m_gateL.value();
 
     digiHit.setEnergy( integral*m_scaleADC.value() );
+    digiHit.setEnergyError( m_scaleADC.value()*std::sqrt(integral) );
+    digiHit.setPosition( scintHit.getPosition() );
     digiHit.setCellID( scintHit.getCellID() );
     // Toa and m_gateStart are in ns
     digiHit.setTime( toa+m_gateStart );
+
+    // Set waveform properties
+    waveform.setInterval(m_sampling);
+    waveform.setTime(toa+m_gateStart);
+    waveform.setCellID(scintHit.getCellID());
+
+    // Fill the waveform with amplitude values
+    // The sipm::SiPMAnalogSignal can be iterated as an std::vector<double>
+    if (integral > 0.) {
+      for (unsigned bin = 0; bin < anaSignal.size(); bin++) {
+        float amp = anaSignal[bin];
+
+        double tStart = static_cast<double>(bin) * m_sampling;
+        double tEnd = static_cast<double>(bin + 1) * m_sampling;
+        double center = (tStart + tEnd) / 2.;
+
+        // Only include samples within our time window of interest
+        if (center < toa+m_gateStart)
+          continue;
+
+        if (center > gateEnd)
+          continue;
+
+        // only store over threshold
+        if (amp > m_thres)
+          waveform.addToAmplitude(amp);
+      }
+    }
   }
 
   return StatusCode::SUCCESS;
