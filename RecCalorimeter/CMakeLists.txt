@@ -14,6 +14,7 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       EDM4HEP::edm4hep
                       ROOT::Core
                       ROOT::Hist
+                      sipm::sipm
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
                       RecCaloCommon
@@ -42,6 +43,12 @@ add_test(NAME FCC_createTruthJets
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCC_createTruthJets)
+
+add_test(NAME simulateSiPM
+  COMMAND sh RecCalorimeter/tests/scripts/testSiPM.sh
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(simulateSiPM)
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
 #
