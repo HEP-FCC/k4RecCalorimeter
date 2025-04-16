@@ -152,7 +152,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
 
       const double effSpeedOfLight = dd4hep::c_light/m_refractiveIndex.value();
       const double distTime = dist/effSpeedOfLight;
-      const double arrivalTime = initialTime + distTime/dd4hep::nanosecond; // in ns
+      const double arrivalTime = m_switchTime.value() ? initialTime : initialTime + distTime/dd4hep::nanosecond; // in ns
 
       for (unsigned ipho = 0; ipho < npe; ipho++) {
         // get photon wavelength
@@ -180,21 +180,24 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
             break;
         }
 
-        // linear interpolation
-        const unsigned waveLow = iwave -1;
-        const double waveDiff = m_wavelen.value().at(iwave) - m_wavelen.value().at(waveLow);
-        const double waveDiffInv = (waveDiff==0.) ? 0. : 1./waveDiff;
-        const double abslenDiff = m_absLen.value().at(iwave) - m_absLen.value().at(waveLow);
-        double absLen = m_absLen.value().at(waveLow) + abslenDiff*waveDiffInv*(valWav - m_wavelen.value().at(waveLow));
+        // absorption length is ill-defined if scintHit.getPosition() is not the sensor position
+        if (!m_switchTime.value()) {
+          // linear interpolation
+          const unsigned waveLow = iwave -1;
+          const double waveDiff = m_wavelen.value().at(iwave) - m_wavelen.value().at(waveLow);
+          const double waveDiffInv = (waveDiff==0.) ? 0. : 1./waveDiff;
+          const double abslenDiff = m_absLen.value().at(iwave) - m_absLen.value().at(waveLow);
+          double absLen = m_absLen.value().at(waveLow) + abslenDiff*waveDiffInv*(valWav - m_wavelen.value().at(waveLow));
 
-        // check absorption
-        // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/management/src/G4VProcess.cc
-        const double nInteractionLengthLeft = -std::log( m_rndmUniform.shoot() );
-        const double nInteractionLength = dist/(absLen*dd4hep::meter);
+          // check absorption
+          // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/management/src/G4VProcess.cc
+          const double nInteractionLengthLeft = -std::log( m_rndmUniform.shoot() );
+          const double nInteractionLength = dist/(absLen*dd4hep::meter);
 
-        // absorb photons
-        if ( nInteractionLength > nInteractionLengthLeft )
-          continue;
+          // absorb photons
+          if ( nInteractionLength > nInteractionLengthLeft )
+            continue;
+        }
 
         // get scintillation time
         double scintTime = arrivalTime + m_rndmExp.shoot();
