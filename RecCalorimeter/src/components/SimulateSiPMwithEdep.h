@@ -108,6 +108,9 @@ private:
   // scale ADC to energy
   Gaudi::Property<double> m_scaleADC{this, "scaleADC", 1., "calibration factor for scaling ADC to energy"};
 
+  // switch to use the stored edm4hep::CaloHitContribution::getTime() as it is
+  Gaudi::Property<bool> m_switchTime{this, "switchTime", false, "switch to use the stored edm4hep::CaloHitContribution::getTime() as it is"};
+
   // integral table - initialized at SimulateSiPMwithEdep::initialize()
   std::vector<double> m_integral;
   double m_efficiency;
