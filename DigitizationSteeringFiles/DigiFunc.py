@@ -1,5 +1,5 @@
 from Gaudi.Configuration import INFO
-from Configurables import CaloDigitizerFunc, CaloFilterFunc
+from Configurables import CaloDigitizerFunc, CaloFilterFunc, CaloAddNoise2Digits
 from k4FWCore import ApplicationMgr, IOSvc
 
 Nevts = 10                              # -1 means all events
@@ -11,7 +11,10 @@ ecalBarrelSignalShapePath = "SignalPulseShapes.root"  # path to the root file wi
 PulseShapeName = "Gaussian"             # name of the signal pulse shape
 GaussianMean = 100.0
 GaussianSigma = 20.0
-FilterSize = 7
+FilterSize = 5
+
+NoiseEnergy = 0.0 # 1 MeV
+NoiseWidth = 1.0
 
 
 io_svc = IOSvc()
@@ -29,33 +32,42 @@ io_svc.outputCommands = ["drop Lumi*",
                          "drop HCal*"]
 
 CaloDigitizer = CaloDigitizerFunc("CaloDigitizerFunc",
-                                signalFileName=ecalBarrelSignalShapePath,
-                                treename="Signal_shape",
-                                InputCollection=[ecalBarrelInputName],
-                                pulseInitTime = DigitInitTime,
-                                pulseEndTime = DigitEndTime,
-                                pulseSamplingLength = PulseSampleLen,
-                                pulseType = PulseShapeName,
-                                mu = GaussianMean,
-                                sigma = GaussianSigma,
-                                OutputCollection=["ECalBarrelDigitized"],)
+                                signalFileName=ecalBarrelSignalShapePath, # Path to a file that stores all cell IDs
+                                treename="Signal_shape", # Treename to access the cell IDs in the above file
+                                InputCollection=[ecalBarrelInputName], # Name of input collection
+                                pulseInitTime = 0.0, # Time of pulse start [ns]
+                                pulseEndTime = 775.0, # Time of pulse ending [ns]
+                                pulseSamplingLength = 31, # Number of samples in the signal pulse shape
+                                pulseType = "Gaussian", # Name of the signal pulse shape
+                                mu = 100.0, # Mean of the Gaussian pulse shape
+                                sigma = 20.0, # Sigma of the Gaussian pulse shape
+                                OutputCollection=["ECalBarrelDigitized"], # Name of output collection
+                                )
+
+CaloAddNoise = CaloAddNoise2Digits("CaloAddNoise",
+                                   InputCollection=["ECalBarrelDigitized"],
+                                   OutputCollection=["ECalBarrelDigitizedWithNoise"],
+                                   noiseEnergy=NoiseEnergy,
+                                   noiseWidth=NoiseWidth,
+                                   )
 
 CaloFilter = CaloFilterFunc("CaloFilterFunc",
-                            InputCollection = ["ECalBarrelDigitized"],
-                            OutputCollectionFilteredPulse = ["ECalBarrelMatchedFilterPulse"], 
-                            OutputCollectionMatchedSampleIdx = ["ECalBarrelMatchedFilterSampleIdx"],
-                            OutputCollectionMatchedSampleEnergy = ["ECalBarrelMatchedFilterSampleEnergy"],
+                            InputCollection = ["ECalBarrelDigitizedWithNoise"], # Name of input collection
+                            OutputCollectionFilteredPulse = ["ECalBarrelMatchedFilterPulse"], # Name of output collection
+                            OutputCollectionMatchedSampleIdx = ["ECalBarrelMatchedFilterSampleIdx"], # Name of output collection
+                            OutputCollectionMatchedSampleEnergy = ["ECalBarrelMatchedFilterSampleEnergy"], # Name of output collection
                             
-                            filterName = "Matched_%s" % PulseShapeName,
-                            pulseInitTime = DigitInitTime,
-                            pulseEndTime = DigitEndTime,
-                            pulseSamplingLength = PulseSampleLen,
-                            filterTemplateSize = FilterSize,
-                            mu = GaussianMean,
-                            sigma = GaussianSigma,
+                            filterName = "Matched_Gaussian", # Name of the filter template
+                            pulseInitTime = 0.0, # Time of pulse start [ns]
+                            pulseEndTime = 775.0, # Time of pulse ending [ns]
+                            pulseSamplingLength = 31, # Number of samples in the signal pulse shape
+                            filterTemplateSize = 5, # Number of samples in the filter template
+                            mu = 100.0, # Mean of the Gaussian pulse shape
+                            sigma = 20.0, # Sigma of the Gaussian pulse shape
                             )
 
 ApplicationMgr(TopAlg=[CaloDigitizer, 
+                       CaloAddNoise,
                        CaloFilter,
                        ],
                EvtSel="NONE",
