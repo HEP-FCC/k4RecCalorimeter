@@ -26,6 +26,8 @@ StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
     error() << "There is no endcap turbine segmentation!!!!" << endmsg;
+    error() << "Tried with name = " << m_readoutName << endmsg;
+
     return StatusCode::FAILURE;
   }
   debug() << "Found endcap turbine segmentation" << endmsg;

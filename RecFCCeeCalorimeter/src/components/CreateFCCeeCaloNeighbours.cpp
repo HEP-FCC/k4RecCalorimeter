@@ -120,6 +120,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
     {
       ecalEndcapTurbineSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo *>(aSegmentation);
     }
+
     else
     {
       error() << "Segmentation type not handled." << endmsg;
@@ -128,7 +129,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 
 
     if (((segmentation == nullptr && segmentationType != "FCCSWHCalPhiRow_k4geo") ||
-	   (phiThetaSegmentation == nullptr && hcalPhiThetaSegmentation == nullptr && hcalPhiRowSegmentation == nullptr && moduleThetaSegmentation == nullptr)) && (ecalEndcapTurbineSegmentation == nullptr))
+	   (phiThetaSegmentation == nullptr && hcalPhiThetaSegmentation == nullptr && hcalPhiRowSegmentation == nullptr && moduleThetaSegmentation == nullptr)) && (ecalEndcapTurbineSegmentation == nullptr) )
         {
   	error() << "Unable to cast segmentation pointer!!!!" << endmsg;
 	return StatusCode::FAILURE;
@@ -167,7 +168,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 	info() << "Segmentation: size in z for wheel " << iWheel << ": " << ecalEndcapTurbineSegmentation->gridSizeZ(iWheel) << endmsg;	
       }
     }
-
+    
     // retrieve decoders and other info needed for volume (ECal-HCal) connection
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     if (m_connectBarrels)
@@ -648,6 +649,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize()
 		  unsigned iLayer = layerOffset[iWheel] + iLayerRho*numCellsZCalib + iLayerZ;
 		  decoder->set(cellId, "layer", iLayer);
 		  uint64_t id = cellId;
+		  if (iSide==-1 && iWheel == 0 && imodule == 112 && irho == 48 && iz == 7) {
+		    debug() << "in test cell, iLayer = " << iLayer << " and cell ID = " << id << endmsg;
+		  }
 		  debug() << "Mapping cell " << cellId << " " << std::hex << cellId << std::dec << endmsg;
 		  auto neighborsList = det::utils::neighbours(*decoder, { "module", "rho", "z"}, extrema, id, {true, false, false}, m_includeDiagonalCells);
 		  // now correct the layer index for the neighbours, since the

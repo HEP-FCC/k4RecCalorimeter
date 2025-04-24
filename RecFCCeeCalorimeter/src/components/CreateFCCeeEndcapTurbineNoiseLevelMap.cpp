@@ -84,7 +84,8 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
 	  int numCellsZ = segmentation->numCellsZ(iWheel);
 	  int numCellsRhoCalib = segmentation->numCellsRhoCalib(iWheel);
 	  int numCellsZCalib = segmentation->numCellsZCalib(iWheel);
-	  
+
+	  std::cout << "For wheel = " << iWheel << " numModules = " << numModules << " numCellsRho = " << numCellsRho << " numCellsZ = " << numCellsZ << std::endl;
 	  // extrema 1: 0, ID of last module
 	  extrema[1] = std::make_pair(0, numModules - 1);
 	  // extrema[2]: 0, ID of last rho cell
@@ -106,7 +107,7 @@ StatusCode CreateFCCeeEndcapTurbineNoiseLevelMap::initialize() {
 		decoder->set(cellId, "layer", iLayer);
 
 		uint64_t id = cellId;
-		if (iSide==1 && iWheel == 2 && imodule == 113 && irho == 19 && iz == 1) {
+		if (iSide==-1 && iWheel == 0 && imodule == 112 && irho == 48 && iz == 7) {
 		  debug() << "in test cell, iLayer = " << iLayer << " and cell ID = " << id << endmsg;
 		}
 		double noiseRMS = 1e-12;  // dummy small non-zero value
