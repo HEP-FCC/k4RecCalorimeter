@@ -401,21 +401,13 @@ if doSWClustering:
     # ECAL-only clusters
     ecalBarrelTowers = CaloTowerToolFCCee("CreateECalBarrelTowers",
                                           deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                                          ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                          ecalEndcapReadoutName="",
-                                          ecalFwdReadoutName="",
-                                          hcalBarrelReadoutName="",
-                                          hcalExtBarrelReadoutName="",
-                                          hcalEndcapReadoutName="",
-                                          hcalFwdReadoutName="",
+                                          thetaMin=pi-2.55254,
+                                          thetaMax=2.55254,
+                                          phiMin=-pi,
+                                          phiMax=pi,
+                                          cells=[ecalBarrelPositionedCellsName],
+                                          nSubDetectors=3,  # just for test here, since there is only the ECAL..
                                           OutputLevel=INFO)
-    ecalBarrelTowers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-    ecalBarrelTowers.ecalEndcapCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.ecalFwdCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalBarrelCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalExtBarrelCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalEndcapCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalFwdCells.Path = "emptyCaloCells"
 
     createECalBarrelClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalBarrelClusters",
                                                                     towerTool=ecalBarrelTowers,
@@ -433,21 +425,9 @@ if doSWClustering:
 
     ecalEndcapTowers = CaloTowerToolFCCee("CreateECalEndcapTowers",
                                           deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                                          ecalBarrelReadoutName="",
-                                          ecalEndcapReadoutName=ecalEndcapReadoutName,
-                                          ecalFwdReadoutName="",
-                                          hcalBarrelReadoutName="",
-                                          hcalExtBarrelReadoutName="",
-                                          hcalEndcapReadoutName="",
-                                          hcalFwdReadoutName="",
+                                          nSubDetectors=0,
+                                          cells=[ecalEndcapPositionedCellsName],
                                           OutputLevel=INFO)
-    ecalEndcapTowers.ecalBarrelCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
-    ecalEndcapTowers.ecalFwdCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalBarrelCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalExtBarrelCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalEndcapCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalFwdCells.Path = "emptyCaloCells"
 
     createECalEndcapClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalEndcapClusters",
                                                                     towerTool=ecalEndcapTowers,

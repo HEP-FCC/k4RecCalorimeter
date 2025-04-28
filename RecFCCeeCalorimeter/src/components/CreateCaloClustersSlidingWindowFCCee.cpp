@@ -297,7 +297,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
     }
 
     // save the clusters in our EDM
-    // check ET thereshold once more (ET could change with the energy sharing correction)
+    // check ET threshold once more (ET could change with the energy sharing correction)
     if (clusterEnergy * sin(clu.theta) > m_energyThreshold) {
       auto edmCluster = edmClusters->create();
       edmCluster.setPosition(edm4hep::Vector3f(clu.X, clu.Y, clu.Z));
