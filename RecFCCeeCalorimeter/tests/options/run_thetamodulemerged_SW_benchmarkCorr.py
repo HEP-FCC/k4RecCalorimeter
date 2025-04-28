@@ -466,23 +466,10 @@ towers = CaloTowerToolFCCee("towers",
                             #deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
                             deltaThetaTower= 0.022180,
                             deltaPhiTower=2 * pi / 256.,
-                            max_layer=25,
-                            ecalBarrelReadoutName=ecalBarrelReadoutName,
-                            ecalEndcapReadoutName=ecalEndcapReadoutName,
-                            ecalFwdReadoutName="",
-                            hcalBarrelReadoutName=hcalBarrelReadoutName,
-                            hcalExtBarrelReadoutName="",
-                            hcalEndcapReadoutName="",
-                            hcalFwdReadoutName="",
+                            cells = [ecalBarrelPositionedCellsName,
+                                     ecalEndcapPositionedCellsName,
+                                     hcalBarrelPositionedCellsName],
                             OutputLevel=INFO)
-towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-towers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
-towers.ecalFwdCells.Path = "emptyCaloCells"
-
-towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName
-towers.hcalExtBarrelCells.Path = "emptyCaloCells"
-towers.hcalEndcapCells.Path = "emptyCaloCells"
-towers.hcalFwdCells.Path = "emptyCaloCells"
 
 # Cluster variables (not optimized)
 windT = 18
