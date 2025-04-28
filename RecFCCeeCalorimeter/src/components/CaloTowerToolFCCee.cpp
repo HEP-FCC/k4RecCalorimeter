@@ -203,7 +203,7 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
               // caloID: 1 = ecal, 2 = hcal, 3 = yoke - see how m_caloid is computed and encoded in cell type in
               // https://github.com/HEP-FCC/k4RecCalorimeter/blob/main/RecCalorimeter/src/components/CreatePositionedCaloCells.cpp
               int caloID = ((cell.getType() / 10) % 10) -1 ;
-              if (caloID < 0 or caloID > m_nSubDetectors) {
+              if (caloID < 0 or caloID > (int) m_nSubDetectors) {
                 warning() << "Wrong caloID " << caloID << endmsg;
               }
               else {
@@ -228,7 +228,7 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
           aEdmCluster.addToHits(cellclone);
           if (m_nSubDetectors>0) {
             int caloID = ((cell.getType() / 10) % 10 - 1);
-            if (caloID < 0 or caloID > m_nSubDetectors) {
+            if (caloID < 0 or caloID > (int) m_nSubDetectors) {
               warning() << "Wrong caloID " << caloID << endmsg;
             }
             else {
