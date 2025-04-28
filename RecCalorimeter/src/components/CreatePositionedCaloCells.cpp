@@ -99,7 +99,7 @@ StatusCode CreatePositionedCaloCells::initialize() {
 
   // these variables will be initilized in the execute() method
   // once the system ID is extracted from one cell
-  m_calotype = -99; // -99 not initialized, 1 unknown, 0 em, 1 had, 2 muon
+  m_calotype = -99; // -99 not initialized, -1 unknown, 0 em, 1 had, 2 muon
   m_caloid = 0;     // 0 unknown, 1 ecal, 2 hcal, 3 yoke
   m_layout = 0;     // 0 any, 1 barrel, 2 endcap
 

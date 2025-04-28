@@ -7,14 +7,8 @@
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
-class IGeoSvc;
 
-namespace dd4hep {
-namespace DDSegmentation {
-  class Segmentation;
-  class BitFieldCoder;
-} // namespace DDSegmentation
-} // namespace dd4hep
+#include <cmath>
 
 // edm4hep
 namespace edm4hep {
@@ -34,7 +28,8 @@ class Cluster;
  *
  *  @author Anna Zaborowska
  *  @author Jana Faltova
- *  @Modified by Tong Li, for Theta-Module Merged readouts in FCCee
+ *  @author Tong Li: implement theta-based grid
+ *  @author Giovanni Marchiori: cleanup, generalise
  */
 
 class CaloTowerToolFCCee : public AlgTool, virtual public ITowerToolThetaModule {
@@ -102,110 +97,57 @@ public:
                            bool aEllipse = false) final;
 
 private:
-  /// Type of the segmentation
-  enum class SegmentationType { kWrong, kModuleTheta, kMulti, kPhiTheta, kHCalPhiTheta, kHCalPhiRow, kEndcapTurbine };
-  /**  Correct way to access the neighbour of the phi tower, taking into account
-   * the full coverage in phi.
-   *   Full coverage means that first tower in phi, with ID = 0 is a direct
-   * neighbour of the last tower in phi with ID = m_nPhiTower - 1).
+  /**  Correct way to obtain the phi index of a tower, taking into account
+   * the phi periodicity.
    *   @param[in] aIPhi requested ID of a phi tower, may be < 0 or >=m_nPhiTower
    *   @return ID of a tower - shifted and corrected (in [0, m_nPhiTower) range)
    */
-  uint phiNeighbour(int aIPhi) const;
+  uint phiIndexTower(int aIPhi) const;
   /**  This is where the cell info is filled into towers
    *   @param[in] aTowers Calorimeter towers.
    *   @param[in] aCells Calorimeter cells collection.
    *   @param[in] fillTowerCells If true, make a list of the cells in each tower
+   *   @return number of clustered cells
    */
-  void CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
+  uint CellsIntoTowers(std::vector<std::vector<float>>& aTowers, const edm4hep::CalorimeterHitCollection* aCells,
                        bool fillTowersCells);
-  /**  Find the maximum phi, theta covered by a readout
-   *   @param[in] aReadoutName Readout name to be checked for maximum phi, theta
-   *   @param[out] phiThetaPair  Values of the maximum phi and theta
-   */
-  StatusCode retrievePhiThetaExtrema(std::string aReadoutName, std::pair<double, double>& phiThetaPair);
-  /**  Check if the readout name exists. If so, it returns the segmentation.
-   *   @param[in] aReadoutName Readout name to be retrieved
-   */
-  std::pair<dd4hep::DDSegmentation::Segmentation*, SegmentationType> retrieveSegmentation(std::string aReadoutName);
-  /// Handle for electromagnetic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
-  /// Handle for ecal endcap calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalEndcapCells{"ecalEndcapCells", Gaudi::DataHandle::Reader,
-                                                                          this};
-  /// Handle for ecal forward calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalFwdCells{"ecalFwdCells", Gaudi::DataHandle::Reader, this};
-  /// Handle for hadronic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
-  /// Handle for hadronic extended barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells",
-                                                                             Gaudi::DataHandle::Reader, this};
-  /// Handle for hcal endcap calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalEndcapCells{"hcalEndcapCells", Gaudi::DataHandle::Reader,
-                                                                          this};
-  /// Handle for hcal forward calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalFwdCells{"hcalFwdCells", Gaudi::DataHandle::Reader, this};
 
-  /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc;
-  /// Name of the electromagnetic barrel readout
-  Gaudi::Property<std::string> m_ecalBarrelReadoutName{this, "ecalBarrelReadoutName", "",
-                                                       "name of the ecal barrel readout"};
-  /// Name of the ecal endcap calorimeter readout
-  Gaudi::Property<std::string> m_ecalEndcapReadoutName{this, "ecalEndcapReadoutName", "",
-                                                       "name of the ecal endcap readout"};
-  /// Name of the ecal forward calorimeter readout
-  Gaudi::Property<std::string> m_ecalFwdReadoutName{this, "ecalFwdReadoutName", "", "name of the ecal fwd readout"};
-  /// Name of the hadronic barrel readout
-  Gaudi::Property<std::string> m_hcalBarrelReadoutName{this, "hcalBarrelReadoutName", "",
-                                                       "name of the hcal barrel readout"};
-  /// Name of the hadronic extended barrel readout
-  Gaudi::Property<std::string> m_hcalExtBarrelReadoutName{this, "hcalExtBarrelReadoutName", "",
-                                                          "name of the hcal extended barrel readout"};
-  /// Name of the hcal endcap calorimeter readout
-  Gaudi::Property<std::string> m_hcalEndcapReadoutName{this, "hcalEndcapReadoutName", "",
-                                                       "name of the hcal endcap readout"};
-  /// Name of the hcal forward calorimeter readout
-  Gaudi::Property<std::string> m_hcalFwdReadoutName{this, "hcalFwdReadoutName", "", "name of the hcal fwd readout"};
-  /// Type of segmentation of the electromagnetic barrel
-  SegmentationType m_ecalBarrelSegmentationType;
-  /// Type of segmentation of the ecal endcap calorimeter
-  SegmentationType m_ecalEndcapSegmentationType;
-  /// Type of segmentation of the ecal forward calorimeter
-  SegmentationType m_ecalFwdSegmentationType;
-  /// Type of segmentation of the hadronic barrel
-  SegmentationType m_hcalBarrelSegmentationType;
-  /// Type of segmentation of the hadronic extended barrel
-  SegmentationType m_hcalExtBarrelSegmentationType;
-  /// Type of segmentation of the hcal endcap calorimeter
-  SegmentationType m_hcalEndcapSegmentationType;
-  /// Type of segmentation of the hcal forward calorimeter
-  SegmentationType m_hcalFwdSegmentationType;
-  /// decoder: only for barrel
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+  /// List of input cell collections
+  Gaudi::Property<std::vector<std::string>> m_cellCollections{
+    this, "cells", {}, "Names of CalorimeterHit collections to read"};
 
-  /// Maximum theta of detector
-  float m_thetaMax;
-  /// Maximum phi of the detector
-  float m_phiMax;
-  /// Size of the tower in theta
-  Gaudi::Property<float> m_deltaThetaTower{this, "deltaThetaTower", 0.01, "Size of the tower in theta"};
-  /// Size of the tower in phi
-  Gaudi::Property<float> m_deltaPhiTower{this, "deltaPhiTower", 0.01, "Size of the tower in phi"};
-  /// number of towers in theta (calculated from m_deltaThetaTower and m_thetaMax)
+    /// The vector of input DataHandles for the input cell collections
+  std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
+
+  /// Maximum theta of towers
+  /// Can be left to pi, it won't hurt
+  // (there will just be towers beyond the detector acceptance with zero energy)
+  Gaudi::Property<float> m_thetaMax{this, "thetaMax", M_PI, "Maximum theta of towers"};
+  /// Maximum theta of towers
+  Gaudi::Property<float> m_thetaMin{this, "thetaMin", 0., "Minimum theta of towers"};
+  /// Maximum phi of towers (note: phi is in -pi..pi)
+  Gaudi::Property<float> m_phiMax{this, "phiMax", M_PI, "Maximum phi of towers"};
+  /// Minimum phi of towers
+  Gaudi::Property<float> m_phiMin{this, "phiMin", -M_PI, "Minimum phi of towers"};
+  /// Size of the tower in theta (default: pi/314 ~ 0.01 rad)
+  Gaudi::Property<float> m_deltaThetaTower{this, "deltaThetaTower", M_PI/314, "Size of the tower in theta"};
+  /// Size of the tower in phi (default: pi/314 ~ 0.01 rad)
+  Gaudi::Property<float> m_deltaPhiTower{this, "deltaPhiTower", M_PI/314, "Size of the tower in phi"};
+
+  /// Number of calorimeters (e.g. ecal/hcal/muon) for which to calculate the
+  /// total subdetector energy of the cluster and save it in the subdetectorEnergies vector
+  /// Should be equal to max(caloID) where caloID is defined as calculated in
+  /// CreatePositionedCaloCells
+  /// Barrel and endcap are considered as part of the same subdetector
+  /// If the property is 0, subdetector energy information will not be computed
+  Gaudi::Property<unsigned int> m_nSubDetectors{this, "nSubDetectors", 0, "Number of calorimeter systems"};
+
+  /// number of towers in theta
   int m_nThetaTower;
-  /// Number of towers in phi (calculated from m_deltaPhiTower)
+  /// Number of towers in phi
   int m_nPhiTower;
   /// map to cells contained within a tower so they can be attached to a reconstructed cluster
   std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> m_cellsInTowers;
-  /// Use only a part of the calorimeter (in depth)
-  Gaudi::Property<bool> m_useHalfTower{this, "halfTower", false, "Use half tower"};
-  /// Max layer
-  Gaudi::Property<uint> m_max_layer{
-      this, "max_layer", 12,
-      "Specify which radial layer are used. The condition is 'if(cellLayer > m_max_layer) skip this cell'."};
 };
 
 #endif /* RECFCCEECALORIMETER_CALOTOWERTOOLFCCEE_H */
