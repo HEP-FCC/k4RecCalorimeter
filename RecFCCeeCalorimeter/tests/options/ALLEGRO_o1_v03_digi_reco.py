@@ -523,22 +523,12 @@ if doSWClustering:
     if runHCal:
         towers = CaloTowerToolFCCee("towers",
                                     deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                                    ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                    ecalEndcapReadoutName=ecalEndcapReadoutName,
-                                    ecalFwdReadoutName="",
-                                    hcalBarrelReadoutName=hcalBarrelReadoutName,
-                                    hcalExtBarrelReadoutName="",
-                                    hcalEndcapReadoutName=hcalEndcapReadoutName,
-                                    hcalFwdReadoutName="",
+                                    cells = [ecalBarrelPositionedCellsName,
+                                             ecalEndcapPositionedCellsName,
+                                             hcalBarrelPositionedCellsName,
+                                             hcalEndcapPositionedCellsName],
+                                    nSubDetectors = 3,
                                     OutputLevel=INFO)
-        towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-        towers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
-        towers.ecalFwdCells.Path = "emptyCaloCells"
-        towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName
-        towers.hcalExtBarrelCells.Path = "emptyCaloCells"
-        towers.hcalEndcapCells.Path = hcalEndcapPositionedCellsName
-        towers.hcalFwdCells.Path = "emptyCaloCells"
-
         createClusters = CreateCaloClustersSlidingWindowFCCee("CreateCaloClusters",
                                                               towerTool=towers,
                                                               nThetaWindow=windT, nPhiWindow=windP,
