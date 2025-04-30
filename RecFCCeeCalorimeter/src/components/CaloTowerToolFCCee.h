@@ -139,7 +139,7 @@ private:
 
   /// Corresponding list of calorimeter IDs
   /// Only needed by SW clustering algorithm that uses this tool
-  /// if new output cell collection with clustered cells is created
+  /// if new output cell collection with clustered cells is created,
   /// to record in metadata the map of systemID vs collectionName
   /// which is then used to determine the appropriate cellID enconding
   Gaudi::Property<std::vector<int>> m_caloIDs{

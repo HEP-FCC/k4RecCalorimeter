@@ -41,7 +41,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
 
   // initialize the metadata with system IDs to collection name map
   // if we are creating a new output collection
-  if (m_attachCells) {
+  if (m_createClusterCellCollection) {
     CaloTowerToolFCCee* tool = dynamic_cast<CaloTowerToolFCCee*>(m_towerTool.get());
     if (tool) {
       std::vector<int> IDs = tool->getInputSystemIDs();
@@ -71,7 +71,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
   edm4hep::CalorimeterHitCollection* clusterCells = nullptr;
   // If the user wants a new cell collection with only the clustered cells, then create it
   // If not, links will point from clusters to cells in their initial collections
-  if (m_attachCells) {
+  if (m_createClusterCellCollection) {
     clusterCells = m_clusterCells.createAndPut();
   }
   // Build towers

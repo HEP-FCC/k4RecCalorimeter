@@ -92,7 +92,7 @@ private:
   /// Handle for calo cluster cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer,
                                                                        this};
-  /// Output collection metadata handles (saving a map of ID: collection does not work..)
+  /// Output collection metadata handles (saving a map of ID:collection does not work)
   MetaDataHandle<std::vector<int>> m_caloIDsMetaData{m_clusters, "inputSystemIDs",
     Gaudi::DataHandle::Writer};
   MetaDataHandle<std::vector<std::string>> m_cellsMetaData{m_clusters, "inputCellCollections",
@@ -131,8 +131,8 @@ private:
   Gaudi::Property<bool> m_energySharingCorrection{this, "energySharingCorrection", false};
   /// Flag for the ellipse used in the final cluster instead of the rectangle
   Gaudi::Property<bool> m_ellipseFinalCluster{this, "ellipse", false};
-  /// Flag if cells should be attached to clusters
-  Gaudi::Property<bool> m_attachCells{this, "attachCells", false};
+  /// Flag if a new output cell collection of clustered cells should be created
+  Gaudi::Property<bool> m_createClusterCellCollection{this, "createClusterCellCollection", false};
 };
 
 #endif /* RECFCCEECALORIMETER_CREATECALOCLUSTERSSLIDINGWINDOWFCCEE_H */

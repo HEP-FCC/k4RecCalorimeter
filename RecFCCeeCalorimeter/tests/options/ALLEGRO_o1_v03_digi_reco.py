@@ -115,28 +115,9 @@ for constant in root.find('define').findall('constant'):
         IDs[constant.get("name")[6:]] = int(constant.get('value'))
     if (constant.get('name') == 'DetID_Muon_Endcap_1'):
         IDs[constant.get("name")[6:-2]] = int(constant.get('value'))
-k# retrieve subdetector IDs
-import xml.etree.ElementTree as ET
-tree = ET.parse(path_to_detector + 'DectDimensions.xml')
-root = tree.getroot()
-IDs = {}
-for constant in root.find('define').findall('constant'):
-    if (constant.get('name') == 'DetID_VXD_Barrel' or
-        constant.get('name') == 'DetID_VXD_Disks' or
-        constant.get('name') == 'DetID_DCH' or
-        constant.get('name') == 'DetID_SiWr_Barrel' or
-        constant.get('name') == 'DetID_SiWr_Disks' or
-        constant.get('name') == 'DetID_ECAL_Barrel' or
-        constant.get('name') == 'DetID_ECAL_Endcap' or
-        constant.get('name') == 'DetID_HCAL_Barrel' or
-        constant.get('name') == 'DetID_HCAL_Endcap' or
-        constant.get('name') == 'DetID_Muon_Barrel'):
-        IDs[constant.get("name")[6:]] = int(constant.get('value'))
-    if (constant.get('name') == 'DetID_Muon_Endcap_1'):
-        IDs[constant.get("name")[6:-2]] = int(constant.get('value'))
 # debug
-# print("Subdetector IDs:")
-# print(IDs)
+print("Subdetector IDs:")
+print(IDs)
 
 # GDML dump of detector model
 if dumpGDML:
@@ -448,6 +429,8 @@ if doSWClustering:
                                           thetaMax=2.55254,
                                           phiMin=-pi,
                                           phiMax=pi,
+                                          cells=cells,
+                                          calorimeterIDs=caloIDs,
                                           nSubDetectors=3,  # just for test here, since there is only the ECAL..
                                           OutputLevel=INFO)
 
@@ -459,12 +442,9 @@ if doSWClustering:
                                                                     nThetaFinal=finT, nPhiFinal=finP,
                                                                     energyThreshold=threshold,
                                                                     energySharingCorrection=False,
-                                                                    attachCells=True,
-                                                                    cells=cells,
-                                                                    calorimeterIDs=caloIDs,
+                                                                    createClusterCellCollection=True,
                                                                     OutputLevel=INFO
                                                                     )
-    createECalBarrelClusters.towerTool.cells = cells
     createECalBarrelClusters.clusters.Path = "EMBCaloClusters"
     createECalBarrelClusters.clusterCells.Path = "EMBCaloClusterCells"
 
@@ -473,6 +453,8 @@ if doSWClustering:
     ecalEndcapTowers = CaloTowerToolFCCee("CreateECalEndcapTowers",
                                           deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
                                           nSubDetectors=0,
+                                          cells=cells,
+                                          calorimeterIDs=caloIDs,
                                           OutputLevel=INFO)
 
     createECalEndcapClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalEndcapClusters",
@@ -483,12 +465,9 @@ if doSWClustering:
                                                                     nThetaFinal=finT, nPhiFinal=finP,
                                                                     energyThreshold=threshold,
                                                                     energySharingCorrection=False,
-                                                                    attachCells=True,
-                                                                    cells=cells,
-                                                                    calorimeterIDs=caloIDs,
+                                                                    createClusterCellCollection=True,
                                                                     OutputLevel=INFO
                                                                     )
-    createECalEndcapClusters.towerTool.cells = cells
     createECalEndcapClusters.clusters.Path = "EMECCaloClusters"
     createECalEndcapClusters.clusterCells.Path = "EMECCaloClusterCells"
 
@@ -574,14 +553,16 @@ if doSWClustering:
         cells = [ecalBarrelPositionedCellsName,
                  ecalEndcapPositionedCellsName,
                  hcalBarrelPositionedCellsName,
-                 hcalEndcapPositionedCellsName],
+                 hcalEndcapPositionedCellsName]
         caloIDs = [IDs["ECAL_Barrel"],
                    IDs["ECAL_Endcap"],
                    IDs["HCAL_Barrel"],
-                   IDs["HCAL_Endcap"],]
+                   IDs["HCAL_Endcap"]]
 
         towers = CaloTowerToolFCCee("towers",
                                     deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
+                                    cells=cells,
+                                    calorimeterIDs=caloIDs,
                                     nSubDetectors = 3,
                                     OutputLevel=INFO)
         createClusters = CreateCaloClustersSlidingWindowFCCee("CreateCaloClusters",
@@ -592,12 +573,9 @@ if doSWClustering:
                                                               nThetaFinal=finT, nPhiFinal=finP,
                                                               energyThreshold=threshold,
                                                               energySharingCorrection=False,
-                                                              attachCells=True,
-                                                              cells=cells,
-                                                              calorimeterIDs=caloIDs,
+                                                              createClusterCellCollection=True,
                                                               OutputLevel=INFO
                                                               )
-        createClusters.towerTool.cells = cells
         createClusters.clusters.Path = "CaloClusters"
         createClusters.clusterCells.Path = "CaloClusterCells"
 

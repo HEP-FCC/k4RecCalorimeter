@@ -156,16 +156,36 @@ hepmc_converter.OutputLevel = INFO
 # Detector geometry
 geoservice = GeoSvc("GeoSvc")
 # if K4GEO is empty, this should use relative path to working directory
-path_to_detector = os.environ.get("K4GEO", "")
+path_to_detector = os.environ.get("K4GEO", "") + '/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/'
 print(path_to_detector)
 detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
+    'ALLEGRO_o1_v03.xml'
 ]
 # prefix all xmls with path_to_detector
 geoservice.detectors = [
     os.path.join(path_to_detector, _det) for _det in detectors_to_use
 ]
 geoservice.OutputLevel = INFO
+
+# retrieve subdetector IDs
+import xml.etree.ElementTree as ET
+tree = ET.parse(path_to_detector + 'DectDimensions.xml')
+root = tree.getroot()
+IDs = {}
+for constant in root.find('define').findall('constant'):
+    if (constant.get('name') == 'DetID_VXD_Barrel' or
+        constant.get('name') == 'DetID_VXD_Disks' or
+        constant.get('name') == 'DetID_DCH' or
+        constant.get('name') == 'DetID_SiWr_Barrel' or
+        constant.get('name') == 'DetID_SiWr_Disks' or
+        constant.get('name') == 'DetID_ECAL_Barrel' or
+        constant.get('name') == 'DetID_ECAL_Endcap' or
+        constant.get('name') == 'DetID_HCAL_Barrel' or
+        constant.get('name') == 'DetID_HCAL_Endcap' or
+        constant.get('name') == 'DetID_Muon_Barrel'):
+        IDs[constant.get("name")[6:]] = int(constant.get('value'))
+    if (constant.get('name') == 'DetID_Muon_Endcap_1'):
+        IDs[constant.get("name")[6:-2]] = int(constant.get('value'))
 
 # Geant4 service
 # Configures the Geant simulation: geometry, physics list and user actions
@@ -464,11 +484,16 @@ createemptycells.cells.Path = "emptyCaloCells"
 # Produce sliding window clusters (ECAL+HCAL)
 towers = CaloTowerToolFCCee("towers",
                             #deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                            deltaThetaTower= 0.022180,
+                            deltaThetaTower=0.022180,
                             deltaPhiTower=2 * pi / 256.,
-                            cells = [ecalBarrelPositionedCellsName,
-                                     ecalEndcapPositionedCellsName,
-                                     hcalBarrelPositionedCellsName],
+                            cells=[ecalBarrelPositionedCellsName,
+                                   ecalEndcapPositionedCellsName,
+                                   hcalBarrelPositionedCellsName],
+                            calorimeterIDs=[
+                                IDs["ECAL_Barrel"],
+                                IDs["ECAL_Endcap"],
+                                IDs["HCAL_Barrel"],
+                                ],
                             OutputLevel=INFO)
 
 # Cluster variables (not optimized)
@@ -491,7 +516,7 @@ createClusters = CreateCaloClustersSlidingWindowFCCee("CreateClusters",
                                                       nThetaFinal=finT, nPhiFinal=finP,
                                                       energyThreshold=threshold,
                                                       energySharingCorrection=False,
-                                                      attachCells=True,
+                                                      createClusterCellCollection=True,
                                                       OutputLevel=INFO
                                                       )
 createClusters.clusters.Path = "CaloClusters"
