@@ -96,6 +96,27 @@ public:
                            edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells,
                            bool aEllipse = false) final;
 
+  /** Get the list of input cell collections
+   *  @return List of input cell collections
+   */
+  inline std::vector<std::string> getInputCollections() {
+    std::vector<std::string> v;
+    for (auto coll: m_cellCollections) {
+      v.push_back(coll);
+    }
+    return v;
+  }
+
+  /** Get the list of system IDs of input cell collections
+   *  @return List of system IDs of input cell collections
+   */
+  inline std::vector<int> getInputSystemIDs() {
+    std::vector<int> v;
+    for (auto ID: m_caloIDs) {
+      v.push_back(ID);
+    }
+    return v;
+  }
 private:
   /**  Correct way to obtain the phi index of a tower, taking into account
    * the phi periodicity.
@@ -115,6 +136,14 @@ private:
   /// List of input cell collections
   Gaudi::Property<std::vector<std::string>> m_cellCollections{
     this, "cells", {}, "Names of CalorimeterHit collections to read"};
+
+  /// Corresponding list of calorimeter IDs
+  /// Only needed by SW clustering algorithm that uses this tool
+  /// if new output cell collection with clustered cells is created
+  /// to record in metadata the map of systemID vs collectionName
+  /// which is then used to determine the appropriate cellID enconding
+  Gaudi::Property<std::vector<int>> m_caloIDs{
+    this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
   /// The vector of input DataHandles for the input cell collections
   std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;

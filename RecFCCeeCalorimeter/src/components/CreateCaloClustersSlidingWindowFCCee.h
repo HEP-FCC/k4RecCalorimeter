@@ -92,17 +92,6 @@ private:
   /// Handle for calo cluster cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer,
                                                                        this};
-  /// List of input cell collections
-  Gaudi::Property<std::vector<std::string>> m_cellCollections{
-    this, "cells", {}, "Names of CalorimeterHit collections to read"};
-  /// Corresponding list of calorimeter IDs
-  /// Only needed by SW clustering algorithm that uses this tool
-  /// if new output cell collection with clustered cells is created
-  /// to record in metadata the map of systemID vs collectionName
-  /// which is then used to determine the appropriate cellID enconding
-  Gaudi::Property<std::vector<int>> m_caloIDs{
-    this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
-
   /// Output collection metadata handles (saving a map of ID: collection does not work..)
   MetaDataHandle<std::vector<int>> m_caloIDsMetaData{m_clusters, "inputSystemIDs",
     Gaudi::DataHandle::Writer};
