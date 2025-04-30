@@ -124,9 +124,9 @@ float CaloTowerToolFCCee::phi(int aIdPhi) const {
 // aIPhi < 0 or >= m_nPhiTower)
 uint CaloTowerToolFCCee::phiIndexTower(int aIPhi) const {
   if (aIPhi < 0) {
-    return phiIndexTower(aIPhi + ceil(2*M_PI/m_deltaPhiTower));
+    return aIPhi + m_nPhiTower;
   } else if (aIPhi >= m_nPhiTower) {
-    return phiIndexTower(aIPhi - ceil(2*M_PI/m_deltaPhiTower));
+    return aIPhi - m_nPhiTower;
   } else
     return aIPhi;
 }
