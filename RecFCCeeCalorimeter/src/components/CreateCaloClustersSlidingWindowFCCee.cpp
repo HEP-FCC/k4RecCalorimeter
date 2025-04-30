@@ -38,6 +38,15 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
     m_nThetaTower = m_nThetaWindow;
   }
 
+  // initialize the metadata with system IDs to collection name map
+  // if we are creating a new output collection
+  if (m_attachCells) {
+    // TODO: check that they have the same size!
+    // m_caloIDsToCellsMap.put(aMap);
+    m_caloIDsMetaData.put(m_caloIDs);
+    m_cellsMetaData.put(m_cellCollections);
+  }
+
   info() << "CreateCaloClustersSlidingWindowFCCee initialized" << endmsg;
   return StatusCode::SUCCESS;
 }

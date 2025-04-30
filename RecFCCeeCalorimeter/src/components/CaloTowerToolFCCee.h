@@ -116,7 +116,15 @@ private:
   Gaudi::Property<std::vector<std::string>> m_cellCollections{
     this, "cells", {}, "Names of CalorimeterHit collections to read"};
 
-    /// The vector of input DataHandles for the input cell collections
+  /// Corresponding list of calorimeter IDs
+  /// Only needed by SW clustering algorithm that uses this tool
+  /// if new output cell collection with clustered cells is created
+  /// to record in metadata the map of systemID vs collectionName
+  /// which is then used to determine the appropriate cellID enconding
+  Gaudi::Property<std::vector<int>> m_caloIDs{
+    this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
+
+  /// The vector of input DataHandles for the input cell collections
   std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
 
   /// Maximum theta of towers
