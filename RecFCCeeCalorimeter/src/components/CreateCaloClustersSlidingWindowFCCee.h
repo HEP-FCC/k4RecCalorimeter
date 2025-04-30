@@ -68,8 +68,8 @@ public:
   StatusCode finalize();
 
 private:
-  // Cluster
-  struct cluster {
+  // precluster
+  struct precluster {
     float transEnergy;
     float theta;
     float phi;
@@ -95,7 +95,7 @@ private:
   // calorimeter towers
   mutable std::vector<std::vector<float>> m_towers;
   /// Vector of pre-clusters
-  mutable std::vector<cluster> m_preClusters;
+  mutable std::vector<precluster> m_preClusters;
   /// number of towers in theta (calculated from m_deltaThetaTower and the theta size of the first layer)
   int m_nThetaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)

@@ -71,7 +71,7 @@ uint CaloTowerToolFCCee::buildTowers(std::vector<std::vector<float>>& aTowers, b
   for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
     verbose() << "Processing collection " << ih << endmsg;
     const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
-    debug() << "Input ell collection size: " << coll->size() << endmsg;
+    debug() << "Input cell collection size: " << coll->size() << endmsg;
     // Loop over collection of calorimeter cells
     if (coll->size() > 0) {
       totalNumberOfClusteredCells += CellsIntoTowers(aTowers, coll, fillTowersCells);
@@ -165,7 +165,7 @@ uint CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
     aTowers[iTheta][phiIndexTower(iPhi)] += cell.getEnergy() * sin(cellTheta);
     if (fillTowersCells) {
       clusteredCells++;
-      m_cellsInTowers[std::make_pair(iTheta, phiIndexTower(iPhi))].push_back(cell.clone());
+      m_cellsInTowers[std::make_pair(iTheta, phiIndexTower(iPhi))].push_back(cell);
       int ncells = m_cellsInTowers[std::make_pair(iTheta, phiIndexTower(iPhi))].size();
 
       if (ncells > 5)
@@ -195,9 +195,16 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
               continue;
             }
             seen_cellIDs.push_back(cell.getCellID());
-            auto cellclone = cell.clone();
-            aEdmClusterCells->push_back(cellclone);
-            aEdmCluster.addToHits(cellclone);
+            // if aEdmClusterCells it not nullptr, the user wants the clustered cells to be put into a new collection
+            // otherwise we just set links to the existing cells
+            if (aEdmClusterCells) {
+              auto cellclone = cell.clone();
+              aEdmClusterCells->push_back(cellclone);
+              aEdmCluster.addToHits(cellclone);
+            }
+            else {
+              aEdmCluster.addToHits(cell);
+            }
 
             if (m_nSubDetectors>0) {
               // caloID: 1 = ecal, 2 = hcal, 3 = yoke - see how m_caloid is computed and encoded in cell type in
@@ -223,9 +230,14 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
             continue;
           }
           seen_cellIDs.push_back(cell.getCellID());
-          auto cellclone = cell.clone();
-          aEdmClusterCells->push_back(cellclone);
-          aEdmCluster.addToHits(cellclone);
+          if (aEdmClusterCells) {
+            auto cellclone = cell.clone();
+            aEdmClusterCells->push_back(cellclone);
+            aEdmCluster.addToHits(cellclone);
+          }
+          else {
+            aEdmCluster.addToHits(cell);
+          }
           if (m_nSubDetectors>0) {
             int caloID = ((cell.getType() / 10) % 10 - 1);
             if (caloID < 0 or caloID > (int) m_nSubDetectors) {
