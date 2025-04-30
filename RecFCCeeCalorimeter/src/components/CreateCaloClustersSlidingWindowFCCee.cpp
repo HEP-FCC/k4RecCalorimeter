@@ -1,4 +1,5 @@
 #include "CreateCaloClustersSlidingWindowFCCee.h"
+#include "CaloTowerToolFCCee.h"
 
 // Gaudi
 #include "GaudiKernel/PhysicalConstants.h"
@@ -41,10 +42,20 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
   // initialize the metadata with system IDs to collection name map
   // if we are creating a new output collection
   if (m_attachCells) {
-    // TODO: check that they have the same size!
-    // m_caloIDsToCellsMap.put(aMap);
-    m_caloIDsMetaData.put(m_caloIDs);
-    m_cellsMetaData.put(m_cellCollections);
+    CaloTowerToolFCCee* tool = dynamic_cast<CaloTowerToolFCCee*>(m_towerTool.get());
+    if (tool) {
+      std::vector<int> IDs = tool->getInputSystemIDs();
+      std::vector<std::string> colls = tool->getInputCollections();
+      if (IDs.size()==colls.size()) {
+        m_caloIDsMetaData.put(IDs);
+        m_cellsMetaData.put(colls);
+      }
+      else {
+        warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written" << endmsg;
+      }
+    } else {
+      warning() << "Failed to get CaloTowerToolFCCee instance, no metadata written" << endmsg;
+    }
   }
 
   info() << "CreateCaloClustersSlidingWindowFCCee initialized" << endmsg;
