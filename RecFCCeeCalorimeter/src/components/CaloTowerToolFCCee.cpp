@@ -32,7 +32,9 @@ StatusCode CaloTowerToolFCCee::initialize() {
     }
   }
 
-  double epsilon = 0.0000;
+  // very small number (epsilon) substructed from the edges to ensure correct division in case of rounding erros
+  // (GM: issue not seen in my tests but kept to be on the safe side)
+  double epsilon = 0.0001;
   // number of phi bins
   m_nPhiTower = ceil((m_phiMax - m_phiMin - epsilon) / m_deltaPhiTower);
   // number of theta bins
