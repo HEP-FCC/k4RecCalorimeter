@@ -154,7 +154,7 @@ uint CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
       continue;
     }
     if (cellPhi<m_phiMin || cellPhi>m_phiMax) {
-      warning() << "Cell theta " << cellTheta << " outside of theta range of towers, will not be clustered" << endmsg;
+      warning() << "Cell phi " << cellPhi << " outside of phi range of towers, will not be clustered" << endmsg;
       continue;
     }
     iTheta = idTheta(cellTheta);
