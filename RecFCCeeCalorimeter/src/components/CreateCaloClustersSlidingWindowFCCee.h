@@ -7,6 +7,7 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
+#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
 
 // edm4hep
@@ -47,7 +48,8 @@ class ClusterCollection;
  *
  *  @author Jana Faltova
  *  @author Anna Zaborowska
- *  @Modified by Tong Li, for Theta-Module Merged readouts in FCCee
+ *  @author Tong Li, for Theta-Module Merged readouts in FCCee
+ *  @author Giovanni Marchiori
  */
 
 class CreateCaloClustersSlidingWindowFCCee : public Gaudi::Algorithm {
@@ -68,8 +70,8 @@ public:
   StatusCode finalize();
 
 private:
-  // Cluster
-  struct cluster {
+  // precluster
+  struct precluster {
     float transEnergy;
     float theta;
     float phi;
@@ -90,12 +92,17 @@ private:
   /// Handle for calo cluster cells (output collection)
   mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer,
                                                                        this};
+  /// Output collection metadata handles (saving a map of ID:collection does not work)
+  MetaDataHandle<std::vector<int>> m_caloIDsMetaData{m_clusters, "inputSystemIDs",
+    Gaudi::DataHandle::Writer};
+  MetaDataHandle<std::vector<std::string>> m_cellsMetaData{m_clusters, "inputCellCollections",
+      Gaudi::DataHandle::Writer};
   /// Handle for the tower building tool
   mutable ToolHandle<ITowerToolThetaModule> m_towerTool;
-  // calorimeter towers
+  /// Calorimeter towers
   mutable std::vector<std::vector<float>> m_towers;
   /// Vector of pre-clusters
-  mutable std::vector<cluster> m_preClusters;
+  mutable std::vector<precluster> m_preClusters;
   /// number of towers in theta (calculated from m_deltaThetaTower and the theta size of the first layer)
   int m_nThetaTower;
   /// Number of towers in phi (calculated from m_deltaPhiTower)
@@ -124,8 +131,8 @@ private:
   Gaudi::Property<bool> m_energySharingCorrection{this, "energySharingCorrection", false};
   /// Flag for the ellipse used in the final cluster instead of the rectangle
   Gaudi::Property<bool> m_ellipseFinalCluster{this, "ellipse", false};
-  /// Flag if cells should be attached to clusters
-  Gaudi::Property<bool> m_attachCells{this, "attachCells", false};
+  /// Flag if a new output cell collection of clustered cells should be created
+  Gaudi::Property<bool> m_createClusterCellCollection{this, "createClusterCellCollection", false};
 };
 
 #endif /* RECFCCEECALORIMETER_CREATECALOCLUSTERSSLIDINGWINDOWFCCEE_H */
