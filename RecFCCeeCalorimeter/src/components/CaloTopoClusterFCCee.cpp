@@ -46,10 +46,35 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     }
   }
 
-  // retrieve cells neighbours tool
-  if (!m_neighboursTool.retrieve()) {
-    error() << "Unable to retrieve the cells neighbours tool!!!" << endmsg;
-    return StatusCode::FAILURE;
+  // use pre-calculated neighbor map i.e. TTree to retrieve neighbors
+  if (m_useNeighborMap) {
+    // retrieve cells neighbours tool
+    if (!m_neighboursTool.retrieve()) {
+      error() << "Unable to retrieve the cells neighbours tool!!!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
+
+  // use DDSegmentation to retrieve neighbors
+  if (!m_useNeighborMap) {
+    m_geoSvc = service("GeoSvc");
+
+    if (!m_geoSvc) {
+      error() << "Unable to locate Geometry Service. "
+              << "Make sure you have GeoSvc in the configuration." << endmsg;
+
+      return StatusCode::FAILURE;
+    }
+
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) ==
+        m_geoSvc->getDetector()->readouts().end()) {
+      error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
+
+      return StatusCode::FAILURE;
+    }
+
+    // get segmentation
+    m_segmentation = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation();
   }
 
   // retrieve cells noise tool
@@ -227,7 +252,7 @@ CaloTopoClusterFCCee::findSeeds(const edm4hep::CalorimeterHitCollection* allCell
 
   // Sort the seeds in decending order of their energy
   std::sort(seedCellsVec.begin(), seedCellsVec.end(),
-            [](const auto& lhs, const auto& rhs) { return lhs.getEnergy() < rhs.getEnergy(); });
+            [](const auto& lhs, const auto& rhs) { return lhs.getEnergy() > rhs.getEnergy(); });
 
   edm4hep::CalorimeterHitCollection seedCells;
   seedCells.setSubsetCollection();
@@ -321,16 +346,28 @@ std::vector<std::pair<uint64_t, uint32_t>> CaloTopoClusterFCCee::searchForNeighb
   // Fill vector to be returned, next cell ids and cluster id for which
   // neighbours are found
   std::vector<std::pair<uint64_t, uint32_t>> additionalNeighbours;
+  std::vector<uint64_t> neighboursVec;
 
   // Retrieve cellIDs of neighbours
-  auto neighboursVec = m_neighboursTool->neighbours(aCellId);
-  if (neighboursVec.size() == 0) {
-    error() << "No neighbours for cellID found! " << endmsg;
-    error() << "to cellID :  " << aCellId << endmsg;
-    error() << "in system:   " << m_decoder->get(aCellId, m_indexSystem) << endmsg;
-    additionalNeighbours.resize(0);
-    additionalNeighbours.push_back(std::make_pair(0, 0));
-    return additionalNeighbours;
+  if (m_useNeighborMap) {
+    neighboursVec = m_neighboursTool->neighbours(aCellId);
+
+    if (neighboursVec.size() == 0) {
+      error() << "No neighbours for cellID found! " << endmsg;
+      error() << "to cellID :  " << aCellId << endmsg;
+      error() << "in system:   " << m_decoder->get(aCellId, m_indexSystem) << endmsg;
+      additionalNeighbours.resize(0);
+      additionalNeighbours.push_back(std::make_pair(0, 0));
+
+      return additionalNeighbours;
+    }
+  }
+
+  if (!m_useNeighborMap) {
+    // DDSegmentation returns std::set
+    std::set<dd4hep::DDSegmentation::CellID> outputNeighbors;
+    m_segmentation->neighbours(aCellId,outputNeighbors);
+    neighboursVec = std::vector<uint64_t>(outputNeighbors.begin(), outputNeighbors.end());
   }
 
   verbose() << "For cluster: " << aClusterID << endmsg;
