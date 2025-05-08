@@ -74,7 +74,7 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Decoder
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(m_systemEncoding.get());
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(m_systemEncoding);
 };
 
 #endif /* RECCALORIMETER_CONSTNOISETOOL_H */
