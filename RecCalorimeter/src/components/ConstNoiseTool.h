@@ -67,11 +67,14 @@ private:
   Gaudi::Property<std::vector<double>> m_detectorsNoiseOffset{
       this, "detectorsNoiseOffset", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, "Cell noise offset in GeV"};
 
+  /// System encoding string
+  Gaudi::Property<std::string> m_systemEncoding{this, "systemEncoding", "system:4", "System encoding string"};
+
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Decoder
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:5");
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(m_systemEncoding.get());
 };
 
 #endif /* RECCALORIMETER_CONSTNOISETOOL_H */

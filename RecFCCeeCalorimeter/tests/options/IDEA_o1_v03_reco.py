@@ -9,7 +9,7 @@ dataservice = k4DataSvc("EventDataSvc", input="testIDEA_o1_v03_digi.root")
 from Configurables import GeoSvc
 import os
 geoservice = GeoSvc("GeoSvc")
-path_to_detector = "/afs/cern.ch/work/s/sako/private/kfc-dream/k4geo/" # os.environ.get("K4GEO", "")
+path_to_detector = os.environ.get("K4GEO", "")
 detectors_to_use = [
     'FCCee/IDEA/compact/IDEA_o1_v03/IDEA_o1_v03.xml'
 ]
@@ -36,6 +36,7 @@ podioinput = PodioInput("PodioInput",
 from Configurables import ConstNoiseTool
 constNoiseTool = ConstNoiseTool("ConstNoiseTool",
     detectors = ["FiberDRCalo"],
+    systemEncoding = "system:5",
     detectorsNoiseRMS = [0.001], # ad-hoc small value
     detectorsNoiseOffset = [0.],
     OutputLevel = INFO
@@ -50,6 +51,7 @@ topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     readoutName = "DRcaloSiPMreadout",
     neigboursTool = None,
     noiseTool = constNoiseTool,
+    systemEncoding = "system:5",
     seedSigma = 4,
     neighbourSigma = 2,
     lastNeighbourSigma = 0,
@@ -64,6 +66,7 @@ topoClusterScint = CaloTopoClusterFCCee("topoClusterScint",
     readoutName = "DRcaloSiPMreadout",
     neigboursTool = None,
     noiseTool = constNoiseTool,
+    systemEncoding = "system:5",
     seedSigma = 4,
     neighbourSigma = 2,
     lastNeighbourSigma = 0,

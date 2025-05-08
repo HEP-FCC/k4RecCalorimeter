@@ -124,8 +124,8 @@ private:
   Gaudi::Property<bool> m_useNeighborMap{this, "useNeighborMap", true, "use pre-calculated neighbor map"};
   // use GeoSvc when the neighbor map is not present
   SmartIF<IGeoSvc> m_geoSvc;
-  // name of the readout (or segmentation)
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout/segmentation"};
+  // name of the readout: only needed if useNeighborMap is set to false
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout (needed if useNeighborMap=false)"};
   // pointer to the segmentation object
   dd4hep::DDSegmentation::Segmentation* m_segmentation = nullptr;
 
