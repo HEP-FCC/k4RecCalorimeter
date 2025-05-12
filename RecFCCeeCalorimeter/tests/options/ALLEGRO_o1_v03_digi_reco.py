@@ -87,14 +87,37 @@ input_reader = PodioInput('InputReader')
 from Configurables import GeoSvc
 import os
 geoservice = GeoSvc("GeoSvc")
-path_to_detector = os.environ.get("K4GEO", "")
+path_to_detector = os.environ.get("K4GEO", "") + "/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/"
 detectors_to_use = [
-    'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
+    'ALLEGRO_o1_v03.xml'
 ]
 geoservice.detectors = [
     os.path.join(path_to_detector, _det) for _det in detectors_to_use
 ]
 geoservice.OutputLevel = INFO
+
+# retrieve subdetector IDs
+import xml.etree.ElementTree as ET
+tree = ET.parse(path_to_detector + 'DectDimensions.xml')
+root = tree.getroot()
+IDs = {}
+for constant in root.find('define').findall('constant'):
+    if (constant.get('name') == 'DetID_VXD_Barrel' or
+        constant.get('name') == 'DetID_VXD_Disks' or
+        constant.get('name') == 'DetID_DCH' or
+        constant.get('name') == 'DetID_SiWr_Barrel' or
+        constant.get('name') == 'DetID_SiWr_Disks' or
+        constant.get('name') == 'DetID_ECAL_Barrel' or
+        constant.get('name') == 'DetID_ECAL_Endcap' or
+        constant.get('name') == 'DetID_HCAL_Barrel' or
+        constant.get('name') == 'DetID_HCAL_Endcap' or
+        constant.get('name') == 'DetID_Muon_Barrel'):
+        IDs[constant.get("name")[6:]] = int(constant.get('value'))
+    if (constant.get('name') == 'DetID_Muon_Endcap_1'):
+        IDs[constant.get("name")[6:-2]] = int(constant.get('value'))
+# debug
+print("Subdetector IDs:")
+print(IDs)
 
 # GDML dump of detector model
 if dumpGDML:
@@ -137,8 +160,7 @@ calibEcalBarrel = CalibrateInLayersTool("CalibrateECalBarrel",
 # The calibrated values can be <0 or >1 for such cells, so these nonsenical
 # numbers are replaced by 1
 calibEcalEndcap = CalibrateInLayersTool("CalibrateECalEndcap",
-
-                                        samplingFraction = [0.0390585] * 1+ [0.463715] * 1+ [0.0853304] * 1+ [1] * 1+ [0.0442381] * 1+ [0.0552701] * 1+ [0.245704] * 1+ [0.137059] * 1+ [0.238013] * 1+ [0.147364] * 1+ [0.0788765] * 1+ [0.219239] * 1+ [0.151537] * 1+ [0.26711] * 1+ [0.0853741] * 1+ [0.0995584] * 1+ [0.206757] * 1+ [0.16663] * 1+ [0.238659] * 1+ [0.0978915] * 1+ [0.121322] * 1+ [0.204324] * 1+ [0.175887] * 1+ [0.244135] * 1+ [0.0994313] * 1+ [0.141767] * 1+ [0.205447] * 1+ [0.186003] * 1+ [0.237895] * 1+ [0.108545] * 1+ [0.16853] * 1+ [0.205409] * 1+ [0.195066] * 1+ [0.234766] * 1+ [0.109689] * 1+ [0.152743] * 1+ [0.202067] * 1+ [0.199587] * 1+ [0.22892] * 1+ [0.117163] * 1+ [0.247339] * 1+ [0.219485] * 1+ [0.217142] * 1+ [0.248389] * 1+ [0.125487] * 1+ [0.10275] * 1+ [0.185187] * 1+ [0.18939] * 1+ [0.171225] * 1+ [0.109632] * 1+ [0.159225] * 1+ [0.172072] * 1+ [0.174928] * 1+ [0.180492] * 1+ [0.184174] * 1+ [0.18843] * 1+ [0.191688] * 1+ [0.194472] * 1+ [0.198021] * 1+ [0.200064] * 1+ [0.20313] * 1+ [0.203984] * 1+ [0.208658] * 1+ [0.198391] * 1+ [0.153334] * 1+ [0.175712] * 1+ [0.169342] * 1+ [0.176852] * 1+ [0.175731] * 1+ [0.181481] * 1+ [0.17978] * 1+ [0.18426] * 1+ [0.185028] * 1+ [0.186753] * 1+ [0.190321] * 1+ [0.189175] * 1+ [0.193018] * 1+ [0.193594] * 1+ [0.195598] * 1+ [0.1969] * 1+ [0.197713] * 1+ [0.201379] * 1+ [0.193965] * 1+ [0.223362] * 1+ [0.166243] * 1+ [0.373141] * 1+ [0.112825] * 1+ [0.469126] * 1+ [1] * 1+ [0.0954407] * 1+ [0.0706573] * 1+ [1] * 1+ [1] * 1+ [0.112354] * 1+ [1] * 1+ [1] * 1+ [1] * 1+ [1] * 1,
+                                        samplingFraction = [0.0897818] * 1+ [0.221318] * 1+ [0.0820002] * 1+ [0.994281] * 1+ [0.0414437] * 1+ [0.1148] * 1+ [0.178831] * 1+ [0.142449] * 1+ [0.181206] * 1+ [0.342843] * 1+ [0.137479] * 1+ [0.176479] * 1+ [0.153273] * 1+ [0.195836] * 1+ [0.0780405] * 1+ [0.150202] * 1+ [0.17846] * 1+ [0.164886] * 1+ [0.175758] * 1+ [0.10836] * 1+ [0.160243] * 1+ [0.183373] * 1+ [0.171818] * 1+ [0.194848] * 1+ [0.111899] * 1+ [0.170704] * 1+ [0.188455] * 1+ [0.178164] * 1+ [0.209113] * 1+ [0.105241] * 1+ [0.180637] * 1+ [0.192206] * 1+ [0.186096] * 1+ [0.211962] * 1+ [0.112019] * 1+ [0.180344] * 1+ [0.195684] * 1+ [0.190778] * 1+ [0.218259] * 1+ [0.118516] * 1+ [0.207786] * 1+ [0.204474] * 1+ [0.207048] * 1+ [0.225913] * 1+ [0.111325] * 1+ [0.147875] * 1+ [0.195625] * 1+ [0.173326] * 1+ [0.175449] * 1+ [0.104087] * 1+ [0.153645] * 1+ [0.161263] * 1+ [0.165499] * 1+ [0.171758] * 1+ [0.175789] * 1+ [0.180657] * 1+ [0.184563] * 1+ [0.187876] * 1+ [0.191762] * 1+ [0.19426] * 1+ [0.197959] * 1+ [0.199021] * 1+ [0.204428] * 1+ [0.195709] * 1+ [0.151751] * 1+ [0.171477] * 1+ [0.165509] * 1+ [0.172565] * 1+ [0.172961] * 1+ [0.175534] * 1+ [0.177989] * 1+ [0.18026] * 1+ [0.181898] * 1+ [0.183912] * 1+ [0.185654] * 1+ [0.187515] * 1+ [0.190408] * 1+ [0.188794] * 1+ [0.193699] * 1+ [0.192287] * 1+ [0.19755] * 1+ [0.190943] * 1+ [0.218553] * 1+ [0.161085] * 1+ [0.373086] * 1+ [0.122495] * 1+ [0.21103] * 1+ [1] * 1+ [0.138686] * 1+ [0.0545171] * 1+ [1] * 1+ [1] * 1+ [0.227945] * 1+ [0.0122872] * 1+ [0.00437334] * 1+ [0.00363533] * 1+ [1] * 1+ [1] * 1,
                                         readoutName=ecalEndcapReadoutName,
                                         layerFieldName="layer")
 
@@ -399,23 +421,18 @@ if doSWClustering:
     threshold = 0.040
 
     # ECAL-only clusters
+    cells = [ecalBarrelPositionedCellsName]
+    caloIDs = [IDs["ECAL_Barrel"]]
     ecalBarrelTowers = CaloTowerToolFCCee("CreateECalBarrelTowers",
                                           deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                                          ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                          ecalEndcapReadoutName="",
-                                          ecalFwdReadoutName="",
-                                          hcalBarrelReadoutName="",
-                                          hcalExtBarrelReadoutName="",
-                                          hcalEndcapReadoutName="",
-                                          hcalFwdReadoutName="",
+                                          thetaMin=pi-2.55254,
+                                          thetaMax=2.55254,
+                                          phiMin=-pi,
+                                          phiMax=pi,
+                                          cells=cells,
+                                          calorimeterIDs=caloIDs,
+                                          nSubDetectors=3,  # just for test here, since there is only the ECAL..
                                           OutputLevel=INFO)
-    ecalBarrelTowers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-    ecalBarrelTowers.ecalEndcapCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.ecalFwdCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalBarrelCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalExtBarrelCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalEndcapCells.Path = "emptyCaloCells"
-    ecalBarrelTowers.hcalFwdCells.Path = "emptyCaloCells"
 
     createECalBarrelClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalBarrelClusters",
                                                                     towerTool=ecalBarrelTowers,
@@ -425,29 +442,20 @@ if doSWClustering:
                                                                     nThetaFinal=finT, nPhiFinal=finP,
                                                                     energyThreshold=threshold,
                                                                     energySharingCorrection=False,
-                                                                    attachCells=True,
+                                                                    createClusterCellCollection=True,
                                                                     OutputLevel=INFO
                                                                     )
     createECalBarrelClusters.clusters.Path = "EMBCaloClusters"
     createECalBarrelClusters.clusterCells.Path = "EMBCaloClusterCells"
 
+    cells = [ecalEndcapPositionedCellsName]
+    caloIDs = [IDs["ECAL_Endcap"]]
     ecalEndcapTowers = CaloTowerToolFCCee("CreateECalEndcapTowers",
                                           deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                                          ecalBarrelReadoutName="",
-                                          ecalEndcapReadoutName=ecalEndcapReadoutName,
-                                          ecalFwdReadoutName="",
-                                          hcalBarrelReadoutName="",
-                                          hcalExtBarrelReadoutName="",
-                                          hcalEndcapReadoutName="",
-                                          hcalFwdReadoutName="",
+                                          nSubDetectors=0,
+                                          cells=cells,
+                                          calorimeterIDs=caloIDs,
                                           OutputLevel=INFO)
-    ecalEndcapTowers.ecalBarrelCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
-    ecalEndcapTowers.ecalFwdCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalBarrelCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalExtBarrelCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalEndcapCells.Path = "emptyCaloCells"
-    ecalEndcapTowers.hcalFwdCells.Path = "emptyCaloCells"
 
     createECalEndcapClusters = CreateCaloClustersSlidingWindowFCCee("CreateECalEndcapClusters",
                                                                     towerTool=ecalEndcapTowers,
@@ -457,7 +465,7 @@ if doSWClustering:
                                                                     nThetaFinal=finT, nPhiFinal=finP,
                                                                     energyThreshold=threshold,
                                                                     energySharingCorrection=False,
-                                                                    attachCells=True,
+                                                                    createClusterCellCollection=True,
                                                                     OutputLevel=INFO
                                                                     )
     createECalEndcapClusters.clusters.Path = "EMECCaloClusters"
@@ -542,24 +550,21 @@ if doSWClustering:
 
     # ECAL + HCAL clusters
     if runHCal:
+        cells = [ecalBarrelPositionedCellsName,
+                 ecalEndcapPositionedCellsName,
+                 hcalBarrelPositionedCellsName,
+                 hcalEndcapPositionedCellsName]
+        caloIDs = [IDs["ECAL_Barrel"],
+                   IDs["ECAL_Endcap"],
+                   IDs["HCAL_Barrel"],
+                   IDs["HCAL_Endcap"]]
+
         towers = CaloTowerToolFCCee("towers",
                                     deltaThetaTower=4 * 0.009817477 / 4, deltaPhiTower=2 * 2 * pi / 1536.,
-                                    ecalBarrelReadoutName=ecalBarrelReadoutName,
-                                    ecalEndcapReadoutName=ecalEndcapReadoutName,
-                                    ecalFwdReadoutName="",
-                                    hcalBarrelReadoutName=hcalBarrelReadoutName,
-                                    hcalExtBarrelReadoutName="",
-                                    hcalEndcapReadoutName=hcalEndcapReadoutName,
-                                    hcalFwdReadoutName="",
+                                    cells=cells,
+                                    calorimeterIDs=caloIDs,
+                                    nSubDetectors = 3,
                                     OutputLevel=INFO)
-        towers.ecalBarrelCells.Path = ecalBarrelPositionedCellsName
-        towers.ecalEndcapCells.Path = ecalEndcapPositionedCellsName
-        towers.ecalFwdCells.Path = "emptyCaloCells"
-        towers.hcalBarrelCells.Path = hcalBarrelPositionedCellsName
-        towers.hcalExtBarrelCells.Path = "emptyCaloCells"
-        towers.hcalEndcapCells.Path = hcalEndcapPositionedCellsName
-        towers.hcalFwdCells.Path = "emptyCaloCells"
-
         createClusters = CreateCaloClustersSlidingWindowFCCee("CreateCaloClusters",
                                                               towerTool=towers,
                                                               nThetaWindow=windT, nPhiWindow=windP,
@@ -568,7 +573,7 @@ if doSWClustering:
                                                               nThetaFinal=finT, nPhiFinal=finP,
                                                               energyThreshold=threshold,
                                                               energySharingCorrection=False,
-                                                              attachCells=True,
+                                                              createClusterCellCollection=True,
                                                               OutputLevel=INFO
                                                               )
         createClusters.clusters.Path = "CaloClusters"
