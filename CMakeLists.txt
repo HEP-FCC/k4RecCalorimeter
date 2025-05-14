@@ -16,14 +16,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 
 #---------------------------------------------------------------
-find_package(ROOT COMPONENTS RIO Tree)
-find_package(Gaudi)
-find_package(k4FWCore) # implicit: Gaudi
-find_package(EDM4HEP) # implicit: Podio
-find_package(DD4hep)
-find_package(k4geo)
-find_package(FastJet)
-find_package(sipm)
+find_package(ROOT COMPONENTS RIO Tree REQUIRED)
+find_package(Gaudi REQUIRED)
+find_package(k4FWCore REQUIRED) # implicit: Gaudi
+find_package(EDM4HEP REQUIRED) # implicit: Podio
+find_package(DD4hep REQUIRED)
+find_package(k4geo REQUIRED)
+find_package(FastJet REQUIRED)
+find_package(sipm REQUIRED)
 # New versions of ONNRuntime package provide onnxruntime-Config.cmake
 # and use the name onnxruntime
 find_package(onnxruntime)
