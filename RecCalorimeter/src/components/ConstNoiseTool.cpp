@@ -17,6 +17,8 @@ ConstNoiseTool::ConstNoiseTool(const std::string& type, const std::string& name,
 }
 
 StatusCode ConstNoiseTool::initialize() {
+  // initialize decoder for retrieving system ID
+  m_decoder = std::make_unique<dd4hep::DDSegmentation::BitFieldCoder>(m_systemEncoding);
 
   // check that sizes of m_detectors and m_detectorNoiseRMS and m_detectorNoiseOffset are the same
   if (m_detectorsNoiseRMS.size() != m_detectors.size()) {
