@@ -191,7 +191,7 @@ StatusCode CalibrateBenchmarkMethod::execute(const EventContext&) const {
 }
 
 // minimisation function for the benchmark method
-double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t* parameter) const {
+double CalibrateBenchmarkMethod::chiSquareFitBarrel(const double* parameter) const {
   double fitvalue = 0.;
   // loop over all events, vector of a size of #evts is filled with the energies
   // ECal calibrated to EM scale, HCal calibrated to HAD scale
