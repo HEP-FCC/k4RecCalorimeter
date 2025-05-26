@@ -50,3 +50,10 @@ add_test(NAME FCCeeLAr_benchmarkCorrection
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeLAr_benchmarkCorrection)
+
+add_test(NAME IDEA_o1_v03_reco
+         COMMAND k4run RecFCCeeCalorimeter/tests/options/IDEA_o1_v03_reco.py
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+set_test_env(IDEA_o1_v03_reco)
+set_tests_properties(IDEA_o1_v03_reco PROPERTIES DEPENDS simulateSiPM)
