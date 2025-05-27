@@ -139,7 +139,8 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
             map.insert(std::pair<uint64_t, std::vector<std::pair<uint64_t, double>>>(
                 id, det::crosstalk::getNeighboursModuleThetaMerged(
                         *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"},
-                        extrema_layer, id)));
+                        extrema_layer, id, m_xtalk_coef_radial, m_xtalk_coef_theta, m_xtalk_coef_diagonal,
+			m_xtalk_coef_tower)));
           }
         }
       }

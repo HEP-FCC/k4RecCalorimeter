@@ -65,6 +65,15 @@ private:
   // Theta ranges of layers in the segmented volumes
   Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
 
+  // radial crosstalk coefficient, see https://indico.cern.ch/event/1368231/contributions/5904291/
+  Gaudi::Property<double> m_xtalk_coef_radial{this, "xtalkCoefRadial", 0.7e-2};
+  // thetacrosstalk coefficient
+  Gaudi::Property<double> m_xtalk_coef_theta{this, "xtalkCoefTheta", 0.2e-2};
+  // diagonal crosstalk coefficient
+  Gaudi::Property<double> m_xtalk_coef_diagonal{this, "xtalkCoefDiagonal", 0.04e-2};
+  // tower crosstalk coefficient
+  Gaudi::Property<double> m_xtalk_coef_tower{this, "xtalkCoefTower", 0.1e-2};
+
   // System ID of ECAL and HCAL barrels
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
   Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
