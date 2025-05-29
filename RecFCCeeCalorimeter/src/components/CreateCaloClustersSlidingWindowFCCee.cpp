@@ -1,4 +1,5 @@
 #include "CreateCaloClustersSlidingWindowFCCee.h"
+#include "CaloTowerToolFCCee.h"
 
 // Gaudi
 #include "GaudiKernel/PhysicalConstants.h"
@@ -20,32 +21,61 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
   if (Gaudi::Algorithm::initialize().isFailure()) {
     return StatusCode::FAILURE;
   }
+
+  // retrieve tool that builds towers of calorimeter cells
   if (!m_towerTool.retrieve()) {
     error() << "Unable to retrieve the tower building tool." << endmsg;
     return StatusCode::FAILURE;
   }
-  // Get number of calorimeter towers
-  m_towerTool->towersNumber(m_nThetaTower, m_nPhiTower);
 
+  // get number of towers in theta and phi
+  m_towerTool->towersNumber(m_nThetaTower, m_nPhiTower);
   debug() << "Number of calorimeter towers (theta x phi) : " << m_nThetaTower << " x " << m_nPhiTower << endmsg;
+
   // make sure that the number of towers in theta is larger than the seeding sliding window
   if (m_nThetaTower < m_nThetaWindow) {
     debug() << "Window size in theta too small!!! Window " << m_nThetaWindow << " # of theta towers " << m_nThetaTower
             << endmsg;
     m_nThetaTower = m_nThetaWindow;
   }
+
+  // initialize the metadata with system IDs to collection name map
+  // if we are creating a new output collection
+  if (m_createClusterCellCollection) {
+    CaloTowerToolFCCee* tool = dynamic_cast<CaloTowerToolFCCee*>(m_towerTool.get());
+    if (tool) {
+      std::vector<int> IDs = tool->getInputSystemIDs();
+      std::vector<std::string> colls = tool->getInputCollections();
+      if (IDs.size()==colls.size()) {
+        m_caloIDsMetaData.put(IDs);
+        m_cellsMetaData.put(colls);
+      }
+      else {
+        warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written" << endmsg;
+      }
+    } else {
+      warning() << "Failed to get CaloTowerToolFCCee instance, no metadata written" << endmsg;
+    }
+  }
+
   info() << "CreateCaloClustersSlidingWindowFCCee initialized" << endmsg;
   return StatusCode::SUCCESS;
 }
 
 StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) const {
+
   // 1. Create calorimeter towers (calorimeter grid in theta phi, all layers merged)
   m_towers.assign(m_nThetaTower, std::vector<float>(m_nPhiTower, 0));
-  // Create an output collection
-  auto edmClusters = m_clusters.createAndPut();
-  auto edmClusterCells = m_clusterCells.createAndPut();
-  // Check if the tower building succeeded
-  if (m_towerTool->buildTowers(m_towers, m_attachCells) == 0) {
+  // Create an output cluster collection
+  auto clusters = m_clusters.createAndPut();
+  edm4hep::CalorimeterHitCollection* clusterCells = nullptr;
+  // If the user wants a new cell collection with only the clustered cells, then create it
+  // If not, links will point from clusters to cells in their initial collections
+  if (m_createClusterCellCollection) {
+    clusterCells = m_clusterCells.createAndPut();
+  }
+  // Build towers
+  if (m_towerTool->buildTowers(m_towers, true) == 0) {
     debug() << "Empty cell collection." << endmsg;
     return StatusCode::SUCCESS;
   }
@@ -197,7 +227,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
           }
           // check if changing the barycentre did not decrease energy below threshold
           if (sumEnergyFin > m_energyThreshold) {
-            cluster newPreCluster;
+            precluster newPreCluster;
             newPreCluster.X = posX;
             newPreCluster.Y = posY;
             newPreCluster.Z = posZ;
@@ -231,7 +261,7 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
 
   // 4. Sort the preclusters according to the transverse energy (descending)
   std::sort(m_preClusters.begin(), m_preClusters.end(),
-            [](cluster clu1, cluster clu2) { return clu1.transEnergy > clu2.transEnergy; });
+            [](precluster clu1, precluster clu2) { return clu1.transEnergy > clu2.transEnergy; });
 
   // 5. Remove duplicates
   for (auto it1 = m_preClusters.begin(); it1 != m_preClusters.end(); it1++) {
@@ -297,19 +327,17 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
     }
 
     // save the clusters in our EDM
-    // check ET thereshold once more (ET could change with the energy sharing correction)
+    // check ET threshold once more (ET could change with the energy sharing correction)
     if (clusterEnergy * sin(clu.theta) > m_energyThreshold) {
-      auto edmCluster = edmClusters->create();
-      edmCluster.setPosition(edm4hep::Vector3f(clu.X, clu.Y, clu.Z));
-      edmCluster.setEnergy(clusterEnergy);
-      if (m_attachCells) {
-        debug() << "Attaching cells to the clusters." << endmsg;
-        m_towerTool->attachCells(clu.theta, clu.phi, halfThetaFin, halfPhiFin, edmCluster, edmClusterCells,
-                                 m_ellipseFinalCluster);
-      }
-      debug() << "Cluster theta: " << clu.theta << " phi: " << clu.phi << " x: " << edmCluster.getPosition().x
-              << " y: " << edmCluster.getPosition().y << " z: " << edmCluster.getPosition().z
-              << " energy: " << edmCluster.getEnergy() << " contains: " << edmCluster.hits_size() << " cells" << endmsg;
+      auto cluster = clusters->create();
+      cluster.setPosition(edm4hep::Vector3f(clu.X, clu.Y, clu.Z));
+      cluster.setEnergy(clusterEnergy);
+      debug() << "Attaching cells to the clusters." << endmsg;
+      m_towerTool->attachCells(clu.theta, clu.phi, halfThetaFin, halfPhiFin, cluster, clusterCells,
+                               m_ellipseFinalCluster);
+      debug() << "Cluster theta: " << clu.theta << " phi: " << clu.phi << " x: " << cluster.getPosition().x
+              << " y: " << cluster.getPosition().y << " z: " << cluster.getPosition().z
+              << " energy: " << cluster.getEnergy() << " contains: " << cluster.hits_size() << " cells" << endmsg;
     }
   }
   return StatusCode::SUCCESS;
