@@ -46,12 +46,12 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
     if (tool) {
       std::vector<int> IDs = tool->getInputSystemIDs();
       std::vector<std::string> colls = tool->getInputCollections();
-      if (IDs.size()==colls.size()) {
+      if (IDs.size() == colls.size()) {
         m_caloIDsMetaData.put(IDs);
         m_cellsMetaData.put(colls);
-      }
-      else {
-        warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written" << endmsg;
+      } else {
+        warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written"
+                  << endmsg;
       }
     } else {
       warning() << "Failed to get CaloTowerToolFCCee instance, no metadata written" << endmsg;

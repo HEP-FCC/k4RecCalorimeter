@@ -227,7 +227,8 @@ void CaloTopoCluster::findingSeeds(const std::unordered_map<uint64_t, double>& a
                                    std::vector<std::pair<uint64_t, double>>& aSeeds) const {
   for (const auto& cell : aCells) {
     // retrieve the noise const and offset assigned to cell
-    double threshold = m_noiseTool->getNoiseOffsetPerCell(cell.first) + (m_noiseTool->getNoiseRMSPerCell(cell.first) * aNumSigma);
+    double threshold =
+        m_noiseTool->getNoiseOffsetPerCell(cell.first) + (m_noiseTool->getNoiseRMSPerCell(cell.first) * aNumSigma);
     if (msgLevel() <= MSG::VERBOSE) {
       verbose() << "noise offset    = " << m_noiseTool->getNoiseOffsetPerCell(cell.first) << "GeV " << endmsg;
       verbose() << "noise rms       = " << m_noiseTool->getNoiseRMSPerCell(cell.first) << "GeV " << endmsg;
@@ -333,7 +334,8 @@ std::vector<std::pair<uint64_t, uint>> CaloTopoCluster::searchForNeighbours(
         bool addNeighbour = false;
         int cellType = 2;
         // retrieve the cell noise level [GeV]
-        double thr = m_noiseTool->getNoiseOffsetPerCell(neighbourID) + (aNumSigma * m_noiseTool->getNoiseRMSPerCell(neighbourID));
+        double thr = m_noiseTool->getNoiseOffsetPerCell(neighbourID) +
+                     (aNumSigma * m_noiseTool->getNoiseRMSPerCell(neighbourID));
         if (abs(neighbouringCellEnergy) > thr)
           addNeighbour = true;
         else

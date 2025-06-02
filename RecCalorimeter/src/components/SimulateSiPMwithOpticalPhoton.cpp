@@ -4,7 +4,7 @@
 DECLARE_COMPONENT(SimulateSiPMwithOpticalPhoton)
 
 SimulateSiPMwithOpticalPhoton::SimulateSiPMwithOpticalPhoton(const std::string& aName, ISvcLocator* aSvcLoc)
-  : Gaudi::Algorithm(aName, aSvcLoc) {
+    : Gaudi::Algorithm(aName, aSvcLoc) {
   // Constructor doesn't need to do anything special
 }
 
@@ -23,7 +23,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
     return StatusCode::FAILURE;
   }
 
-  if (m_rndmUniform.initialize(m_randSvc, Rndm::Flat(0.,1.)).isFailure()) {
+  if (m_rndmUniform.initialize(m_randSvc, Rndm::Flat(0., 1.)).isFailure()) {
     error() << "Couldn't initialize RndmGenSvc!" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -34,7 +34,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
     return StatusCode::FAILURE;
   }
 
-  if (m_wavelen.size()!=m_sipmEff.size()) {
+  if (m_wavelen.size() != m_sipmEff.size()) {
     error() << "SimulateSiPMwithOpticalPhoton: "
             << "The SiPM efficiency vector size should be equal to the wavelength vector size" << endmsg;
     return StatusCode::FAILURE;
@@ -56,7 +56,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   // Set the PDE type to spectrum PDE
   properties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
   // Set the PDE spectrum
-  properties.setPdeSpectrum(m_wavelen.value(),m_sipmEff.value());
+  properties.setPdeSpectrum(m_wavelen.value(), m_sipmEff.value());
 
   // Create the SiPM sensor model
   m_sensor = std::make_unique<sipm::SiPMSensor>(properties);
@@ -67,7 +67,8 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   return StatusCode::SUCCESS;
 }
 
-std::vector<double> SimulateSiPMwithOpticalPhoton::integral(const std::vector<double>& wavelen, const std::vector<double>& yval) const {
+std::vector<double> SimulateSiPMwithOpticalPhoton::integral(const std::vector<double>& wavelen,
+                                                            const std::vector<double>& yval) const {
   double val = 0.;
   double prevXval = wavelen.front();
   std::vector<double> result = {0.};
@@ -75,8 +76,8 @@ std::vector<double> SimulateSiPMwithOpticalPhoton::integral(const std::vector<do
 
   for (unsigned idx = 1; idx < wavelen.size(); idx++) {
     double intervalX = std::abs(prevXval - wavelen.at(idx));
-    double avgY = (yval.at(idx) + yval.at(idx-1))/2.;
-    val += intervalX*avgY;
+    double avgY = (yval.at(idx) + yval.at(idx - 1)) / 2.;
+    val += intervalX * avgY;
     result.push_back(val);
   }
 
@@ -121,14 +122,14 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
     vecSpectrum.reserve(waveLength.adcCounts_size());
     // be aware that we loop in the decreasing order!
     for (unsigned bin = waveLength.adcCounts_size(); bin != 1; bin--) {
-      double wavlenBinCenter = waveLength.getTime() + waveLength.getInterval() * (static_cast<float>(bin-1) + 0.5);
-      double spectrum = static_cast<double>(waveLength.getAdcCounts(bin-1));
+      double wavlenBinCenter = waveLength.getTime() + waveLength.getInterval() * (static_cast<float>(bin - 1) + 0.5);
+      double spectrum = static_cast<double>(waveLength.getAdcCounts(bin - 1));
 
       vecWavelenEdm.push_back(wavlenBinCenter);
       vecSpectrum.push_back(spectrum);
     }
 
-    std::vector<double> integralSpectrum = integral(vecWavelenEdm,vecSpectrum);
+    std::vector<double> integralSpectrum = integral(vecWavelenEdm, vecSpectrum);
 
     // extract photon arrival times from the time structure
     // and generate wavelength according to the pdf
@@ -146,10 +147,10 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
         vecTimes.emplace_back(timeBin);
 
         // generate wavelength
-        const double randval = integralSpectrum.back()*m_rndmUniform.shoot();
+        const double randval = integralSpectrum.back() * m_rndmUniform.shoot();
         unsigned xhigh = 1;
 
-        for (; xhigh < integralSpectrum.size()-1; xhigh++) {
+        for (; xhigh < integralSpectrum.size() - 1; xhigh++) {
           if (randval < integralSpectrum.at(xhigh))
             break;
         }
@@ -157,8 +158,8 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
         const unsigned xlow = xhigh - 1;
         const double xdiff = vecWavelenEdm.at(xhigh) - vecWavelenEdm.at(xlow);
         const double ydiff = integralSpectrum.at(xhigh) - integralSpectrum.at(xlow);
-        const double ydiffInv = (ydiff==0.) ? 0. : 1./ydiff;
-        double valWav = vecWavelenEdm.at(xlow) + xdiff*(randval-integralSpectrum.at(xlow))*ydiffInv;
+        const double ydiffInv = (ydiff == 0.) ? 0. : 1. / ydiff;
+        double valWav = vecWavelenEdm.at(xlow) + xdiff * (randval - integralSpectrum.at(xlow)) * ydiffInv;
 
         vecWavelengths.emplace_back(valWav);
       }
@@ -167,7 +168,7 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
     // Reset the SiPM state and run the simulation
     m_sensor->resetState();
     m_sensor->addPhotons(vecTimes, vecWavelengths); // Sets photon arrival times (in ns) & wavelengths (in nm)
-    m_sensor->runEvent();        // Runs the SiPM simulation
+    m_sensor->runEvent();                           // Runs the SiPM simulation
 
     auto digiHit = digiHits->create();
     auto waveform = waveforms->create();
@@ -177,13 +178,14 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
 
     // Compute integral (energy) and time of arrival
     // if the signal never exceeds the threshold, it will return -1.
-    const double integral = std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
-    const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
+    const double integral =
+        std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
+    const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
     const double gateEnd = m_gateStart.value() + m_gateL.value();
 
     // Set digitized hit properties
-    digiHit.setEnergy(integral*m_scaleADC.value());
-    digiHit.setEnergyError(m_scaleADC.value()*std::sqrt(integral));
+    digiHit.setEnergy(integral * m_scaleADC.value());
+    digiHit.setEnergyError(m_scaleADC.value() * std::sqrt(integral));
     digiHit.setPosition(simHit.getPosition());
     digiHit.setCellID(simHit.getCellID());
     digiHit.setTime(toa + m_gateStart); // Toa and m_gateStart are in ns

@@ -39,7 +39,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
     try {
       m_cellCollectionHandles.push_back(
-          new DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
+          new k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
     } catch (...) {
       error() << "Error creating handle for input collection: " << col << endmsg;
       return StatusCode::FAILURE;
@@ -66,8 +66,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
       return StatusCode::FAILURE;
     }
 
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) ==
-        m_geoSvc->getDetector()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
 
       return StatusCode::FAILURE;
@@ -366,7 +365,7 @@ std::vector<std::pair<uint64_t, uint32_t>> CaloTopoClusterFCCee::searchForNeighb
   if (!m_useNeighborMap) {
     // DDSegmentation returns std::set
     std::set<dd4hep::DDSegmentation::CellID> outputNeighbors;
-    m_segmentation->neighbours(aCellId,outputNeighbors);
+    m_segmentation->neighbours(aCellId, outputNeighbors);
     neighboursVec = std::vector<uint64_t>(outputNeighbors.begin(), outputNeighbors.end());
   }
 

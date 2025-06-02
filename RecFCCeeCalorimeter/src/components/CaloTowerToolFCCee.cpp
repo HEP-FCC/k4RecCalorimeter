@@ -25,7 +25,7 @@ StatusCode CaloTowerToolFCCee::initialize() {
     debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
     try {
       m_cellCollectionHandles.push_back(
-          new DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
+          new k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
     } catch (...) {
       error() << "Error creating handle for input collection: " << col << endmsg;
       return StatusCode::FAILURE;
@@ -39,10 +39,10 @@ StatusCode CaloTowerToolFCCee::initialize() {
   m_nPhiTower = ceil((m_phiMax - m_phiMin - epsilon) / m_deltaPhiTower);
   // number of theta bins
   m_nThetaTower = ceil((m_thetaMax - m_thetaMin - epsilon) / m_deltaThetaTower);
-  debug() << "Towers: thetaMin " << m_thetaMin.value() <<  ", thetaMax " << m_thetaMax.value()
-          << ", deltaThetaTower " << m_deltaThetaTower.value() << ", nThetaTower " << m_nThetaTower << endmsg;
-  debug() << "Towers: phiMin " << m_phiMin.value() << ", phiMax " << m_phiMax.value()
-          << ", deltaPhiTower " << m_deltaPhiTower.value() << ", nPhiTower " << m_nPhiTower << endmsg;
+  debug() << "Towers: thetaMin " << m_thetaMin.value() << ", thetaMax " << m_thetaMax.value() << ", deltaThetaTower "
+          << m_deltaThetaTower.value() << ", nThetaTower " << m_nThetaTower << endmsg;
+  debug() << "Towers: phiMin " << m_phiMin.value() << ", phiMax " << m_phiMax.value() << ", deltaPhiTower "
+          << m_deltaPhiTower.value() << ", nPhiTower " << m_nPhiTower << endmsg;
 
   return StatusCode::SUCCESS;
 }
@@ -151,19 +151,20 @@ uint CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
     float cellTheta = atan2(sqrt(cellX * cellX + cellY * cellY), cellZ);
     float cellPhi = atan2(cellY, cellX);
     // skip cells outside of specified ranges
-    if (cellTheta<m_thetaMin || cellTheta>m_thetaMax) {
+    if (cellTheta < m_thetaMin || cellTheta > m_thetaMax) {
       warning() << "Cell theta " << cellTheta << " outside of theta range of towers, will not be clustered" << endmsg;
       continue;
     }
-    if (cellPhi<m_phiMin || cellPhi>m_phiMax) {
+    if (cellPhi < m_phiMin || cellPhi > m_phiMax) {
       warning() << "Cell phi " << cellPhi << " outside of phi range of towers, will not be clustered" << endmsg;
       continue;
     }
     iTheta = idTheta(cellTheta);
     iPhi = idPhi(cellPhi);
-    //debug() << "Cell: x = " << cellX << " y = " << cellY << " z = " << cellZ << endmsg;
-    //debug() << "Cell: theta = " << cellTheta << " phi = " << cellPhi << endmsg;
-    //debug() << "Cell: iTheta = " << iTheta << " iPhi = " << iPhi << " iPhi(cyclic) = " << phiIndexTower(iPhi) << endmsg;
+    // debug() << "Cell: x = " << cellX << " y = " << cellY << " z = " << cellZ << endmsg;
+    // debug() << "Cell: theta = " << cellTheta << " phi = " << cellPhi << endmsg;
+    // debug() << "Cell: iTheta = " << iTheta << " iPhi = " << iPhi << " iPhi(cyclic) = " << phiIndexTower(iPhi) <<
+    // endmsg;
     aTowers[iTheta][phiIndexTower(iPhi)] += cell.getEnergy() * sin(cellTheta);
     if (fillTowersCells) {
       clusteredCells++;
@@ -203,19 +204,17 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
               auto cellclone = cell.clone();
               aEdmClusterCells->push_back(cellclone);
               aEdmCluster.addToHits(cellclone);
-            }
-            else {
+            } else {
               aEdmCluster.addToHits(cell);
             }
 
-            if (m_nSubDetectors>0) {
+            if (m_nSubDetectors > 0) {
               // caloID: 1 = ecal, 2 = hcal, 3 = yoke - see how m_caloid is computed and encoded in cell type in
               // https://github.com/HEP-FCC/k4RecCalorimeter/blob/main/RecCalorimeter/src/components/CreatePositionedCaloCells.cpp
-              int caloID = ((cell.getType() / 10) % 10) -1 ;
-              if (caloID < 0 or caloID > (int) m_nSubDetectors) {
+              int caloID = ((cell.getType() / 10) % 10) - 1;
+              if (caloID < 0 or caloID > (int)m_nSubDetectors) {
                 warning() << "Wrong caloID " << caloID << endmsg;
-              }
-              else {
+              } else {
                 subDetectorEnergies[caloID] += cell.getEnergy();
               }
             }
@@ -236,16 +235,14 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
             auto cellclone = cell.clone();
             aEdmClusterCells->push_back(cellclone);
             aEdmCluster.addToHits(cellclone);
-          }
-          else {
+          } else {
             aEdmCluster.addToHits(cell);
           }
-          if (m_nSubDetectors>0) {
+          if (m_nSubDetectors > 0) {
             int caloID = ((cell.getType() / 10) % 10 - 1);
-            if (caloID < 0 or caloID > (int) m_nSubDetectors) {
+            if (caloID < 0 or caloID > (int)m_nSubDetectors) {
               warning() << "Wrong caloID " << caloID << endmsg;
-            }
-            else {
+            } else {
               subDetectorEnergies[caloID] += cell.getEnergy();
             }
           }
@@ -253,7 +250,7 @@ void CaloTowerToolFCCee::attachCells(float theta, float phi, uint halfThetaFin, 
       }
     }
   }
-  for (auto energy: subDetectorEnergies) {
+  for (auto energy : subDetectorEnergies) {
     aEdmCluster.addToSubdetectorEnergies(energy);
   }
   return;

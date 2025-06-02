@@ -84,16 +84,18 @@ private:
                                           "Save only cells with energy above threshold?"};
 
   /// Handle for calo hits (input collection)
-  mutable DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
   /// Handle for the cellID encoding string of the input hit collection
-  MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Reader};
+  k4FWCore::MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding,
+                                                             Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   /// Handle for hit<->cell link (output collection)
-  mutable DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_links{"links", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_links{"links", Gaudi::DataHandle::Writer,
+                                                                                 this};
   /// Handle for the cellID encoding of the output cell collection
-  MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding,
-                                                    Gaudi::DataHandle::Writer};
+  k4FWCore::MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding,
+                                                              Gaudi::DataHandle::Writer};
   /// Maps of cell IDs (corresponding to DD4hep IDs) vs digitised cell energies
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk

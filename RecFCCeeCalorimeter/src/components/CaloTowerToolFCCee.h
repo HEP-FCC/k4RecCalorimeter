@@ -101,7 +101,7 @@ public:
    */
   inline std::vector<std::string> getInputCollections() {
     std::vector<std::string> v;
-    for (auto coll: m_cellCollections) {
+    for (auto coll : m_cellCollections) {
       v.push_back(coll);
     }
     return v;
@@ -112,11 +112,12 @@ public:
    */
   inline std::vector<int> getInputSystemIDs() {
     std::vector<int> v;
-    for (auto ID: m_caloIDs) {
+    for (auto ID : m_caloIDs) {
       v.push_back(ID);
     }
     return v;
   }
+
 private:
   /**  Correct way to obtain the phi index of a tower, taking into account
    * the phi periodicity.
@@ -135,18 +136,17 @@ private:
 
   /// List of input cell collections
   Gaudi::Property<std::vector<std::string>> m_cellCollections{
-    this, "cells", {}, "Names of CalorimeterHit collections to read"};
+      this, "cells", {}, "Names of CalorimeterHit collections to read"};
 
   /// Corresponding list of calorimeter IDs
   /// Only needed by SW clustering algorithm that uses this tool
   /// if new output cell collection with clustered cells is created,
   /// to record in metadata the map of systemID vs collectionName
   /// which is then used to determine the appropriate cellID enconding
-  Gaudi::Property<std::vector<int>> m_caloIDs{
-    this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
+  Gaudi::Property<std::vector<int>> m_caloIDs{this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
-  /// The vector of input DataHandles for the input cell collections
-  std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
+  /// The vector of input k4FWCore::DataHandles for the input cell collections
+  std::vector<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
 
   /// Maximum theta of towers
   /// Can be left to pi, it won't hurt
@@ -159,9 +159,9 @@ private:
   /// Minimum phi of towers
   Gaudi::Property<float> m_phiMin{this, "phiMin", -M_PI, "Minimum phi of towers"};
   /// Size of the tower in theta (default: pi/314 ~ 0.01 rad)
-  Gaudi::Property<float> m_deltaThetaTower{this, "deltaThetaTower", M_PI/314, "Size of the tower in theta"};
+  Gaudi::Property<float> m_deltaThetaTower{this, "deltaThetaTower", M_PI / 314, "Size of the tower in theta"};
   /// Size of the tower in phi (default: pi/314 ~ 0.01 rad)
-  Gaudi::Property<float> m_deltaPhiTower{this, "deltaPhiTower", M_PI/314, "Size of the tower in phi"};
+  Gaudi::Property<float> m_deltaPhiTower{this, "deltaPhiTower", M_PI / 314, "Size of the tower in phi"};
 
   /// Number of calorimeters (e.g. ecal/hcal/muon) for which to calculate the
   /// total subdetector energy of the cluster and save it in the subdetectorEnergies vector
