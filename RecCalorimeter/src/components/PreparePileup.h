@@ -74,7 +74,7 @@ private:
   int m_nPhiTower;
 
   /// Handle for calo hits (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
 
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   mutable std::unordered_map<uint64_t, double> m_cellsMap;

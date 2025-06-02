@@ -89,10 +89,10 @@ private:
    */
   unsigned int phiNeighbour(int aIPhi) const;
   /// Handle for calo clusters (output collection)
-  mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Writer, this};
   /// Handle for calo cluster cells (output collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells", Gaudi::DataHandle::Writer,
-                                                                       this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells",
+                                                                                 Gaudi::DataHandle::Writer, this};
   /// Handle for the tower building tool
   mutable ToolHandle<ITowerTool> m_towerTool;
   // calorimeter towers
