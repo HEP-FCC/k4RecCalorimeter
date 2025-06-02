@@ -107,7 +107,7 @@ private:
   Gaudi::Property<std::vector<std::string>> m_cellCollections{
       this, "cells", {}, "Names of CalorimeterHit collections to read"};
   /// the vector of input k4FWCore::DataHandles for the input cell collections
-  std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
+  std::vector<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
   // Cluster collection (output)
   mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"clusters", Gaudi::DataHandle::Writer,
                                                                                this};
