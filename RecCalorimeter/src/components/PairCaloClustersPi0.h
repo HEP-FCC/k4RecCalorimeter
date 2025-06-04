@@ -89,13 +89,13 @@ private:
   double getInvariantMass(double E1, edm4hep::Vector3d momentum1 ,double E2, edm4hep::Vector3d momentum2) const;
 
   /// Handle for input calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
   /// Handle for reconstructed pi0 particles (output1) collection
-  mutable DataHandle<edm4hep::ReconstructedParticleCollection> m_reconstructedPi0{"reconstructedPi0", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ReconstructedParticleCollection> m_reconstructedPi0{"reconstructedPi0", Gaudi::DataHandle::Writer, this};
   /// Handle for unpaired (output2) calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_unpairedClusters{"unpairedClusters", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_unpairedClusters{"unpairedClusters", Gaudi::DataHandle::Writer, this};
   /// Handle for paired (output3) calorimeter clusters collection
-  mutable DataHandle<edm4hep::ClusterCollection> m_pairedClusters{"pairedClusters", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_pairedClusters{"pairedClusters", Gaudi::DataHandle::Writer, this};
 
   
   // pi0 mass window
