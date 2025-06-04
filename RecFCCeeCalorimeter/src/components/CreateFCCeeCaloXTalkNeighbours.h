@@ -69,7 +69,7 @@ private:
   // These numbers are for ECAL only. Consider to extend them to a vector in future development.
   // radial crosstalk coefficient, p7, "in C14 out C15", 50 ns shaping
   Gaudi::Property<double> m_xtalk_coef_radial{this, "xtalkCoefRadial", 0.7e-2};
-  // theta crosstalk coefficient, p7, "in C14 out C14", 50 ns shaping 
+  // theta crosstalk coefficient, p11, "in C14 out C14", 50 ns shaping 
   Gaudi::Property<double> m_xtalk_coef_theta{this, "xtalkCoefTheta", 0.2e-2};
   // diagonal crosstalk coefficient, p11, "in C14 out C13" and "in C14 out C15", 50 ns shaping
   Gaudi::Property<double> m_xtalk_coef_diagonal{this, "xtalkCoefDiagonal", 0.04e-2};
