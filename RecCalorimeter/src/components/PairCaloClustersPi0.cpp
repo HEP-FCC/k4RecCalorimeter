@@ -74,20 +74,15 @@ double PairCaloClustersPi0::getInvariantMass(
 
 // projection: energy -> 3 momentum of a cluster
 edm4hep::Vector3d PairCaloClustersPi0::projectMomentum(double energy, edm4hep::Vector3d position, edm4hep::Vector3d origin) const{
-  double dirx=position.x-origin.x;
-  double diry=position.y-origin.y;
-  double dirz=position.z-origin.z;
-  double quadsum_dir=pow(dirx,2) + pow(diry,2) + pow(dirz,2);
-  if (quadsum_dir>0){
-    quadsum_dir=sqrt(quadsum_dir);
-    double px=energy * dirx / quadsum_dir;
-    double py=energy * diry / quadsum_dir;
-    double pz=energy * dirz / quadsum_dir;
-    return edm4hep::Vector3d(px, py, pz);
-  }
-  else{
-    return edm4hep::Vector3d(0,0,0);
-  }
+  // the direction of a cluster is defined to be that from the inferred origin of the cluster to the barycenter of the cluster
+  double dirx = position.x-origin.x;
+  double diry = position.y-origin.y;
+  double dirz = position.z-origin.z;
+  double quadsum_dir = sqrt( abs( pow(dirx,2) + pow(diry,2) + pow(dirz,2) ) );
+  double px = energy * dirx / quadsum_dir;
+  double py = energy * diry / quadsum_dir;
+  double pz = energy * dirz / quadsum_dir;
+  return edm4hep::Vector3d(px, py, pz);
 }
 
 // cluster pairing
@@ -104,11 +99,13 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
   for (size_t i=0; i<inClusters->size(); ++i){
     double energy_i=inClusters->at(i).getEnergy();
     edm4hep::Vector3d cluster_i_position3d(inClusters->at(i).getPosition().x, inClusters->at(i).getPosition().y, inClusters->at(i).getPosition().z);
+    // For the moment, the cluster origin points to (x, y, z) = (0, 0, 0). Waiting for the update of cluster direction pointing algorithm.
     edm4hep::Vector3d cluster_i_origin3d(0., 0., 0.);
     edm4hep::Vector3d cluster_i_momentum=PairCaloClustersPi0::projectMomentum(energy_i, cluster_i_position3d, cluster_i_origin3d);
     for(size_t j=i+1; j<inClusters->size(); j++){
       double energy_j=inClusters->at(j).getEnergy();
       edm4hep::Vector3d cluster_j_position3d(inClusters->at(j).getPosition().x, inClusters->at(j).getPosition().y, inClusters->at(j).getPosition().z);
+      // For the moment, the cluster origin points to (x, y, z) = (0, 0, 0). Waiting for the update of cluster direction pointing algorithm.
       edm4hep::Vector3d cluster_j_origin3d(0., 0., 0.);
       edm4hep::Vector3d cluster_j_momentum=PairCaloClustersPi0::projectMomentum(energy_j, cluster_j_position3d, cluster_j_origin3d);
       double invM=PairCaloClustersPi0::getInvariantMass(energy_i, cluster_i_momentum, energy_j, cluster_j_momentum);
