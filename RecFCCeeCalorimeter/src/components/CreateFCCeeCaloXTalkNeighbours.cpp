@@ -38,6 +38,9 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
+  if(m_connectBarrels){
+    warning() << "connectBarrels feature is not yet implemented!" <<endmsg;
+  }
   std::unordered_map<uint64_t, std::vector<std::pair<uint64_t, double>>> map;
 
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {

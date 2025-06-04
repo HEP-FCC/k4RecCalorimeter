@@ -65,21 +65,29 @@ private:
   // Theta ranges of layers in the segmented volumes
   Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
 
-  // radial crosstalk coefficient, see https://indico.cern.ch/event/1368231/contributions/5904291/
+  // for crosstalk coefficient, please see https://indico.cern.ch/event/1368231/contributions/5904291/
+  // These numbers are for ECAL only. Consider to extend them to a vector in future development.
+  // radial crosstalk coefficient, p7, "in C14 out C15", 50 ns shaping
   Gaudi::Property<double> m_xtalk_coef_radial{this, "xtalkCoefRadial", 0.7e-2};
-  // theta crosstalk coefficient
+  // theta crosstalk coefficient, p7, "in C14 out C14", 50 ns shaping 
   Gaudi::Property<double> m_xtalk_coef_theta{this, "xtalkCoefTheta", 0.2e-2};
-  // diagonal crosstalk coefficient
+  // diagonal crosstalk coefficient, p11, "in C14 out C13" and "in C14 out C15", 50 ns shaping
   Gaudi::Property<double> m_xtalk_coef_diagonal{this, "xtalkCoefDiagonal", 0.04e-2};
-  // tower crosstalk coefficient
+  // tower crosstalk coefficient: crosstalk due to the signal traces traversing the theta tower.
+  // This quantity was not measured at CERN at the time. A reasonable guess is used here, which is confirmed orally by IJCLab.
   Gaudi::Property<double> m_xtalk_coef_tower{this, "xtalkCoefTower", 0.1e-2};
+  
+  // Save debug information of cell position in (layer, theta, module) indices
+  Gaudi::Property<bool> m_debugCellInfo{this, "debugCellInfo", true};
+
+  // Properties below are intended for future implementation of cross-talk between ECAL and HCAL. Currently not used.
 
   // System ID of ECAL and HCAL barrels
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
   Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
 
   // For combination of barrels: flag if ECal and HCal barrels should be merged
-  Gaudi::Property<bool> m_connectBarrels{this, "connectBarrels", true};
+  Gaudi::Property<bool> m_connectBarrels{this, "connectBarrels", false};
   // For combination of barrels: size of HCal cell along z axis
   Gaudi::Property<double> m_hCalZSize{this, "hCalZsize", 18};
   // For combination of barrels: offset of HCal detector in z (lower edge)
@@ -89,8 +97,6 @@ private:
   // For combination of barrels: offset of HCal modules in phi (lower edge)
   Gaudi::Property<double> m_hCalPhiOffset{this, "hCalPhiOffset"};
   
-  // Save debug information of cell position in (layer, theta, module) indices
-  Gaudi::Property<bool> m_debugCellInfo{this, "debugCellInfo", true};
 
   /// Name of output file
   std::string m_outputFileName;
