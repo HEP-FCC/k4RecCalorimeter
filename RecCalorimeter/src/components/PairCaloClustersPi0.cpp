@@ -19,19 +19,6 @@ StatusCode PairCaloClustersPi0::initialize() {
     if (sc.isFailure()) {
       return sc;
     }
-    /*
-    // Initialize random service
-    m_randSvc = service("RndmGenSvc", false);
-    if (!m_randSvc) {
-      error() << "Couldn't get RndmGenSvc!!!!" << endmsg;
-      return StatusCode::FAILURE;
-    }
-    // Initialize binary random number generator
-    if (m_bit.initialize(m_randSvc, Rndm::Bit()).isFailure()) {
-      error() << "Couldn't initialize RndmGenSvc!!!!" << endmsg;
-      return StatusCode::FAILURE;
-    }
-    */
   }
 
   // print pi0 mass window
@@ -99,15 +86,13 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
   for (size_t i=0; i<inClusters->size(); ++i){
     double energy_i=inClusters->at(i).getEnergy();
     edm4hep::Vector3d cluster_i_position3d(inClusters->at(i).getPosition().x, inClusters->at(i).getPosition().y, inClusters->at(i).getPosition().z);
-    // For the moment, the cluster origin points to (x, y, z) = (0, 0, 0). Waiting for the update of cluster direction pointing algorithm.
-    edm4hep::Vector3d cluster_i_origin3d(0., 0., 0.);
-    edm4hep::Vector3d cluster_i_momentum=PairCaloClustersPi0::projectMomentum(energy_i, cluster_i_position3d, cluster_i_origin3d);
+    // For the moment, the cluster direction uses the pointing assumption: from (0,0,0) to the cluster position. Waiting for the update of cluster direction pointing algorithm.
+    edm4hep::Vector3d cluster_i_momentum=PairCaloClustersPi0::projectMomentum(energy_i, cluster_i_position3d, edm4hep::Vector3d(0,0,0));
     for(size_t j=i+1; j<inClusters->size(); j++){
       double energy_j=inClusters->at(j).getEnergy();
       edm4hep::Vector3d cluster_j_position3d(inClusters->at(j).getPosition().x, inClusters->at(j).getPosition().y, inClusters->at(j).getPosition().z);
-      // For the moment, the cluster origin points to (x, y, z) = (0, 0, 0). Waiting for the update of cluster direction pointing algorithm.
-      edm4hep::Vector3d cluster_j_origin3d(0., 0., 0.);
-      edm4hep::Vector3d cluster_j_momentum=PairCaloClustersPi0::projectMomentum(energy_j, cluster_j_position3d, cluster_j_origin3d);
+      // For the moment, the cluster direction uses the pointing assumption: from (0,0,0) to the cluster position. Waiting for the update of cluster direction pointing algorithm.
+      edm4hep::Vector3d cluster_j_momentum=PairCaloClustersPi0::projectMomentum(energy_j, cluster_j_position3d, edm4hep::Vector3d(0,0,0));
       double invM=PairCaloClustersPi0::getInvariantMass(energy_i, cluster_i_momentum, energy_j, cluster_j_momentum);
       if (invM>masslow && invM<masshigh){
 	std::pair<size_t, size_t> this_possible_pair=std::make_pair(i,j);
@@ -229,7 +214,6 @@ PairCaloClustersPi0::ClusterPairing(const edm4hep::ClusterCollection* inClusters
     double this_pi0_invM=PairCaloClustersPi0::getInvariantMass( outCluster1.getEnergy(), momentum1, outCluster2.getEnergy(), momentum2 );
     verbose() << "Final pairing " << i << " first cluster = " << bestcombi_pairs[i].first << ", second cluster =  " << bestcombi_pairs[i].second << ", invariant mass [GeV] = " <<  this_pi0_invM <<endmsg;
     
-    //edm4hep::Vector3f pi0_momentum(momentum1.x+momentum2.x, momentum1.y+momentum2.y, momentum1.z+momentum2.z);
     edm4hep::MutableReconstructedParticle this_pi0(
 	111,
 	outCluster1.getEnergy()+outCluster2.getEnergy(),

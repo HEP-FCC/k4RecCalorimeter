@@ -7,8 +7,6 @@
 // Gaudi
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/MsgStream.h"
-//#include "GaudiKernel/IRndmGenSvc.h"
-//#include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // our edm
@@ -33,10 +31,15 @@ class Vector3d;
 
 /** @class PairCaloClustersPi0
  *
- *  Make pi0 candidate (reconstructed particle) from cluster pairs, according to the definition of a pi0 mass window
+ *  Make pi0 candidate (reconstructed particle) from cluster pairs, according to the definition of a pi0 mass window.
+ *  (1) The pairing algorithm makes as many cluster pairs as possible, provided that there is no overlap of cluster.
+ *  (2) In case there is an ambiguity of cluster pairing,
+ *      Keep the combination of cluster pairing that leads to the smallest deviation of invariant mass from the pi0 mass peak.
+ *  (3) If the ambiguity still exists (very unlikely), randomly choose a combination of cluster pairing.
+ *
  *  Output1: A list of reconstructed particles, with energy, momentum, and pointers to a pair of clusters
- *  Output2: The rest of clusters not involved in the reconstructioni of pi0 candidate through the pairing.
- *  Output3: Clusters used in the reconstructioni of pi0 candidate.
+ *  Output2: The rest of clusters not involved in the reconstruction of pi0 candidate through the pairing.
+ *  Output3: Clusters used in the reconstruction of pi0 candidate.
  *  
  *  @author Zhibo Wu
  */
@@ -102,13 +105,6 @@ private:
   Gaudi::Property<double> m_massPeak{this, "massPeak", 0.135, "pi0 mass peak [GeV]"};
   Gaudi::Property<double> m_massLow{this, "massLow", 0.0, "lower boundary of pi0 mass window [GeV]"};
   Gaudi::Property<double> m_massHigh{this, "massHigh", 0.27, "upper boundary of pi0 mass window [GeV]"};
-
-  /*
-  /// Random Number Service
-  SmartIF<IRndmGenSvc> m_randSvc;
-  /// Randomly choose between 0 and 1, used in cluster pairing
-  Rndm::Numbers m_bit;
-  */
 
 };
 
