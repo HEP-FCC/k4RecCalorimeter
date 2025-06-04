@@ -55,24 +55,26 @@ public:
 
 private:
   /// Handle for electromagnetic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
   /// Handle for ecal endcap calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalEndcapCells{"ecalEndcapCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_ecalEndcapCells{"ecalEndcapCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
   /// Handle for ecal forward calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalFwdCells{"ecalFwdCells", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_ecalFwdCells{"ecalFwdCells",
+                                                                                 Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic extended barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells",
-                                                                             Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hcalExtBarrelCells{"hcalExtBarrelCells",
+                                                                                       Gaudi::DataHandle::Reader, this};
   /// Handle for hcal endcap calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalEndcapCells{"hcalEndcapCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hcalEndcapCells{"hcalEndcapCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
   /// Handle for hcal forward calorimeter cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalFwdCells{"hcalFwdCells", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hcalFwdCells{"hcalFwdCells",
+                                                                                 Gaudi::DataHandle::Reader, this};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Name of the electromagnetic barrel readout

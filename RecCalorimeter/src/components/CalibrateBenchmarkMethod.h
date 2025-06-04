@@ -64,17 +64,17 @@ private:
   /// Pointer to the interface of histogram service
   ServiceHandle<ITHistSvc> m_histSvc;
 
-  double chiSquareFitBarrel(const Double_t* par) const;
+  double chiSquareFitBarrel(const double* par) const;
   void registerHistogram(const std::string& path, TH1F*& histogramName);
   void runMinimization(int n_param, const std::vector<double>& variable, const std::vector<double>& steps,
                        const std::vector<int>& fixedParameters) const;
 
   /// Handle for electromagnetic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
 
   /// Histogram of total deposited energy in the calorimeters
   TH1F* m_totalEnergyECal;

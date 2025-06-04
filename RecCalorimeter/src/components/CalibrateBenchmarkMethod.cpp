@@ -191,7 +191,7 @@ StatusCode CalibrateBenchmarkMethod::execute(const EventContext&) const {
 }
 
 // minimisation function for the benchmark method
-double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t* parameter) const {
+double CalibrateBenchmarkMethod::chiSquareFitBarrel(const double* parameter) const {
   double fitvalue = 0.;
   // loop over all events, vector of a size of #evts is filled with the energies
   // ECal calibrated to EM scale, HCal calibrated to HAD scale
@@ -203,7 +203,7 @@ double CalibrateBenchmarkMethod::chiSquareFitBarrel(const Double_t* parameter) c
     double energyInLastLayerECal = m_vecEnergyInLastLayerECal.at(i);
     double energyInFirstLayerHCal = m_vecEnergyInFirstLayerHCal.at(i);
 
-    Double_t benchmarkEnergy =
+    double benchmarkEnergy =
         parameter[0] * totalEnergyInECal + parameter[1] * totalEnergyInHCal +
         parameter[2] *
             std::sqrt(std::fabs(energyInLastLayerECal * parameter[0] * energyInFirstLayerHCal * parameter[1])) +
@@ -277,8 +277,8 @@ void CalibrateBenchmarkMethod::runMinimization(int n_param, const std::vector<do
   minimizer->Minimize();
 
   // Access the results if needed
-  const Double_t* xs = minimizer->X();
-  const Double_t* ys = minimizer->Errors();
+  const double* xs = minimizer->X();
+  const double* ys = minimizer->Errors();
 
   std::cout << "Minimum: f(";
   for (int i = 0; i < n_param; ++i) {

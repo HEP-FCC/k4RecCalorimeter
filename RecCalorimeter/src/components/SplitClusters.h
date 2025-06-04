@@ -91,12 +91,13 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Handle for calo clusters (input collection)
-  mutable DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_clusters{"calo/clusters", Gaudi::DataHandle::Reader, this};
   /// Handle for calo clusters (output collection)
-  mutable DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_newClusters{"calo/calibClusters",
+                                                                         Gaudi::DataHandle::Writer, this};
   // Handle for calo cells (output collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells", Gaudi::DataHandle::Writer,
-                                                                   this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells",
+                                                                             Gaudi::DataHandle::Writer, this};
   /// Handle for neighbours tool
   mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 
