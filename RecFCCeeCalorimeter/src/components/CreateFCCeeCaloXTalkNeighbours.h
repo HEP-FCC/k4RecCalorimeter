@@ -67,7 +67,7 @@ private:
 
   // radial crosstalk coefficient, see https://indico.cern.ch/event/1368231/contributions/5904291/
   Gaudi::Property<double> m_xtalk_coef_radial{this, "xtalkCoefRadial", 0.7e-2};
-  // thetacrosstalk coefficient
+  // theta crosstalk coefficient
   Gaudi::Property<double> m_xtalk_coef_theta{this, "xtalkCoefTheta", 0.2e-2};
   // diagonal crosstalk coefficient
   Gaudi::Property<double> m_xtalk_coef_diagonal{this, "xtalkCoefDiagonal", 0.04e-2};
