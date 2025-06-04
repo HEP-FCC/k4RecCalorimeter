@@ -17,8 +17,6 @@
 #include "TSystem.h"
 #include "TTree.h"
 
-#define DEBUGCELLINFO 1
-
 DECLARE_COMPONENT(CreateFCCeeCaloXTalkNeighbours)
 
 CreateFCCeeCaloXTalkNeighbours::CreateFCCeeCaloXTalkNeighbours(const std::string& aName, ISvcLocator* aSL)
@@ -41,9 +39,6 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
     return StatusCode::FAILURE;
   }
   std::unordered_map<uint64_t, std::vector<std::pair<uint64_t, double>>> map;
-#if DEBUGCELLINFO == 1
-  std::unordered_map<uint64_t, std::vector<int>> CellInfo;
-#endif
 
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readout exists
@@ -193,10 +188,10 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
   tree.Branch("list_crosstalks", &saveCrosstalks);
 
   // Debug: save cell position
-#if DEBUGCELLINFO == 1
   std::vector<int> saveCellInfo;
-  tree.Branch("CellInfo", &saveCellInfo);
-#endif
+  if (m_debugCellInfo){
+    tree.Branch("CellInfo", &saveCellInfo);
+  }
 
   int count_map = 0;
   for (const auto& item : map) {
@@ -211,21 +206,21 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
     saveNeighbours = temp_neighbours;
     saveCrosstalks = temp_crosstalks;
     // Debug: save cell position
-#if DEBUGCELLINFO == 1
-    for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
-      dd4hep::DDSegmentation::Segmentation* aSegmentation =
-          m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation();
-      std::string segmentationType = aSegmentation->type();
-      dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* moduleThetaSegmentation = nullptr;
-      auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
-      if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
-        moduleThetaSegmentation =
-            dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
+    if (m_debugCellInfo){
+      for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
+        dd4hep::DDSegmentation::Segmentation* aSegmentation =
+            m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation();
+        std::string segmentationType = aSegmentation->type();
+        dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* moduleThetaSegmentation = nullptr;
+        auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
+        if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
+          moduleThetaSegmentation =
+              dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
+        }
+        saveCellInfo = det::crosstalk::getCellIndices(*moduleThetaSegmentation, *decoder,
+                                                      {m_activeFieldNamesSegmented[iSys], "module", "theta"}, saveCellId);
       }
-      saveCellInfo = det::crosstalk::getCellIndices(*moduleThetaSegmentation, *decoder,
-                                                    {m_activeFieldNamesSegmented[iSys], "module", "theta"}, saveCellId);
     }
-#endif
     tree.Fill();
     count_map++;
     if (!count_map % 1000)

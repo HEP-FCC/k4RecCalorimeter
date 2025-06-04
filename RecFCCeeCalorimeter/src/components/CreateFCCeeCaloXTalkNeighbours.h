@@ -88,6 +88,9 @@ private:
   Gaudi::Property<double> m_hCalRinner{this, "hCalRinner", 2850};
   // For combination of barrels: offset of HCal modules in phi (lower edge)
   Gaudi::Property<double> m_hCalPhiOffset{this, "hCalPhiOffset"};
+  
+  // Save debug information of cell position in (layer, theta, module) indices
+  Gaudi::Property<bool> m_debugCellInfo{this, "debugCellInfo", true};
 
   /// Name of output file
   std::string m_outputFileName;
