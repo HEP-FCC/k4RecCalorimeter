@@ -40,11 +40,12 @@ private:
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
 
   /// Handle for calo hits (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
   /// Handle for calo hits (input collection)
-  mutable DataHandle<edm4hep::MCParticleCollection> m_particles{"particles", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::MCParticleCollection> m_particles{"particles", Gaudi::DataHandle::Reader, this};
   /// Handle for calo cells (output collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_selCells{"selCells", Gaudi::DataHandle::Writer,
+                                                                             this};
   /// Map of cell IDs (corresponding to DD4hep IDs) and energy
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
 

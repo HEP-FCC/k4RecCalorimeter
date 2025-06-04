@@ -4,7 +4,8 @@
 
 DECLARE_COMPONENT(SimulateSiPMwithEdep)
 
-SimulateSiPMwithEdep::SimulateSiPMwithEdep(const std::string& aName, ISvcLocator* aSvcLoc) : Gaudi::Algorithm(aName, aSvcLoc) {}
+SimulateSiPMwithEdep::SimulateSiPMwithEdep(const std::string& aName, ISvcLocator* aSvcLoc)
+    : Gaudi::Algorithm(aName, aSvcLoc) {}
 
 StatusCode SimulateSiPMwithEdep::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
@@ -20,7 +21,7 @@ StatusCode SimulateSiPMwithEdep::initialize() {
     return StatusCode::FAILURE;
   }
 
-  if (m_rndmUniform.initialize(m_randSvc, Rndm::Flat(0.,1.)).isFailure()) {
+  if (m_rndmUniform.initialize(m_randSvc, Rndm::Flat(0., 1.)).isFailure()) {
     error() << "Couldn't initialize RndmGenSvc!" << endmsg;
     return StatusCode::FAILURE;
   }
@@ -36,21 +37,23 @@ StatusCode SimulateSiPMwithEdep::initialize() {
     return StatusCode::FAILURE;
   }
 
-  if (m_wavelen.size()!=m_sipmEff.size()) {
+  if (m_wavelen.size() != m_sipmEff.size()) {
     error() << "SimulateSiPMwithEdep: "
             << "The SiPM efficiency vector size should be equal to the wavelength vector size" << endmsg;
     return StatusCode::FAILURE;
   }
 
-  if (m_wavelen.size()!=m_scintSpectrum.size()) {
+  if (m_wavelen.size() != m_scintSpectrum.size()) {
     error() << "SimulateSiPMwithEdep: "
-               "The scintillation spectrum vector size should be equal to the wavelength vector size" << endmsg;
+               "The scintillation spectrum vector size should be equal to the wavelength vector size"
+            << endmsg;
     return StatusCode::FAILURE;
   }
 
-  if (m_wavelen.size()!=m_filterEff.size()) {
+  if (m_wavelen.size() != m_filterEff.size()) {
     error() << "SimulateSiPMwithEdep: "
-               "The filter efficiency vector size should be equal to the wavelength vector size" << endmsg;
+               "The filter efficiency vector size should be equal to the wavelength vector size"
+            << endmsg;
     return StatusCode::FAILURE;
   }
 
@@ -68,7 +71,7 @@ StatusCode SimulateSiPMwithEdep::initialize() {
   properties.setRiseTime(m_risetime);
   properties.setSnr(m_snr);
   properties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
-  properties.setPdeSpectrum(m_wavelen,m_sipmEff);
+  properties.setPdeSpectrum(m_wavelen, m_sipmEff);
 
   m_sensor = std::make_unique<sipm::SiPMSensor>(properties); // must be constructed from SiPMProperties
 
@@ -83,14 +86,15 @@ StatusCode SimulateSiPMwithEdep::initialize() {
 
   // integral scintillation spectrum times efficiency
   // and retrieve average efficiency
-  auto integralSpectrum = integral(m_wavelen.value(),m_scintSpectrum.value());
-  m_integral = integral(m_wavelen.value(),specTimesEff);
-  m_efficiency = m_integral.back()/integralSpectrum.back();
+  auto integralSpectrum = integral(m_wavelen.value(), m_scintSpectrum.value());
+  m_integral = integral(m_wavelen.value(), specTimesEff);
+  m_efficiency = m_integral.back() / integralSpectrum.back();
 
   return StatusCode::SUCCESS;
 }
 
-std::vector<double> SimulateSiPMwithEdep::integral(const std::vector<double>& wavelen, const std::vector<double>& yval) const {
+std::vector<double> SimulateSiPMwithEdep::integral(const std::vector<double>& wavelen,
+                                                   const std::vector<double>& yval) const {
   double val = 0.;
   double prevXval = wavelen.front();
   std::vector<double> result = {0.};
@@ -98,8 +102,8 @@ std::vector<double> SimulateSiPMwithEdep::integral(const std::vector<double>& wa
 
   for (unsigned idx = 1; idx < wavelen.size(); idx++) {
     double intervalX = std::abs(prevXval - wavelen.at(idx));
-    double avgY = (yval.at(idx) + yval.at(idx-1))/2.;
-    val += intervalX*avgY;
+    double avgY = (yval.at(idx) + yval.at(idx - 1)) / 2.;
+    val += intervalX * avgY;
     result.push_back(val);
   }
 
@@ -111,7 +115,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
   edm4hep::TimeSeriesCollection* waveforms = m_waveforms.createAndPut();
 
-  const double yield = m_scintYield.value()/dd4hep::keV;
+  const double yield = m_scintYield.value() / dd4hep::keV;
 
   for (unsigned int idx = 0; idx < scintHits->size(); idx++) {
     const auto& scintHit = scintHits->at(idx);
@@ -120,9 +124,9 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
     std::vector<double> vecTimes;
     std::vector<double> vecWavelens;
 
-    for (auto contrib = scintHit.contributions_begin(); contrib!=scintHit.contributions_end(); ++contrib) {
-      const double edep = contrib->getEnergy()*dd4hep::GeV;
-      double avgNphoton = edep*yield*m_efficiency;
+    for (auto contrib = scintHit.contributions_begin(); contrib != scintHit.contributions_end(); ++contrib) {
+      const double edep = contrib->getEnergy() * dd4hep::GeV;
+      double avgNphoton = edep * yield * m_efficiency;
 
       // generate the number of p.e. (npe)
       unsigned npe = 0;
@@ -131,14 +135,14 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
         Rndm::Numbers rnd(m_randSvc, Rndm::Poisson(avgNphoton));
         npe = static_cast<unsigned>(std::floor(rnd.shoot() + 0.5));
       } else {
-        Rndm::Numbers rnd(m_randSvc, Rndm::Gauss(avgNphoton,std::sqrt(avgNphoton)));
+        Rndm::Numbers rnd(m_randSvc, Rndm::Gauss(avgNphoton, std::sqrt(avgNphoton)));
         // prevent underflow since Gaussian can shoot negative in rare case
         double val = std::floor(rnd.shoot() + 0.5);
         npe = static_cast<unsigned>(std::max(val, 0.));
       }
 
-      vecTimes.reserve(vecTimes.size()+npe);
-      vecWavelens.reserve(vecTimes.size()+npe);
+      vecTimes.reserve(vecTimes.size() + npe);
+      vecWavelens.reserve(vecTimes.size() + npe);
 
       // calculate photon arrival time at SiPM
       // using the distance from the step to the SiPM
@@ -148,19 +152,21 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
       const float relX = sipmPos.x - stepPos.x;
       const float relY = sipmPos.y - stepPos.y;
       const float relZ = sipmPos.z - stepPos.z;
-      const float dist = std::sqrt(relX*relX + relY*relY + relZ*relZ)*dd4hep::mm; // in mm (edm4hep unit)
+      const float dist = std::sqrt(relX * relX + relY * relY + relZ * relZ) * dd4hep::mm; // in mm (edm4hep unit)
 
-      const double effSpeedOfLight = dd4hep::c_light/m_refractiveIndex.value();
-      const double distTime = dist/effSpeedOfLight;
-      const double arrivalTime = m_switchTime.value() ? initialTime : initialTime + distTime/dd4hep::nanosecond; // in ns
+      const double effSpeedOfLight = dd4hep::c_light / m_refractiveIndex.value();
+      const double distTime = dist / effSpeedOfLight;
+      const double arrivalTime =
+          m_switchTime.value() ? initialTime : initialTime + distTime / dd4hep::nanosecond; // in ns
 
       for (unsigned ipho = 0; ipho < npe; ipho++) {
         // get photon wavelength
-        // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/electromagnetic/xrays/src/G4Scintillation.cc
-        const double randval = m_integral.back()*m_rndmUniform.shoot();
+        // similar to
+        // https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/electromagnetic/xrays/src/G4Scintillation.cc
+        const double randval = m_integral.back() * m_rndmUniform.shoot();
         unsigned xhigh = 1;
 
-        for (xhigh = 1; xhigh < m_integral.size()-1; xhigh++) {
+        for (xhigh = 1; xhigh < m_integral.size() - 1; xhigh++) {
           if (randval < m_integral.at(xhigh))
             break;
         }
@@ -169,13 +175,13 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
         const unsigned xlow = xhigh - 1;
         const double xdiff = m_wavelen.value().at(xhigh) - m_wavelen.value().at(xlow);
         const double ydiff = m_integral.at(xhigh) - m_integral.at(xlow);
-        const double ydiffInv = (ydiff==0.) ? 0. : 1./ydiff;
-        double valWav = m_wavelen.value().at(xlow) + xdiff*(randval-m_integral.at(xlow))*ydiffInv;
+        const double ydiffInv = (ydiff == 0.) ? 0. : 1. / ydiff;
+        double valWav = m_wavelen.value().at(xlow) + xdiff * (randval - m_integral.at(xlow)) * ydiffInv;
 
         // get absorption length
         unsigned iwave = 1;
 
-        for (iwave = 1; iwave < m_wavelen.value().size()-1; iwave++) { // decreasing order
+        for (iwave = 1; iwave < m_wavelen.value().size() - 1; iwave++) { // decreasing order
           if (valWav > m_wavelen.value().at(iwave))
             break;
         }
@@ -183,19 +189,20 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
         // absorption length is ill-defined if scintHit.getPosition() is not the sensor position
         if (!m_switchTime.value()) {
           // linear interpolation
-          const unsigned waveLow = iwave -1;
+          const unsigned waveLow = iwave - 1;
           const double waveDiff = m_wavelen.value().at(iwave) - m_wavelen.value().at(waveLow);
-          const double waveDiffInv = (waveDiff==0.) ? 0. : 1./waveDiff;
+          const double waveDiffInv = (waveDiff == 0.) ? 0. : 1. / waveDiff;
           const double abslenDiff = m_absLen.value().at(iwave) - m_absLen.value().at(waveLow);
-          double absLen = m_absLen.value().at(waveLow) + abslenDiff*waveDiffInv*(valWav - m_wavelen.value().at(waveLow));
+          double absLen =
+              m_absLen.value().at(waveLow) + abslenDiff * waveDiffInv * (valWav - m_wavelen.value().at(waveLow));
 
           // check absorption
           // similar to https://gitlab.cern.ch/geant4/geant4/-/blob/master/source/processes/management/src/G4VProcess.cc
-          const double nInteractionLengthLeft = -std::log( m_rndmUniform.shoot() );
-          const double nInteractionLength = dist/(absLen*dd4hep::meter);
+          const double nInteractionLengthLeft = -std::log(m_rndmUniform.shoot());
+          const double nInteractionLength = dist / (absLen * dd4hep::meter);
 
           // absorb photons
-          if ( nInteractionLength > nInteractionLengthLeft )
+          if (nInteractionLength > nInteractionLengthLeft)
             continue;
         }
 
@@ -208,8 +215,8 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
     } // contrib
 
     m_sensor->resetState();
-    m_sensor->addPhotons(vecTimes,vecWavelens); // Sets photon times & wavelengths
-    m_sensor->runEvent(); // Runs the simulation
+    m_sensor->addPhotons(vecTimes, vecWavelens); // Sets photon times & wavelengths
+    m_sensor->runEvent();                        // Runs the simulation
 
     auto digiHit = digiHits->create();
     auto waveform = waveforms->create();
@@ -218,20 +225,21 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
     const sipm::SiPMAnalogSignal anaSignal = m_sensor->signal();
 
     // if the signal never exceeds the threshold, it will return -1.
-    const double integral = std::max(0., anaSignal.integral(m_gateStart,m_gateL,m_thres)); // (intStart, intGate, threshold)
-    const double toa = std::max(0., anaSignal.toa(m_gateStart,m_gateL,m_thres));           // (intStart, intGate, threshold)
+    const double integral =
+        std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
+    const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
     const double gateEnd = m_gateStart.value() + m_gateL.value();
 
-    digiHit.setEnergy( integral*m_scaleADC.value() );
-    digiHit.setEnergyError( m_scaleADC.value()*std::sqrt(integral) );
-    digiHit.setPosition( scintHit.getPosition() );
-    digiHit.setCellID( scintHit.getCellID() );
+    digiHit.setEnergy(integral * m_scaleADC.value());
+    digiHit.setEnergyError(m_scaleADC.value() * std::sqrt(integral));
+    digiHit.setPosition(scintHit.getPosition());
+    digiHit.setCellID(scintHit.getCellID());
     // Toa and m_gateStart are in ns
-    digiHit.setTime( toa+m_gateStart );
+    digiHit.setTime(toa + m_gateStart);
 
     // Set waveform properties
     waveform.setInterval(m_sampling);
-    waveform.setTime(toa+m_gateStart);
+    waveform.setTime(toa + m_gateStart);
     waveform.setCellID(scintHit.getCellID());
 
     // Fill the waveform with amplitude values
@@ -245,7 +253,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
         double center = (tStart + tEnd) / 2.;
 
         // Only include samples within our time window of interest
-        if (center < toa+m_gateStart)
+        if (center < toa + m_gateStart)
           continue;
 
         if (center > gateEnd)
@@ -261,6 +269,4 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
   return StatusCode::SUCCESS;
 }
 
-StatusCode SimulateSiPMwithEdep::finalize() {
-  return Gaudi::Algorithm::finalize();
-}
+StatusCode SimulateSiPMwithEdep::finalize() { return Gaudi::Algorithm::finalize(); }

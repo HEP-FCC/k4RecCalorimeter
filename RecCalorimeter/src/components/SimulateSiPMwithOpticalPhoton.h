@@ -2,9 +2,9 @@
 #define RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H
 
 // EDM4HEP includes
-#include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/RawTimeSeriesCollection.h"
+#include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/TimeSeriesCollection.h"
 
 // k4FWCore includes
@@ -12,9 +12,9 @@
 
 // Gaudi includes
 #include "Gaudi/Algorithm.h"
-#include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/IRndmGenSvc.h"
 #include "GaudiKernel/RndmGenerators.h"
+#include "GaudiKernel/ToolHandle.h"
 
 // Check for SiPMSensor header location (similar to how DigiSiPM handles this)
 #if __has_include("SiPMSensor.h")
@@ -59,21 +59,31 @@ private:
   Rndm::Numbers m_rndmUniform;
 
   // input collection names
-  Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadoutSimHit", "input calo collection name"};
-  Gaudi::Property<std::string> m_outColl{this, "outputHitCollection", "DRcaloSiPMreadoutDigiHit", "output calo collection name"};
+  Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadoutSimHit",
+                                         "input calo collection name"};
+  Gaudi::Property<std::string> m_outColl{this, "outputHitCollection", "DRcaloSiPMreadoutDigiHit",
+                                         "output calo collection name"};
 
-  Gaudi::Property<std::string> m_inTimeColl{this, "inputTimeStructCollection", "DRcaloSiPMreadoutTimeStruct", "input time structure collection name"};
-  Gaudi::Property<std::string> m_inWavlenColl{this, "inputWavlenCollection", "DRcaloSiPMreadoutWaveLen", "input wavelength collection name"};
-  Gaudi::Property<std::string> m_outTimeColl{this, "outputTimeStructCollection", "DRcaloSiPMreadoutDigiWaveform", "output waveform collection name"};
+  Gaudi::Property<std::string> m_inTimeColl{this, "inputTimeStructCollection", "DRcaloSiPMreadoutTimeStruct",
+                                            "input time structure collection name"};
+  Gaudi::Property<std::string> m_inWavlenColl{this, "inputWavlenCollection", "DRcaloSiPMreadoutWaveLen",
+                                              "input wavelength collection name"};
+  Gaudi::Property<std::string> m_outTimeColl{this, "outputTimeStructCollection", "DRcaloSiPMreadoutDigiWaveform",
+                                             "output waveform collection name"};
 
   // Input collections
-  mutable DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{m_hitColl, Gaudi::DataHandle::Reader, this};
-  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{m_inTimeColl, Gaudi::DataHandle::Reader, this};
-  mutable DataHandle<edm4hep::RawTimeSeriesCollection> m_wavelenStruct{m_inWavlenColl, Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{m_hitColl, Gaudi::DataHandle::Reader,
+                                                                               this};
+  mutable k4FWCore::DataHandle<edm4hep::RawTimeSeriesCollection> m_timeStruct{m_inTimeColl, Gaudi::DataHandle::Reader,
+                                                                              this};
+  mutable k4FWCore::DataHandle<edm4hep::RawTimeSeriesCollection> m_wavelenStruct{m_inWavlenColl,
+                                                                                 Gaudi::DataHandle::Reader, this};
 
   // Output collections
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{m_outColl, Gaudi::DataHandle::Writer, this};
-  mutable DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{m_outTimeColl, Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{m_outColl, Gaudi::DataHandle::Writer,
+                                                                             this};
+  mutable k4FWCore::DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{m_outTimeColl, Gaudi::DataHandle::Writer,
+                                                                          this};
 
   // SiPM sensor model
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
@@ -102,7 +112,8 @@ private:
   Gaudi::Property<double> m_thres{this, "threshold", 1.5, "Integration threshold in photoelectrons"};
 
   // SiPM efficiency
-  Gaudi::Property<std::vector<double>> m_wavelen{this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
+  Gaudi::Property<std::vector<double>> m_wavelen{
+      this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
   Gaudi::Property<std::vector<double>> m_sipmEff{this, "sipmEfficiency", {0.1, 0.1}, "SiPM efficiency vs wavelength"};
 
   // scale ADC to energy
