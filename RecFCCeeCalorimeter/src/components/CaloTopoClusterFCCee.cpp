@@ -198,17 +198,14 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
         outClusterCells->push_back(cell);
         cluster.addToHits(cell);
       } else {
-        std::cout << "Cell ID: " << count << "\t" << protoCell.getCellID() << "\t" << protoCell.getEnergy() << "\t" << protoCell.getType() << std::endl;
         for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
           const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
           for (const auto& hit : *coll) {
             if(hit.id() == protoCell.id()){
-              std::cout << "Found match" << std::endl;
               cluster.addToHits(hit);
             }
           }
         }
-        //cluster.addToHits(protoCell);
       }
     }
 
