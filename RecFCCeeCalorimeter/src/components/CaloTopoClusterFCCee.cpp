@@ -82,8 +82,6 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     return StatusCode::FAILURE;
   }
 
-
-
   // setup system decoder
   m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(m_systemEncoding);
   m_indexSystem = m_decoder->index("system");
@@ -176,9 +174,7 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
     double sumCellPhi = 0.;
     double sumCellTheta = 0.;
     std::map<int, int> system;
-    int count = -1;
     for (const auto& protoCell : protoCluster.second) {
-      count ++;
       // identify calo system
       auto systemId = m_decoder->get(protoCell.getCellID(), m_indexSystem);
       system[int(systemId)]++;
@@ -236,8 +232,8 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   debug() << "Total energy of clusters above threshold:                           " << checkTotEnergyAboveThreshold
           << endmsg;
   if(m_createClusterCellCollection){
-  debug() << "Leftover cells :                                    " << inCells->size() - outClusterCells->size()
-          << endmsg;
+    debug() << "Leftover cells :                                    " << inCells->size() - outClusterCells->size()
+            << endmsg;
   }
 
   delete inCells;
