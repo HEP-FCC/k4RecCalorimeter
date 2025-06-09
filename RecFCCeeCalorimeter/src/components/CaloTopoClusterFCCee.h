@@ -142,6 +142,9 @@ private:
 
   /// System encoding string
   Gaudi::Property<std::string> m_systemEncoding{this, "systemEncoding", "system:4", "System encoding string"};
+
+  /// Flag if a new output cell collection of clustered cells should be created
+  Gaudi::Property<bool> m_createClusterCellCollection{this, "createClusterCellCollection", false};
   /// General decoder to encode the calorimeter sub-system to determine which
   /// positions tool to use
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;

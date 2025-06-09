@@ -82,6 +82,8 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     return StatusCode::FAILURE;
   }
 
+
+
   // setup system decoder
   m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(m_systemEncoding);
   m_indexSystem = m_decoder->index("system");
@@ -97,7 +99,10 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
 
   // Create output collections
   edm4hep::ClusterCollection* outClusters = m_clusterCollection.createAndPut();
-  edm4hep::CalorimeterHitCollection* outClusterCells = m_clusterCellsCollection.createAndPut();
+  edm4hep::CalorimeterHitCollection* outClusterCells = nullptr;
+  if (m_createClusterCellCollection) {
+    outClusterCells = m_clusterCellsCollection.createAndPut();
+  }
 
   // Get input collection with calorimeter cells
   edm4hep::CalorimeterHitCollection* inCells = new edm4hep::CalorimeterHitCollection();
@@ -171,24 +176,40 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
     double sumCellPhi = 0.;
     double sumCellTheta = 0.;
     std::map<int, int> system;
+    int count = -1;
     for (const auto& protoCell : protoCluster.second) {
-      auto cell = protoCell.clone();
+      count ++;
       // identify calo system
-      auto systemId = m_decoder->get(cell.getCellID(), m_indexSystem);
+      auto systemId = m_decoder->get(protoCell.getCellID(), m_indexSystem);
       system[int(systemId)]++;
-      auto cellPos = dd4hep::Position(cell.getPosition().x, cell.getPosition().y, cell.getPosition().z);
+      auto cellPos = dd4hep::Position(protoCell.getPosition().x, protoCell.getPosition().y, protoCell.getPosition().z);
 
-      clusterPosX += cell.getPosition().x * cell.getEnergy();
-      clusterPosY += cell.getPosition().y * cell.getEnergy();
-      clusterPosZ += cell.getPosition().z * cell.getEnergy();
+      clusterPosX += protoCell.getPosition().x * protoCell.getEnergy();
+      clusterPosY += protoCell.getPosition().y * protoCell.getEnergy();
+      clusterPosZ += protoCell.getPosition().z * protoCell.getEnergy();
       cellPosPhi.push_back(cellPos.Phi());
       cellPosTheta.push_back(cellPos.Theta());
-      cellEnergy.push_back(cell.getEnergy());
-      sumCellPhi += cellPos.Phi() * cell.getEnergy();
-      sumCellTheta += cellPos.Theta() * cell.getEnergy();
+      cellEnergy.push_back(protoCell.getEnergy());
+      sumCellPhi += cellPos.Phi() * protoCell.getEnergy();
+      sumCellTheta += cellPos.Theta() * protoCell.getEnergy();
 
-      cluster.addToHits(cell);
-      outClusterCells->push_back(cell);
+      if(m_createClusterCellCollection){
+        auto cell = protoCell.clone();
+        outClusterCells->push_back(cell);
+        cluster.addToHits(cell);
+      } else {
+        std::cout << "Cell ID: " << count << "\t" << protoCell.getCellID() << "\t" << protoCell.getEnergy() << "\t" << protoCell.getType() << std::endl;
+        for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
+          const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
+          for (const auto& hit : *coll) {
+            if(hit.id() == protoCell.id()){
+              std::cout << "Found match" << std::endl;
+              cluster.addToHits(hit);
+            }
+          }
+        }
+        //cluster.addToHits(protoCell);
+      }
     }
 
     // set cluster position (weighted barycentre of cell positions)
@@ -217,8 +238,10 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
   debug() << "Total energy of clusters above threshold:                           " << checkTotEnergyAboveThreshold
           << endmsg;
+  if(m_createClusterCellCollection){
   debug() << "Leftover cells :                                    " << inCells->size() - outClusterCells->size()
           << endmsg;
+  }
 
   delete inCells;
   return StatusCode::SUCCESS;
