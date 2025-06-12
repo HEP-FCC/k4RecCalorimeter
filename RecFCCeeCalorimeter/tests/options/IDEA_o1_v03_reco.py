@@ -25,7 +25,7 @@ tree = ET.parse(path_to_detector + '/FCCee/IDEA/compact/IDEA_o1_v03/DectDimensio
 root = tree.getroot()
 IDs = {}
 for constant in root.find('define').findall('constant'):
-    if (constant.get('name') == 'DetID_FiberDRCalo':
+    if (constant.get('name') == 'DetID_FiberDRCalo'):
         IDs[constant.get("name")[6:]] = int(constant.get('value'))
 # debug
 print("Subdetector IDs:")
