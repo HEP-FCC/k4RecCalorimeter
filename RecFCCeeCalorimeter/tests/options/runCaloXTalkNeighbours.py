@@ -25,6 +25,10 @@ neighbours = CreateFCCeeCaloXTalkNeighbours("xtalk_neighbours",
                                        systemValues=[4],
                                        activeFieldNames=["layer"],
                                        activeVolumesNumbers=[11],
+                                       xtalkCoefRadial=0.7e-2,
+                                       xtalkCoefTheta=0.2e-2,
+                                       xtalkCoefDiagonal=0.04e-2,
+                                       xtalkCoefTower=0.1e-2,
                                        OutputLevel=DEBUG)
 
 # ApplicationMgr
