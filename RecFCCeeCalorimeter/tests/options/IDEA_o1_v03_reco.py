@@ -21,7 +21,7 @@ geoservice.detectors = [
 
 # retrieve subdetector IDs
 import xml.etree.ElementTree as ET
-tree = ET.parse(path_to_detector + 'DectDimensions.xml')
+tree = ET.parse(path_to_detector + '/DectDimensions.xml')
 root = tree.getroot()
 IDs = {}
 for constant in root.find('define').findall('constant'):
