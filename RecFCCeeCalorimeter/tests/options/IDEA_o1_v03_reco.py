@@ -25,20 +25,8 @@ tree = ET.parse(path_to_detector + '/FCCee/IDEA/compact/IDEA_o1_v03/DectDimensio
 root = tree.getroot()
 IDs = {}
 for constant in root.find('define').findall('constant'):
-    if (constant.get('name') == 'DetID_VXD_Barrel' or
-        constant.get('name') == 'DetID_VXD_Disks' or
-        constant.get('name') == 'DetID_DCH' or
-        constant.get('name') == 'DetID_SiWr_Barrel' or
-        constant.get('name') == 'DetID_SiWr_Disks' or
-        constant.get('name') == 'DetID_ECAL_Barrel' or
-        constant.get('name') == 'DetID_ECAL_Endcap' or
-        constant.get('name') == 'DetID_HCAL_Barrel' or
-        constant.get('name') == 'DetID_HCAL_Endcap' or
-        constant.get('name') == 'DetID_FiberDRCalo' or
-        constant.get('name') == 'DetID_Muon_Barrel'):
+    if (constant.get('name') == 'DetID_FiberDRCalo':
         IDs[constant.get("name")[6:]] = int(constant.get('value'))
-    if (constant.get('name') == 'DetID_Muon_Endcap_1'):
-        IDs[constant.get("name")[6:-2]] = int(constant.get('value'))
 # debug
 print("Subdetector IDs:")
 print(IDs)
