@@ -21,7 +21,7 @@ geoservice.detectors = [
 
 # retrieve subdetector IDs
 import xml.etree.ElementTree as ET
-tree = ET.parse(path_to_detector + '/DectDimensions.xml')
+tree = ET.parse(path_to_detector + '/FCCee/IDEA/compact/IDEA_o1_v03/DectDimensions_IDEA_o1_v03.xml')
 root = tree.getroot()
 IDs = {}
 for constant in root.find('define').findall('constant'):
@@ -70,7 +70,7 @@ constNoiseTool = ConstNoiseTool("ConstNoiseTool",
 )
 
 from Configurables import CaloTopoClusterFCCee
-caloIds = ["DetID_SiWr_Barrel"]
+caloIDs = ["DetID_SiWr_Barrel"]
 topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     cells = ["DRcaloSiPMreadoutDigiHit"],
     clusters = "TopoClusterCheren",
