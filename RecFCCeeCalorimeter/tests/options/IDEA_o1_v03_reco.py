@@ -34,6 +34,7 @@ for constant in root.find('define').findall('constant'):
         constant.get('name') == 'DetID_ECAL_Endcap' or
         constant.get('name') == 'DetID_HCAL_Barrel' or
         constant.get('name') == 'DetID_HCAL_Endcap' or
+        constant.get('name') == 'DetID_FiberDRCalo' or
         constant.get('name') == 'DetID_Muon_Barrel'):
         IDs[constant.get("name")[6:]] = int(constant.get('value'))
     if (constant.get('name') == 'DetID_Muon_Endcap_1'):
@@ -70,7 +71,7 @@ constNoiseTool = ConstNoiseTool("ConstNoiseTool",
 )
 
 from Configurables import CaloTopoClusterFCCee
-caloIDs = ["DetID_SiWr_Barrel"]
+caloIDs = [IDs["FiberDRCalo"]]
 topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     cells = ["DRcaloSiPMreadoutDigiHit"],
     clusters = "TopoClusterCheren",
