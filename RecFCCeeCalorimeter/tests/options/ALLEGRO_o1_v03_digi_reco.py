@@ -606,6 +606,7 @@ if doTopoClustering:
                                                      OutputLevel=INFO)
     
     from Configurables import CaloTopoClusterFCCee
+    caloIDs = [IDs["ECAL_Barrel"]]
     createECalBarrelTopoClusters = CaloTopoClusterFCCee("CreateECalBarrelTopoClusters",
                                                         cells=[ecalBarrelPositionedCellsName],
                                                         clusters="EMBCaloTopoClusters",
@@ -616,6 +617,8 @@ if doTopoClustering:
                                                         neighbourSigma=2,
                                                         lastNeighbourSigma=0,
                                                         minClusterEnergy=0.2,
+                                                        calorimeterIDs=caloIDs,
+                                                        createClusterCellCollection=True,
                                                         OutputLevel=INFO)
 
     # Neighbours map
@@ -630,6 +633,7 @@ if doTopoClustering:
                                                      fileName=ecalEndcapNoiseMap,
                                                      OutputLevel=INFO)
 
+    caloIDs = [IDs["ECAL_Endcap"]]
     createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
                                                         cells=[ecalEndcapPositionedCellsName],
                                                         clusters="EMECaloTopoClusters",
@@ -639,6 +643,8 @@ if doTopoClustering:
                                                         seedSigma=4,
                                                         neighbourSigma=2,
                                                         lastNeighbourSigma=0,
+                                                        calorimeterIDs=caloIDs,
+                                                        createClusterCellCollection=True,
                                                         OutputLevel=INFO)
 
     if applyUpDownstreamCorrections:
