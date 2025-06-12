@@ -90,6 +90,25 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   std::vector<std::string> shapeParameterNames = {"dR_over_E"};
   m_shapeParametersHandle.put(shapeParameterNames);
 
+  if (m_createClusterCellCollection) {
+    std::vector<int> IDs;
+    for (auto ID: m_caloIDs) {
+      IDs.push_back(ID);
+    }
+
+    std::vector<std::string> colls;
+    for (auto coll: m_cellCollections) {
+      colls.push_back(coll);
+    }
+
+    if (IDs.size()==colls.size()) {
+      m_caloIDsMetaData.put(IDs);
+      m_cellsMetaData.put(colls);
+    } else {
+      warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written" << endmsg;
+    }
+  }
+
   return StatusCode::SUCCESS;
 }
 

@@ -18,6 +18,33 @@ geoservice.detectors = [
     os.path.join(path_to_detector, _det) for _det in detectors_to_use
 ]
 
+
+# retrieve subdetector IDs
+import xml.etree.ElementTree as ET
+tree = ET.parse(path_to_detector + 'DectDimensions.xml')
+root = tree.getroot()
+IDs = {}
+for constant in root.find('define').findall('constant'):
+    if (constant.get('name') == 'DetID_VXD_Barrel' or
+        constant.get('name') == 'DetID_VXD_Disks' or
+        constant.get('name') == 'DetID_DCH' or
+        constant.get('name') == 'DetID_SiWr_Barrel' or
+        constant.get('name') == 'DetID_SiWr_Disks' or
+        constant.get('name') == 'DetID_ECAL_Barrel' or
+        constant.get('name') == 'DetID_ECAL_Endcap' or
+        constant.get('name') == 'DetID_HCAL_Barrel' or
+        constant.get('name') == 'DetID_HCAL_Endcap' or
+        constant.get('name') == 'DetID_Muon_Barrel'):
+        IDs[constant.get("name")[6:]] = int(constant.get('value'))
+    if (constant.get('name') == 'DetID_Muon_Endcap_1'):
+        IDs[constant.get("name")[6:-2]] = int(constant.get('value'))
+# debug
+print("Subdetector IDs:")
+print(IDs)
+
+
+
+
 geoservice.OutputLevel = INFO
 
 from Configurables import PodioInput
@@ -43,6 +70,7 @@ constNoiseTool = ConstNoiseTool("ConstNoiseTool",
 )
 
 from Configurables import CaloTopoClusterFCCee
+caloIds = ["DetID_SiWr_Barrel"]
 topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     cells = ["DRcaloSiPMreadoutDigiHit"],
     clusters = "TopoClusterCheren",
@@ -55,6 +83,8 @@ topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     seedSigma = 4,
     neighbourSigma = 2,
     lastNeighbourSigma = 0,
+    calorimeterIDs=caloIDs,
+    createClusterCellCollection=True,
     OutputLevel = INFO
 )
 
@@ -70,6 +100,8 @@ topoClusterScint = CaloTopoClusterFCCee("topoClusterScint",
     seedSigma = 4,
     neighbourSigma = 2,
     lastNeighbourSigma = 0,
+    calorimeterIDs=caloIDs,
+    createClusterCellCollection=True,
     OutputLevel = INFO
 )
 
