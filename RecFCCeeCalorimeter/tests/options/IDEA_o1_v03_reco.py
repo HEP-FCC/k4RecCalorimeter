@@ -18,6 +18,22 @@ geoservice.detectors = [
     os.path.join(path_to_detector, _det) for _det in detectors_to_use
 ]
 
+
+# retrieve subdetector IDs
+import xml.etree.ElementTree as ET
+tree = ET.parse(path_to_detector + '/FCCee/IDEA/compact/IDEA_o1_v03/DectDimensions_IDEA_o1_v03.xml')
+root = tree.getroot()
+IDs = {}
+for constant in root.find('define').findall('constant'):
+    if (constant.get('name') == 'DetID_FiberDRCalo'):
+        IDs[constant.get("name")[6:]] = int(constant.get('value'))
+# debug
+print("Subdetector IDs:")
+print(IDs)
+
+
+
+
 geoservice.OutputLevel = INFO
 
 from Configurables import PodioInput
@@ -43,6 +59,7 @@ constNoiseTool = ConstNoiseTool("ConstNoiseTool",
 )
 
 from Configurables import CaloTopoClusterFCCee
+caloIDs = [IDs["FiberDRCalo"]]
 topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     cells = ["DRcaloSiPMreadoutDigiHit"],
     clusters = "TopoClusterCheren",
@@ -55,6 +72,8 @@ topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
     seedSigma = 4,
     neighbourSigma = 2,
     lastNeighbourSigma = 0,
+    calorimeterIDs=caloIDs,
+    createClusterCellCollection=True,
     OutputLevel = INFO
 )
 
@@ -70,6 +89,8 @@ topoClusterScint = CaloTopoClusterFCCee("topoClusterScint",
     seedSigma = 4,
     neighbourSigma = 2,
     lastNeighbourSigma = 0,
+    calorimeterIDs=caloIDs,
+    createClusterCellCollection=True,
     OutputLevel = INFO
 )
 

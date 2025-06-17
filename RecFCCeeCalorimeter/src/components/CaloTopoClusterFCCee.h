@@ -16,9 +16,9 @@
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
 #include "k4Interface/IGeoSvc.h"
+#include "k4Interface/INoiseConstTool.h"
 
 // EDM4HEP
 namespace edm4hep {
@@ -106,15 +106,25 @@ private:
   /// List of input cell collections
   Gaudi::Property<std::vector<std::string>> m_cellCollections{
       this, "cells", {}, "Names of CalorimeterHit collections to read"};
-  /// the vector of input DataHandles for the input cell collections
-  std::vector<DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
+  /// the vector of input k4FWCore::DataHandles for the input cell collections
+  std::vector<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
   // Cluster collection (output)
-  mutable DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"clusters", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"clusters", Gaudi::DataHandle::Writer,
+                                                                               this};
   // Cluster cells in collection (output)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{"clusterCells",
-                                                                                 Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
+      "clusterCells", Gaudi::DataHandle::Writer, this};
+
+  /// Output collection metadata handles (saving a map of ID:collection does not work)
+  k4FWCore::MetaDataHandle<std::vector<int>> m_caloIDsMetaData{m_clusterCollection, "inputSystemIDs",
+    Gaudi::DataHandle::Writer};
+  k4FWCore::MetaDataHandle<std::vector<std::string>> m_cellsMetaData{m_clusterCollection, "inputCellCollections",
+      Gaudi::DataHandle::Writer};
+  Gaudi::Property<std::vector<int>> m_caloIDs{
+    this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
+
   /// Handle for the cluster shape metadata to write
-  MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
+  k4FWCore::MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
       m_clusterCollection, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
   /// Handle for the cells noise tool
   mutable ToolHandle<INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
@@ -125,7 +135,8 @@ private:
   // use GeoSvc when the neighbor map is not present
   SmartIF<IGeoSvc> m_geoSvc;
   // name of the readout: only needed if useNeighborMap is set to false
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout (needed if useNeighborMap=false)"};
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "",
+                                             "name of the readout (needed if useNeighborMap=false)"};
   // pointer to the segmentation object
   dd4hep::DDSegmentation::Segmentation* m_segmentation = nullptr;
 
@@ -140,6 +151,9 @@ private:
 
   /// System encoding string
   Gaudi::Property<std::string> m_systemEncoding{this, "systemEncoding", "system:4", "System encoding string"};
+
+  /// Flag if a new output cell collection of clustered cells should be created
+  Gaudi::Property<bool> m_createClusterCellCollection{this, "createClusterCellCollection", false};
   /// General decoder to encode the calorimeter sub-system to determine which
   /// positions tool to use
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;

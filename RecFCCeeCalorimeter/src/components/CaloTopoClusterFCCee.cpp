@@ -39,7 +39,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
     try {
       m_cellCollectionHandles.push_back(
-          new DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
+          new k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
     } catch (...) {
       error() << "Error creating handle for input collection: " << col << endmsg;
       return StatusCode::FAILURE;
@@ -66,8 +66,7 @@ StatusCode CaloTopoClusterFCCee::initialize() {
       return StatusCode::FAILURE;
     }
 
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) ==
-        m_geoSvc->getDetector()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
 
       return StatusCode::FAILURE;
@@ -91,6 +90,25 @@ StatusCode CaloTopoClusterFCCee::initialize() {
   std::vector<std::string> shapeParameterNames = {"dR_over_E"};
   m_shapeParametersHandle.put(shapeParameterNames);
 
+  if (m_createClusterCellCollection) {
+    std::vector<int> IDs;
+    for (auto ID: m_caloIDs) {
+      IDs.push_back(ID);
+    }
+
+    std::vector<std::string> colls;
+    for (auto coll: m_cellCollections) {
+      colls.push_back(coll);
+    }
+
+    if (IDs.size()==colls.size()) {
+      m_caloIDsMetaData.put(IDs);
+      m_cellsMetaData.put(colls);
+    } else {
+      warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written" << endmsg;
+    }
+  }
+
   return StatusCode::SUCCESS;
 }
 
@@ -98,7 +116,10 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
 
   // Create output collections
   edm4hep::ClusterCollection* outClusters = m_clusterCollection.createAndPut();
-  edm4hep::CalorimeterHitCollection* outClusterCells = m_clusterCellsCollection.createAndPut();
+  edm4hep::CalorimeterHitCollection* outClusterCells = nullptr;
+  if (m_createClusterCellCollection) {
+    outClusterCells = m_clusterCellsCollection.createAndPut();
+  }
 
   // Get input collection with calorimeter cells
   edm4hep::CalorimeterHitCollection* inCells = new edm4hep::CalorimeterHitCollection();
@@ -173,23 +194,34 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
     double sumCellTheta = 0.;
     std::map<int, int> system;
     for (const auto& protoCell : protoCluster.second) {
-      auto cell = protoCell.clone();
       // identify calo system
-      auto systemId = m_decoder->get(cell.getCellID(), m_indexSystem);
+      auto systemId = m_decoder->get(protoCell.getCellID(), m_indexSystem);
       system[int(systemId)]++;
-      auto cellPos = dd4hep::Position(cell.getPosition().x, cell.getPosition().y, cell.getPosition().z);
+      auto cellPos = dd4hep::Position(protoCell.getPosition().x, protoCell.getPosition().y, protoCell.getPosition().z);
 
-      clusterPosX += cell.getPosition().x * cell.getEnergy();
-      clusterPosY += cell.getPosition().y * cell.getEnergy();
-      clusterPosZ += cell.getPosition().z * cell.getEnergy();
+      clusterPosX += protoCell.getPosition().x * protoCell.getEnergy();
+      clusterPosY += protoCell.getPosition().y * protoCell.getEnergy();
+      clusterPosZ += protoCell.getPosition().z * protoCell.getEnergy();
       cellPosPhi.push_back(cellPos.Phi());
       cellPosTheta.push_back(cellPos.Theta());
-      cellEnergy.push_back(cell.getEnergy());
-      sumCellPhi += cellPos.Phi() * cell.getEnergy();
-      sumCellTheta += cellPos.Theta() * cell.getEnergy();
+      cellEnergy.push_back(protoCell.getEnergy());
+      sumCellPhi += cellPos.Phi() * protoCell.getEnergy();
+      sumCellTheta += cellPos.Theta() * protoCell.getEnergy();
 
-      cluster.addToHits(cell);
-      outClusterCells->push_back(cell);
+      if(m_createClusterCellCollection){
+        auto cell = protoCell.clone();
+        outClusterCells->push_back(cell);
+        cluster.addToHits(cell);
+      } else {
+        for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
+          const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
+          for (const auto& hit : *coll) {
+            if(hit.id() == protoCell.id()){
+              cluster.addToHits(hit);
+            }
+          }
+        }
+      }
     }
 
     // set cluster position (weighted barycentre of cell positions)
@@ -218,8 +250,10 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
   debug() << "Total energy of clusters above threshold:                           " << checkTotEnergyAboveThreshold
           << endmsg;
-  debug() << "Leftover cells :                                    " << inCells->size() - outClusterCells->size()
-          << endmsg;
+  if(m_createClusterCellCollection){
+    debug() << "Leftover cells :                                    " << inCells->size() - outClusterCells->size()
+            << endmsg;
+  }
 
   delete inCells;
   return StatusCode::SUCCESS;
@@ -366,7 +400,7 @@ std::vector<std::pair<uint64_t, uint32_t>> CaloTopoClusterFCCee::searchForNeighb
   if (!m_useNeighborMap) {
     // DDSegmentation returns std::set
     std::set<dd4hep::DDSegmentation::CellID> outputNeighbors;
-    m_segmentation->neighbours(aCellId,outputNeighbors);
+    m_segmentation->neighbours(aCellId, outputNeighbors);
     neighboursVec = std::vector<uint64_t>(outputNeighbors.begin(), outputNeighbors.end());
   }
 

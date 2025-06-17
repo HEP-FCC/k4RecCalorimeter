@@ -136,7 +136,8 @@ public:
 
 private:
   /// Handle for calo cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"calo/cells", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"calo/cells", Gaudi::DataHandle::Reader,
+                                                                          this};
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
   /// Name of the detector readout

@@ -40,7 +40,7 @@ public:
 
 private:
   /// Handle for the calo cells (output collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_caloCells{"cells", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_caloCells{"cells", Gaudi::DataHandle::Writer, this};
 };
 
 #endif /* RECCALORIMETER_CREATEEMPTYCALOCELLSCOLLECTION_H */

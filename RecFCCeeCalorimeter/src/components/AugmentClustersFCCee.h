@@ -48,14 +48,15 @@ public:
 
 private:
   /// Handle for input clusters
-  mutable DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
   /// Handle for output clusters
-  mutable DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer,
+                                                                         this};
   /// Handle for the cluster shape metadata to read and to write
-  MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{m_inClusters, edm4hep::labels::ShapeParameterNames,
-                                                                    Gaudi::DataHandle::Reader};
-  MetaDataHandle<std::vector<std::string>> m_showerShapeHandle{m_outClusters, edm4hep::labels::ShapeParameterNames,
-                                                               Gaudi::DataHandle::Writer};
+  k4FWCore::MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
+      m_inClusters, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Reader};
+  k4FWCore::MetaDataHandle<std::vector<std::string>> m_showerShapeHandle{
+      m_outClusters, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;

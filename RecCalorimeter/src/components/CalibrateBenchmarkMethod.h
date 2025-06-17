@@ -70,11 +70,11 @@ private:
                        const std::vector<int>& fixedParameters) const;
 
   /// Handle for electromagnetic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_ecalBarrelCells{"ecalBarrelCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
   /// Handle for hadronic barrel cells (input collection)
-  mutable DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells", Gaudi::DataHandle::Reader,
-                                                                          this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hcalBarrelCells{"hcalBarrelCells",
+                                                                                    Gaudi::DataHandle::Reader, this};
 
   /// Histogram of total deposited energy in the calorimeters
   TH1F* m_totalEnergyECal;
