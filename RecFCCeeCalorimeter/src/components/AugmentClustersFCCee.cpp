@@ -19,6 +19,8 @@
 #include "TString.h"
 #include "TVector3.h"
 
+#include <cmath>
+
 DECLARE_COMPONENT(AugmentClustersFCCee)
 
 AugmentClustersFCCee::AugmentClustersFCCee(const std::string& name, ISvcLocator* svcLoc)
@@ -240,13 +242,14 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         // retrieve layer and module ID
         uint layer = decoder->get(cID, layerField);
         int module_id = decoder->get(cID, moduleField);
+        unsigned int layerToFill = layer + startPositionToFill;
 
         // retrieve cell energy, update sum of cell energies per layer, total energy, and max cell energy
         double eCell = cell->getEnergy();
-        sumEnLayer[layer + startPositionToFill] += eCell;
+        sumEnLayer[layerToFill] += eCell;
         E += eCell;
-        if (maxCellEnergyInLayer[layer + startPositionToFill] < eCell)
-          maxCellEnergyInLayer[layer + startPositionToFill] = eCell;
+        if (maxCellEnergyInLayer[layerToFill] < eCell)
+          maxCellEnergyInLayer[layerToFill] = eCell;
 
         // compute phi and module of cell to determine min/max phi and module ID of cluster
         TVector3 v = TVector3(cell->getPosition().x, cell->getPosition().y, cell->getPosition().z);
@@ -286,9 +289,15 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
     // for phi use standard E weighting
     std::vector<double> sumThetaLayer;
     std::vector<double> sumPhiLayer;
+    std::vector<double> sumXLayer;
+    std::vector<double> sumYLayer;
+    std::vector<double> sumZLayer;
     std::vector<double> sumWeightLayer;
     sumThetaLayer.assign(numLayersTotal, 0);
     sumPhiLayer.assign(numLayersTotal, 0);
+    sumXLayer.assign(numLayersTotal, 0);
+    sumYLayer.assign(numLayersTotal, 0);
+    sumZLayer.assign(numLayersTotal, 0);
     sumWeightLayer.assign(numLayersTotal, 0);
 
     // vectors for photon/pi0 discrimination
@@ -366,11 +375,16 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         uint layer = decoder->get(cID, layerField);
         int theta_id = decoder->get(cID, thetaField);
         int module_id = decoder->get(cID, moduleField);
+        unsigned int layerToFill = layer + startPositionToFill;
 
         double eCell = cell->getEnergy();
         double weightLog =
-            std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(eCell / sumEnLayer[layer + startPositionToFill]));
-        TVector3 v = TVector3(cell->getPosition().x, cell->getPosition().y, cell->getPosition().z);
+            std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(eCell / sumEnLayer[layerToFill]));
+        auto position = cell->getPosition();
+        double x = position.x;
+        double y = position.y;
+        double z = position.z;
+        TVector3 v = TVector3(x, y, z);
         double theta = v.Theta();
         double phi = v.Phi();
 
@@ -384,29 +398,37 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
           module_id -= nModules[k]; // transition near 1535..0, reset the module ID
         }
 
-        if (m_thetaRecalcLayerWeights[k][layer] < 0)
-          sumThetaLayer[layer + startPositionToFill] += (eCell * theta);
-        else
-          sumThetaLayer[layer + startPositionToFill] += (weightLog * theta);
-        sumWeightLayer[layer + startPositionToFill] += weightLog;
-        sumPhiLayer[layer + startPositionToFill] += (eCell * phi);
+        if (m_thetaRecalcLayerWeights[k][layer] < 0) {
+          sumThetaLayer[layerToFill] += (eCell * theta);
+          sumXLayer[layerToFill] += (eCell * x);
+          sumYLayer[layerToFill] += (eCell * y);
+          sumZLayer[layerToFill] += (eCell * z);
+        }
+        else {
+          sumThetaLayer[layerToFill] += (weightLog * theta);
+          sumXLayer[layerToFill] += (weightLog * x);
+          sumYLayer[layerToFill] += (weightLog * y);
+          sumZLayer[layerToFill] += (weightLog * z);
+        }
+        sumWeightLayer[layerToFill] += weightLog;
+        sumPhiLayer[layerToFill] += (eCell * phi);
 
         // do pi0/photon shape var only for EMB
         if (m_do_photon_shapeVar && systemID == systemID_EMB) {
           // E, theta_id, and module_id of cells in layer
-          vec_E_cell_layer[layer + startPositionToFill].push_back(eCell);
-          vec_theta_cell_layer[layer + startPositionToFill].push_back(theta_id);
-          vec_module_cell_layer[layer + startPositionToFill].push_back(module_id);
+          vec_E_cell_layer[layerToFill].push_back(eCell);
+          vec_theta_cell_layer[layerToFill].push_back(theta_id);
+          vec_module_cell_layer[layerToFill].push_back(module_id);
           // sum them for width in theta/module calculation
           if (m_do_widthTheta_logE_weights) {
-            theta2_E_layer[layer + startPositionToFill] += theta_id * theta_id * weightLog;
-            theta_E_layer[layer + startPositionToFill] += theta_id * weightLog;
+            theta2_E_layer[layerToFill] += theta_id * theta_id * weightLog;
+            theta_E_layer[layerToFill] += theta_id * weightLog;
           } else {
-            theta2_E_layer[layer + startPositionToFill] += theta_id * theta_id * eCell;
-            theta_E_layer[layer + startPositionToFill] += theta_id * eCell;
+            theta2_E_layer[layerToFill] += theta_id * theta_id * eCell;
+            theta_E_layer[layerToFill] += theta_id * eCell;
           }
-          module2_E_layer[layer + startPositionToFill] += module_id * module_id * eCell;
-          module_E_layer[layer + startPositionToFill] += module_id * eCell;
+          module2_E_layer[layerToFill] += module_id * module_id * eCell;
+          module_E_layer[layerToFill] += module_id * eCell;
         }
       } // end of loop over cells
     } // end of loop over each system / readout
@@ -426,18 +448,19 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         startPositionToFill += m_numLayers[k - 1];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
+        unsigned int layerToFill = layer + startPositionToFill;
         // in case there's no cell in this layer (sometimes in layer 0)
-        if (vec_E_cell_layer[layer + startPositionToFill].empty()) {
-          vec_E_cell_layer[layer + startPositionToFill].push_back(0);
-          vec_theta_cell_layer[layer + startPositionToFill].push_back(0);
-          vec_module_cell_layer[layer + startPositionToFill].push_back(0);
+        if (vec_E_cell_layer[layerToFill].empty()) {
+          vec_E_cell_layer[layerToFill].push_back(0);
+          vec_theta_cell_layer[layerToFill].push_back(0);
+          vec_module_cell_layer[layerToFill].push_back(0);
         }
-        auto result = MergeSumAndSort(vec_theta_cell_layer[layer + startPositionToFill],
-                                      vec_E_cell_layer[layer + startPositionToFill]);
+        auto result = MergeSumAndSort(vec_theta_cell_layer[layerToFill],
+                                      vec_E_cell_layer[layerToFill]);
 
         // fill the zero energy cells in 1D theta-E profile
         for (int i = result.first.front(); i <= result.first.back();
-             i += nMergedThetaCells[layer + startPositionToFill]) {
+             i += nMergedThetaCells[layerToFill]) {
           if (std::find(result.first.begin(), result.first.end(), i) == result.first.end()) {
             auto it = std::lower_bound(result.first.begin(), result.first.end(), i);
             int idx = it - result.first.begin();
@@ -448,69 +471,69 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         theta_E_pair.push_back(result);
 
         // loop over theta IDs to find the local E maxima
-        for (size_t i = 0; i < theta_E_pair[layer + startPositionToFill].second.size(); i++) {
-          // std::cout << i << " " << theta_E_pair[layer+startPositionToFill].first[i] << " " <<
-          // theta_E_pair[layer+startPositionToFill].second[i] << std::endl;
-          if ((i == 0 && theta_E_pair[layer + startPositionToFill].second[i] >
-                             theta_E_pair[layer + startPositionToFill].second[i + 1]) ||
-              (i == theta_E_pair[layer + startPositionToFill].second.size() - 1 &&
-               theta_E_pair[layer + startPositionToFill].second[i] >
-                   theta_E_pair[layer + startPositionToFill].second[i - 1]) ||
-              (i != 0 && i != (theta_E_pair[layer + startPositionToFill].second.size() - 1) &&
-               theta_E_pair[layer + startPositionToFill].second[i] >
-                   theta_E_pair[layer + startPositionToFill].second[i - 1] &&
-               theta_E_pair[layer + startPositionToFill].second[i] >
-                   theta_E_pair[layer + startPositionToFill].second[i + 1])) {
-            local_E_Max[layer + startPositionToFill].push_back(theta_E_pair[layer + startPositionToFill].second[i]);
-            local_E_Max_theta[layer + startPositionToFill].push_back(
-                theta_E_pair[layer + startPositionToFill].first[i]);
+        for (size_t i = 0; i < theta_E_pair[layerToFill].second.size(); i++) {
+          // std::cout << i << " " << theta_E_pair[layerToFill].first[i] << " " <<
+          // theta_E_pair[layerToFill].second[i] << std::endl;
+          if ((i == 0 && theta_E_pair[layerToFill].second[i] >
+                             theta_E_pair[layerToFill].second[i + 1]) ||
+              (i == theta_E_pair[layerToFill].second.size() - 1 &&
+               theta_E_pair[layerToFill].second[i] >
+                   theta_E_pair[layerToFill].second[i - 1]) ||
+              (i != 0 && i != (theta_E_pair[layerToFill].second.size() - 1) &&
+               theta_E_pair[layerToFill].second[i] >
+                   theta_E_pair[layerToFill].second[i - 1] &&
+               theta_E_pair[layerToFill].second[i] >
+                   theta_E_pair[layerToFill].second[i + 1])) {
+            local_E_Max[layerToFill].push_back(theta_E_pair[layerToFill].second[i]);
+            local_E_Max_theta[layerToFill].push_back(
+                theta_E_pair[layerToFill].first[i]);
           }
         } // end of loop over theta IDs
 
-        if (local_E_Max[layer + startPositionToFill].empty()) {
-          E_cell_Max[layer + startPositionToFill] = 0.;
-          E_cell_secMax[layer + startPositionToFill] = 0.;
-          E_cell_Max_theta[layer + startPositionToFill] = 0.;
-          E_cell_secMax_theta[layer + startPositionToFill] = 0.;
-          E_cell_Min[layer + startPositionToFill] = 0.;
-        } else if (local_E_Max[layer + startPositionToFill].size() < 2) {
-          E_cell_Max[layer + startPositionToFill] = local_E_Max[layer + startPositionToFill][0];
-          E_cell_secMax[layer + startPositionToFill] = 0.;
-          E_cell_Max_theta[layer + startPositionToFill] = local_E_Max_theta[layer + startPositionToFill][0];
-          E_cell_secMax_theta[layer + startPositionToFill] = local_E_Max_theta[layer + startPositionToFill][0];
-          E_cell_Min[layer + startPositionToFill] = 0.;
+        if (local_E_Max[layerToFill].empty()) {
+          E_cell_Max[layerToFill] = 0.;
+          E_cell_secMax[layerToFill] = 0.;
+          E_cell_Max_theta[layerToFill] = 0.;
+          E_cell_secMax_theta[layerToFill] = 0.;
+          E_cell_Min[layerToFill] = 0.;
+        } else if (local_E_Max[layerToFill].size() < 2) {
+          E_cell_Max[layerToFill] = local_E_Max[layerToFill][0];
+          E_cell_secMax[layerToFill] = 0.;
+          E_cell_Max_theta[layerToFill] = local_E_Max_theta[layerToFill][0];
+          E_cell_secMax_theta[layerToFill] = local_E_Max_theta[layerToFill][0];
+          E_cell_Min[layerToFill] = 0.;
         } else {
-          std::vector<double> sortedVec = local_E_Max[layer + startPositionToFill];
+          std::vector<double> sortedVec = local_E_Max[layerToFill];
           // move the top 2 max to the beginning
           std::partial_sort(sortedVec.begin(), sortedVec.begin() + 2, sortedVec.end(), std::greater<double>());
-          E_cell_Max[layer + startPositionToFill] = sortedVec[0];
-          E_cell_secMax[layer + startPositionToFill] = sortedVec[1];
+          E_cell_Max[layerToFill] = sortedVec[0];
+          E_cell_secMax[layerToFill] = sortedVec[1];
           // get the corresponding theta IDs
-          auto it_Max = std::find(local_E_Max[layer + startPositionToFill].begin(),
-                                  local_E_Max[layer + startPositionToFill].end(), sortedVec[0]);
-          int index_Max = std::distance(local_E_Max[layer + startPositionToFill].begin(), it_Max);
-          auto it_secMax = std::find(local_E_Max[layer + startPositionToFill].begin(),
-                                     local_E_Max[layer + startPositionToFill].end(), sortedVec[1]);
-          int index_secMax = std::distance(local_E_Max[layer + startPositionToFill].begin(), it_secMax);
-          E_cell_Max_theta[layer + startPositionToFill] = local_E_Max_theta[layer + startPositionToFill][index_Max];
-          E_cell_secMax_theta[layer + startPositionToFill] =
-              local_E_Max_theta[layer + startPositionToFill][index_secMax];
+          auto it_Max = std::find(local_E_Max[layerToFill].begin(),
+                                  local_E_Max[layerToFill].end(), sortedVec[0]);
+          int index_Max = std::distance(local_E_Max[layerToFill].begin(), it_Max);
+          auto it_secMax = std::find(local_E_Max[layerToFill].begin(),
+                                     local_E_Max[layerToFill].end(), sortedVec[1]);
+          int index_secMax = std::distance(local_E_Max[layerToFill].begin(), it_secMax);
+          E_cell_Max_theta[layerToFill] = local_E_Max_theta[layerToFill][index_Max];
+          E_cell_secMax_theta[layerToFill] =
+              local_E_Max_theta[layerToFill][index_secMax];
           // find the E_min inside the theta range of E_cell_Max and E_cell_secMax
           // the theta_E_pair are sorted in ascending order of thetaID
-          for (size_t i = 0; i < theta_E_pair[layer + startPositionToFill].second.size(); i++) {
-            if ((theta_E_pair[layer + startPositionToFill].first[i] >
-                 std::min(E_cell_Max_theta[layer + startPositionToFill],
-                          E_cell_secMax_theta[layer + startPositionToFill])) &&
-                (theta_E_pair[layer + startPositionToFill].first[i] <
-                 std::max(E_cell_Max_theta[layer + startPositionToFill],
-                          E_cell_secMax_theta[layer + startPositionToFill])) &&
-                (theta_E_pair[layer + startPositionToFill].second[i] < E_cell_Min[layer + startPositionToFill])) {
-              E_cell_Min[layer + startPositionToFill] = theta_E_pair[layer + startPositionToFill].second[i];
+          for (size_t i = 0; i < theta_E_pair[layerToFill].second.size(); i++) {
+            if ((theta_E_pair[layerToFill].first[i] >
+                 std::min(E_cell_Max_theta[layerToFill],
+                          E_cell_secMax_theta[layerToFill])) &&
+                (theta_E_pair[layerToFill].first[i] <
+                 std::max(E_cell_Max_theta[layerToFill],
+                          E_cell_secMax_theta[layerToFill])) &&
+                (theta_E_pair[layerToFill].second[i] < E_cell_Min[layerToFill])) {
+              E_cell_Min[layerToFill] = theta_E_pair[layerToFill].second[i];
             }
           }
         }
-        if (E_cell_Min[layer + startPositionToFill] > 1e12)
-          E_cell_Min[layer + startPositionToFill] = 0.; // check E_cell_Min
+        if (E_cell_Min[layerToFill] > 1e12)
+          E_cell_Min[layerToFill] = 0.; // check E_cell_Min
       } // end of loop over layers
     }
 
@@ -529,11 +552,12 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         startPositionToFill += m_numLayers[k - 1];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
-        auto result_2 = MergeSumAndSort(vec_module_cell_layer[layer + startPositionToFill],
-                                        vec_E_cell_layer[layer + startPositionToFill]);
+        unsigned int layerToFill = layer + startPositionToFill;
+        auto result_2 = MergeSumAndSort(vec_module_cell_layer[layerToFill],
+                                        vec_E_cell_layer[layerToFill]);
         // fill the zero energy cells in 1D module-E profile
         for (int i = result_2.first.front(); i <= result_2.first.back();
-             i += nMergedModules[layer + startPositionToFill]) {
+             i += nMergedModules[layerToFill]) {
           if (std::find(result_2.first.begin(), result_2.first.end(), i) == result_2.first.end()) {
             auto it = std::lower_bound(result_2.first.begin(), result_2.first.end(), i);
             int idx = it - result_2.first.begin();
@@ -544,72 +568,72 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         module_E_pair.push_back(result_2);
 
         // loop over module IDs to find the local E maxima
-        for (size_t i = 0; i < module_E_pair[layer + startPositionToFill].second.size(); i++) {
-          // std::cout << i << " " << module_E_pair[layer+startPositionToFill].first[i] << " " <<
-          // module_E_pair[layer+startPositionToFill].second[i] << std::endl;
-          if ((i == 0 && module_E_pair[layer + startPositionToFill].second[i] >
-                             module_E_pair[layer + startPositionToFill].second[i + 1]) ||
-              (i == module_E_pair[layer + startPositionToFill].second.size() - 1 &&
-               module_E_pair[layer + startPositionToFill].second[i] >
-                   module_E_pair[layer + startPositionToFill].second[i - 1]) ||
-              (i != 0 && i != (module_E_pair[layer + startPositionToFill].second.size() - 1) &&
-               module_E_pair[layer + startPositionToFill].second[i] >
-                   module_E_pair[layer + startPositionToFill].second[i - 1] &&
-               module_E_pair[layer + startPositionToFill].second[i] >
-                   module_E_pair[layer + startPositionToFill].second[i + 1])) {
-            local_E_Max_vs_phi[layer + startPositionToFill].push_back(
-                module_E_pair[layer + startPositionToFill].second[i]);
-            local_E_Max_vs_phi_module[layer + startPositionToFill].push_back(
-                module_E_pair[layer + startPositionToFill].first[i]);
+        for (size_t i = 0; i < module_E_pair[layerToFill].second.size(); i++) {
+          // std::cout << i << " " << module_E_pair[layerToFill].first[i] << " " <<
+          // module_E_pair[layerToFill].second[i] << std::endl;
+          if ((i == 0 && module_E_pair[layerToFill].second[i] >
+                             module_E_pair[layerToFill].second[i + 1]) ||
+              (i == module_E_pair[layerToFill].second.size() - 1 &&
+               module_E_pair[layerToFill].second[i] >
+                   module_E_pair[layerToFill].second[i - 1]) ||
+              (i != 0 && i != (module_E_pair[layerToFill].second.size() - 1) &&
+               module_E_pair[layerToFill].second[i] >
+                   module_E_pair[layerToFill].second[i - 1] &&
+               module_E_pair[layerToFill].second[i] >
+                   module_E_pair[layerToFill].second[i + 1])) {
+            local_E_Max_vs_phi[layerToFill].push_back(
+                module_E_pair[layerToFill].second[i]);
+            local_E_Max_vs_phi_module[layerToFill].push_back(
+                module_E_pair[layerToFill].first[i]);
           }
         } // end of loop over module IDs
 
-        if (local_E_Max_vs_phi[layer + startPositionToFill].empty()) {
-          E_cell_vs_phi_Max[layer + startPositionToFill] = 0.;
-          E_cell_vs_phi_secMax[layer + startPositionToFill] = 0.;
-          E_cell_vs_phi_Max_module[layer + startPositionToFill] = 0;
-          E_cell_vs_phi_secMax_module[layer + startPositionToFill] = 0;
-          E_cell_vs_phi_Min[layer + startPositionToFill] = 0.;
-        } else if (local_E_Max_vs_phi[layer + startPositionToFill].size() < 2) {
-          E_cell_vs_phi_Max[layer + startPositionToFill] = local_E_Max_vs_phi[layer + startPositionToFill][0];
-          E_cell_vs_phi_secMax[layer + startPositionToFill] = 0.;
-          E_cell_vs_phi_Max_module[layer + startPositionToFill] =
-              local_E_Max_vs_phi_module[layer + startPositionToFill][0];
-          E_cell_vs_phi_secMax_module[layer + startPositionToFill] = 0;
-          E_cell_vs_phi_Min[layer + startPositionToFill] = 0.;
+        if (local_E_Max_vs_phi[layerToFill].empty()) {
+          E_cell_vs_phi_Max[layerToFill] = 0.;
+          E_cell_vs_phi_secMax[layerToFill] = 0.;
+          E_cell_vs_phi_Max_module[layerToFill] = 0;
+          E_cell_vs_phi_secMax_module[layerToFill] = 0;
+          E_cell_vs_phi_Min[layerToFill] = 0.;
+        } else if (local_E_Max_vs_phi[layerToFill].size() < 2) {
+          E_cell_vs_phi_Max[layerToFill] = local_E_Max_vs_phi[layerToFill][0];
+          E_cell_vs_phi_secMax[layerToFill] = 0.;
+          E_cell_vs_phi_Max_module[layerToFill] =
+              local_E_Max_vs_phi_module[layerToFill][0];
+          E_cell_vs_phi_secMax_module[layerToFill] = 0;
+          E_cell_vs_phi_Min[layerToFill] = 0.;
         } else {
-          std::vector<double> sortedVec = local_E_Max_vs_phi[layer + startPositionToFill];
+          std::vector<double> sortedVec = local_E_Max_vs_phi[layerToFill];
           // move the top 2 max to the beginning
           std::partial_sort(sortedVec.begin(), sortedVec.begin() + 2, sortedVec.end(), std::greater<double>());
-          E_cell_vs_phi_Max[layer + startPositionToFill] = sortedVec[0];
-          E_cell_vs_phi_secMax[layer + startPositionToFill] = sortedVec[1];
+          E_cell_vs_phi_Max[layerToFill] = sortedVec[0];
+          E_cell_vs_phi_secMax[layerToFill] = sortedVec[1];
           // get the corresponding module IDs
-          auto it_Max = std::find(local_E_Max_vs_phi[layer + startPositionToFill].begin(),
-                                  local_E_Max_vs_phi[layer + startPositionToFill].end(), sortedVec[0]);
-          int index_Max = std::distance(local_E_Max_vs_phi[layer + startPositionToFill].begin(), it_Max);
-          auto it_secMax = std::find(local_E_Max_vs_phi[layer + startPositionToFill].begin(),
-                                     local_E_Max_vs_phi[layer + startPositionToFill].end(), sortedVec[1]);
-          int index_secMax = std::distance(local_E_Max_vs_phi[layer + startPositionToFill].begin(), it_secMax);
-          E_cell_vs_phi_Max_module[layer + startPositionToFill] =
-              local_E_Max_vs_phi_module[layer + startPositionToFill][index_Max];
-          E_cell_vs_phi_secMax_module[layer + startPositionToFill] =
-              local_E_Max_vs_phi_module[layer + startPositionToFill][index_secMax];
+          auto it_Max = std::find(local_E_Max_vs_phi[layerToFill].begin(),
+                                  local_E_Max_vs_phi[layerToFill].end(), sortedVec[0]);
+          int index_Max = std::distance(local_E_Max_vs_phi[layerToFill].begin(), it_Max);
+          auto it_secMax = std::find(local_E_Max_vs_phi[layerToFill].begin(),
+                                     local_E_Max_vs_phi[layerToFill].end(), sortedVec[1]);
+          int index_secMax = std::distance(local_E_Max_vs_phi[layerToFill].begin(), it_secMax);
+          E_cell_vs_phi_Max_module[layerToFill] =
+              local_E_Max_vs_phi_module[layerToFill][index_Max];
+          E_cell_vs_phi_secMax_module[layerToFill] =
+              local_E_Max_vs_phi_module[layerToFill][index_secMax];
           // find the E_min inside the module range of E_cell_Max and E_cell_secMax
-          for (size_t i = 0; i < module_E_pair[layer + startPositionToFill].second.size(); i++) {
-            if ((module_E_pair[layer + startPositionToFill].first[i] >
-                 std::min(E_cell_vs_phi_Max_module[layer + startPositionToFill],
-                          E_cell_vs_phi_secMax_module[layer + startPositionToFill])) &&
-                (module_E_pair[layer + startPositionToFill].first[i] <
-                 std::max(E_cell_vs_phi_Max_module[layer + startPositionToFill],
-                          E_cell_vs_phi_secMax_module[layer + startPositionToFill])) &&
-                (module_E_pair[layer + startPositionToFill].second[i] <
-                 E_cell_vs_phi_Min[layer + startPositionToFill])) {
-              E_cell_vs_phi_Min[layer + startPositionToFill] = module_E_pair[layer + startPositionToFill].second[i];
+          for (size_t i = 0; i < module_E_pair[layerToFill].second.size(); i++) {
+            if ((module_E_pair[layerToFill].first[i] >
+                 std::min(E_cell_vs_phi_Max_module[layerToFill],
+                          E_cell_vs_phi_secMax_module[layerToFill])) &&
+                (module_E_pair[layerToFill].first[i] <
+                 std::max(E_cell_vs_phi_Max_module[layerToFill],
+                          E_cell_vs_phi_secMax_module[layerToFill])) &&
+                (module_E_pair[layerToFill].second[i] <
+                 E_cell_vs_phi_Min[layerToFill])) {
+              E_cell_vs_phi_Min[layerToFill] = module_E_pair[layerToFill].second[i];
             }
           }
         }
-        if (E_cell_vs_phi_Min[layer + startPositionToFill] > 1e12)
-          E_cell_vs_phi_Min[layer + startPositionToFill] = 0.; // check E_cell_Min
+        if (E_cell_vs_phi_Min[layerToFill] > 1e12)
+          E_cell_vs_phi_Min[layerToFill] = 0.; // check E_cell_Min
       } // end of loop over layers
     }
 
@@ -622,43 +646,54 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
       int systemID = m_systemIDs[k];
       // loop over layers
       for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
-        // theta
+        unsigned int layerToFill = layer + startPositionToFill;
+        // theta, x, y, z
         if (m_thetaRecalcLayerWeights[k][layer] < 0) {
-          if (sumEnLayer[layer + startPositionToFill] != 0.0) {
-            sumThetaLayer[layer + startPositionToFill] /= sumEnLayer[layer + startPositionToFill];
+          if (sumEnLayer[layerToFill] != 0.0) {
+            sumThetaLayer[layerToFill] /= sumEnLayer[layerToFill];
+            sumXLayer[layerToFill] /= sumEnLayer[layerToFill];
+            sumYLayer[layerToFill] /= sumEnLayer[layerToFill];
+            sumZLayer[layerToFill] /= sumEnLayer[layerToFill];
           } else {
-            sumThetaLayer[layer + startPositionToFill] = 0.;
+            sumThetaLayer[layerToFill] = 0.;
           }
         } else {
-          if (sumWeightLayer[layer + startPositionToFill] != 0.0) {
-            sumThetaLayer[layer + startPositionToFill] /= sumWeightLayer[layer + startPositionToFill];
+          if (sumWeightLayer[layerToFill] != 0.0) {
+            sumThetaLayer[layerToFill] /= sumWeightLayer[layerToFill];
+            sumXLayer[layerToFill] /= sumWeightLayer[layerToFill];
+            sumYLayer[layerToFill] /= sumWeightLayer[layerToFill];
+            sumZLayer[layerToFill] /= sumWeightLayer[layerToFill];
           } else {
-            sumThetaLayer[layer + startPositionToFill] = 0.;
+            sumThetaLayer[layerToFill] = 0.;
           }
         }
 
         // phi
-        if (sumEnLayer[layer + startPositionToFill] != 0.0) {
-          sumPhiLayer[layer + startPositionToFill] /= sumEnLayer[layer + startPositionToFill];
+        if (sumEnLayer[layerToFill] != 0.0) {
+          sumPhiLayer[layerToFill] /= sumEnLayer[layerToFill];
         } else {
-          sumPhiLayer[layer + startPositionToFill] = 0.;
+          sumPhiLayer[layerToFill] = 0.;
         }
         // make sure phi is in range -pi..pi
-        if (sumPhiLayer[layer + startPositionToFill] > TMath::Pi())
-          sumPhiLayer[layer + startPositionToFill] -= TMath::TwoPi();
+        if (sumPhiLayer[layerToFill] > TMath::Pi())
+          sumPhiLayer[layerToFill] -= TMath::TwoPi();
 
-        newCluster.addToShapeParameters(sumEnLayer[layer + startPositionToFill] / E); // E fraction of layer
-        newCluster.addToShapeParameters(sumThetaLayer[layer + startPositionToFill]);
-        newCluster.addToShapeParameters(sumPhiLayer[layer + startPositionToFill]);
+        // calculate theta, phi from x/y/z instead?
+        sumThetaLayer[layerToFill] = std::atan2(std::sqrt(sumXLayer[layerToFill]*sumXLayer[layerToFill] + sumYLayer[layerToFill]*sumYLayer[layerToFill]), sumZLayer[layerToFill]);
+        sumPhiLayer[layerToFill] = std::atan2(sumYLayer[layerToFill], sumXLayer[layerToFill]);
+
+        newCluster.addToShapeParameters(sumEnLayer[layerToFill] / E); // E fraction of layer
+        newCluster.addToShapeParameters(sumThetaLayer[layerToFill]);
+        newCluster.addToShapeParameters(sumPhiLayer[layerToFill]);
 
         // do pi0/photon shape var only for EMB
         if (m_do_photon_shapeVar && systemID == systemID_EMB) {
           if (m_do_widthTheta_logE_weights) {
             double w_theta2(0.0);
-            if (sumWeightLayer[layer + startPositionToFill] != 0.) {
+            if (sumWeightLayer[layerToFill] != 0.) {
               w_theta2 =
-                  theta2_E_layer[layer + startPositionToFill] / sumWeightLayer[layer + startPositionToFill] -
-                  std::pow(theta_E_layer[layer + startPositionToFill] / sumWeightLayer[layer + startPositionToFill], 2);
+                  theta2_E_layer[layerToFill] / sumWeightLayer[layerToFill] -
+                  std::pow(theta_E_layer[layerToFill] / sumWeightLayer[layerToFill], 2);
             }
             // Negative values can happen when noise is on and not filtered
             // Negative values very close to zero can happen due to numerical precision
@@ -666,16 +701,16 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
               PrintDebugMessage(warning(),
                                 "w_theta2 in theta width calculation is negative: " + std::to_string(w_theta2) +
                                     " , will set theta width to zero (this might happen when noise simulation is on)");
-              width_theta[layer + startPositionToFill] = 0.;
+              width_theta[layerToFill] = 0.;
             } else {
-              width_theta[layer + startPositionToFill] = std::sqrt(w_theta2);
+              width_theta[layerToFill] = std::sqrt(w_theta2);
             }
           } else {
             double w_theta2(0.0);
-            if (sumEnLayer[layer + startPositionToFill] != 0.) {
+            if (sumEnLayer[layerToFill] != 0.) {
               w_theta2 =
-                  theta2_E_layer[layer + startPositionToFill] / sumEnLayer[layer + startPositionToFill] -
-                  std::pow(theta_E_layer[layer + startPositionToFill] / sumEnLayer[layer + startPositionToFill], 2);
+                  theta2_E_layer[layerToFill] / sumEnLayer[layerToFill] -
+                  std::pow(theta_E_layer[layerToFill] / sumEnLayer[layerToFill], 2);
             }
             // Negative values can happen when noise is on and not filtered
             // Negative values very close to zero can happen due to numerical precision
@@ -683,16 +718,16 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
               PrintDebugMessage(warning(),
                                 "w_theta2 in theta width calculation is negative: " + std::to_string(w_theta2) +
                                     " , will set theta width to zero (this might happen when noise simulation is on)");
-              width_theta[layer + startPositionToFill] = 0.;
+              width_theta[layerToFill] = 0.;
             } else {
-              width_theta[layer + startPositionToFill] = std::sqrt(w_theta2);
+              width_theta[layerToFill] = std::sqrt(w_theta2);
             }
           }
           double w_module2(0.0);
-          if (sumEnLayer[layer + startPositionToFill] != 0.) {
+          if (sumEnLayer[layerToFill] != 0.) {
             w_module2 =
-                module2_E_layer[layer + startPositionToFill] / sumEnLayer[layer + startPositionToFill] -
-                std::pow(module_E_layer[layer + startPositionToFill] / sumEnLayer[layer + startPositionToFill], 2);
+                module2_E_layer[layerToFill] / sumEnLayer[layerToFill] -
+                std::pow(module_E_layer[layerToFill] / sumEnLayer[layerToFill], 2);
           }
           // Negative values can happen when noise is on and not filtered
           // Negative values very close to zero can happen due to numerical precision
@@ -700,29 +735,29 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
             PrintDebugMessage(warning(),
                               "w_module2 in module width calculation is negative: " + std::to_string(w_module2) +
                                   " , will set module width to zero (this might happen when noise simulation is on)");
-            width_module[layer + startPositionToFill] = 0.;
+            width_module[layerToFill] = 0.;
           } else {
-            width_module[layer + startPositionToFill] = std::sqrt(w_module2);
+            width_module[layerToFill] = std::sqrt(w_module2);
           }
 
-          double Ratio_E = (E_cell_Max[layer + startPositionToFill] - E_cell_secMax[layer + startPositionToFill]) /
-                           (E_cell_Max[layer + startPositionToFill] + E_cell_secMax[layer + startPositionToFill]);
-          if (E_cell_Max[layer + startPositionToFill] + E_cell_secMax[layer + startPositionToFill] == 0)
+          double Ratio_E = (E_cell_Max[layerToFill] - E_cell_secMax[layerToFill]) /
+                           (E_cell_Max[layerToFill] + E_cell_secMax[layerToFill]);
+          if (E_cell_Max[layerToFill] + E_cell_secMax[layerToFill] == 0)
             Ratio_E = 1.;
-          Ratio_E_max_2ndmax[layer + startPositionToFill] = Ratio_E;
-          Delta_E_2ndmax_min[layer + startPositionToFill] =
-              E_cell_secMax[layer + startPositionToFill] - E_cell_Min[layer + startPositionToFill];
+          Ratio_E_max_2ndmax[layerToFill] = Ratio_E;
+          Delta_E_2ndmax_min[layerToFill] =
+              E_cell_secMax[layerToFill] - E_cell_Min[layerToFill];
 
           double Ratio_E_vs_phi =
-              (E_cell_vs_phi_Max[layer + startPositionToFill] - E_cell_vs_phi_secMax[layer + startPositionToFill]) /
-              (E_cell_vs_phi_Max[layer + startPositionToFill] + E_cell_vs_phi_secMax[layer + startPositionToFill]);
-          if (E_cell_vs_phi_Max[layer + startPositionToFill] + E_cell_vs_phi_secMax[layer + startPositionToFill] == 0.)
+              (E_cell_vs_phi_Max[layerToFill] - E_cell_vs_phi_secMax[layerToFill]) /
+              (E_cell_vs_phi_Max[layerToFill] + E_cell_vs_phi_secMax[layerToFill]);
+          if (E_cell_vs_phi_Max[layerToFill] + E_cell_vs_phi_secMax[layerToFill] == 0.)
             Ratio_E_vs_phi = 1.;
-          Ratio_E_max_2ndmax_vs_phi[layer + startPositionToFill] = Ratio_E_vs_phi;
-          Delta_E_2ndmax_min_vs_phi[layer + startPositionToFill] =
-              E_cell_vs_phi_secMax[layer + startPositionToFill] - E_cell_vs_phi_Min[layer + startPositionToFill];
+          Ratio_E_max_2ndmax_vs_phi[layerToFill] = Ratio_E_vs_phi;
+          Delta_E_2ndmax_min_vs_phi[layerToFill] =
+              E_cell_vs_phi_secMax[layerToFill] - E_cell_vs_phi_Min[layerToFill];
 
-          if (local_E_Max[layer + startPositionToFill].size() > 0) {
+          if (local_E_Max[layerToFill].size() > 0) {
             double E_m1 = 0.;
             double E_p1 = 0.;
             int theta_m1 = 0;
@@ -739,10 +774,10 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
             double E_p4 = 0.;
             int theta_m4 = 0;
             int theta_p4 = 0;
-            auto it_1 = std::find(theta_E_pair[layer + startPositionToFill].second.begin(),
-                                  theta_E_pair[layer + startPositionToFill].second.end(),
-                                  E_cell_Max[layer + startPositionToFill]);
-            int ind_1 = std::distance(theta_E_pair[layer + startPositionToFill].second.begin(), it_1);
+            auto it_1 = std::find(theta_E_pair[layerToFill].second.begin(),
+                                  theta_E_pair[layerToFill].second.end(),
+                                  E_cell_Max[layerToFill]);
+            int ind_1 = std::distance(theta_E_pair[layerToFill].second.begin(), it_1);
 
             if (ind_1 - 1 >= 0) {
               E_m1 = theta_E_pair[layer].second[ind_1 - 1];
@@ -804,36 +839,36 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
               theta_p4 = 0;
             }
             // calculate energy fraction outside core of 3 inner theta strips
-            double sum_E_3Bin = E_m1 + E_cell_Max[layer + startPositionToFill] + E_p1;
+            double sum_E_3Bin = E_m1 + E_cell_Max[layerToFill] + E_p1;
             double sum_E_5Bin = sum_E_3Bin + E_m2 + E_p2;
             double sum_E_7Bin = sum_E_5Bin + E_m3 + E_p3;
             double sum_E_9Bin = sum_E_7Bin + E_m4 + E_p4;
-            E_fr_side_pm2[layer + startPositionToFill] = (sum_E_3Bin > 0.) ? (sum_E_5Bin / sum_E_3Bin - 1.) : 0.;
-            E_fr_side_pm3[layer + startPositionToFill] = (sum_E_3Bin > 0.) ? (sum_E_7Bin / sum_E_3Bin - 1.) : 0.;
-            E_fr_side_pm4[layer + startPositionToFill] = (sum_E_3Bin > 0.) ? (sum_E_9Bin / sum_E_3Bin - 1.) : 0.;
+            E_fr_side_pm2[layerToFill] = (sum_E_3Bin > 0.) ? (sum_E_5Bin / sum_E_3Bin - 1.) : 0.;
+            E_fr_side_pm3[layerToFill] = (sum_E_3Bin > 0.) ? (sum_E_7Bin / sum_E_3Bin - 1.) : 0.;
+            E_fr_side_pm4[layerToFill] = (sum_E_3Bin > 0.) ? (sum_E_9Bin / sum_E_3Bin - 1.) : 0.;
 
             // calculate width along theta in core
             double _w_theta_3Bin2(0.), _w_theta_5Bin2(0.), _w_theta_7Bin2(0.), _w_theta_9Bin2(0.);
             if (m_do_widthTheta_logE_weights) {
               double weightLog_E_max =
-                  std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_cell_Max[layer + startPositionToFill] /
-                                                                         sumEnLayer[layer + startPositionToFill]));
+                  std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(E_cell_Max[layerToFill] /
+                                                                         sumEnLayer[layerToFill]));
               double weightLog_m1 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_m1 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_m1 / sumEnLayer[layerToFill]));
               double weightLog_m2 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_m2 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_m2 / sumEnLayer[layerToFill]));
               double weightLog_m3 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_m3 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_m3 / sumEnLayer[layerToFill]));
               double weightLog_m4 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_m4 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_m4 / sumEnLayer[layerToFill]));
               double weightLog_p1 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_p1 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_p1 / sumEnLayer[layerToFill]));
               double weightLog_p2 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_p2 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_p2 / sumEnLayer[layerToFill]));
               double weightLog_p3 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_p3 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_p3 / sumEnLayer[layerToFill]));
               double weightLog_p4 = std::max(0., m_thetaRecalcLayerWeights[k][layer] +
-                                                     log(E_p4 / sumEnLayer[layer + startPositionToFill]));
+                                                     log(E_p4 / sumEnLayer[layerToFill]));
 
               double sum_weightLog_3Bin = weightLog_E_max + weightLog_m1 + weightLog_p1;
               double sum_weightLog_5Bin = sum_weightLog_3Bin + weightLog_m2 + weightLog_p2;
@@ -841,11 +876,11 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
               double sum_weightLog_9Bin = sum_weightLog_7Bin + weightLog_m4 + weightLog_p4;
 
               double theta2_E_3Bin = theta_m1 * theta_m1 * weightLog_m1 +
-                                     E_cell_Max_theta[layer + startPositionToFill] *
-                                         E_cell_Max_theta[layer + startPositionToFill] * weightLog_E_max +
+                                     E_cell_Max_theta[layerToFill] *
+                                         E_cell_Max_theta[layerToFill] * weightLog_E_max +
                                      theta_p1 * theta_p1 * weightLog_p1;
               double theta_E_3Bin = theta_m1 * weightLog_m1 +
-                                    E_cell_Max_theta[layer + startPositionToFill] * weightLog_E_max +
+                                    E_cell_Max_theta[layerToFill] * weightLog_E_max +
                                     theta_p1 * weightLog_p1;
               double theta2_E_5Bin =
                   theta2_E_3Bin + theta_m2 * theta_m2 * weightLog_m2 + theta_p2 * theta_p2 * weightLog_p2;
@@ -863,13 +898,13 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
               _w_theta_9Bin2 = theta2_E_9Bin / sum_weightLog_9Bin - std::pow(theta_E_9Bin / sum_weightLog_9Bin, 2);
             } else {
               double theta2_E_3Bin = theta_m1 * theta_m1 * E_m1 +
-                                     E_cell_Max_theta[layer + startPositionToFill] *
-                                         E_cell_Max_theta[layer + startPositionToFill] *
-                                         E_cell_Max[layer + startPositionToFill] +
+                                     E_cell_Max_theta[layerToFill] *
+                                         E_cell_Max_theta[layerToFill] *
+                                         E_cell_Max[layerToFill] +
                                      theta_p1 * theta_p1 * E_p1;
               double theta_E_3Bin =
                   theta_m1 * E_m1 +
-                  E_cell_Max_theta[layer + startPositionToFill] * E_cell_Max[layer + startPositionToFill] +
+                  E_cell_Max_theta[layerToFill] * E_cell_Max[layerToFill] +
                   theta_p1 * E_p1;
               double theta2_E_5Bin = theta2_E_3Bin + theta_m2 * theta_m2 * E_m2 + theta_p2 * theta_p2 * E_p2;
               double theta_E_5Bin = theta_E_3Bin + theta_m2 * E_m2 + theta_p2 * E_p2;
@@ -889,60 +924,60 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
                   warning(),
                   "_w_theta_3Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_3Bin2) +
                       " , will set theta width to zero (this might happen when noise simulation is on)");
-              width_theta_3Bin[layer + startPositionToFill] = 0.;
+              width_theta_3Bin[layerToFill] = 0.;
             } else {
-              width_theta_3Bin[layer + startPositionToFill] = std::sqrt(_w_theta_3Bin2);
+              width_theta_3Bin[layerToFill] = std::sqrt(_w_theta_3Bin2);
             }
             if (_w_theta_5Bin2 < 0) {
               PrintDebugMessage(
                   warning(),
                   "_w_theta_5Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_5Bin2) +
                       " , will set theta width to zero (this might happen when noise simulation is on)");
-              width_theta_5Bin[layer + startPositionToFill] = 0.;
+              width_theta_5Bin[layerToFill] = 0.;
             } else {
-              width_theta_5Bin[layer + startPositionToFill] = std::sqrt(_w_theta_5Bin2);
+              width_theta_5Bin[layerToFill] = std::sqrt(_w_theta_5Bin2);
             }
             if (_w_theta_7Bin2 < 0) {
               PrintDebugMessage(
                   warning(),
                   "_w_theta_7Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_7Bin2) +
                       " , will set theta width to zero (this might happen when noise simulation is on)");
-              width_theta_7Bin[layer + startPositionToFill] = 0.;
+              width_theta_7Bin[layerToFill] = 0.;
             } else {
-              width_theta_7Bin[layer + startPositionToFill] = std::sqrt(_w_theta_7Bin2);
+              width_theta_7Bin[layerToFill] = std::sqrt(_w_theta_7Bin2);
             }
             if (_w_theta_9Bin2 < 0) {
               PrintDebugMessage(
                   warning(),
                   "_w_theta_9Bin2 in theta width calculation is negative: " + std::to_string(_w_theta_9Bin2) +
                       " , will set theta width to zero (this might happen when noise simulation is on)");
-              width_theta_9Bin[layer + startPositionToFill] = 0.;
+              width_theta_9Bin[layerToFill] = 0.;
             } else {
-              width_theta_9Bin[layer + startPositionToFill] = std::sqrt(_w_theta_9Bin2);
+              width_theta_9Bin[layerToFill] = std::sqrt(_w_theta_9Bin2);
             }
           } else {
-            width_theta_3Bin[layer + startPositionToFill] = 0.;
-            width_theta_5Bin[layer + startPositionToFill] = 0.;
-            width_theta_7Bin[layer + startPositionToFill] = 0.;
-            width_theta_9Bin[layer + startPositionToFill] = 0.;
-            E_fr_side_pm2[layer + startPositionToFill] = 0.;
-            E_fr_side_pm3[layer + startPositionToFill] = 0.;
-            E_fr_side_pm4[layer + startPositionToFill] = 0.;
+            width_theta_3Bin[layerToFill] = 0.;
+            width_theta_5Bin[layerToFill] = 0.;
+            width_theta_7Bin[layerToFill] = 0.;
+            width_theta_9Bin[layerToFill] = 0.;
+            E_fr_side_pm2[layerToFill] = 0.;
+            E_fr_side_pm3[layerToFill] = 0.;
+            E_fr_side_pm4[layerToFill] = 0.;
           }
-          newCluster.addToShapeParameters(maxCellEnergyInLayer[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(width_theta[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(width_module[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(Ratio_E_max_2ndmax[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(Delta_E_2ndmax_min[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(Ratio_E_max_2ndmax_vs_phi[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(Delta_E_2ndmax_min_vs_phi[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(width_theta_3Bin[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(width_theta_5Bin[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(width_theta_7Bin[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(width_theta_9Bin[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(E_fr_side_pm2[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(E_fr_side_pm3[layer + startPositionToFill]);
-          newCluster.addToShapeParameters(E_fr_side_pm4[layer + startPositionToFill]);
+          newCluster.addToShapeParameters(maxCellEnergyInLayer[layerToFill]);
+          newCluster.addToShapeParameters(width_theta[layerToFill]);
+          newCluster.addToShapeParameters(width_module[layerToFill]);
+          newCluster.addToShapeParameters(Ratio_E_max_2ndmax[layerToFill]);
+          newCluster.addToShapeParameters(Delta_E_2ndmax_min[layerToFill]);
+          newCluster.addToShapeParameters(Ratio_E_max_2ndmax_vs_phi[layerToFill]);
+          newCluster.addToShapeParameters(Delta_E_2ndmax_min_vs_phi[layerToFill]);
+          newCluster.addToShapeParameters(width_theta_3Bin[layerToFill]);
+          newCluster.addToShapeParameters(width_theta_5Bin[layerToFill]);
+          newCluster.addToShapeParameters(width_theta_7Bin[layerToFill]);
+          newCluster.addToShapeParameters(width_theta_9Bin[layerToFill]);
+          newCluster.addToShapeParameters(E_fr_side_pm2[layerToFill]);
+          newCluster.addToShapeParameters(E_fr_side_pm3[layerToFill]);
+          newCluster.addToShapeParameters(E_fr_side_pm4[layerToFill]);
         }
       } // end of loop over layers
     } // end of loop over system/readout
