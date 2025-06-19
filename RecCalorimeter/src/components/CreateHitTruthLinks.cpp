@@ -7,10 +7,7 @@ DECLARE_COMPONENT(CreateHitTruthLinks)
 
 CreateHitTruthLinks::CreateHitTruthLinks(const std::string& name, ISvcLocator* svcLoc)
     : Gaudi::Algorithm(name, svcLoc) {
-  //declareProperty("hits", m_hits, "Hits collection (input)");
-  //declareProperty("cells", m_cells, "Cell collection (input)");
   declareProperty("mcparticles", m_mcparticles, "MC particles collection (input)");
-  //declareProperty("cell_hit_links", m_cell_hit_links, "The links between cells and hits (input)");
   declareProperty("cell_mcparticle_links", m_cell_mcparticle_links, "The links between cells and MC particles (output)");
 }
 

@@ -39,16 +39,6 @@ public:
   virtual ~CreateHitTruthLinks();
 
 private:
-  /// Handle for sim calo hits (input collection)
-  /// mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
-
-  /// Handle for calo hits (input collection)
-  /// mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};
-
-  /// Handle for hit<->cell link (input collection)
-  /// mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_cell_hit_links{"cell_hit_links", Gaudi::DataHandle::Reader,
-  ///  this};
-
   /// List of input sim calo hit collections
   Gaudi::Property<std::vector<std::string>> m_hitCollections{
     this, "hits", {}, "Names of CSimalorimeterHit collections to read"};
