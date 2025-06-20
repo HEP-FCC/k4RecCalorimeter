@@ -30,6 +30,7 @@ StatusCode CreateHitTruthLinks::initialize() {
     }
   }
 
+  /*
   for (const auto& col : m_cellCollections) {
     debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
     try {
@@ -40,6 +41,7 @@ StatusCode CreateHitTruthLinks::initialize() {
       return StatusCode::FAILURE;
     }
   }
+  */
 
   for (const auto& col : m_cell_hit_linkCollections) {
     debug() << "Creating handle for input cell-hit link collection : " << col << endmsg;
@@ -376,7 +378,7 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
                         debug() << "starts_in_tracker, has_pi0, has_bs, gmother_in_calo : " <<  starts_in_tracker << " " << has_pi0 << " " <<  has_bs << " " << gmother_in_calo << endmsg;
                         if ( starts_in_tracker == 1 ) {
                           // this_Kid is a clear-cut hit-originator
-                          // this_Kid started before the calo, and is the one\
+                          // this_Kid started before the calo, and is the one
                           // the hit should be attributed to
                           remap_as_you_go[index_mcp] = index_this_Kid;
                           index_mcp = index_this_Kid;
@@ -521,8 +523,8 @@ StatusCode CreateHitTruthLinks::finalize() {
   for (size_t ih = 0; ih < m_hitCollectionHandles.size(); ih++)
     delete m_hitCollectionHandles[ih];
 
-  for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++)
-    delete m_cellCollectionHandles[ih];
+  // for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++)
+  //   delete m_cellCollectionHandles[ih];
 
   for (size_t ih = 0; ih < m_cell_hit_linkCollectionHandles.size(); ih++)
     delete m_cell_hit_linkCollectionHandles[ih];
