@@ -506,8 +506,8 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
         } // end if (assoc.getTo() == simHit)
       } // end loop over calo hit <-> sim calo hit links
       if (nhits==0) {
-        error() << "Sim hit with no associated  calo hit!!!" << endmsg;
-        return StatusCode::FAILURE;
+        warning() << "Sim hit with no associated  calo hit!!!" << endmsg;
+        // might happen if digitiser creates cells only if energy is above a given threshold..
       }
     } // end loop over sim calo hits
   } // end loop over sim calo hit collections
