@@ -45,12 +45,6 @@ private:
   /// the vector of input k4FWCore::DataHandles for the input hit collections
   std::vector<k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection>*> m_hitCollectionHandles;
 
-  /// List of input cell collections (not used explicitly - should it be defined anyway?)
-  // Gaudi::Property<std::vector<std::string>> m_cellCollections{
-  //   this, "cells", {}, "Names of CalorimeterHit collections to read"};
-  /// the vector of input k4FWCore::DataHandles for the input cell collections
-  // std::vector<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
-
   /// List of input cell<->hits collections
   Gaudi::Property<std::vector<std::string>> m_cell_hit_linkCollections{
     this, "cell_hit_links", {}, "Names of CaloHitSimCaloHitLink collections to read"};

@@ -30,19 +30,6 @@ StatusCode CreateHitTruthLinks::initialize() {
     }
   }
 
-  /*
-  for (const auto& col : m_cellCollections) {
-    debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
-    try {
-      m_cellCollectionHandles.push_back(
-          new k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
-    } catch (...) {
-      error() << "Error creating handle for input collection: " << col << endmsg;
-      return StatusCode::FAILURE;
-    }
-  }
-  */
-
   for (const auto& col : m_cell_hit_linkCollections) {
     debug() << "Creating handle for input cell-hit link collection : " << col << endmsg;
     try {
@@ -67,7 +54,7 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
   bool doRemapping = true;  // for debug
 
   // create cell<->particle links
-  edm4hep::CaloHitMCParticleLinkCollection* caloHitMCParticleLinkCollection = new edm4hep::CaloHitMCParticleLinkCollection();
+  edm4hep::CaloHitMCParticleLinkCollection* caloHitMCParticleLinkCollection = m_cell_mcparticle_links.createAndPut();
 
   // retrieve MC particles
   const edm4hep::MCParticleCollection* mcparticles = m_mcparticles.get();
@@ -512,8 +499,6 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
     } // end loop over sim calo hits
   } // end loop over sim calo hit collections
 
-  // push the CaloHitCollection to event store
-  m_cell_mcparticle_links.put(caloHitMCParticleLinkCollection);
   debug() << "Finished linking calo hits to MC particles" << endmsg;
 
   return StatusCode::SUCCESS;
@@ -522,9 +507,6 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
 StatusCode CreateHitTruthLinks::finalize() {
   for (size_t ih = 0; ih < m_hitCollectionHandles.size(); ih++)
     delete m_hitCollectionHandles[ih];
-
-  // for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++)
-  //   delete m_cellCollectionHandles[ih];
 
   for (size_t ih = 0; ih < m_cell_hit_linkCollectionHandles.size(); ih++)
     delete m_cell_hit_linkCollectionHandles[ih];
