@@ -219,6 +219,9 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
     int module_id_Min = 9999;
     int module_id_Max = -9999;
 
+    TVector3 clusterBarycenter(0., 0., 0.);
+    TVector3 clusterDirection(0., 0., 0.);
+
     // loop over each system/readout
     int startPositionToFill = 0;
     for (size_t k = 0; k < m_readoutNames.size(); k++) {
@@ -986,4 +989,384 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
   } // end of loop over clusters
 
   return StatusCode::SUCCESS;
+}
+
+
+StatusCode ClusterFitHelper::FitStart(const Cluster *const pCluster, const unsigned int maxOccupiedLayers, ClusterFitResult &clusterFitResult)
+{
+    if (maxOccupiedLayers < 2)
+        return STATUS_CODE_INVALID_PARAMETER;
+
+    const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
+    const unsigned int listSize(orderedCaloHitList.size());
+
+    if (0 == listSize)
+        return STATUS_CODE_NOT_INITIALIZED;
+
+    if (listSize < 2)
+        return STATUS_CODE_OUT_OF_RANGE;
+
+    unsigned int occupiedLayerCount(0);
+
+    ClusterFitPointList clusterFitPointList;
+    for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
+    {
+        if (++occupiedLayerCount > maxOccupiedLayers)
+            break;
+
+        for (const CaloHit *const pCaloHit : *layerIter.second)
+        {
+            clusterFitPointList.push_back(ClusterFitPoint(pCaloHit));
+        }
+    }
+
+    return FitPoints(clusterFitPointList, clusterFitResult);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+StatusCode ClusterFitHelper::FitEnd(const Cluster *const pCluster, const unsigned int maxOccupiedLayers, ClusterFitResult &clusterFitResult)
+{
+    if (maxOccupiedLayers < 2)
+        return STATUS_CODE_INVALID_PARAMETER;
+
+    const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
+    const unsigned int listSize(orderedCaloHitList.size());
+
+    if (0 == listSize)
+        return STATUS_CODE_NOT_INITIALIZED;
+
+    if (listSize < 2)
+        return STATUS_CODE_OUT_OF_RANGE;
+
+    unsigned int occupiedLayerCount(0);
+
+    ClusterFitPointList clusterFitPointList;
+    for (OrderedCaloHitList::const_reverse_iterator iter = orderedCaloHitList.rbegin(), iterEnd = orderedCaloHitList.rend(); iter != iterEnd; ++iter)
+    {
+        if (++occupiedLayerCount > maxOccupiedLayers)
+            break;
+
+        for (const CaloHit *const pCaloHit : *iter->second)
+        {
+            clusterFitPointList.push_back(ClusterFitPoint(pCaloHit));
+        }
+    }
+
+    return FitPoints(clusterFitPointList, clusterFitResult);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+StatusCode ClusterFitHelper::FitFullCluster(const Cluster *const pCluster, ClusterFitResult &clusterFitResult)
+{
+    const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
+    const unsigned int listSize(orderedCaloHitList.size());
+
+    if (0 == listSize)
+        return STATUS_CODE_NOT_INITIALIZED;
+
+    if (listSize < 2)
+        return STATUS_CODE_OUT_OF_RANGE;
+
+    ClusterFitPointList clusterFitPointList;
+    for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
+    {
+        for (const CaloHit *const pCaloHit : *layerIter.second)
+        {
+            clusterFitPointList.push_back(ClusterFitPoint(pCaloHit));
+        }
+    }
+
+    return FitPoints(clusterFitPointList, clusterFitResult);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+StatusCode ClusterFitHelper::FitLayers(const Cluster *const pCluster, const unsigned int startLayer, const unsigned int endLayer,
+    ClusterFitResult &clusterFitResult)
+{
+    if (startLayer >= endLayer)
+        return STATUS_CODE_INVALID_PARAMETER;
+
+    const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
+    const unsigned int listSize(orderedCaloHitList.size());
+
+    if (0 == listSize)
+        return STATUS_CODE_NOT_INITIALIZED;
+
+    if (listSize < 2)
+        return STATUS_CODE_OUT_OF_RANGE;
+
+    ClusterFitPointList clusterFitPointList;
+    for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
+    {
+        const unsigned int pseudoLayer(layerIter.first);
+
+        if (startLayer > pseudoLayer)
+            continue;
+
+        if (endLayer < pseudoLayer)
+            break;
+
+        for (const CaloHit *const pCaloHit : *layerIter.second)
+        {
+            clusterFitPointList.push_back(ClusterFitPoint(pCaloHit));
+        }
+    }
+
+    return FitPoints(clusterFitPointList, clusterFitResult);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+StatusCode ClusterFitHelper::FitLayerCentroids(const Cluster *const pCluster, const unsigned int startLayer, const unsigned int endLayer,
+    ClusterFitResult &clusterFitResult)
+{
+    try
+    {
+        if (startLayer >= endLayer)
+            return STATUS_CODE_INVALID_PARAMETER;
+
+        const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
+        const unsigned int listSize(orderedCaloHitList.size());
+
+        if (0 == listSize)
+            return STATUS_CODE_NOT_INITIALIZED;
+
+        if (listSize < 2)
+            return STATUS_CODE_OUT_OF_RANGE;
+
+        ClusterFitPointList clusterFitPointList;
+        // once the hits are ordered by pseudolayer, can iterate over each layer
+        // and determine the centroid of each layer, with
+        // - position, cell length scale and energy = average of values of each hit
+        // - direction = sum of cell directions (normal vectors), normalised to unity
+        for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
+        {
+            const unsigned int pseudoLayer(layerIter.first);
+
+            if (startLayer > pseudoLayer)
+                continue;
+
+            if (endLayer < pseudoLayer)
+                break;
+
+            const unsigned int nCaloHits(layerIter.second->size());
+
+            if (0 == nCaloHits)
+                throw StatusCodeException(STATUS_CODE_FAILURE);
+
+            float cellLengthScaleSum(0.f), cellEnergySum(0.f);
+            TVector3 cellNormalVectorSum(0.f, 0.f, 0.f);
+
+            for (const CaloHit *const pCaloHit : *layerIter.second)
+            {
+                cellLengthScaleSum += pCaloHit->GetCellLengthScale();
+                cellNormalVectorSum += pCaloHit->GetCellNormalVector();
+                cellEnergySum += pCaloHit->GetInputEnergy();
+            }
+
+            clusterFitPointList.push_back(ClusterFitPoint(pCluster->GetCentroid(pseudoLayer), cellNormalVectorSum.Unit(),
+                cellLengthScaleSum / static_cast<float>(nCaloHits), cellEnergySum / static_cast<float>(nCaloHits), pseudoLayer));
+        }
+
+        // then, fit the centroids rather than fitting all hits in clusters
+        return FitPoints(clusterFitPointList, clusterFitResult);
+    }
+    catch (StatusCodeException &statusCodeException)
+    {
+        clusterFitResult.SetSuccessFlag(false);
+        return statusCodeException.GetStatusCode();
+    }
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+StatusCode AugmentClustersFCCee::FitPoints(ClusterFitPointList &clusterFitPointList, ClusterFitResult &clusterFitResult)
+{
+    std::sort(clusterFitPointList.begin(), clusterFitPointList.end());
+
+    try
+    {
+        const unsigned int nFitPoints(clusterFitPointList.size());
+        std::cout << "Number of points for fit: " << nFitPoints << std::endl;
+
+        if (nFitPoints < 2)
+            return STATUS_CODE_INVALID_PARAMETER;
+
+        clusterFitResult.Reset();
+        TVector3 positionSum(0.f, 0.f, 0.f);
+        TVector3 normalVectorSum(0.f, 0.f, 0.f);
+
+        for (const ClusterFitPoint &clusterFitPoint : clusterFitPointList)
+        {
+            positionSum += clusterFitPoint.GetPosition();
+            normalVectorSum += clusterFitPoint.GetCellNormalVector();
+        }
+
+        return PerformLinearFit(positionSum * (1.f / static_cast<float>(nFitPoints)), normalVectorSum.Unit(), clusterFitPointList, clusterFitResult);
+    }
+  catch (...)
+  {
+    error() << "Error performing fit" << endmsg;
+    return StatusCode::FAILURE;
+  }
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPosition, const TVector3 &centralDirection,
+    ClusterFitPointList &clusterFitPointList, ClusterFitResult &clusterFitResult)
+{
+    std::cout << "Performing linear fit for cluster" << std::endl;
+    std::cout << "  initial position: " << centralPosition << std::endl;
+    std::cout << "  initial direction: " << centralDirection << std::endl;
+
+    std::sort(clusterFitPointList.begin(), clusterFitPointList.end());
+
+    // Extract the data
+    double sumP(0.), sumQ(0.), sumR(0.), sumWeights(0.);
+    double sumPR(0.), sumQR(0.), sumRR(0.);
+
+    // Rotate the coordinate system to align the estimated initial direction (centralDirection)
+    // with the z axis (chosenAxis) using Rodrigues rotation formula
+    // Points are also translated so that the centroid (centralPosition) is at the origin
+    const TVector3 chosenAxis(0.f, 0.f, 1.f);
+    const double cosTheta(std::cos(centralDirection.Angle(chosenAxis)));
+    const double sinTheta(std::sin(centralDirection.Angle(chosenAxis)));
+
+    const TVector3 rotationAxis((std::fabs(cosTheta) > 0.99) ? TVector3(1.f, 0.f, 0.f) :
+        centralDirection.Cross(chosenAxis).Unit());
+
+    for (const ClusterFitPoint &clusterFitPoint : clusterFitPointList)
+    {
+        const TVector3 position(clusterFitPoint.GetPosition() - centralPosition);
+        const double weight(1.);
+
+        const double p( (cosTheta + rotationAxis.X() * rotationAxis.X() * (1. - cosTheta)) * position.X() +
+            (rotationAxis.X() * rotationAxis.Y() * (1. - cosTheta) - rotationAxis.Z() * sinTheta) * position.Y() +
+            (rotationAxis.X() * rotationAxis.Z() * (1. - cosTheta) + rotationAxis.Y() * sinTheta) * position.Z() );
+        const double q( (rotationAxis.Y() * rotationAxis.X() * (1. - cosTheta) + rotationAxis.Z() * sinTheta) * position.X() +
+            (cosTheta + rotationAxis.Y() * rotationAxis.Y() * (1. - cosTheta)) * position.Y() +
+            (rotationAxis.Y() * rotationAxis.Z() * (1. - cosTheta) - rotationAxis.X() * sinTheta) * position.Z() );
+        const double r( (rotationAxis.Z() * rotationAxis.X() * (1. - cosTheta) - rotationAxis.Y() * sinTheta) * position.X() +
+            (rotationAxis.Z() * rotationAxis.Y() * (1. - cosTheta) + rotationAxis.X() * sinTheta) * position.Y() +
+            (cosTheta + rotationAxis.Z() * rotationAxis.Z() * (1. - cosTheta)) * position.Z() );
+
+        sumP += p * weight; sumQ += q * weight; sumR += r * weight;
+        sumPR += p * r * weight; sumQR += q * r * weight; sumRR += r * r * weight;
+        sumWeights += weight;
+    }
+
+    // Once the points are rotated, perform a 2D linear regression in (p, q) plane as a function of r(z)
+    // i.e. find best fitting lines: p = a_p*r + b_p, q = a_q*r + b_q
+    const double denominatorR(sumR * sumR - sumWeights * sumRR);
+
+    if (std::fabs(denominatorR) < std::numeric_limits<double>::epsilon()) {
+        std::cout << "  fit failed" << std::endl;
+        return STATUS_CODE_FAILURE;
+    }
+
+    const double aP((sumR * sumP - sumWeights * sumPR) / denominatorR);
+    const double bP((sumP - aP * sumR) / sumWeights);
+    const double aQ((sumR * sumQ - sumWeights * sumQR) / denominatorR);
+    const double bQ((sumQ - aQ * sumR) / sumWeights);
+
+    // Convert fitted line back to 3D
+
+    // Extract direction in 3D: (a_p, a_q, 1) normalised to 1
+    const double magnitude(std::sqrt(1. + aP * aP + aQ * aQ));
+    const double dirP(aP / magnitude), dirQ(aQ / magnitude), dirR(1. / magnitude);
+
+    // Rotate the direction and intercept back to original frame
+    // Reverse rotation applied to direction vector to go back to original frame
+    TVector3 direction(
+        static_cast<float>((cosTheta + rotationAxis.X() * rotationAxis.X() * (1. - cosTheta)) * dirP +
+            (rotationAxis.X() * rotationAxis.Y() * (1. - cosTheta) + rotationAxis.Z() * sinTheta) * dirQ +
+            (rotationAxis.X() * rotationAxis.Z() * (1. - cosTheta) - rotationAxis.Y() * sinTheta) * dirR),
+        static_cast<float>((rotationAxis.Y() * rotationAxis.X() * (1. - cosTheta) - rotationAxis.Z() * sinTheta) * dirP +
+            (cosTheta + rotationAxis.Y() * rotationAxis.Y() * (1. - cosTheta)) * dirQ +
+            (rotationAxis.Y() * rotationAxis.Z() * (1. - cosTheta) + rotationAxis.X() * sinTheta) * dirR),
+        static_cast<float>((rotationAxis.Z() * rotationAxis.X() * (1. - cosTheta) + rotationAxis.Y() * sinTheta) * dirP +
+            (rotationAxis.Z() * rotationAxis.Y() * (1. - cosTheta) - rotationAxis.X() * sinTheta) * dirQ +
+            (cosTheta + rotationAxis.Z() * rotationAxis.Z() * (1. - cosTheta)) * dirR) );
+
+    // Similar transformation for intercept (which is defined as the point of th best-fit line for r=0)
+    // i.e. at same z as centroid for endcap and at same rho as centroid for barrel?
+    // Additional translation to shift back the centroid at the proper position
+    TVector3 intercept(centralPosition + TVector3(
+        static_cast<float>((cosTheta + rotationAxis.X() * rotationAxis.X() * (1. - cosTheta)) * bP +
+            (rotationAxis.X() * rotationAxis.Y() * (1. - cosTheta) + rotationAxis.Z() * sinTheta) * bQ),
+        static_cast<float>((rotationAxis.Y() * rotationAxis.X() * (1. - cosTheta) - rotationAxis.Z() * sinTheta) * bP +
+            (cosTheta + rotationAxis.Y() * rotationAxis.Y() * (1. - cosTheta)) * bQ),
+        static_cast<float>((rotationAxis.Z() * rotationAxis.X() * (1. - cosTheta) + rotationAxis.Y() * sinTheta) * bP +
+            (rotationAxis.Z() * rotationAxis.Y() * (1. - cosTheta) - rotationAxis.X() * sinTheta) * bQ) ));
+
+    // Extract radial direction cosine: cosine of angle between fitted direction, and direction calculated from
+    // intercept ("best-fit" centroid) assuming projectivity from IP
+    float dirCosR(direction.GetDotProduct(intercept) / intercept.GetMagnitude());
+
+    if (0.f > dirCosR)
+    {
+        dirCosR = -dirCosR;
+        direction = direction * -1.f;
+    }
+
+    // Now calculate something like a chi2
+    double chi2_P(0.), chi2_Q(0.), rms(0.);
+    double sumA(0.), sumL(0.), sumAL(0.), sumLL(0.);
+
+    for (const ClusterFitPoint &clusterFitPoint : clusterFitPointList)
+    {
+        const TVector3 position(clusterFitPoint.GetPosition() - centralPosition);
+
+        const double p( (cosTheta + rotationAxis.X() * rotationAxis.X() * (1. - cosTheta)) * position.X() +
+            (rotationAxis.X() * rotationAxis.Y() * (1. - cosTheta) - rotationAxis.Z() * sinTheta) * position.Y() +
+            (rotationAxis.X() * rotationAxis.Z() * (1. - cosTheta) + rotationAxis.Y() * sinTheta) * position.Z() );
+        const double q( (rotationAxis.Y() * rotationAxis.X() * (1. - cosTheta) + rotationAxis.Z() * sinTheta) * position.X() +
+            (cosTheta + rotationAxis.Y() * rotationAxis.Y() * (1. - cosTheta)) * position.Y() +
+            (rotationAxis.Y() * rotationAxis.Z() * (1. - cosTheta) - rotationAxis.X() * sinTheta) * position.Z() );
+        const double r( (rotationAxis.Z() * rotationAxis.X() * (1. - cosTheta) - rotationAxis.Y() * sinTheta) * position.X() +
+            (rotationAxis.Z() * rotationAxis.Y() * (1. - cosTheta) + rotationAxis.X() * sinTheta) * position.Y() +
+            (cosTheta + rotationAxis.Z() * rotationAxis.Z() * (1. - cosTheta)) * position.Z() );
+
+        const double error(clusterFitPoint.GetCellSize() / 3.46);
+        const double chiP((p - aP * r - bP) / error);
+        const double chiQ((q - aQ * r - bQ) / error);
+
+        chi2_P += chiP * chiP;
+        chi2_Q += chiQ * chiQ;
+
+        const TVector3 difference(clusterFitPoint.GetPosition() - intercept);
+        rms += (direction.Cross(difference)).GetMagnitudeSquared();
+
+        const float a(direction.GetDotProduct(difference));
+        const float l(static_cast<float>(clusterFitPoint.GetPseudoLayer()));
+        sumA += a; sumL += l; sumAL += a * l; sumLL += l * l;
+    }
+
+    const double nPoints(static_cast<double>(clusterFitPointList.size()));
+    const double denominatorL(sumL * sumL - nPoints * sumLL);
+
+    if (std::fabs(denominatorL) > std::numeric_limits<double>::epsilon())
+    {
+        if (0. > ((sumL * sumA - nPoints * sumAL) / denominatorL))
+            direction = direction * -1.f;
+    }
+
+    clusterFitResult.SetDirection(direction);
+    clusterFitResult.SetIntercept(intercept);
+    clusterFitResult.SetChi2(static_cast<float>((chi2_P + chi2_Q) / nPoints));
+    clusterFitResult.SetRms(static_cast<float>(std::sqrt(rms / nPoints)));
+    clusterFitResult.SetRadialDirectionCosine(dirCosR);
+    clusterFitResult.SetSuccessFlag(true);
+
+    std::cout << "  fit successful" << std::endl;
+    std::cout << "  final position: " << intercept << std::endl;
+    std::cout << "  final direction: " << direction << std::endl;
+    std::cout << "  rms: " << clusterFitResult.GetRms() << std::endl;
+    std::cout << "  cos(dRdir): " << dirCosR << std::endl;
+
+    return STATUS_CODE_SUCCESS;
 }
