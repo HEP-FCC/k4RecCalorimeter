@@ -184,16 +184,14 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
                     // mother, or the mother decayed in the tracker
                     // (=> the kid is the particle entering the calorimeter.)
                     debug() << "in originator loop " << endmsg;
-                    {
-                      const edm4hep::MCParticle& mother = mcparticles->at(index_mother);
-                      debug() << "shower-part mother "<<mother.id()
-                              << " gs "<<mother.getGeneratorStatus()
-                              << " dint "<<mother.isDecayedInTracker()
-                              << " bs "<<mother.isBackscatter()
-                              << " ndi "<<mother.vertexIsNotEndpointOfParent()
-                              << " npar "<<mother.getParents().size()
-                              << " pdg "<<mother.getPDG() << endmsg;
-                    }
+                    const edm4hep::MCParticle& mother = mcparticles->at(index_mother);
+                    debug() << "shower-part mother "<<mother.id()
+                            << " gs "<<mother.getGeneratorStatus()
+                            << " dint "<<mother.isDecayedInTracker()
+                            << " bs "<<mother.isBackscatter()
+                            << " ndi "<<mother.vertexIsNotEndpointOfParent()
+                            << " npar "<<mother.getParents().size()
+                            << " pdg "<<mother.getPDG() << endmsg;
                     // case shower-particle (???)
                     // if ( this_Kid.vertexIsNotEndpointOfParent() != _invertedNonDestructiveInteractionLogic) {
                     if ( mcparticles->at(index_this_Kid).vertexIsNotEndpointOfParent() ) {
