@@ -105,6 +105,16 @@ private:
                                         "maximum number of debug/warning messages from execute()"};
 
   void PrintDebugMessage(MsgStream stream, const std::string& text) const;
+
+  // methods for fitting the cluster direction and intercept
+  StatusCode FitLayerCentroids(
+    const std::vector<TVector3>& layerCentroids, const std::vector<double>& layerWeights,
+    const unsigned int startLayer, const unsigned int endLayer,
+    TVector3 &clusterCentroid, TVector3 &clusterDirection);
+  StatusCode PerformLinearFit(
+    const TVector3 &centralPosition, const TVector3 &centralDirection,
+    std::vector<TVector3> &clusterFitPointList,
+    TVector3 &clusterBarycenter, TVector3 &clusterDirection);
 };
 
 #endif /* RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H */
