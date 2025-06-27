@@ -17,8 +17,8 @@ from GaudiKernel.PhysicalConstants import pi
 inputfile = "ALLEGRO_sim_ee_z_qq.root"     # input file produced with ddsim
 outputfile = "ALLEGRO_sim_digi_reco.root"  # output file to be produced
 Nevts = -1                                 # -1 means all events
-addNoise = False                           # add noise or not to the cell energy
-addCrosstalk = False                       # switch on/off the crosstalk
+addNoise = True                            # add noise or not to the cell energy
+addCrosstalk = True                        # switch on/off the crosstalk
 dumpGDML = False                           # create GDML file of detector model
 runHCal = True                             # if false, it will produce only ECAL clusters. if true, it will also produce ECAL+HCAL clusters
 
