@@ -9,8 +9,6 @@
 
 // edm4hep
 #include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
-#include "edm4hep/CalorimeterHitCollection.h"
-#include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/CaloHitMCParticleLinkCollection.h"
 #include "edm4hep/MCParticleCollection.h"
 
@@ -39,12 +37,6 @@ public:
   virtual ~CreateHitTruthLinks();
 
 private:
-  /// List of input sim calo hit collections
-  Gaudi::Property<std::vector<std::string>> m_hitCollections{
-    this, "hits", {}, "Names of SimCalorimeterHit collections to read"};
-  /// the vector of input k4FWCore::DataHandles for the input hit collections
-  std::vector<k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection>*> m_hitCollectionHandles;
-
   /// List of input cell<->hits collections
   Gaudi::Property<std::vector<std::string>> m_cell_hit_linkCollections{
     this, "cell_hit_links", {}, "Names of CaloHitSimCaloHitLink collections to read"};

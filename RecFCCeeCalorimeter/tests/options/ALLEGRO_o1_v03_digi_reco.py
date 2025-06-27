@@ -17,8 +17,8 @@ from GaudiKernel.PhysicalConstants import pi
 inputfile = "ALLEGRO_sim_ee_z_qq.root"     # input file produced with ddsim
 outputfile = "ALLEGRO_sim_digi_reco.root"  # output file to be produced
 Nevts = -1                                 # -1 means all events
-addNoise = True                            # add noise or not to the cell energy
-addCrosstalk = True                        # switch on/off the crosstalk
+addNoise = False                           # add noise or not to the cell energy
+addCrosstalk = False                       # switch on/off the crosstalk
 dumpGDML = False                           # create GDML file of detector model
 runHCal = True                             # if false, it will produce only ECAL clusters. if true, it will also produce ECAL+HCAL clusters
 
@@ -445,31 +445,13 @@ if runHCal:
                                                       cells=hcalEndcapPositionedCellsName,
                                                       links=hcalEndcapLinks)
     TopAlg += [createHCalEndcapCells]
-# else:
-#     hcalBarrelPositionedCellsName = "emptyCaloCells"
-#     hcalEndcapPositionedCellsName = "emptyCaloCells"
-#     hcalBarrelLinks = ""
-#     hcalEndcapLinks = ""
-#     cellPositionHCalBarrelTool = None
-#     cellPositionHCalEndcapTool = None
-
-# Empty cells for parts of calorimeter not implemented yet
-# from Configurables import CreateEmptyCaloCellsCollection
-# createemptycells = CreateEmptyCaloCellsCollection("CreateEmptyCaloCells")
-# createemptycells.cells.Path = "emptyCaloCells"
 
 # Create CaloHit<->MCParticle links
 from Configurables import CreateHitTruthLinks
-caloHits = [ecalBarrelReadoutName, ecalEndcapReadoutName]
-# caloCells = [ecalBarrelPositionedCellsName, ecalEndcapPositionedCellsName]
 caloLinks = [ecalBarrelLinks, ecalEndcapLinks]
 if runHCal:
-    caloHits += [hcalBarrelReadoutName, hcalEndcapReadoutName]
-    # caloCells += [hcalBarrelPositionedCellsName, hcalEndcapPositionedCellsName]
     caloLinks += [hcalBarrelLinks, hcalEndcapLinks]
 createHitParticleLinks = CreateHitTruthLinks("CreateHitParticleLinks",
-                                             hits=caloHits,
-                                             # cells=caloCells,
                                              cell_hit_links=caloLinks,
                                              mcparticles="MCParticles",
                                              cell_mcparticle_links="CaloHitMCParticleLinks",
@@ -607,7 +589,7 @@ if doSWClustering:
                                                             OutputLevel=INFO
                                                             )
         TopAlg += [calibrateECalBarrelClusters]
-    
+
     if runPhotonIDTool:
         if not addShapeParameters:
             print("Photon ID tool cannot be run if shower shape parameters are not calculated")
@@ -660,7 +642,7 @@ if doSWClustering:
         createClusters.clusters.Path = "CaloClusters"
         createClusters.clusterCells.Path = "CaloClusterCells"
         TopAlg += [createClusters]
-    
+
         # add here E+H cluster calibration tool or anything else for E+H clusters
 
 
@@ -683,7 +665,7 @@ if doTopoClustering:
     readECalBarrelNoisyCellsMap = TopoCaloNoisyCells("ReadECalBarrelNoisyCellsMap",
                                                      fileName=ecalBarrelNoiseMap,
                                                      OutputLevel=INFO)
-    
+
     from Configurables import CaloTopoClusterFCCee
     caloIDs = [IDs["ECAL_Barrel"]]
     createECalBarrelTopoClusters = CaloTopoClusterFCCee("CreateECalBarrelTopoClusters",
@@ -727,7 +709,7 @@ if doTopoClustering:
                                                         createClusterCellCollection=True,
                                                         OutputLevel=INFO)
     TopAlg += [createECalEndcapTopoClusters]
-    
+
     if applyUpDownstreamCorrections:
         from Configurables import CorrectCaloClusters
         correctECalBarrelTopoClusters = CorrectCaloClusters(
