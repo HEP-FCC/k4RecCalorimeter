@@ -156,13 +156,6 @@ for constant in root.find('define').findall('constant'):
 print("Subdetector IDs:")
 print(IDs)
 
-# Input: load the output of the SIM step
-# from Configurables import k4DataSvc, PodioInput
-# podioevent = k4DataSvc('EventDataSvc')
-# podioevent.input = inputfile
-# input_reader = PodioInput('InputReader')
-# TopAlg += [input_reader]
-# ExtSvc += [podioevent]
 # Input/Output handling
 from k4FWCore import IOSvc
 from Configurables import EventDataSvc
@@ -170,7 +163,6 @@ io_svc = IOSvc("IOSvc")
 io_svc.Input = inputfile
 io_svc.Output = outputfile
 ExtSvc += [EventDataSvc("EventDataSvc")]
-
 
 # GDML dump of detector model
 if dumpGDML:
@@ -830,13 +822,7 @@ if doTopoClustering:
                                                   OutputLevel=INFO)
         TopAlg += [createTopoClusters]
 
-# Output
-# from Configurables import PodioOutput
-# io_svc = PodioOutput("out",
-#                   OutputLevel=INFO)
-# io_svc.filename = "ALLEGRO_sim_digi_reco.root"
-# TopAlg += [io_svc]
-
+# Configure output
 io_svc.outputCommands = ["keep *",
                          "drop emptyCaloCells"]
 
