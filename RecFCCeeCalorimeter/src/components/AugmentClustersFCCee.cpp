@@ -17,7 +17,6 @@
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TString.h"
-#include "TVector3.h"
 
 #include <cmath>
 
@@ -292,15 +291,10 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
     // for phi use standard E weighting
     std::vector<double> sumThetaLayer;
     std::vector<double> sumPhiLayer;
-    std::vector<double> sumXLayer;
-    std::vector<double> sumYLayer;
-    std::vector<double> sumZLayer;
+    std::vector<TVector3> layerCentroids(numLayersTotal, TVector3(0., 0., 0.));
     std::vector<double> sumWeightLayer;
     sumThetaLayer.assign(numLayersTotal, 0);
     sumPhiLayer.assign(numLayersTotal, 0);
-    sumXLayer.assign(numLayersTotal, 0);
-    sumYLayer.assign(numLayersTotal, 0);
-    sumZLayer.assign(numLayersTotal, 0);
     sumWeightLayer.assign(numLayersTotal, 0);
 
     // vectors for photon/pi0 discrimination
@@ -403,15 +397,11 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
         if (m_thetaRecalcLayerWeights[k][layer] < 0) {
           sumThetaLayer[layerToFill] += (eCell * theta);
-          sumXLayer[layerToFill] += (eCell * x);
-          sumYLayer[layerToFill] += (eCell * y);
-          sumZLayer[layerToFill] += (eCell * z);
+          layerCentroids[layerToFill] += (eCell * v);
         }
         else {
           sumThetaLayer[layerToFill] += (weightLog * theta);
-          sumXLayer[layerToFill] += (weightLog * x);
-          sumYLayer[layerToFill] += (weightLog * y);
-          sumZLayer[layerToFill] += (weightLog * z);
+          layerCentroids[layerToFill] += (weightLog * v);
         }
         sumWeightLayer[layerToFill] += weightLog;
         sumPhiLayer[layerToFill] += (eCell * phi);
@@ -538,7 +528,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (E_cell_Min[layerToFill] > 1e12)
           E_cell_Min[layerToFill] = 0.; // check E_cell_Min
       } // end of loop over layers
-    }
+    } // end of loop over systems (readouts)
 
     // local maxima of E vs phi (could be more than one) and the corresponding module
     std::vector<std::pair<std::vector<int>, std::vector<double>>> module_E_pair;
@@ -638,7 +628,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (E_cell_vs_phi_Min[layerToFill] > 1e12)
           E_cell_vs_phi_Min[layerToFill] = 0.; // check E_cell_Min
       } // end of loop over layers
-    }
+    } // end of loop over systems (readouts)
 
     // save energy and theta/phi positions per layer in shape parameters
     startPositionToFill = 0;
@@ -654,18 +644,14 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (m_thetaRecalcLayerWeights[k][layer] < 0) {
           if (sumEnLayer[layerToFill] != 0.0) {
             sumThetaLayer[layerToFill] /= sumEnLayer[layerToFill];
-            sumXLayer[layerToFill] /= sumEnLayer[layerToFill];
-            sumYLayer[layerToFill] /= sumEnLayer[layerToFill];
-            sumZLayer[layerToFill] /= sumEnLayer[layerToFill];
+            layerCentroids[layerToFill] *= (1./sumEnLayer[layerToFill]);
           } else {
             sumThetaLayer[layerToFill] = 0.;
           }
         } else {
           if (sumWeightLayer[layerToFill] != 0.0) {
             sumThetaLayer[layerToFill] /= sumWeightLayer[layerToFill];
-            sumXLayer[layerToFill] /= sumWeightLayer[layerToFill];
-            sumYLayer[layerToFill] /= sumWeightLayer[layerToFill];
-            sumZLayer[layerToFill] /= sumWeightLayer[layerToFill];
+            layerCentroids[layerToFill] *= (1./sumWeightLayer[layerToFill]);
           } else {
             sumThetaLayer[layerToFill] = 0.;
           }
@@ -682,8 +668,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
           sumPhiLayer[layerToFill] -= TMath::TwoPi();
 
         // calculate theta, phi from x/y/z instead?
-        sumThetaLayer[layerToFill] = std::atan2(std::sqrt(sumXLayer[layerToFill]*sumXLayer[layerToFill] + sumYLayer[layerToFill]*sumYLayer[layerToFill]), sumZLayer[layerToFill]);
-        sumPhiLayer[layerToFill] = std::atan2(sumYLayer[layerToFill], sumXLayer[layerToFill]);
+        sumThetaLayer[layerToFill] = layerCentroids[layerToFill].Theta();
+        sumPhiLayer[layerToFill] = layerCentroids[layerToFill].Phi();
 
         newCluster.addToShapeParameters(sumEnLayer[layerToFill] / E); // E fraction of layer
         newCluster.addToShapeParameters(sumThetaLayer[layerToFill]);
@@ -981,11 +967,19 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
           newCluster.addToShapeParameters(E_fr_side_pm2[layerToFill]);
           newCluster.addToShapeParameters(E_fr_side_pm3[layerToFill]);
           newCluster.addToShapeParameters(E_fr_side_pm4[layerToFill]);
-        }
+        } // end if do photon shower shape vars
       } // end of loop over layers
     } // end of loop over system/readout
     newCluster.addToShapeParameters(p4cl.M());
     newCluster.addToShapeParameters(nCells);
+
+    StatusCode sc = FitLayerCentroids(
+      layerCentroids,
+      sumEnLayer,
+      3, numLayersTotal-2,
+      clusterBarycenter, clusterDirection);
+    newCluster.setITheta(clusterDirection.Theta());
+    newCluster.setPhi(clusterDirection.Phi());
   } // end of loop over clusters
 
   return StatusCode::SUCCESS;
@@ -993,86 +987,15 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-// loop over cluster, retrieve cells, add each cell to list of fit points, and fit. Not migrated
-/*
-StatusCode ClusterFitHelper::FitFullCluster(const Cluster *const pCluster, ClusterFitResult &clusterFitResult)
-{
-  const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
-  const unsigned int listSize(orderedCaloHitList.size());
-
-  if (0 == listSize)
-    return STATUS_CODE_NOT_INITIALIZED;
-
-  if (listSize < 2)
-    return STATUS_CODE_OUT_OF_RANGE;
-
-  ClusterFitPointList clusterFitPointList;
-  for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
-  {
-    for (const CaloHit *const pCaloHit : *layerIter.second)
-    {
-      clusterFitPointList.push_back(ClusterFitPoint(pCaloHit));
-    }
-  }
-
-  return FitPoints(clusterFitPointList, clusterFitResult);
-}
-*/
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-// loop over cluster, retrieve (pseudo)layers, loop over cells in layers, add each cell to list of fit points, and fit
-// difference wrt previous method is that layers could be merged into pseudolayers thus granularity could be smaller than
-// physical one. Not migrated
-/*
-StatusCode ClusterFitHelper::FitLayers(
-  const Cluster *const pCluster,
-  const unsigned int startLayer,
-  const unsigned int endLayer,
-  ClusterFitResult &clusterFitResult)
-{
-  if (startLayer >= endLayer) {
-    return STATUS_CODE_INVALID_PARAMETER;
-  }
-
-  const OrderedCaloHitList &orderedCaloHitList = pCluster->GetOrderedCaloHitList();
-  const unsigned int listSize(orderedCaloHitList.size());
-
-  if (0 == listSize)
-      return STATUS_CODE_NOT_INITIALIZED;
-
-  if (listSize < 2)
-    return STATUS_CODE_OUT_OF_RANGE;
-
-  ClusterFitPointList clusterFitPointList;
-  for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
-  {
-    const unsigned int pseudoLayer(layerIter.first);
-
-    if (startLayer > pseudoLayer)
-      continue;
-
-    if (endLayer < pseudoLayer)
-      break;
-
-    for (const CaloHit *const pCaloHit : *layerIter.second)
-    {
-      clusterFitPointList.push_back(ClusterFitPoint(pCaloHit));
-    }
-  }
-
-  return FitPoints(clusterFitPointList, clusterFitResult);
-}
-*/
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
 // fit the layer centroids
+// loop over cluster, retrieve (pseudo)layers, loop over cells in layers, add each cell to list of fit points, and fit.
+// difference wrt previous method is that layers could be merged into pseudolayers thus granularity could be smaller than
+// physical one.
 StatusCode AugmentClustersFCCee::FitLayerCentroids(
   const std::vector<TVector3>& layerCentroids,
   const std::vector<double>& layerWeights,
   const unsigned int startLayer, const unsigned int endLayer,
-  TVector3 &clusterCentroid, TVector3 &clusterDirection)
+  TVector3 &clusterBarycenter, TVector3 &clusterDirection) const
 {
   try
   {
@@ -1092,79 +1015,49 @@ StatusCode AugmentClustersFCCee::FitLayerCentroids(
       return StatusCode::FAILURE;
     }
 
+    std::vector<TVector3> fitPoints(endLayer-startLayer, TVector3(0., 0., 0.));
 
-    ClusterFitPointList clusterFitPointList;
-    // once the hits are ordered by pseudolayer, can iterate over each layer
-    // and determine the centroid of each layer, with
-    // - position, cell length scale and energy = average of values of each hit
-    // - direction = sum of cell directions (normal vectors), normalised to unity
-    for (const OrderedCaloHitList::value_type &layerIter : orderedCaloHitList)
+    TVector3 clusterCentroid(0.f, 0.f, 0.f);
+    TVector3 clusterOrientation(0.f, 0.f, 0.f);
+    double sumWeights(0.0);
+    unsigned int layerToFill(0);
+    for (unsigned int layer = startLayer; layer < endLayer; layer++)
     {
-      const unsigned int pseudoLayer(layerIter.first);
-
-      if (startLayer > pseudoLayer)
+      if (layerWeights[layer] <= 0.0) {
+        warning() << "Layer weight for layer " << layer << " is non-positive, will be skipped: " << layerWeights[layer] << endmsg;
+        // decrease number of fit points (remove last element)
+        fitPoints.pop_back();
         continue;
-
-      if (endLayer < pseudoLayer)
-        break;
-
-      const unsigned int nCaloHits(layerIter.second->size());
-
-      if (0 == nCaloHits)
-        throw StatusCodeException(STATUS_CODE_FAILURE);
-
-      float cellLengthScaleSum(0.f), cellEnergySum(0.f);
-      TVector3 cellNormalVectorSum(0.f, 0.f, 0.f);
-
-      for (const CaloHit *const pCaloHit : *layerIter.second)
-      {
-        cellLengthScaleSum += pCaloHit->GetCellLengthScale();
-        cellNormalVectorSum += pCaloHit->GetCellNormalVector();
-        cellEnergySum += pCaloHit->GetInputEnergy();
       }
-
-      clusterFitPointList.push_back(ClusterFitPoint(pCluster->GetCentroid(pseudoLayer), cellNormalVectorSum.Unit(),
-        cellLengthScaleSum / static_cast<float>(nCaloHits), cellEnergySum / static_cast<float>(nCaloHits), pseudoLayer));
+      debug() << "Weight for layer " << layer << " : " << layerWeights[layer] << endmsg;
+      fitPoints[layerToFill++] = layerCentroids[layer];
+          
+      sumWeights += layerWeights[layer];
+      clusterCentroid += layerCentroids[layer] * layerWeights[layer];
+      if (layer == startLayer) {
+        clusterOrientation -= layerCentroids[layer];
+      } else if (layer == endLayer - 1) {
+        clusterOrientation += layerCentroids[layer];
+      }
     }
+    clusterCentroid *= (1.0 / sumWeights);
+    // TODO: fix for endcap...
+    clusterOrientation.SetZ(0.);
+    clusterOrientation = clusterOrientation.Unit();
 
-    // then, fit the centroids rather than fitting all hits in clusters
-    return FitPoints(clusterFitPointList, clusterFitResult);
-  }
-  catch (...)
-  {
-    clusterFitResult.SetSuccessFlag(false);
-    return statusCodeException.GetStatusCode();
-  }
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-StatusCode AugmentClustersFCCee::FitPoints(ClusterFitPointList &clusterFitPointList, TVector3 &clusterBarycenter, TVector3 &clusterDirection)
-{
-  try
-  {
-    const unsigned int nFitPoints(clusterFitPointList.size());
-    std::cout << "Number of points for fit: " << nFitPoints << std::endl;
+    // the fit
+    const unsigned int nFitPoints( fitPoints.size() );
+    debug() << "Number of points for fit: " << nFitPoints << endmsg;
 
     if (nFitPoints < 2) {
-      error() << "Not enough points for fit" << endmsg;
-      return StatusCode::FAILURE;
-    }
-
-    clusterBarycenter.SetXYZ(0.,0.,0.);
-    TVector3 positionSum(0.f, 0.f, 0.f);
-    TVector3 normalVectorSum(0.f, 0.f, 0.f);
-
-    for (const ClusterFitPoint &clusterFitPoint : clusterFitPointList)
-    {
-      positionSum += clusterFitPoint.GetPosition();
-      normalVectorSum += clusterFitPoint.GetCellNormalVector();
+      warning() << "Not enough points for fit" << endmsg;
+      return StatusCode::SUCCESS;
     }
 
     return PerformLinearFit(
-      positionSum * (1.f / static_cast<float>(nFitPoints)),
-      normalVectorSum.Unit(),
-      clusterFitPointList,
+      fitPoints,
+      clusterCentroid,
+      clusterOrientation,
       clusterBarycenter,
       clusterDirection);
   }
@@ -1177,12 +1070,24 @@ StatusCode AugmentClustersFCCee::FitPoints(ClusterFitPointList &clusterFitPointL
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPosition, const TVector3 &centralDirection,
-    std::vector<TVector3> &clusterFitPointList, TVector3 &clusterBarycenter, TVector3 &clusterDirection)
+StatusCode AugmentClustersFCCee::PerformLinearFit(
+  const std::vector<TVector3> &clusterFitPointList,
+  const TVector3 &centralPosition, const TVector3 &centralDirection,
+  TVector3 &clusterBarycenter, TVector3 &clusterDirection) const
 {
     debug() << "Performing linear fit for cluster" << endmsg;
-    debug() << "  initial position: " << centralPosition << endmsg;
-    debug() << "  initial direction: " << centralDirection << endmsg;
+    debug() << "  initial position (x/y/z): "
+            << centralPosition.X() << ", "
+            << centralPosition.Y() << ", "
+            << centralPosition.Z() << endmsg;
+    debug() << "  initial position (rho, theta, phi): "
+            << centralPosition.Perp() << ", "
+            << centralPosition.Theta() << ", "
+            << centralPosition.Phi() << endmsg;
+    debug() << "  initial direction (r, theta, phi): "
+            << centralDirection.Mag() << ", "
+            << centralDirection.Theta() << ", "
+            << centralDirection.Phi() << endmsg;
 
     // Extract the data
     double sumP(0.), sumQ(0.), sumR(0.), sumWeights(0.);
@@ -1194,15 +1099,18 @@ StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPositio
     const TVector3 chosenAxis(0.f, 0.f, 1.f);
     const double cosTheta(std::cos(centralDirection.Angle(chosenAxis)));
     const double sinTheta(std::sin(centralDirection.Angle(chosenAxis)));
+    debug() << "cosTheta, sinTheta : " << cosTheta << " , " << sinTheta << endmsg;
 
     const TVector3 rotationAxis((std::fabs(cosTheta) > 0.99) ? TVector3(1.f, 0.f, 0.f) :
         centralDirection.Cross(chosenAxis).Unit());
-
+    debug() << "rotationAxis X/Y/Z: " << rotationAxis.X() << " " << rotationAxis.Y() << " " << rotationAxis.Z() << endmsg;
+    
     for (const TVector3 &clusterFitPoint : clusterFitPointList)
     {
       const TVector3 position(clusterFitPoint - centralPosition);
       const double weight(1.);
-
+      debug() << "position x/y/z : " << position.X() << " " << position.Y() << " " << position.Z() << endmsg;
+      
       const double p(
         (cosTheta + rotationAxis.X() * rotationAxis.X() * (1. - cosTheta)) * position.X() +
         (rotationAxis.X() * rotationAxis.Y() * (1. - cosTheta) - rotationAxis.Z() * sinTheta) * position.Y() +
@@ -1218,7 +1126,8 @@ StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPositio
         (rotationAxis.Z() * rotationAxis.Y() * (1. - cosTheta) + rotationAxis.X() * sinTheta) * position.Y() +
         (cosTheta + rotationAxis.Z() * rotationAxis.Z() * (1. - cosTheta)) * position.Z()
       );
-
+      debug() << "p/q/r : " << p << " " << q << " " << r << endmsg;
+      
       sumP += p * weight;
       sumQ += q * weight;
       sumR += r * weight;
@@ -1241,13 +1150,14 @@ StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPositio
     const double bP((sumP - aP * sumR) / sumWeights);
     const double aQ((sumR * sumQ - sumWeights * sumQR) / denominatorR);
     const double bQ((sumQ - aQ * sumR) / sumWeights);
-
+    debug() << "aP, aQ, bP, bQ : " << aP << " " << aQ << " " << bP << " " << bQ << endmsg;
+    
     // Convert fitted line back to 3D
 
     // Extract direction in 3D: (a_p, a_q, 1) normalised to 1
     const double magnitude(std::sqrt(1. + aP * aP + aQ * aQ));
     const double dirP(aP / magnitude), dirQ(aQ / magnitude), dirR(1. / magnitude);
-
+    
     // Rotate the direction and intercept back to original frame
     // Reverse rotation applied to direction vector to go back to original frame
     TVector3 direction(
@@ -1265,7 +1175,7 @@ StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPositio
       (cosTheta + rotationAxis.Z() * rotationAxis.Z() * (1. - cosTheta)) * dirR
     );
 
-    // Similar transformation for intercept (which is defined as the point of th best-fit line for r=0)
+    // Similar transformation for intercept (which is defined as the point of the best-fit line for r=0)
     // i.e. at same z as centroid for endcap and at same rho as centroid for barrel?
     // Additional translation to shift back the centroid at the proper position
     TVector3 intercept(centralPosition + TVector3(
@@ -1290,22 +1200,23 @@ StatusCode AugmentClustersFCCee::PerformLinearFit(const TVector3 &centralPositio
         direction = direction * -1.f;
     }
 
-    const double nPoints(static_cast<double>(clusterFitPointList.size()));
-    const double denominatorL(sumL * sumL - nPoints * sumLL);
-
-    if (std::fabs(denominatorL) > std::numeric_limits<double>::epsilon())
-    {
-      if (0. > ((sumL * sumA - nPoints * sumAL) / denominatorL))
-        direction = direction * -1.f;
-    }
-
     clusterBarycenter = intercept;
     clusterDirection = direction;
 
     debug() << "  fit successful" << endmsg;
-    debug() << "  final position: " << intercept << endmsg;
-    debug() << "  final direction: " << direction << endmsg;
+    debug() << "  final position (x/y/z): "
+            << intercept.X() << ", "
+            << intercept.Y() << ", "
+            << intercept.Z() << endmsg;
+    debug() << "  final position (rho, theta, phi): "
+            << intercept.Perp() << ", "
+            << intercept.Theta() << ", "
+            << intercept.Phi() << endmsg;
+    debug() << "  final direction (r, theta, phi): "
+            << direction.Mag() << ", "
+            << direction.Theta() << ", "
+            << direction.Phi() << endmsg;
     debug() << "  cos(dRdir): " << dirCosR << endmsg;
 
-    return STATUS_CODE_SUCCESS;
+    return StatusCode::SUCCESS;
 }
