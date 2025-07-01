@@ -62,8 +62,8 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
       debug() << "Sim hit id and index: " << simHit.id() << " " << simHit.id().index << endmsg;
       debug() << "Calo hit id and index: " << caloHit.id() << " " << caloHit.id().index << endmsg;
       if (nhits[simHit.id().index + ih*(1<<24)]>0) {
-        error() << "Sim hit with more than one calo hit!!!" << endmsg;
-        return StatusCode::FAILURE;
+        warning() << "Sim hit with more than one calo hit!!!" << endmsg;
+        continue;
       }
       else {
         nhits[simHit.id().index + ih*(1<<24)]=1;
