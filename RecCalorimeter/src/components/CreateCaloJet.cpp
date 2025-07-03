@@ -60,7 +60,7 @@ struct CreateCaloJet final
       float x = position.x;
       float y = position.y;
       float z = position.z;
-      double theta = acos(sqrt(z * z / (x * x + y * y + z * z)));
+      double theta = acos(z / sqrt(x * x + y * y + z * z));
       double eta = -log(tan(theta / 2.));
       double phi = atan2(y, x);
       double pT = cluster.getEnergy() * sqrt((x * x + y * y) / (x * x + y * y + z * z));
