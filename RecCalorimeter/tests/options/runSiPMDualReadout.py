@@ -16,12 +16,27 @@ podioinput = PodioInput("PodioInput",
     OutputLevel = DEBUG
 )
 
+from Configurables import GeoSvc
+import os
+geoservice = GeoSvc("GeoSvc")
+path_to_detector = os.environ.get("K4GEO", "")
+detectors_to_use = [
+    'FCCee/IDEA/compact/IDEA_o1_v03/IDEA_o1_v03.xml'
+]
+
+geoservice.detectors = [
+    os.path.join(path_to_detector, _det) for _det in detectors_to_use
+]
+
+geoservice.OutputLevel = INFO
+
 from Configurables import SimulateSiPMwithEdep
 sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
     OutputLevel=DEBUG,
     inputHitCollection = "DRcaloSiPMreadout_scint",
     outputHitCollection = "DRcaloSiPMreadoutDigiHit_scint",
     outputTimeStructCollection = "DRcaloSiPMreadoutDigiWaveform_scint",
+    readoutName = "DRcaloSiPMreadout",
     # wavelength in nm (decreasing order)
     wavelength = [
         900., 850., 800., 750., 725.,
@@ -73,7 +88,8 @@ sipmEdep = SimulateSiPMwithEdep("SimulateSiPMwithEdep",
         0.
     ],
     # empirical value to keep (scint npe / ceren npe) =~ 5
-    scintYield = 2.5
+    scintYield = 0.565,
+    scaleADC = 0.000366 # Cheren scale ADC / 5
 )
 
 from Configurables import SimulateSiPMwithOpticalPhoton
@@ -103,7 +119,8 @@ sipmOptical = SimulateSiPMwithOpticalPhoton("SimulateSiPMwithOpticalPhoton",
         0.181, 0.182, 0.183, 0.184, 0.18,
         0.173, 0.166, 0.158, 0.15, 0.12,
         0.05
-    ]
+    ],
+    scaleADC = 0.00178
 )
 
 from Configurables import PodioOutput
@@ -129,6 +146,6 @@ ApplicationMgr(
         podiooutput
     ],
     EvtSel = 'NONE',
-    EvtMax = 10,
-    ExtSvc = [rndmEngine,rndmGenSvc,dataservice]
+    EvtMax = -1,
+    ExtSvc = [rndmEngine,rndmGenSvc,dataservice,geoservice]
 )
