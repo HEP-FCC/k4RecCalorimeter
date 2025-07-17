@@ -390,6 +390,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
       for (unsigned int ilayer = 0; ilayer < m_activeVolumesNumbersSegmented[iSys]; ilayer++) {
         dd4hep::DDSegmentation::CellID volumeId = 0;
         // Get VolumeID
+
         (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
         (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
         (*decoder)["row"].set(volumeId, 0);
@@ -490,17 +491,18 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         dd4hep::DDSegmentation::CellID volumeId = 0;
         // Get VolumeID
         (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
-        (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
+	(*decoder)["layer"].set(volumeId, ilayer);
         (*decoder)["theta"].set(volumeId, 0);
         (*decoder)["module"].set(volumeId, 0);
         // Get number of segmentation cells within the active volume
         // numberOfCells: return Array of the number of cells in (module, theta) and the minimum theta ID.
-        auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
+         auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
         // extrema 1: min module number (0), max module number
         extrema[1] = std::make_pair(0, (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(ilayer));
         // extrema[2]: min theta ID, n (merged) theta cells
         extrema[2] = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) *
-                                                                   moduleThetaSegmentation->mergedThetaCells(ilayer));
+				    moduleThetaSegmentation->mergedThetaCells(ilayer));
+
         // for layer N-1 of ECal barrel,  will be used for volume connecting
         if (ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1) && m_fieldNamesSegmented[iSys] == "system" &&
             m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
@@ -516,7 +518,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
         debug() << "Number of segmentation cells in (module,theta): " << numCells << endmsg;
         // Loop over segmentation cells to find neighbours in ECAL
-        for (int imodule = extrema[1].first; imodule <= extrema[1].second;
+
+	for (int imodule = extrema[1].first; imodule <= extrema[1].second;
              imodule += moduleThetaSegmentation->mergedModules(ilayer)) {
           for (int itheta = extrema[2].first; itheta <= extrema[2].second;
                itheta += moduleThetaSegmentation->mergedThetaCells(ilayer)) {
@@ -524,12 +527,98 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
             decoder->set(cellId, "module", imodule);
             decoder->set(cellId, "theta", itheta); // start from the minimum existing theta cell in this layer
             uint64_t id = cellId;
-            map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
-                id, det::utils::neighbours_ModuleThetaMerged(*moduleThetaSegmentation, *decoder,
-                                                             {m_activeFieldNamesSegmented[iSys], "module", "theta"},
-                                                             extrema, id, m_includeDiagonalCells)));
-          }
-        }
+	    auto neighborsList = det::utils::neighbours_ModuleThetaMerged(*moduleThetaSegmentation, *decoder,
+									  {"layer", "module", "theta"},
+									  extrema, id, m_includeDiagonalCells);
+	    info() << "How many neighbors? " << id << " " << neighborsList.size() << endmsg;
+	    
+	    // check if we are on an edge in theta, and add neighbours in the
+	    // endcap calorimeter if so
+
+	    if ((itheta == extrema[2].first) ||  (itheta == extrema[2].second)) {
+	      // find barrel cell position
+	      //	      dd4hep::DDSegmentation::Vector3D barrelPos = moduleThetaSegmentation->position(cellId);
+	      dd4hep::VolumeManager volman = m_geoSvc->getDetector()->volumeManager();
+	      auto detelement = volman.lookupDetElement(cellId);
+	      const auto& transformMatrix = detelement.nominal().worldTransformation();
+	      double outGlobal[3];
+	      double inLocal[] = {0, 0, 0};
+	      transformMatrix.LocalToMaster(inLocal, outGlobal);
+	      double eCalBarrelPhiOffset = std::atan2(outGlobal[1], outGlobal[0]);
+                          
+	      double eCalBarrelPhi = eCalBarrelPhiOffset;
+	      double eCalBarrelRho = std::sqrt(outGlobal[0]*outGlobal[0]+outGlobal[1]*outGlobal[1]);
+	      double eCalBarrelTheta = moduleThetaSegmentation->theta(cellId);
+	      for (uint iSys2 = 0; iSys2 < m_readoutNamesSegmented.size(); iSys2++) {
+		// get segmentation
+		dd4hep::DDSegmentation::Segmentation* aSegmentation2 =
+		  m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys2]).segmentation().segmentation();
+		if (aSegmentation2 == nullptr) {
+		  error() << "Segmentation does not exist." << endmsg;
+		  return StatusCode::FAILURE;
+		}
+                
+		std::string segmentationType2 = aSegmentation2->type();
+		//info() << "Segmentation type : " << segmentationType2 << endmsg;
+		if (segmentationType2 == "FCCSWEndcapTurbine_k4geo") {
+		  info() << "Found the endcap segmenation" << endmsg;
+		  auto endcapDecoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys2]).idSpec().decoder();
+		  unsigned layerOffset[3];
+		  layerOffset[0] = 0;
+		  layerOffset[1] =
+		    ecalEndcapTurbineSegmentation->numCellsRhoCalib(0) * ecalEndcapTurbineSegmentation->numCellsZCalib(0);
+		  layerOffset[2] = layerOffset[1] + ecalEndcapTurbineSegmentation->numCellsRhoCalib(1) *
+		    ecalEndcapTurbineSegmentation->numCellsZCalib(1);
+		  int iWheel = 2;
+		  int iSide;
+		  if (itheta == extrema[2].first) iSide = 1;
+		  if (itheta == extrema[2].second) iSide = -1;
+		  unsigned numECModules = ecalEndcapTurbineSegmentation->nModules(iWheel);
+		  unsigned numECCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
+		  // Loop over segmentation cells
+		  double endcapGridSizeRho = ecalEndcapTurbineSegmentation->gridSizeRho(iWheel);
+		  double endcapGridSizePhi = 2*M_PI/numECModules;
+		  unsigned iECz = 0;
+
+		  dd4hep::DDSegmentation::CellID endcapCellId = 0;
+
+		  (*endcapDecoder)[m_fieldNamesSegmented[0]].set(endcapCellId, m_fieldValuesSegmented[0]);
+                          
+		  (*endcapDecoder)["system"].set(endcapCellId, m_ecalEndcapSysId);
+		  (*endcapDecoder)["z"].set(endcapCellId, iECz);
+		  (*endcapDecoder)["wheel"].set(endcapCellId, iWheel);
+		  (*endcapDecoder)["side"].set(endcapCellId, iSide);
+
+		  for (unsigned iECmodule = 0; iECmodule < numECModules; iECmodule++) {
+		    for (unsigned iECrho = 0; iECrho < numECCellsRho; iECrho++)
+		      {
+			(*endcapDecoder)["module"].set(endcapCellId, iECmodule);
+			(*endcapDecoder)["rho"].set(endcapCellId, iECrho);
+			(*endcapDecoder)["layer"].set(endcapCellId,ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));			
+			
+			double endcapPhi =  TMath::ATan2(ecalEndcapTurbineSegmentation->position(cellId).y(), ecalEndcapTurbineSegmentation->position(cellId).x());
+			double endcapRho = ecalEndcapTurbineSegmentation->rho(endcapCellId);
+
+			double endcapTheta = TMath::ATan2(endcapRho,ecalEndcapTurbineSegmentation->z(endcapCellId));
+			double endcapThetaPlus = TMath::ATan2(endcapRho+endcapGridSizeRho,ecalEndcapTurbineSegmentation->z(endcapCellId));
+			double endcapDelTheta = TMath::Abs(endcapThetaPlus-endcapTheta);
+			
+			info() << "phi, rho, theta,z = " << endcapPhi << " " << endcapRho << " " << endcapTheta << " " <<  ecalEndcapTurbineSegmentation->z(endcapCellId) << endmsg;
+			if (eCalBarrelTheta < endcapTheta+2*endcapDelTheta && eCalBarrelTheta > endcapTheta-2*endcapDelTheta && eCalBarrelPhi < endcapPhi+3*endcapGridSizePhi/2. && eCalBarrelPhi > endcapPhi-3*endcapGridSizePhi/2.) {
+			  info() << "Adding endcap cell to barrel list" << endmsg;
+			  neighborsList.push_back(endcapCellId);
+			}
+		      }   
+		  }
+		}		
+	      }
+	    
+	     }
+	   
+	     map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
+								   id, neighborsList));
+	  }
+	}
       }
     } else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
       // Loop over active layers
@@ -571,22 +660,40 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
           debug() << "Extrema[0]: " << extrema[0].first << " , " << extrema[0].second << endmsg;
           debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
           debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
+
+	  // Set up some variables that will be useful when finding neighbors
+	  // in the EM barrel.  These will be calculated the first time through
+	  // the loop
+	  float delPhiEMBarrel = -1.;
+	  float minRhoEMBarrel = -1.;
+	  
           // Loop over segmentation cells
           for (unsigned imodule = 0; imodule < numModules; imodule++) {
             for (unsigned irho = 0; irho < numCellsRho; irho++) {
               for (unsigned iz = 0; iz < numCellsZ; iz++) {
+
                 // check if we're at the boundary between wheels
-                bool atInnerBoundary = false, atOuterBoundary = false;
+                bool atInnerBoundary = false, atOuterBoundary = false, nextToEMBarrel = false;
                 if (iWheel > 0 && irho == 0)
                   atInnerBoundary = true;
                 if (iWheel < 2 && irho == numCellsRho - 1)
                   atOuterBoundary = true;
+
                 dd4hep::DDSegmentation::CellID cellId = volumeId;
                 decoder->set(cellId, "wheel", iWheel);
                 decoder->set(cellId, "module", imodule);
                 decoder->set(cellId, "rho", irho);
                 decoder->set(cellId, "z", iz);
 
+		double endcapRho = ecalEndcapTurbineSegmentation->rho(cellId);
+		if (iWheel == 2 && iz == 0 && ((endcapRho > minRhoEMBarrel) || (minRhoEMBarrel < 0.) )) {
+		  nextToEMBarrel = true;
+		}
+
+		double endcapGridSizeRho = ecalEndcapTurbineSegmentation->gridSizeRho(iWheel);
+		double endcapPhi =  TMath::ATan2(ecalEndcapTurbineSegmentation->position(cellId).y(), ecalEndcapTurbineSegmentation->position(cellId).x());
+		double endcapGridSizePhi = 2*M_PI/numModules;
+		
                 unsigned iLayerZ = iz / (numCellsZ / numCellsZCalib);
                 unsigned iLayerRho = irho / (numCellsRho / numCellsRhoCalib);
                 unsigned iLayer = layerOffset[iWheel] + iLayerRho * numCellsZCalib + iLayerZ;
@@ -671,11 +778,138 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                     }
                   }
                 }
-                map.insert(std::pair<uint64_t, std::vector<uint64_t>>(id, neighborsList));
-              }
-            }
-          }
-        }
+		// add neighboring cells in the EM barrel calorimeter, if relevant
+		if (nextToEMBarrel) {
+		  // imodule, irho can be translated into rho,phi position
+		  // check if the rho overlaps with the barrel rho
+		  // if so, find barrel cells closest to that postition
+		  // note that this will depend on which of the endcaps we're in --
+		  // will have theta index of 0 in the barrel for -z endcap, theta index
+		  // max in the barrel for +z endcap
+		  // let's see if we can find the barrel segmentation, as a start
+		  // info() << "We're next to the EM barrel" << endmsg ;
+		  double endcapTheta = TMath::ATan2(endcapRho,ecalEndcapTurbineSegmentation->z(cellId));
+		  double endcapThetaPlus = TMath::ATan2(endcapRho+endcapGridSizeRho,ecalEndcapTurbineSegmentation->z(cellId));
+		  double endcapDelTheta = TMath::Abs(endcapThetaPlus-endcapTheta);
+		  for (uint iSys2 = 0; iSys2 < m_readoutNamesSegmented.size(); iSys2++) {
+		    // get segmentation
+		    dd4hep::DDSegmentation::Segmentation* aSegmentation2 =
+		      m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys2]).segmentation().segmentation();
+		    if (aSegmentation2 == nullptr) {
+		      error() << "Segmentation does not exist." << endmsg;
+		      return StatusCode::FAILURE;
+		    }
+		    
+		    std::string segmentationType2 = aSegmentation2->type();
+		    //info() << "Segmentation type : " << segmentationType2 << endmsg;
+		    if (segmentationType2 == "FCCSWGridModuleThetaMerged_k4geo") {
+		      moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation2);
+		      auto barrelDecoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys2]).idSpec().decoder();
+		      m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys2]);
+		      //info() << "Found the barrel segmentation, at iSys = " << iSys2 << endmsg;
+		      // Loop over all relevant cells in the barrel and find position
+		      unsigned iBarrelTheta = 0;
+		      unsigned nLayersBarrel = m_activeVolumesNumbersSegmented[iSys2];
+		      auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
+		      for (unsigned iBarrelLayer = 0; iBarrelLayer < nLayersBarrel; iBarrelLayer++) {
+			unsigned nModulesBarrel = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
+		        unsigned startModule, endModule;
+			if (delPhiEMBarrel < 0) {
+			  startModule = 0;
+			  endModule = nModulesBarrel;
+			} else {
+			  int nModulesToCheck = nModulesBarrel*delPhiEMBarrel/(2*M_PI);
+			  //info() << "nModulesToCheck =" <<  nModulesToCheck << endmsg;
+			  float endPhi = endcapPhi;
+			  if (endPhi < 0.) endPhi = endPhi+2*M_PI;
+			  endModule = nModulesBarrel*(endPhi/(2*M_PI))+nModulesToCheck;			  
+			  startModule = endModule-2*nModulesToCheck;
+			  if (endModule > nModulesBarrel) endModule-=nModulesBarrel;
+			  if (startModule > nModulesBarrel) {
+			    startModule = nModulesBarrel-nModulesToCheck+endModule;
+			  }
+			}
+			
+			//			for (unsigned iBarrelModule = startModule; iBarrelModule < endModule; iBarrelModule++) {
+			for (unsigned iBarrelModule = 0; iBarrelModule < nModulesBarrel; iBarrelModule++) {
+			// set volumeID correctly
+			  dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
+			  (*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
+			  
+			  (*barrelDecoder)["system"].set(barrelVolumeId, m_ecalBarrelSysId);
+			  (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
+			  (*barrelDecoder)["layer"].set(barrelVolumeId, iBarrelLayer);
+
+			  numCells = det::utils::numberOfCells(barrelVolumeId, *moduleThetaSegmentation);
+			  
+			  if (iSide > 0) {
+			    iBarrelTheta = numCells[2];
+			  } else {
+			    iBarrelTheta = numCells[2] + (numCells[1] - 1) *
+			      moduleThetaSegmentation->mergedThetaCells(iBarrelLayer);
+			  }
+			  (*barrelDecoder)["theta"].set(barrelVolumeId, iBarrelTheta);
+
+			  //			  info() << "Just looping " << iBarrelLayer << " " << nLayersBarrel << " " << iBarrelModule << " " << nModulesBarrel << " " << iBarrelTheta << " " << numCells[0] << " " << numCells[1] << " " << numCells[2] << " " <<  numCells[2]+(numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(iBarrelLayer) << " " << moduleThetaSegmentation->mergedThetaCells(iBarrelLayer) << endmsg;
+
+			  // for ECAL barrel with module readout, need to find out phi position of module 0 of ECal barrel last layer
+			  // get it from volume manager
+			  // for a normal phi grid it would suffice to use the segmentation phi(cellId) method
+			  //			  dd4hep::DDSegmentation::Vector3D barrelPos = moduleThetaSegmentation->position(barrelVolumeId);
+			  dd4hep::VolumeManager volman = m_geoSvc->getDetector()->volumeManager();
+			  
+			  auto detelement = volman.lookupDetElement(barrelVolumeId);
+			  const auto& transformMatrix = detelement.nominal().worldTransformation();
+			  double outGlobal[3];
+			  double inLocal[] = {0, 0, 0};
+			  transformMatrix.LocalToMaster(inLocal, outGlobal);
+			  double eCalBarrelPhiOffset = std::atan2(outGlobal[1], outGlobal[0]);
+			  if (delPhiEMBarrel < 0 && iBarrelLayer == nLayersBarrel - 1 && iBarrelModule == 0) {
+			    delPhiEMBarrel = abs(eCalBarrelPhiOffset);
+			    //info() << "delPhiEMBarrel = " << delPhiEMBarrel << endmsg;
+			  }
+			  
+			  //double eCalBarrelPhi =  atan2(barrelPos.y(), barrelPos.x()) +eCalBarrelPhiOffset;
+			  double eCalBarrelPhi = eCalBarrelPhiOffset;
+			  double eCalBarrelRho = std::sqrt(outGlobal[0]*outGlobal[0]+outGlobal[1]*outGlobal[1]);
+			  //double eCalBarrelTheta = TMath::ATan2(eCalBarrelRho, outGlobal[2]);
+			  double eCalBarrelTheta = moduleThetaSegmentation->theta(barrelVolumeId);
+			  //info() << "Barrel module, layer, phi is " << iBarrelModule << " " << iBarrelLayer << " " << eCalBarrelPhi << endmsg;
+
+			  if (iBarrelLayer == 0 && minRhoEMBarrel < 0) {
+			    minRhoEMBarrel = eCalBarrelRho;
+			    //info() << "minRhoEMBarrel = " << minRhoEMBarrel << endmsg;
+			  }
+			  //			  info() << "Barrel cell x, y, z is " << barrelPos.x() << ", " << barrelPos.y() << " " << outGlobal[2] << endmsg;
+			  //			  info() << "Barrel cell phi and rho is " << atan2(barrelPos.y(), barrelPos.x())+eCalBarrelPhiOffset << " " << eCalBarrelRho << endmsg;
+			  //info() << "eCalBarrelTheta, endcapTheta = " << eCalBarrelTheta << " " << endcapTheta << endmsg;
+			  if (eCalBarrelTheta < endcapTheta+2*endcapDelTheta && eCalBarrelTheta > endcapTheta-2*endcapDelTheta && eCalBarrelPhi < endcapPhi+3*endcapGridSizePhi/2. && eCalBarrelPhi > endcapPhi-3*endcapGridSizePhi/2.) {
+			    info() << "We have found a neighbor for cellId " << cellId << "!" << endmsg;
+			    info() << "start, end module, barrel module = " << startModule << " " << endModule << " " << iBarrelModule << endmsg;
+			    bool inModuleRange = false;
+			    if (startModule < endModule) {
+			      if (iBarrelModule >= startModule && iBarrelModule < endModule) inModuleRange = true;
+			    } else {
+			      if (iBarrelModule < startModule) inModuleRange = true;
+			      if (iBarrelModule > endModule) inModuleRange = true;
+			    }
+			    if (!inModuleRange) {
+			      info() << "OOOPS module is outside expected range" << endmsg;
+			    }
+			    info() << "endcap phi and side and barrel module are " << endcapPhi << " " << iSide << " " <<iBarrelModule << endmsg;
+			    info() << "adding barrel cell" << endmsg;
+			    neighborsList.push_back(barrelVolumeId);
+			  }
+			}
+		      } 		     
+		    }
+		  }
+		}	      	    
+		map.insert(std::pair<uint64_t, std::vector<uint64_t>>(id, neighborsList));
+	      }
+	    }
+	  }
+	}
       }
     }
 

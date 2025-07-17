@@ -76,6 +76,7 @@ private:
 
   // System ID of ECAL and HCAL barrels
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
+  Gaudi::Property<uint> m_ecalEndcapSysId{this, "ecalEndcapSysId", 5};  
   Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
   // System ID of HCAL endcap
   Gaudi::Property<uint> m_hcalEndcapSysId{this, "hcalEndcapSysId", 9};
