@@ -790,7 +790,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 		      unsigned iBarrelTheta = 0;
 		      unsigned nLayersBarrel = m_activeVolumesNumbersSegmented[iSys2];
 		      auto numCells = det::utils::numberOfCells(volumeId, *moduleThetaSegmentation);
-		      unsigned iMatchLayer;
+		      unsigned iMatchLayer = 0;
 		      float minDelTheta = 1.0;
 		      		     
 		      for (unsigned iBarrelLayer = 0; iBarrelLayer < nLayersBarrel; iBarrelLayer++) {
