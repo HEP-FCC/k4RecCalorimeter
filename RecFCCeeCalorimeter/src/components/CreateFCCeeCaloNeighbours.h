@@ -85,6 +85,8 @@ private:
   Gaudi::Property<bool> m_connectBarrels{this, "connectBarrels", true};
   // For combination of HCal Barrel and Endcap: flag if HCal Barrel and Endcap should be merged
   Gaudi::Property<bool> m_connectHCal{this, "connectHCal", true};
+  // For combination of ECal Barrel and Endcap: flag if ECal Barrel and Endcap should be merged
+  Gaudi::Property<bool> m_connectECal{this, "connectECal", true};
   // For combination of barrels: size of HCal cell along z axis
   Gaudi::Property<double> m_hCalZSize{this, "hCalZsize", 18};
   // For combination of barrels: offset of HCal detector in z (lower edge)
@@ -96,6 +98,17 @@ private:
 
   /// Name of output file
   std::string m_outputFileName;
+
+  // Lookup tables for cell positions in the barrel and endcap EM calorimeters
+  std::vector< std::vector<Float_t>> m_EMB_phi_lookup;
+  std::vector<Float_t> m_EMB_theta_lookup;
+
+  std::vector< std::vector<Float_t>> m_EMEC_pos_phi_lookup;
+  std::vector< std::vector<Float_t>> m_EMEC_neg_phi_lookup;
+  std::vector<Float_t> m_EMEC_theta_lookup;
+
+  StatusCode initialize_lookups();
+  
 };
 
 #endif /* RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H */
