@@ -22,6 +22,7 @@
 #include "TGeoManager.h"
 
 class IGeoSvc;
+class TH1F;
 
 /** @class CreateFCCeeCaloNeighbours
  *
@@ -99,10 +100,13 @@ private:
   /// Name of output file
   std::string m_outputFileName;
 
-  // Lookup tables for cell positions in the barrel and endcap EM calorimeters
+  // Lookup tables/histograms for cell positions in the barrel and endcap EM calorimeters
+  std::vector< TH1F* > m_EMB_h_module_vs_phi;
   std::vector< std::vector<Float_t>> m_EMB_phi_lookup;
   std::vector<Float_t> m_EMB_theta_lookup;
 
+  std::vector< TH1F* > m_EMEC_h_module_vs_phi_pos;
+  std::vector< TH1F* > m_EMEC_h_module_vs_phi_neg;
   std::vector< std::vector<Float_t>> m_EMEC_pos_phi_lookup;
   std::vector< std::vector<Float_t>> m_EMEC_neg_phi_lookup;
   std::vector<Float_t> m_EMEC_theta_lookup;

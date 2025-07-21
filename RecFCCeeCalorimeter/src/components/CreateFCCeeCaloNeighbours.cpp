@@ -19,6 +19,7 @@
 #include "TFile.h"
 #include "TSystem.h"
 #include "TTree.h"
+#include "TH1F.h"
 
 DECLARE_COMPONENT(CreateFCCeeCaloNeighbours)
 
@@ -541,9 +542,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 	    if ((itheta == extrema[2].first) ||  (itheta == extrema[2].second)) {
 	      // find barrel cell position
 	      
-	      double eCalBarrelPhi = m_EMB_phi_lookup[ilayer][imodule];
 	      double eCalBarrelTheta = m_EMB_theta_lookup[ilayer];
 	      if (itheta == extrema[2].second) eCalBarrelTheta = TMath::Pi()-eCalBarrelTheta;
+	      double eCalBarrelPhi = m_EMB_phi_lookup[ilayer][imodule];
 	      
 	      for (uint iSys2 = 0; iSys2 < m_readoutNamesSegmented.size(); iSys2++) {
 		// get segmentation
@@ -593,25 +594,19 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 		    }
 		  }
 		  if (minDelTheta > 0.5) continue;
-		  for (unsigned iECmodule = 0; iECmodule < numECModules; iECmodule++) {
-		    
-		    double endcapPhi;
-		    if (iSide == -1) {
-		      endcapPhi = m_EMEC_neg_phi_lookup[iECmodule][iMatchRho];
-		    } else {
-		      endcapPhi = m_EMEC_pos_phi_lookup[iECmodule][iMatchRho];
-		    }
-		    
-		    if ( eCalBarrelPhi < endcapPhi+3*endcapGridSizePhi/2. && eCalBarrelPhi > endcapPhi-3*endcapGridSizePhi/2.) {
-		      info() << "Adding endcap cell to barrel list" << endmsg;
-		      (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
-		      (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
-		      (*endcapDecoder)["layer"].set(endcapCellId,ecalEndcapTurbineSegmentation->expLayer(iWheel, iMatchRho, 0));
-		      neighborsList.push_back(endcapCellId);
-		    }
-		  }   
+		  unsigned iECmodule;
+		  if (iSide == -1) {
+		    iECmodule = m_EMEC_h_module_vs_phi_neg[iMatchRho]->GetBinContent(m_EMEC_h_module_vs_phi_neg[iMatchRho]->FindBin(eCalBarrelPhi));
+		  } else {
+		     iECmodule = m_EMEC_h_module_vs_phi_pos[iMatchRho]->GetBinContent(m_EMEC_h_module_vs_phi_pos[iMatchRho]->FindBin(eCalBarrelPhi));
+		  }
+		  info() << "Adding endcap cell to barrel list with module " << iECmodule << endmsg;
+		  (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
+		  (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
+		  (*endcapDecoder)["layer"].set(endcapCellId,ecalEndcapTurbineSegmentation->expLayer(iWheel, iMatchRho, 0));
+		  neighborsList.push_back(endcapCellId);
 		}
-	      }		
+	      }   
 	    }   
 	    map.insert(std::pair<uint64_t, std::vector<uint64_t>>(
 								   id, neighborsList));
@@ -824,25 +819,25 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 		      }
 		      if (minDelTheta > 0.5) continue;
 		      unsigned nModulesBarrel = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iMatchLayer);
+
+		      unsigned iBarrelModule = m_EMB_h_module_vs_phi[iMatchLayer]->GetBinContent(m_EMB_h_module_vs_phi[iMatchLayer]->FindBin(endcapPhi));
+		      // set volumeID correctly
+		      dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
+		      (*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
 		      
-		      for (unsigned iBarrelModule = 0; iBarrelModule < nModulesBarrel; iBarrelModule++) {
-			// set volumeID correctly
-			dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
-			(*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
-			
-			(*barrelDecoder)["system"].set(barrelVolumeId, m_ecalBarrelSysId);
-			(*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
-			(*barrelDecoder)["layer"].set(barrelVolumeId, iMatchLayer);
-			
-			numCells = det::utils::numberOfCells(barrelVolumeId, *moduleThetaSegmentation);
-			
-			if (iSide > 0) {
+		      (*barrelDecoder)["system"].set(barrelVolumeId, m_ecalBarrelSysId);
+		      (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
+		      (*barrelDecoder)["layer"].set(barrelVolumeId, iMatchLayer);
+		      
+		      numCells = det::utils::numberOfCells(barrelVolumeId, *moduleThetaSegmentation);
+		      
+		      if (iSide > 0) {
 			  iBarrelTheta = numCells[2];
-			} else {
-			  iBarrelTheta = numCells[2] + (numCells[1] - 1) *
-			    moduleThetaSegmentation->mergedThetaCells(iMatchLayer);
-			}
-			(*barrelDecoder)["theta"].set(barrelVolumeId, iBarrelTheta);
+		      } else {
+			iBarrelTheta = numCells[2] + (numCells[1] - 1) *
+			  moduleThetaSegmentation->mergedThetaCells(iMatchLayer);
+		      }
+		      (*barrelDecoder)["theta"].set(barrelVolumeId, iBarrelTheta);
 			
 			//			  info() << "Just looping " << iBarrelLayer << " " << nLayersBarrel << " " << iBarrelModule << " " << nModulesBarrel << " " << iBarrelTheta << " " << numCells[0] << " " << numCells[1] << " " << numCells[2] << " " <<  numCells[2]+(numCells[1] - 1) * moduleThetaSegmentation->mergedThetaCells(iBarrelLayer) << " " << moduleThetaSegmentation->mergedThetaCells(iBarrelLayer) << endmsg;
 			
@@ -851,7 +846,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 			// for a normal phi grid it would suffice to use the segmentation phi(cellId) method
 			//			  dd4hep::DDSegmentation::Vector3D barrelPos = moduleThetaSegmentation->position(barrelVolumeId);
 			
-			double eCalBarrelPhi = m_EMB_phi_lookup[iMatchLayer][iBarrelModule];
 			
 			//info() << "Barrel module, layer, phi is " << iBarrelModule << " " << iBarrelLayer << " " << eCalBarrelPhi << endmsg;
 			
@@ -862,14 +856,12 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 			//			  info() << "Barrel cell x, y, z is " << barrelPos.x() << ", " << barrelPos.y() << " " << outGlobal[2] << endmsg;
 			//			  info() << "Barrel cell phi and rho is " << atan2(barrelPos.y(), barrelPos.x())+eCalBarrelPhiOffset << " " << eCalBarrelRho << endmsg;
 			//info() << "eCalBarrelTheta, endcapTheta = " << eCalBarrelTheta << " " << endcapTheta << endmsg;
-			if (eCalBarrelPhi < endcapPhi+3*endcapGridSizePhi/2. && eCalBarrelPhi > endcapPhi-3*endcapGridSizePhi/2.) {
-			  info() << "We have found a neighbor for cellId " << cellId << "!" << endmsg;
-			  neighborsList.push_back(barrelVolumeId);
-			}
-		      }
-		    } 		     
+		      info() << "We have found a neighbor for cellId  " << cellId << " with module " << iBarrelModule << " from phi " << endcapPhi << " and bin " << m_EMB_h_module_vs_phi[iMatchLayer]->FindBin(endcapPhi) << "!" << endmsg;
+		      neighborsList.push_back(barrelVolumeId);
+		      break;
+		    }
 		  }
-		}
+		} 		     
 		map.insert(std::pair<uint64_t, std::vector<uint64_t>>(id, neighborsList));
 	      }
 	    }
@@ -1819,6 +1811,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
       unsigned numECModules = ecalEndcapTurbineSegmentation->nModules(iWheel);
       unsigned numECCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
 
+      m_EMEC_h_module_vs_phi_pos.reserve(numECModules);
+      m_EMEC_h_module_vs_phi_neg.reserve(numECModules);
+      
       m_EMEC_pos_phi_lookup.reserve(numECModules);
       m_EMEC_neg_phi_lookup.reserve(numECModules);
       // start by sizing the vectors appropriately
@@ -1827,8 +1822,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 	m_EMEC_neg_phi_lookup[iModule].reserve(numECCellsRho);
       }
 
-      info() << "Lookup size 1 " << m_EMEC_pos_phi_lookup.size() << endmsg;
-      info() << "Lookup size 2 " << m_EMEC_pos_phi_lookup[0].size() << endmsg;
       // Loop over segmentation cells
       double endcapGridSizeRho = ecalEndcapTurbineSegmentation->gridSizeRho(iWheel);
       double endcapGridSizePhi = 2*M_PI/numECModules;
@@ -1843,39 +1836,47 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
       (*endcapDecoder)["wheel"].set(endcapCellId, iWheel);
       for (int iSide = -1; iSide < 1; iSide+= 2) {
 	(*endcapDecoder)["side"].set(endcapCellId, iSide);
-      
-	for (unsigned iECmodule = 0; iECmodule < numECModules; iECmodule++) {
-	  std::vector<Float_t> neg_phis, pos_phis, thetas;
-	  for (unsigned iECrho = 0; iECrho < numECCellsRho; iECrho++)
-	    {
-	      (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
-	      (*endcapDecoder)["rho"].set(endcapCellId, iECrho);
-	      (*endcapDecoder)["layer"].set(endcapCellId,ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));			
-	      
-	      double endcapPhi =  TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(), ecalEndcapTurbineSegmentation->position(endcapCellId).x());
 
-	      double endcapRho = ecalEndcapTurbineSegmentation->rho(endcapCellId);
-	      
-	      double endcapTheta = TMath::ATan2(endcapRho,ecalEndcapTurbineSegmentation->z(endcapCellId));
-	      double endcapThetaPlus = TMath::ATan2(endcapRho+endcapGridSizeRho,ecalEndcapTurbineSegmentation->z(endcapCellId));
-	      double endcapDelTheta = TMath::Abs(endcapThetaPlus-endcapTheta);
-
-	      if (iSide == -1) {
-		neg_phis.push_back(endcapPhi);
-		thetas.push_back(endcapTheta);
-	      } else {
-		pos_phis.push_back(endcapPhi);
-	      }		
-	      // m_EMEC_theta_lookup[iECmodule][iECrho] = endcapTheta;
-	      //if (iSide == -1) {
-	      //m_EMEC_neg_phi_lookup[iECmodule][iECrho] = endcapPhi;
-	      //} else {
-	      //	m_EMEC_pos_phi_lookup[iECmodule][iECrho] = endcapPhi;
-	      //}
-	      if (iECmodule==0) m_EMEC_theta_lookup.push_back(endcapTheta);
-	    }
-	  m_EMEC_pos_phi_lookup.push_back(pos_phis);
-	  m_EMEC_neg_phi_lookup.push_back(neg_phis);
+	for (unsigned iECrho = 0; iECrho < numECCellsRho; iECrho++) {
+	  std::string histname_pos = "h_modulevphi_pos_"+std::to_string(iECrho);
+	  std::string histname_neg = "h_modulevphi_neg_"+std::to_string(iECrho);
+	  TH1F *h_pos=new TH1F(histname_pos.c_str(), histname_pos.c_str(), numECModules, -TMath::Pi(), TMath::Pi());
+	  TH1F *h_neg=new TH1F(histname_neg.c_str(), histname_neg.c_str(), numECModules, -TMath::Pi(), TMath::Pi());
+	  m_EMEC_h_module_vs_phi_pos.push_back(h_neg);
+	  for (unsigned iECmodule = 0; iECmodule < numECModules; iECmodule++) {
+	    //	    std::vector<Float_t> neg_phis, pos_phis, thetas;
+	    (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
+	    (*endcapDecoder)["rho"].set(endcapCellId, iECrho);
+	    (*endcapDecoder)["layer"].set(endcapCellId,ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));			
+	    
+	    double endcapPhi =  TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(), ecalEndcapTurbineSegmentation->position(endcapCellId).x());
+	    
+	    double endcapRho = ecalEndcapTurbineSegmentation->rho(endcapCellId);
+	    
+	    double endcapTheta = TMath::ATan2(endcapRho,ecalEndcapTurbineSegmentation->z(endcapCellId));
+	    double endcapThetaPlus = TMath::ATan2(endcapRho+endcapGridSizeRho,ecalEndcapTurbineSegmentation->z(endcapCellId));
+	    double endcapDelTheta = TMath::Abs(endcapThetaPlus-endcapTheta);
+	    
+	    if (iSide == -1) {
+	      m_EMEC_neg_phi_lookup[iECrho].push_back(endcapPhi);
+	      h_neg->SetBinContent(h_neg->FindBin(endcapPhi), iECmodule);
+	      //		thetas.push_back(endcapTheta);
+	    } else {
+	      m_EMEC_pos_phi_lookup[iECrho].push_back(endcapPhi);
+	      h_pos->SetBinContent(h_pos->FindBin(endcapPhi), iECmodule);
+	    }		
+	    // m_EMEC_theta_lookup[iECmodule][iECrho] = endcapTheta;
+	    //if (iSide == -1) {
+	    //m_EMEC_neg_phi_lookup[iECmodule][iECrho] = endcapPhi;
+	    //} else {
+	    //	m_EMEC_pos_phi_lookup[iECmodule][iECrho] = endcapPhi;
+	    //}
+	    if (iECmodule==0) m_EMEC_theta_lookup.push_back(endcapTheta);
+	  }
+	  //	  m_EMEC_pos_phi_lookup.push_back(pos_phis);
+	  //  m_EMEC_neg_phi_lookup.push_back(neg_phis);
+	  m_EMEC_h_module_vs_phi_pos.push_back(h_pos);
+	  m_EMEC_h_module_vs_phi_neg.push_back(h_neg);
 	}
       }
     }
@@ -1903,15 +1904,18 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
       unsigned nBarrelLayers = m_activeVolumesNumbersSegmented[iSys];
       m_EMB_phi_lookup.reserve(nBarrelLayers);
       auto numCells = det::utils::numberOfCells(m_ecalBarrelSysId, *moduleThetaSegmentation);
-      for (unsigned iBarrelLayer = 0; iBarrelLayer < nBarrelLayers; iBarrelLayer++) {
-	unsigned nBarrelModules = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
-	info() << "In lookup, nBarrelModules, nBarrelLayers = " << nBarrelModules << " "  << nBarrelLayers << endmsg;
-	m_EMB_phi_lookup[iBarrelLayer].reserve(nBarrelModules);
-      }
+      // for (unsigned iBarrelLayer = 0; iBarrelLayer < nBarrelLayers; iBarrelLayer++) {
+      // 	unsigned nBarrelModules = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
+      //	info() << "In lookup, nBarrelModules, nBarrelLayers = " << nBarrelModules << " "  << nBarrelLayers << endmsg;
+	
+      //	m_EMB_phi_lookup[iBarrelLayer].reserve(nBarrelModules);
+      //}
       
       for (unsigned iBarrelLayer = 0; iBarrelLayer < nBarrelLayers; iBarrelLayer++) {
 	std::vector<Float_t> phis, thetas;
 	unsigned nModulesBarrel = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
+	std::string histname = "h_EMB_modulevphi_"+std::to_string(iBarrelLayer);
+	TH1F* h_phi = new TH1F(histname.c_str(), histname.c_str(), nModulesBarrel, -TMath::Pi(), TMath::Pi());
 	for (unsigned iBarrelModule = 0; iBarrelModule < nModulesBarrel; iBarrelModule++) {
 	  // set volumeID correctly
 	  dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
@@ -1939,14 +1943,15 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 	  double eCalBarrelPhi = eCalBarrelPhiOffset;
 	  double eCalBarrelTheta = moduleThetaSegmentation->theta(barrelVolumeId);
 
-	  info() << "EMB phi lookup size: " << iBarrelLayer << " " << m_EMB_phi_lookup[iBarrelLayer].capacity() << endmsg;
+	  h_phi->SetBinContent(h_phi->FindBin(eCalBarrelPhi), iBarrelModule);
 	  phis.push_back(eCalBarrelPhi);
-	  //  m_EMB_theta_lookup[iBarrelLayer].push_back(eCalBarrelTheta);	  
-	  // m_EMB_phi_lookup[iBarrelLayer].push_back(eCalBarrelPhi);
+	  // m_EMB_theta_lookup.push_back(eCalBarrelTheta);	  
+	  //  m_EMB_phi_lookup[iBarrelLayer].push_back(eCalBarrelPhi);
 
 	  if (iBarrelModule == 0) m_EMB_theta_lookup.push_back(eCalBarrelTheta);
 	}
 	m_EMB_phi_lookup.push_back(phis);
+	m_EMB_h_module_vs_phi.push_back(h_phi);
       } 		     
     }
 }
