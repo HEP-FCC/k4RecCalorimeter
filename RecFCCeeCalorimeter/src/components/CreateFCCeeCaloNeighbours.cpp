@@ -508,7 +508,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         // extrema[2]: min theta ID, n (merged) theta cells
         extrema[2] = std::make_pair(numCells[2], numCells[2] + (numCells[1] - 1) *
 				    moduleThetaSegmentation->mergedThetaCells(ilayer));
-
         // for layer N-1 of ECal barrel,  will be used for volume connecting
         if (ilayer == (m_activeVolumesNumbersSegmented[iSys] - 1) && m_fieldNamesSegmented[iSys] == "system" &&
             m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
@@ -524,7 +523,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
         debug() << "Number of segmentation cells in (module,theta): " << numCells << endmsg;
         // Loop over segmentation cells to find neighbours in ECAL
-
 	for (int imodule = extrema[1].first; imodule <= extrema[1].second;
              imodule += moduleThetaSegmentation->mergedModules(ilayer)) {
           for (int itheta = extrema[2].first; itheta <= extrema[2].second;
@@ -661,14 +659,12 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
           for (unsigned imodule = 0; imodule < numModules; imodule++) {
             for (unsigned irho = 0; irho < numCellsRho; irho++) {
               for (unsigned iz = 0; iz < numCellsZ; iz++) {
-
                 // check if we're at the boundary between wheels
                 bool atInnerBoundary = false, atOuterBoundary = false, nextToEMBarrel = false;
                 if (iWheel > 0 && irho == 0)
                   atInnerBoundary = true;
                 if (iWheel < 2 && irho == numCellsRho - 1)
                   atOuterBoundary = true;
-
                 dd4hep::DDSegmentation::CellID cellId = volumeId;
                 decoder->set(cellId, "wheel", iWheel);
                 decoder->set(cellId, "module", imodule);
