@@ -38,7 +38,7 @@ else
 fi
 
 # get the files needed for calibration, noise, neighbor finding, etc
-if ! test -f ./neighbours_map_ecalB_thetamodulemerged_hcalB_thetaphi.root; then  # assumes that if the last file exists, all the other as well
+if ! test -f ./cellNoise_map_endcapTurbine_electronicsNoiseLevel.root; then  # assumes that if the last file exists, all the other as well
   echo "Downloading files needed for reconstruction"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/capacitances_ecalBarrelFCCee_theta.root"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/cellNoise_map_electronicsNoiseLevel_ecalB_thetamodulemerged.root"
@@ -52,7 +52,7 @@ if ! test -f ./neighbours_map_ecalB_thetamodulemerged_hcalB_thetaphi.root; then 
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalE_turbine.root"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalB_thetamodulemerged_ecalE_turbine_hcalB_hcalEndcap_phitheta.root"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/cellNoise_map_endcapTurbine_electronicsNoiseLevel.root"
-  
+
   # add here the lines to get the files for the photon ID
 fi
 
