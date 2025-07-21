@@ -69,7 +69,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readout exists
-    info() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
+    debug() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
     if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) ==
         m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesSegmented[iSys] << ">> does not exist." << endmsg;
@@ -85,7 +85,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
     }
 
     std::string segmentationType = aSegmentation->type();
-    info() << "Segmentation type : " << segmentationType << endmsg;
+    debug() << "Segmentation type : " << segmentationType << endmsg;
 
     dd4hep::DDSegmentation::GridTheta_k4geo* segmentation = nullptr;
     dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* phiThetaSegmentation = nullptr;
@@ -598,7 +598,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 		  } else {
 		     iECmodule = m_EMEC_h_module_vs_phi_pos[iMatchRho]->GetBinContent(m_EMEC_h_module_vs_phi_pos[iMatchRho]->FindBin(eCalBarrelPhi));
 		  }
-		  info() << "Adding endcap cell to barrel list with module " << iECmodule << " for side " << iSide << " and barrel phi " << eCalBarrelPhi << endmsg;
+		  debug() << "Adding endcap cell to barrel list with module " << iECmodule << " for side " << iSide << " and barrel phi " << eCalBarrelPhi << endmsg;
 		  (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
 		  (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
 		  (*endcapDecoder)["layer"].set(endcapCellId,ecalEndcapTurbineSegmentation->expLayer(iWheel, iMatchRho, 0));
@@ -1763,7 +1763,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
                 
     std::string segmentationType = aSegmentation->type();
     if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
-      info() << "Found the endcap segmenation" << endmsg;
       auto ecalEndcapTurbineSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(aSegmentation);
       auto endcapDecoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
       unsigned layerOffset[3];
@@ -1850,7 +1849,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
     }
     
     std::string segmentationType = aSegmentation->type();
-    //info() << "Segmentation type : " << segmentationType2 << endmsg;
     if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
       auto moduleThetaSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
       auto barrelDecoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
@@ -1907,7 +1905,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 }
 	      	    
 		
-  info() << "Lookup test " << m_EMEC_theta_lookup[9] << endmsg;
+  debug() << "Lookup test " << m_EMEC_theta_lookup[9] << endmsg;
   return StatusCode::SUCCESS;
 }
 
