@@ -695,8 +695,8 @@ if doTopoClustering:
     caloIDs = [IDs["ECAL_Endcap"]]
     createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
                                                         cells=[ecalEndcapPositionedCellsName],
-                                                        clusters="EMECaloTopoClusters",
-                                                        clusterCells="EMECaloTopoClusterCells",
+                                                        clusters="EMECCaloTopoClusters",
+                                                        clusterCells="EMECCaloTopoClusterCells",
                                                         neigboursTool=readECalEndcapNeighboursMap,
                                                         noiseTool=readECalEndcapNoisyCellsMap,
                                                         seedSigma=4,
@@ -731,8 +731,8 @@ if doTopoClustering:
 
     if addShapeParameters:
         from Configurables import AugmentClustersFCCee
-        inClusters=createECalBarrelTopoClusters.clusters.Path,
-        outClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path,
+        inClusters=createECalBarrelTopoClusters.clusters.Path
+        outClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path
         augmentECalBarrelTopoClusters = AugmentClustersFCCee("augmentECalBarrelTopoClusters",
                                                              inClusters=inClusters,
                                                              outClusters=outClusters,
