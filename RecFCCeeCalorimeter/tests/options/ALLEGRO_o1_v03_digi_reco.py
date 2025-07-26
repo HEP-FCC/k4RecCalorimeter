@@ -706,7 +706,7 @@ if doTopoClustering:
                                                         createClusterCellCollection=True,
                                                         OutputLevel=INFO)
     TopAlg += [createECalEndcapTopoClusters]
-    finalClusters += ["EMECCaloClusters"]
+    finalClusters += ["EMECCaloTopoClusters"]
 
     if applyUpDownstreamCorrections:
         from Configurables import CorrectCaloClusters
