@@ -1,0 +1,11 @@
+gaudi_add_module(RecCalorimeterPlugins
+  src/components/DualCrysCalDigi.cpp
+  # Add other component files as needed
+  LINK_LIBRARIES
+    Gaudi::GaudiAlgLib
+    Gaudi::GaudiKernel
+    k4FWCore
+    k4Interface
+    edm4hep
+    DD4hep::DDRec
+)
