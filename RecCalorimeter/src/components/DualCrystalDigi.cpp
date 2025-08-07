@@ -1,6 +1,6 @@
 #include "DualCrysCalDigi.h"
 #include "GaudiKernel/Service.h"
-#include "Randomize.h"
+#include "CLHEP/Random/Randomize.h"
 #include "DD4hep/CellIDPositionConverter.h"
 #include <cmath>
 

@@ -1,5 +1,18 @@
+cmake_minimum_required(VERSION 3.15)
+project(RecCalorimeter)
+
+# Find dependencies
+find_package(Gaudi REQUIRED)
+find_package(k4FWCore REQUIRED)
+find_package(k4Interface REQUIRED)
+find_package(edm4hep REQUIRED)
+find_package(DD4hep REQUIRED COMPONENTS DDRec DDCore)  # Add DDCore just in case
+
+# Add your module
 gaudi_add_module(RecCalorimeterPlugins
   src/components/DualCrysCalDigi.cpp
+  src/components/DualCrystalDigi.cpp
+  src/components/CaloDIGI.cpp
   # Add other component files as needed
   LINK_LIBRARIES
     Gaudi::GaudiAlgLib
@@ -8,4 +21,8 @@ gaudi_add_module(RecCalorimeterPlugins
     k4Interface
     edm4hep
     DD4hep::DDRec
+    DD4hep::DDCore
 )
+
+# If you have tests or other executables, add them here...
+
