@@ -50,14 +50,13 @@ StatusCode DualCrysCalDigi::initialize() {
   return StatusCode::SUCCESS;
 }
 
-std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection> 
-DualCrysCalDigi::operator()(const edm4hep::SimCalorimeterHitCollection& SimCaloHits, const edm4hep::EventHeaderCollection& headers) const {
+std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection> DualCrysCalDigi::operator()(
+    const edm4hep::SimCalorimeterHitCollection& SimCaloHits, const edm4hep::EventHeaderCollection& headers) const {
   debug() << " process event : " << headers[0].getEventNumber() << " - run  " << headers[0].getRunNumber()
           << endmsg;  // headers[0].getRunNumber(),headers[0].getEventNumber()
 
   auto calcol    = edm4hep::CalorimeterHitCollection();
   auto calRelcol = edm4hep::CaloHitSimCaloHitLinkCollection();
-  edm4hep::CaloHitSimCaloHitLinkCollection muonRelcol;
 
   std::string initString;
 
@@ -117,5 +116,4 @@ bool DualCrysCalDigi::useLayer(CHT::Layout caloLayout, unsigned int layer) const
       return true;
   }
 }  //useLayer
-
 

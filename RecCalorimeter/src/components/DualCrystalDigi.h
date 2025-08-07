@@ -1,24 +1,28 @@
-#ifndef DUAL_TEST_BEAM_DualCrysCalDigi_H
-#define DUAL_TEST_BEAM_DualCrysCalDigi_H
+#ifndef DUAL_TEST_BEAM_DUALCRYSTALDIGI_H
+#define DUAL_TEST_BEAM_DUALCRYSTALDIGI_H
 
-#include "FWCore/Algorithm.h"
+#include "Gaudi/Algorithm.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
-#include "DetInterface/IGeoSvc.h"
+#include "k4Interface/IGeoSvc.h"
+#include "k4FWCore/DataHandle.h"
 
 namespace DUAL {
 
-class DualCrysCalDigi : public GaudiAlgorithm {
+class DualCrystalDigi : public Gaudi::Algorithm {
 public:
-  DualCrysCalDigi(const std::string& name, ISvcLocator* svcLoc);
-  virtual StatusCode initialize() override;
-  virtual StatusCode execute() override;
-  virtual StatusCode finalize() override;
+  DualCrystalDigi(const std::string& name, ISvcLocator* svcLoc);
+  StatusCode initialize() override;
+  StatusCode execute(const EventContext& ctx) const override;
+  StatusCode finalize() override;
 
 private:
-  Gaudi::Property<std::string> m_simHitsA{"simHitsA","SimHitsCrystalA","Sim hits for crystal A"};
-  Gaudi::Property<std::string> m_simHitsB{"simHitsB","SimHitsCrystalB","Sim hits for crystal B"};
-  Gaudi::Property<std::string> m_outputHits{"outputHits","DualCrysCalDigi","Digitized output"};
+  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHitsA{
+    "SimCalorimeterHitsA", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHitsB{
+    "SimHitsB", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_outputHits{
+    "OutputHits", Gaudi::DataHandle::Writer, this};
 
   Gaudi::Property<double> m_gainA{"gainA",1000.0};
   Gaudi::Property<double> m_gainB{"gainB",1000.0};
@@ -33,4 +37,4 @@ private:
 
 } // namespace DUAL
 
-#endif
+#endif // DUAL_TEST_BEAM_DUALCRYSTALDIGI_H

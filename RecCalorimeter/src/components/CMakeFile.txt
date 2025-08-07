@@ -6,7 +6,7 @@ find_package(Gaudi REQUIRED)
 find_package(k4FWCore REQUIRED)
 find_package(k4Interface REQUIRED)
 find_package(edm4hep REQUIRED)
-find_package(DD4hep REQUIRED COMPONENTS DDRec DDCore)  # Add DDCore just in case
+find_package(DD4hep REQUIRED COMPONENTS DDRec DDCore DDAlign DDCond DDG4)
 
 # Add your module
 gaudi_add_module(RecCalorimeterPlugins
