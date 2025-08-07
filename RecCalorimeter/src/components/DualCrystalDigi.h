@@ -6,6 +6,7 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "k4Interface/IGeoSvc.h"
 #include "k4FWCore/DataHandle.h"
+#include "DDRec/CellIDPositionConverter.h"
 
 namespace DUAL {
 
@@ -33,6 +34,12 @@ private:
   SmartIF<IGeoSvc> m_geoSvc;
 
   float digitizeEnergy(double energy, double gain) const;
+
+  // Helper method to reduce code duplication
+  void processHits(const edm4hep::SimCalorimeterHitCollection* simHits,
+                   double gain,
+                   edm4hep::CalorimeterHitCollection* out,
+                   dd4hep::rec::CellIDPositionConverter& posTool) const;
 };
 
 } // namespace DUAL
