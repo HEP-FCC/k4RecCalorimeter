@@ -43,6 +43,7 @@
 
 // For correlation calculation
 #include <TMatrixDSym.h>
+#include <TMatrixDSymEigen.h>
 #include <cmath>
 #include <vector>
 
@@ -51,149 +52,142 @@
         CaloWhitening(const std::string& name, ISvcLocator* svcLoc)
        : Transformer(name, svcLoc, 
         {KeyValues("InputCollection", {"DigitsFloat"})},
-        {KeyValues("OutputCollection", {"DigitsWithNoiseFloat"})}) {}
+        {KeyValues("OutputCollection", {"WhitenedDigitsCollection"})}) {}
  
     StatusCode initialize() override{
-        r3->SetSeed(m_noiseSeed.value()); // Set the seed for the random number generator
+        // Check if file exists
+        if (m_noiseInfoFileName.empty()) {
+            error() << "Name of the file with the noise info not provided!" << endmsg;
+            return StatusCode::FAILURE;
+        }
+        if (gSystem->AccessPathName(m_noiseInfoFileName.value().c_str())) {
+            error() << "Provided file with the noise info not found!" << endmsg;
+            error() << "File path: " << m_noiseInfoFileName.value() << endmsg;
+            return StatusCode::FAILURE;
+        }
+
+        // Open the file with the noise info
+        std::unique_ptr<TFile> NoiseInfoFile(TFile::Open(m_noiseInfoFileName.value().c_str(), "READ"));
+        if (NoiseInfoFile->IsZombie()) {
+            error() << "Unable to open the file with the noise info!" << endmsg;
+            error() << "File path: " << m_noiseInfoFileName.value() << endmsg;
+            return StatusCode::FAILURE;
+        } else {
+            info() << "Using the following file with noise info: "
+                << m_noiseInfoFileName.value() << endmsg;
+        }
+
+        // Load CorrMat into memory
+        TMatrixDSym* corrMat = nullptr;
+        NoiseInfoFile->GetObject(m_corrMatName.value().c_str(), corrMat);
+        if (!corrMat) {
+            error() << "Unable to load correlation matrix from file!" << endmsg;
+            return StatusCode::FAILURE;
+        }
+
+        // Load muVec into memory
+        NoiseInfoFile->GetObject(m_muVecName.value().c_str(), MuVec);
+        if (!MuVec) {
+            error() << "Unable to load mean vector from file!" << endmsg;
+            return StatusCode::FAILURE;
+        }
+
+
+        // Compute inverse and store as separate object
+        TMatrixDSym* invCorrMat = new TMatrixDSym(*corrMat);
+        invCorrMat->Invert();
+        // You can now use invCorrMat as needed
+
+        if (m_filterName.value().c_str() == "ZCA"){
+            info() << "Using the ZCA filter!" << endmsg;
+            // Define ZCA whitening matrix --> corr^(-1/2)
+            // Compute eigen decomposition
+            TMatrixDSymEigen eig(*invCorrMat);
+
+            // Get eigenvalues and eigenvectors
+            TVectorD eigenVals = eig.GetEigenValues();
+            TMatrixD eigenVecs = eig.GetEigenVectors();
+
+            // Build diagonal matrix of sqrt(eigenvalues)
+            TMatrixD sqrtDiag(eigenVals.GetNrows(), eigenVals.GetNrows());
+            sqrtDiag.Zero();
+            for (int i = 0; i < eigenVals.GetNrows(); ++i) {
+                sqrtDiag(i, i) = std::sqrt(eigenVals[i]);
+            }
+
+            // Compute square root: V * sqrt(D) * V^T
+            WhiteningMatrix = eigenVecs * sqrtDiag * eigenVecs.T();
+        }
+
+        // else if (m_filterName.value().c_str() == "Cholesky"){
+
+        // }
+
+        else{
+            error() << "Unknown filter name: " << m_filterName.value() << endmsg;
+        }
+
         return StatusCode::SUCCESS;
     }
    
+
+
    // This is the function that will be called to transform the data
    // Note that the function has to be const, as well as all pointers to collections
    // we get from the input
    edm4hep::TimeSeriesCollection operator()(const edm4hep::TimeSeriesCollection& DigitsPulse) const override {
-    info() << "Digitized pulse collection size: " << DigitsPulse.size() << endmsg;
+    info() << "Input digitized pulse collection size: " << DigitsPulse.size() << endmsg;
 
-    edm4hep::TimeSeriesCollection DigitsWNoiseCollection;
+    edm4hep::TimeSeriesCollection WhitenedDigitsCollection;
 
     // Loop over DigitsPulse to extract the pulse amplitudes
     for (const auto& Digit : DigitsPulse) {
         const auto InputPulse = Digit.getAmplitude();
 
-        if (PulseSize == -1){
-            PulseSize = InputPulse.size();
-        }
+        auto WhitenedDigit = WhitenedDigitsCollection.create();
+        WhitenedDigit.setCellID(Digit.getCellID());
 
-        auto DigitWNoise = DigitsWNoiseCollection.create();
-        DigitWNoise.setCellID(Digit.getCellID());
+        WhitenedDigit.setTime(0.0); // Placeholder for time info
+        WhitenedDigit.setInterval(Digit.getInterval()); // Set the interval for the digitized pulse in ns
 
-        DigitWNoise.setTime(0.0); // Placeholder for time info
-        DigitWNoise.setInterval(Digit.getInterval()); // Set the interval for the digitized pulse in ns
+        // Apply whitening to the digitized pulse
+        auto WhitenedPulse = ApplyWhiteningMat(InputPulse);
 
-        // Apply noise to the digitized pulse
-        auto Out = applyGaussianNoise(InputPulse, m_noiseEnergy, m_noiseWidth);
-
-        for (unsigned int i = 0; i < Out.size(); i++) {
-            DigitWNoise.addToAmplitude(Out[i]);
+        for (unsigned int i = 0; i < WhitenedPulse.size(); i++) {
+            WhitenedDigit.addToAmplitude(WhitenedPulse[i]);
+            std::cout << "WhitenedPulse[" << i << "] = " << WhitenedPulse[i] << std::endl;
         }
     }
-     return DigitsWNoiseCollection;
+     return WhitenedDigitsCollection;
    }
 
-   std::vector<float> applyGaussianNoise(const podio::RelationRange<float> Digits, float NoiseEnergy, float NoiseWidth) const
-   {     
-        std::vector<float> OutVector(Digits.size(), 0.0f);
-
-        // Loop over the DigitVector
-        for (unsigned int i = 0; i < OutVector.size(); ++i) {
-            OutVector[i] = Digits[i] + r3->Gaus(NoiseEnergy, NoiseWidth);
-        }
-        return OutVector;
+   TVectorD ApplyWhiteningMat(const podio::RelationRange<float> Digits) const
+   {
+       TVectorD Pulse(Digits.size());
+       // Loop over the DigitVector
+       for (unsigned int i = 0; i < Digits.size(); ++i) {
+           Pulse[i] = Digits[i] - (*MuVec)[i]; // Subtract mean
+           std::cout << "Digits w/ noise, no mu subtraction[" << i << "] = " << Digits[i] << std::endl;
+           std::cout << "Pulse after Mu subtraction[" << i << "] = " << Pulse[i] << std::endl;
+       }
+       auto WhitenedPulse = WhiteningMatrix * Pulse;
+       return WhitenedPulse;
    }
 
-
-    // Computes the correlation coefficient matrix from a TMatrixD of observations
-    // data: TMatrixD with rows = observations, cols = variables
-    TMatrixDSym ComputeCovvarianceMatrix(const TMatrixD& data, const std::vector<double>& means) {
-        // Compute covariance matrix
-        int nVars = data.GetNcols();
-        TMatrixDSym cov(nVars);
-        for (int i = 0; i < nVars; ++i) {
-            for (int j = i; j < nVars; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < m_noiseSimSamples.value(); ++k) {
-                    sum += (data(k, i) - means[i]) * (data(k, j) - means[j]);
-                }
-                cov(i, j) = sum / (m_noiseSimSamples.value() - 1);
-                if (i != j) cov(j, i) = cov(i, j);
-            }
-        }
-        return cov;
-    }
-
-    TMatrixDSym ComputeCorrelationMatrix(const TMatrixDSym& cov){
-        // Compute correlation matrix from cov mat
-        int nVars = cov.GetNcols();
-        TMatrixDSym corr(nVars);
-        for (int i = 0; i < nVars; ++i) {
-            for (int j = i; j < nVars; ++j) {
-                double denom = std::sqrt(cov(i, i) * cov(j, j));
-                // std::cout << "Covariance: " << cov(i, j) << ", Denominator: " << denom << std::endl;
-                double val = denom != 0.0 ? cov(i, j) / denom : 0.0;
-                corr(i, j) = val;
-                if (i != j) corr(j, i) = val;
-            }
-        }
-        return corr;
-    }
-    
-
-    void createNoiseSampleMatrix(TMatrixD* NoiseSampleMat, std::vector<double>* means) const {
-        for (int j = 0; j < PulseSize; ++j) {
-            for (int i = 0; i < m_noiseSimSamples.value(); ++i) {
-                (*NoiseSampleMat)(i, j) = r3->Gaus(m_noiseEnergy.value(), m_noiseWidth.value());
-                // std::cout << "NoiseSampleMat(" << i << ", " << j << ") = " << (*NoiseSampleMat)(i, j) << std::endl;
-                // (*means)[j] += (*NoiseSampleMat)(i, j);
-            }
-            (*means)[j] /= m_noiseSimSamples.value(); // Calculate mean for each pulse sample
-        }
-    }
 
     StatusCode finalize() override{
-        TMatrixD NoiseSampleMat(m_noiseSimSamples.value(), PulseSize);
-        std::vector<double> means(PulseSize, 0.0); // Pulse size to calculate means
-        createNoiseSampleMatrix(&NoiseSampleMat, &means);
-        
-        TMatrixDSym covMat = ComputeCovvarianceMatrix(NoiseSampleMat, means);
-        TMatrixDSym corMat = ComputeCorrelationMatrix(covMat);
-
-        TVectorD meansVec(PulseSize);
-        for (int i = 0; i < PulseSize; ++i) {
-            meansVec[i] = means[i];
-        }
-
-        // Check if file exists
-        if (m_noiseInfoFileName.empty()) {
-            error() << "Name of the file with the pulse shapes not provided!" << endmsg;
-            return StatusCode::FAILURE;
-        }
-
-        auto f = TFile::Open(m_noiseInfoFileName.value().c_str(), "RECREATE");
-        f->cd();
-        NoiseSampleMat.Write("NoiseSampleMatrix");
-
-        meansVec.Write("NoiseSampleMat_MeansVector");
-        covMat.Write("CovarianceMatrix");
-        corMat.Write("CorrelationMatrix");
-        f->Close();
-
-        info() << "Noise sample matrix created with size: " << NoiseSampleMat.GetNrows() << "x" << NoiseSampleMat.GetNcols() << endmsg;
-        info() << "Noise sample matrix, means vector, covvariance matrix, and correlation matrix saved to: " << m_noiseInfoFileName.value() << endmsg;
-
         return StatusCode::SUCCESS;
     }
 
 
  private:
-  Gaudi::Property<std::string> m_noiseInfoFileName{this, "noiseInfoFileName", "NoiseInfo.root", "Name of file to store noise samples, means, cov, and corr matrices"};
-  Gaudi::Property<float> m_noiseEnergy {this, "noiseEnergy", 0.1, "Noise energy for Gaussian (mean) - in GeV" };
-  Gaudi::Property<float> m_noiseWidth {this, "noiseWidth", 0.05, "Noise width - in GeV as well" };
-  Gaudi::Property<int> m_noiseSimSamples {this, "noiseSimSamples", 1000, "Number of samples for noise simulation" };
-  Gaudi::Property<int> m_noiseSeed {this, "noiseSeed", 32, "Seed for the random number generator" };
+  Gaudi::Property<std::string> m_noiseInfoFileName{this, "noiseInfoFileName", "NoiseInfo.root", "Name of file to load noise corr matrix from"};
+  Gaudi::Property<std::string> m_corrMatName{this, "corrMatName", "CorrelationMatrix", "Name of ROOT TMatrixD that represents the correlation matrix of the noise"};
+  Gaudi::Property<std::string> m_muVecName{this, "muVecName", "NoiseSampleMat_MeansVector", "Name of ROOT TVectorD that represents the mean vector of the noise"};
+  Gaudi::Property<std::string> m_filterName{this, "filterName", "ZCA", "Name of the whitening filter to apply"};
+  TMatrixD WhiteningMatrix;
+  TVectorD* MuVec = nullptr;
 
-  TRandom *r3 = new TRandom3();
-  mutable int PulseSize = -1;
-
- };
+};
  
  DECLARE_COMPONENT(CaloWhitening)
