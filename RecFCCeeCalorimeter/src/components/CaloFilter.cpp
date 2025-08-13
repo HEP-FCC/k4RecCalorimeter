@@ -31,12 +31,15 @@
 
 #include "k4FWCore/Transformer.h"
 
+#include <iostream>
 #include <ostream>
 #include <string>
 
 #include "TFile.h"
-#include "TTree.h"
 #include "TSystem.h"
+#include <TMatrixD.h>
+#include <TVectorD.h>
+#include "TMatrixDSym.h"
 
 using DigitsColl = edm4hep::TimeSeriesCollection;
 
@@ -59,10 +62,7 @@ struct CaloFilterFunc final
 
     StatusCode initialize() override{
         // Get matched filter template
-        if (m_filterName.value() == "MatchedDirac") {
-            info() << "Using the matched filter: Matched Dirac" << endmsg;
-            FilterTemplate = {0.0, 1.0, 0.0};
-        } else if (m_filterName.value() == "Matched_Gaussian"){
+        if (m_filterName.value() == "Matched_Gaussian"){
             info() << "Using the matched filter: Matched Gaussian" << endmsg;          
 
             // Number of samples you want the known pulse (i.e. filter) to consider
@@ -73,11 +73,12 @@ struct CaloFilterFunc final
             int UpCnt = m_filterTemplateSize.value() - DownCnt - 1;
 
             // We will create a Gaussian shape w/ mean = m_mu and sigma = m_sigma. The filter will be defined as e^(-0.5 * ((x - m_mu)/m_sigma)^2) for x in [maximum - DownCnt, maximum + UpCnt].
-            
+
             int samplingInterval = (m_pulseEndTime.value() - m_pulseInitTime.value()) / m_lenSample.value();
             std::vector<float> PulseShape(m_lenSample.value(), 0.0);
             for (int i = 0; i < m_lenSample.value(); ++i) {
                 PulseShape[i] = Gaussian(i * samplingInterval, m_mu.value(), m_sigma.value());
+                info() << "PulseShape[" << i << "] = " << PulseShape[i] << endmsg;
             }
 
             // Get the filter template between MaxIdx - DownCnt and MaxIdx + UpCnt
@@ -91,15 +92,41 @@ struct CaloFilterFunc final
                         << ", PulseShape.size()=" << PulseShape.size() << endmsg;
                 return StatusCode::FAILURE;
             }
-            // Resize FilterTemplate to fit the range [DownIdx, UpIdx]
-            FilterTemplate.resize(UpIdx - DownIdx + 1, 0.0);
-
+            
             info() << "MaxIdx: " << MaxIdx << ", DownIdx: " << DownIdx << ", UpIdx: " << UpIdx << endmsg;
-            // Get the filter template and calculate SumSquared for normalization
+
+            // Create padded FilterTemplate with small part that is signal
+            TVectorD FilterTemplatePadded(m_lenSample.value());
             for (int i = DownIdx; i <= UpIdx; ++i) {
-                FilterTemplate[i - DownIdx] = PulseShape[i]; // Use relative indexing for FilterTemplate
-                SumSquared += PulseShape[i] * PulseShape[i];
+                FilterTemplatePadded[i] = PulseShape[i];
             }
+
+            for (int i = 0; i < FilterTemplatePadded.GetNrows(); ++i) {
+                info() << "FilterTemplatePadded[" << i << "] = " << FilterTemplatePadded[i] << endmsg;
+            }
+
+            auto GetInvCorrMatStatus = GetInvCorrMat();
+            if (GetInvCorrMatStatus != StatusCode::SUCCESS) {
+                return GetInvCorrMatStatus;
+            }
+
+            auto Temp = (*invCorrMat) * FilterTemplatePadded;
+            float Norm = FilterTemplatePadded * Temp;
+
+            info() << "Norm for matched filter (PaddedSignal^T * InvCorrMat * PaddedSignal): " << Norm << endmsg;
+
+            for (int i = 0; i < Temp.GetNrows(); ++i) {
+                info() << "Temp[" << i << "] = " << Temp[i] << endmsg;
+            }
+            FilterTemplate = new std::vector<float>(m_filterTemplateSize.value(), 0.0f);
+            for (int i = DownIdx; i <= UpIdx; ++i) {
+                (*FilterTemplate)[i - DownIdx] = Temp[i] / Norm;
+            } // Should be subvector of Temp, divided by Norm of course
+
+            for (int i = 0; i < FilterTemplate->size(); ++i) {
+                info() << "FilterTemplate[" << i << "] = " << (*FilterTemplate)[i] << endmsg;
+            }
+
         } else {
             error() << "Unknown filter name: " << m_filterName.value() << endmsg;
             return StatusCode::FAILURE;
@@ -129,7 +156,7 @@ struct CaloFilterFunc final
         FilteredDigit.setInterval(Digit.getInterval()); // Set the interval for the digitized pulse in ns
 
         // Apply matched filter
-        auto Out = applyMatchedFilter(InputPulse, FilterTemplate);
+        auto Out = applyMatchedFilter(InputPulse, *FilterTemplate);
 
         for (unsigned int i = 0; i < Out.size(); i++) {
             FilteredDigit.addToAmplitude(Out[i]);
@@ -137,10 +164,9 @@ struct CaloFilterFunc final
 
         // Calculate the energy of the matched filter and the matched sample index
         auto MaxIdx = std::distance(Out.begin(), std::max_element(Out.begin(), Out.end()));
-        auto MaxVal = *std::max_element(Out.begin(), Out.end());
-        auto Energy = MaxVal / SumSquared;
+        auto Energy = *std::max_element(Out.begin(), Out.end());
 
-        debug() << "Cell ID" << Digit.getCellID() << ", MaxIdx: " << MaxIdx << ", MaxVal: " << MaxVal << ", Energy: " << Energy << endmsg;
+        debug() << "Cell ID" << Digit.getCellID() << ", MaxIdx: " << MaxIdx << ", Energy - max val: " << Energy << endmsg;
 
         // Store the matched sample index and energy
         MaxIdxCollection.push_back(MaxIdx);
@@ -150,48 +176,60 @@ struct CaloFilterFunc final
     }
 
     return std::make_tuple(std::move(FilteredDigitsCollection), std::move(MaxIdxCollection), std::move(EnergyCollection));
-}
+    }
 
    StatusCode finalize() override{return StatusCode::SUCCESS;}
 
+   StatusCode GetInvCorrMat(){
+        // Check if file exists
+        if (m_noiseInfoFileName.empty()) {
+            error() << "Name of the file with the noise info not provided!" << endmsg;
+            return StatusCode::FAILURE;
+        }
+        if (gSystem->AccessPathName(m_noiseInfoFileName.value().c_str())) {
+            error() << "Provided file with the noise info not found!" << endmsg;
+            error() << "File path: " << m_noiseInfoFileName.value() << endmsg;
+            return StatusCode::FAILURE;
+        }
 
- 
- private:  
-  /// Map to be used for the lookup of the pulse shapes
-  Gaudi::Property<std::string> m_filterName{this, "filterName", "Matched_Gaussian", "Name of the filter to apply" };
-    
-  Gaudi::Property<float> m_mu{this, "mu", 50, "Mean of Gaussian pulse" };
-  Gaudi::Property<float> m_sigma{this, "sigma", 20, "Sigma of Gaussian pulse" };
-  
-  // Number of samples in the filter template
-  Gaudi::Property<int> m_filterTemplateSize{this, "filterTemplateSize", 5, "Size of the filter template" };
+        // Open the file with the noise info
+        std::unique_ptr<TFile> NoiseInfoFile(TFile::Open(m_noiseInfoFileName.value().c_str(), "READ"));
+        if (NoiseInfoFile->IsZombie()) {
+            error() << "Unable to open the file with the noise info!" << endmsg;
+            error() << "File path: " << m_noiseInfoFileName.value() << endmsg;
+            return StatusCode::FAILURE;
+        } else {
+            info() << "Using the following file with noise info: "
+                << m_noiseInfoFileName.value() << endmsg;
+        }
 
-  // Initial time of the pulse
-  Gaudi::Property<float> m_pulseInitTime {this, "pulseInitTime", 0.0, "Initial time of the pulse" };
-  // End time of the pulse
-  Gaudi::Property<float> m_pulseEndTime {this, "pulseEndTime", 750.0, "End time of the pulse" };
-  // Number of samples in pulse
-  Gaudi::Property<int> m_lenSample {this, "pulseSamplingLength", 30, "Number of samples in pulse" };
+        // Load CorrMat into memory
+        NoiseInfoFile->GetObject(m_invCorrMatName.value().c_str(), invCorrMat);
+        invCorrMat->Print();
+        if (!invCorrMat) {
+            error() << "Unable to load inverse of correlation matrix from file!" << endmsg;
+            return StatusCode::FAILURE;
+        }
 
-  std::vector<float> FilterTemplate;
-  float SumSquared = 0;
-
-  // Method to apply matched filter
-  std::vector<float> applyMatchedFilter(const  podio::RelationRange<float>& pulse, const std::vector<float>& Cfilter) const {
-      // Reverse filter
-      std::vector<float> filter = Cfilter;
-      std::reverse(filter.begin(), filter.end());
-      // Convolve the pulse with the filter
-      return ConvolveSame(pulse, filter);
+        return StatusCode::SUCCESS;
     }
 
-  float Gaussian(float x, float mu = 0.0, float sigma = 1.0) const {
-      return (1.0 / (sigma * sqrt(2 * M_PI))) * exp(-0.5 * pow((x - mu) / sigma, 2));
-  }
+    // Method to apply matched filter
+    std::vector<float> applyMatchedFilter(const  podio::RelationRange<float>& pulse, const std::vector<float>& Cfilter) const {
+        // Reverse filter
+        std::vector<float> filter = Cfilter;
+        std::reverse(filter.begin(), filter.end());
+        // Convolve the pulse with the filter
+        return ConvolveSame(pulse, filter);
+        }
 
-  float GaussianNoNorm(float x, float mu = 0.0, float sigma = 1.0) const {
-    return exp(-0.5 * pow((x - mu) / sigma, 2));
-  }
+    float Gaussian(float x, float mu = 0.0, float sigma = 1.0) const {
+        return (1.0 / (sigma * sqrt(2 * M_PI))) * exp(-0.5 * pow((x - mu) / sigma, 2));
+    }
+
+    float GaussianNoNorm(float x, float mu = 0.0, float sigma = 1.0) const {
+        return exp(-0.5 * pow((x - mu) / sigma, 2));
+    }
 
     std::vector<float> ConvolveSame(const podio::RelationRange<float>& pulse, const std::vector<float>& filter) const {
         int n = pulse.size();
@@ -211,7 +249,27 @@ struct CaloFilterFunc final
     }
 
 
+ private:  
+  /// Map to be used for the lookup of the pulse shapes
+  Gaudi::Property<std::string> m_filterName{this, "filterName", "Matched_Gaussian", "Name of the filter to apply" };
+    
+  Gaudi::Property<float> m_mu{this, "mu", 50, "Mean of Gaussian pulse" };
+  Gaudi::Property<float> m_sigma{this, "sigma", 20, "Sigma of Gaussian pulse" };
   
+  // Number of samples in the filter template
+  Gaudi::Property<int> m_filterTemplateSize{this, "filterTemplateSize", 5, "Size of the filter template" };
+
+  // Initial time of the pulse
+  Gaudi::Property<float> m_pulseInitTime {this, "pulseInitTime", 0.0, "Initial time of the pulse" };
+  // End time of the pulse
+  Gaudi::Property<float> m_pulseEndTime {this, "pulseEndTime", 750.0, "End time of the pulse" };
+  // Number of samples in pulse
+  Gaudi::Property<int> m_lenSample {this, "pulseSamplingLength", 30, "Number of samples in pulse" };
+  Gaudi::Property<std::string> m_noiseInfoFileName{this, "noiseInfoFileName", "NoiseInfo.root", "Name of file to load noise corr matrix from"};
+  Gaudi::Property<std::string> m_invCorrMatName{this, "invCorrMatName", "InvertedCorrelationMatrix", "Name of ROOT TMatrixD that represents the inverse of the correlation matrix of the noise"};
+
+  TMatrixDSym* invCorrMat = nullptr;
+  std::vector<float>* FilterTemplate = nullptr;
 
  };
  
