@@ -55,6 +55,39 @@
  
     StatusCode initialize() override{
         r3->SetSeed(m_noiseSeed.value()); // Set the seed for the random number generator
+
+        TMatrixD NoiseSampleMat(m_noiseSimSamples.value(), PulseSize);
+        std::vector<double> means(PulseSize, 0.0); // Pulse size to calculate means
+        createNoiseSampleMatrix(&NoiseSampleMat, &means);
+        
+        TMatrixDSym covMat = ComputeCovvarianceMatrix(NoiseSampleMat, means);
+        TMatrixDSym corMat = ComputeCorrelationMatrix(covMat);
+        TMatrixDSym invCorrMat(corMat);
+        invCorrMat.Invert(); // Invert correlation matrix to then save
+
+        TVectorD meansVec(PulseSize);
+        for (int i = 0; i < PulseSize; ++i) {
+            meansVec[i] = means[i];
+        }
+
+        // Check if file exists
+        if (m_noiseInfoFileName.empty()) {
+            error() << "Name of the file with the pulse shapes not provided!" << endmsg;
+            return StatusCode::FAILURE;
+        }
+
+        info() << "Saving noise sample matrix, means vector, covariance matrix, correlation matrix, and inverse correlation matrix to: " << m_noiseInfoFileName.value() << endmsg;
+        auto f = TFile::Open(m_noiseInfoFileName.value(), "RECREATE");
+        f->cd();
+        NoiseSampleMat.Write("NoiseSampleMatrix");
+
+        meansVec.Write("NoiseSampleMat_MeansVector");
+        covMat.Write("CovarianceMatrix");
+        corMat.Write("CorrelationMatrix");
+        invCorrMat.Write("InvertedCorrelationMatrix");
+        f->Close();
+
+        info() << "Noise sample matrix created with size: " << NoiseSampleMat.GetNrows() << "x" << NoiseSampleMat.GetNcols() << endmsg;
         return StatusCode::SUCCESS;
     }
    
@@ -150,39 +183,6 @@
     }
 
     StatusCode finalize() override{
-        TMatrixD NoiseSampleMat(m_noiseSimSamples.value(), PulseSize);
-        std::vector<double> means(PulseSize, 0.0); // Pulse size to calculate means
-        createNoiseSampleMatrix(&NoiseSampleMat, &means);
-        
-        TMatrixDSym covMat = ComputeCovvarianceMatrix(NoiseSampleMat, means);
-        TMatrixDSym corMat = ComputeCorrelationMatrix(covMat);
-        TMatrixDSym invCorrMat(corMat);
-        invCorrMat.Invert(); // Invert correlation matrix to then save
-
-        TVectorD meansVec(PulseSize);
-        for (int i = 0; i < PulseSize; ++i) {
-            meansVec[i] = means[i];
-        }
-
-        // Check if file exists
-        if (m_noiseInfoFileName.empty()) {
-            error() << "Name of the file with the pulse shapes not provided!" << endmsg;
-            return StatusCode::FAILURE;
-        }
-
-        auto f = TFile::Open(m_noiseInfoFileName.value().c_str(), "RECREATE");
-        f->cd();
-        NoiseSampleMat.Write("NoiseSampleMatrix");
-
-        meansVec.Write("NoiseSampleMat_MeansVector");
-        covMat.Write("CovarianceMatrix");
-        corMat.Write("CorrelationMatrix");
-        invCorrMat.Write("InvertedCorrelationMatrix");
-        f->Close();
-
-        info() << "Noise sample matrix created with size: " << NoiseSampleMat.GetNrows() << "x" << NoiseSampleMat.GetNcols() << endmsg;
-        info() << "Noise sample matrix, means vector, covvariance matrix, and correlation matrix saved to: " << m_noiseInfoFileName.value() << endmsg;
-
         return StatusCode::SUCCESS;
     }
 
