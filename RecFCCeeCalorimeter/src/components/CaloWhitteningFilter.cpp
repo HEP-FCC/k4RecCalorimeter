@@ -29,15 +29,9 @@
 
 #include "k4FWCore/Transformer.h"
 
-#include <algorithm>
-#include <string>
-#include <vector>
-
 #include "TFile.h"
-#include "TTree.h"
 #include "TSystem.h"
 
-#include <TRandom3.h>
 #include <TMatrixD.h>
 #include <TVectorD.h>
 
@@ -45,7 +39,6 @@
 #include <TMatrixDSym.h>
 #include <TMatrixDSymEigen.h>
 #include <cmath>
-#include <vector>
 
  struct CaloWhitening final
      : k4FWCore::Transformer<edm4hep::TimeSeriesCollection(const edm4hep::TimeSeriesCollection&)> {
@@ -78,10 +71,10 @@
         }
 
         // Load CorrMat into memory
-        TMatrixDSym* corrMat = nullptr;
-        NoiseInfoFile->GetObject(m_corrMatName.value().c_str(), corrMat);
-        if (!corrMat) {
-            error() << "Unable to load correlation matrix from file!" << endmsg;
+        TMatrixDSym* invCorrMat = nullptr;
+        NoiseInfoFile->GetObject(m_invCorrMatName.value().c_str(), invCorrMat);
+        if (!invCorrMat) {
+            error() << "Unable to load inverse of correlation matrix from file!" << endmsg;
             return StatusCode::FAILURE;
         }
 
@@ -92,18 +85,13 @@
             return StatusCode::FAILURE;
         }
 
-
-        // Compute inverse and store as separate object
-        TMatrixDSym* invCorrMat = new TMatrixDSym(*corrMat);
-        invCorrMat->Invert();
-        // You can now use invCorrMat as needed
-
-        if (m_filterName.value().c_str() == "ZCA"){
+        if (m_filterName.value() == "ZCA"){
             info() << "Using the ZCA filter!" << endmsg;
             // Define ZCA whitening matrix --> corr^(-1/2)
             // Compute eigen decomposition
             TMatrixDSymEigen eig(*invCorrMat);
 
+            info() << "Doing eigendecomposition of inverse correlation matrix to get the sqrt" << endmsg;
             // Get eigenvalues and eigenvectors
             TVectorD eigenVals = eig.GetEigenValues();
             TMatrixD eigenVecs = eig.GetEigenVectors();
@@ -116,7 +104,23 @@
             }
 
             // Compute square root: V * sqrt(D) * V^T
-            WhiteningMatrix = eigenVecs * sqrtDiag * eigenVecs.T();
+            // TMatrixD WhiteningMat = TMatrixD(eigenVecs, TMatrixD::kMult, sqrtDiag); // Does not overwrite anything. ROOT is stupid......
+            // WhiteningMat *= eigenVecs.T(); // Overwrites WhiteningMatrix w/ WhiteningMat *= eigenVecs.T()
+            // WhiteningMatrix = &WhiteningMat; // Assign to the member variable
+
+            WhiteningMatrix = new TMatrixD(eigenVecs, TMatrixD::kMult, sqrtDiag);
+            (*WhiteningMatrix) *= eigenVecs.T();
+
+            info() << "Eigenvalues: " << endmsg;
+            eigenVals.Print();
+
+            info() << "Eigenvecs: " << endmsg;
+            eigenVecs.Print();
+
+            info() << "sqrt(corr^-1): " << endmsg;
+            WhiteningMatrix->Print();
+
+            info() << "Sqrt of Corr^(-1) done!" << endmsg;
         }
 
         // else if (m_filterName.value().c_str() == "Cholesky"){
@@ -153,9 +157,11 @@
         // Apply whitening to the digitized pulse
         auto WhitenedPulse = ApplyWhiteningMat(InputPulse);
 
+
+
         for (unsigned int i = 0; i < WhitenedPulse.size(); i++) {
             WhitenedDigit.addToAmplitude(WhitenedPulse[i]);
-            std::cout << "WhitenedPulse[" << i << "] = " << WhitenedPulse[i] << std::endl;
+            // std::cout << "WhitenedPulse[" << i << "] = " << WhitenedPulse[i] << std::endl;
         }
     }
      return WhitenedDigitsCollection;
@@ -167,10 +173,10 @@
        // Loop over the DigitVector
        for (unsigned int i = 0; i < Digits.size(); ++i) {
            Pulse[i] = Digits[i] - (*MuVec)[i]; // Subtract mean
-           std::cout << "Digits w/ noise, no mu subtraction[" << i << "] = " << Digits[i] << std::endl;
-           std::cout << "Pulse after Mu subtraction[" << i << "] = " << Pulse[i] << std::endl;
+        //    std::cout << "Digits w/ noise, no mu subtraction[" << i << "] = " << Digits[i] << std::endl;
+        //    std::cout << "Pulse after Mu subtraction[" << i << "] = " << Pulse[i] << std::endl;
        }
-       auto WhitenedPulse = WhiteningMatrix * Pulse;
+       auto WhitenedPulse = (*WhiteningMatrix) * Pulse;
        return WhitenedPulse;
    }
 
@@ -182,10 +188,10 @@
 
  private:
   Gaudi::Property<std::string> m_noiseInfoFileName{this, "noiseInfoFileName", "NoiseInfo.root", "Name of file to load noise corr matrix from"};
-  Gaudi::Property<std::string> m_corrMatName{this, "corrMatName", "CorrelationMatrix", "Name of ROOT TMatrixD that represents the correlation matrix of the noise"};
+  Gaudi::Property<std::string> m_invCorrMatName{this, "invCorrMatName", "InvertedCorrelationMatrix", "Name of ROOT TMatrixD that represents the inverse of the correlation matrix of the noise"};
   Gaudi::Property<std::string> m_muVecName{this, "muVecName", "NoiseSampleMat_MeansVector", "Name of ROOT TVectorD that represents the mean vector of the noise"};
   Gaudi::Property<std::string> m_filterName{this, "filterName", "ZCA", "Name of the whitening filter to apply"};
-  TMatrixD WhiteningMatrix;
+  TMatrixD* WhiteningMatrix = nullptr;
   TVectorD* MuVec = nullptr;
 
 };

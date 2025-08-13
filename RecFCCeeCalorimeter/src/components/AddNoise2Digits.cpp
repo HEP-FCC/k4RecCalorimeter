@@ -156,6 +156,8 @@
         
         TMatrixDSym covMat = ComputeCovvarianceMatrix(NoiseSampleMat, means);
         TMatrixDSym corMat = ComputeCorrelationMatrix(covMat);
+        TMatrixDSym invCorrMat(corMat);
+        invCorrMat.Invert(); // Invert correlation matrix to then save
 
         TVectorD meansVec(PulseSize);
         for (int i = 0; i < PulseSize; ++i) {
@@ -175,6 +177,7 @@
         meansVec.Write("NoiseSampleMat_MeansVector");
         covMat.Write("CovarianceMatrix");
         corMat.Write("CorrelationMatrix");
+        invCorrMat.Write("InvertedCorrelationMatrix");
         f->Close();
 
         info() << "Noise sample matrix created with size: " << NoiseSampleMat.GetNrows() << "x" << NoiseSampleMat.GetNcols() << endmsg;
