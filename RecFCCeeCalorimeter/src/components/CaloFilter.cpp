@@ -121,7 +121,7 @@ struct CaloFilterFunc final
             FilterTemplate = new std::vector<float>(m_filterTemplateSize.value(), 0.0f);
             for (int i = DownIdx; i <= UpIdx; ++i) {
                 (*FilterTemplate)[i - DownIdx] = Temp[i] / Norm;
-            } // Should be subvector of Temp, divided by Norm of course
+            } // Should be subvector of Temp --> Temp[DownIdx:UpIdx], divided by Norm of course
 
             for (int i = 0; i < FilterTemplate->size(); ++i) {
                 info() << "FilterTemplate[" << i << "] = " << (*FilterTemplate)[i] << endmsg;
