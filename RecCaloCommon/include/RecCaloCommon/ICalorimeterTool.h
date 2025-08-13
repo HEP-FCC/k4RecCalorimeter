@@ -27,6 +27,13 @@
 #include "GaudiKernel/IAlgTool.h"
 
 #include <memory>
+#include <unordered_map>
+#include <vector>
+
+
+namespace dd4hep::DDSegmentation {
+  class Segmentation;
+} // namespace dd4hep::DDSegmentation
 
 
 namespace k4::recCalo {
@@ -44,11 +51,27 @@ public:
 
   DeclareInterfaceID(ICalorimeterTool, 1, 0);
 
+  /** Fill vector with all existing cells for this geometry.
+   */
+  virtual const std::vector<CellID>& cellIDs() const = 0;
+
   /** Prepare a map of all existing cells in current geometry.
    *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
    *   return Status code.
    */
-  virtual StatusCode prepareEmptyCells(std::unordered_map<CellID, double>& aCells) = 0;
+  virtual StatusCode prepareEmptyCells(std::unordered_map<CellID, double>& aCells) const = 0;
+
+  /** Return the segmentation associated with this geometry.
+   */
+  virtual const dd4hep::DDSegmentation::Segmentation* segmentation() const = 0;
+
+  /** Return the name specified for the readout.
+   */
+  virtual const std::string& readoutName() const = 0;
+
+  /** Return the subdetector ID.
+   */
+  virtual int id() const = 0;
 
   /** Return a new indexer object for this subdetector.
    *
