@@ -205,7 +205,7 @@ struct CaloFilterFunc final
 
         // Load CorrMat into memory
         NoiseInfoFile->GetObject(m_invCorrMatName.value().c_str(), invCorrMat);
-        invCorrMat->Print();
+        // invCorrMat->Print();
         if (!invCorrMat) {
             error() << "Unable to load inverse of correlation matrix from file!" << endmsg;
             return StatusCode::FAILURE;

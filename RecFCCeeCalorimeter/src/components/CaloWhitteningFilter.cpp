@@ -111,14 +111,14 @@
             WhiteningMatrix = new TMatrixD(eigenVecs, TMatrixD::kMult, sqrtDiag);
             (*WhiteningMatrix) *= eigenVecs.T();
 
-            info() << "Eigenvalues: " << endmsg;
-            eigenVals.Print();
+            // info() << "Eigenvalues: " << endmsg;
+            // eigenVals.Print();
 
-            info() << "Eigenvecs: " << endmsg;
-            eigenVecs.Print();
+            // info() << "Eigenvecs: " << endmsg;
+            // eigenVecs.Print();
 
-            info() << "sqrt(corr^-1): " << endmsg;
-            WhiteningMatrix->Print();
+            // info() << "sqrt(corr^-1): " << endmsg;
+            // WhiteningMatrix->Print();
 
             info() << "Sqrt of Corr^(-1) done!" << endmsg;
         }

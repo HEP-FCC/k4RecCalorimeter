@@ -56,8 +56,8 @@
     StatusCode initialize() override{
         r3->SetSeed(m_noiseSeed.value()); // Set the seed for the random number generator
 
-        TMatrixD NoiseSampleMat(m_noiseSimSamples.value(), PulseSize);
-        std::vector<double> means(PulseSize, 0.0); // Pulse size to calculate means
+        TMatrixD NoiseSampleMat(m_noiseSimSamples.value(), m_lenSample.value());
+        std::vector<double> means(m_lenSample.value(), 0.0); // Pulse size to calculate means
         createNoiseSampleMatrix(&NoiseSampleMat, &means);
         
         TMatrixDSym covMat = ComputeCovvarianceMatrix(NoiseSampleMat, means);
@@ -65,9 +65,10 @@
         TMatrixDSym invCorrMat(corMat);
         invCorrMat.Invert(); // Invert correlation matrix to then save
 
-        TVectorD meansVec(PulseSize);
-        for (int i = 0; i < PulseSize; ++i) {
+        TVectorD meansVec(m_lenSample.value());
+        for (int i = 0; i < m_lenSample.value(); ++i) {
             meansVec[i] = means[i];
+            info() << "MeansVec[" << i << "]: " << means[i] << endmsg;
         }
 
         // Check if file exists
@@ -77,7 +78,7 @@
         }
 
         info() << "Saving noise sample matrix, means vector, covariance matrix, correlation matrix, and inverse correlation matrix to: " << m_noiseInfoFileName.value() << endmsg;
-        auto f = TFile::Open(m_noiseInfoFileName.value(), "RECREATE");
+        auto f = TFile::Open(m_noiseInfoFileName.value().c_str(), "RECREATE");
         f->cd();
         NoiseSampleMat.Write("NoiseSampleMatrix");
 
@@ -102,10 +103,6 @@
     // Loop over DigitsPulse to extract the pulse amplitudes
     for (const auto& Digit : DigitsPulse) {
         const auto InputPulse = Digit.getAmplitude();
-
-        if (PulseSize == -1){
-            PulseSize = InputPulse.size();
-        }
 
         auto DigitWNoise = DigitsWNoiseCollection.create();
         DigitWNoise.setCellID(Digit.getCellID());
@@ -172,11 +169,11 @@
     
 
     void createNoiseSampleMatrix(TMatrixD* NoiseSampleMat, std::vector<double>* means) const {
-        for (int j = 0; j < PulseSize; ++j) {
+        for (int j = 0; j < m_lenSample.value(); ++j) {
             for (int i = 0; i < m_noiseSimSamples.value(); ++i) {
                 (*NoiseSampleMat)(i, j) = r3->Gaus(m_noiseEnergy.value(), m_noiseWidth.value());
                 // std::cout << "NoiseSampleMat(" << i << ", " << j << ") = " << (*NoiseSampleMat)(i, j) << std::endl;
-                // (*means)[j] += (*NoiseSampleMat)(i, j);
+                (*means)[j] += (*NoiseSampleMat)(i, j);
             }
             (*means)[j] /= m_noiseSimSamples.value(); // Calculate mean for each pulse sample
         }
@@ -193,9 +190,9 @@
   Gaudi::Property<float> m_noiseWidth {this, "noiseWidth", 0.05, "Noise width - in GeV as well" };
   Gaudi::Property<int> m_noiseSimSamples {this, "noiseSimSamples", 1000, "Number of samples for noise simulation" };
   Gaudi::Property<int> m_noiseSeed {this, "noiseSeed", 32, "Seed for the random number generator" };
+  Gaudi::Property<int> m_lenSample {this, "pulseSamplingLength", 30, "Number of samples in pulse" };
 
   TRandom *r3 = new TRandom3();
-  mutable int PulseSize = -1;
 
  };
  
