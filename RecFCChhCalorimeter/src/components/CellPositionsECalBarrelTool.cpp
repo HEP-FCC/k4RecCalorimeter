@@ -43,7 +43,7 @@ StatusCode CellPositionsECalBarrelTool::initialize() {
 }
 
 void CellPositionsECalBarrelTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                               edm4hep::CalorimeterHitCollection& outputColl) {
+                                               edm4hep::CalorimeterHitCollection& outputColl) const {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
@@ -88,7 +88,7 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const uint64_t& aCellI
   return outSeg;
 }
 
-int CellPositionsECalBarrelTool::layerId(const uint64_t& aCellId) {
+int CellPositionsECalBarrelTool::layerId(const uint64_t& aCellId) const {
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");
