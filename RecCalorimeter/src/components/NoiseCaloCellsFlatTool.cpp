@@ -35,13 +35,13 @@ StatusCode NoiseCaloCellsFlatTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-void NoiseCaloCellsFlatTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) {
+void NoiseCaloCellsFlatTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
   std::for_each(aCells.begin(), aCells.end(), [this](std::pair<const uint64_t, double>& p) {
     p.second += (m_cellNoiseOffset + (m_gauss.shoot() * m_cellNoiseRMS));
   });
 }
 
-void NoiseCaloCellsFlatTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) {
+void NoiseCaloCellsFlatTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
   // Erase a cell if it has energy below a threshold
   double threshold = m_cellNoiseOffset + m_filterThreshold * m_cellNoiseRMS;
   auto it = aCells.begin();
