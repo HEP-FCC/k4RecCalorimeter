@@ -38,14 +38,11 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsVsThetaFromFileTool : public AlgTool,
-                                          virtual public INoiseCaloCellsTool,
-                                          virtual public INoiseConstTool {
+class NoiseCaloCellsVsThetaFromFileTool : public extends<AlgTool, INoiseCaloCellsTool,  INoiseConstTool> {
 public:
-  NoiseCaloCellsVsThetaFromFileTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using base_class::base_class;
   virtual ~NoiseCaloCellsVsThetaFromFileTool() = default;
   virtual StatusCode initialize() final;
-  virtual StatusCode finalize() final;
 
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
@@ -53,11 +50,21 @@ public:
   virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const final;
   virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) final
   { const auto* cthis = this;  cthis->addRandomCellNoise(aCells); }
+
+  /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
+   * Vector of cells must contain all cells in the calorimeter with their cellIDs.
+   */
+  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const final;
+
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
   virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const final;
   virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) final
   { const auto* cthis = this;  cthis->filterCellNoise(aCells); }
+
+  /** @brief Remove cells with energy below threshold*sigma from the vector of cells
+   */
+  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells)    const final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
@@ -71,8 +78,13 @@ public:
 
 
 private:
+  template <typename C>
+  void addRandomCellNoiseT (C& aCells) const;
+  template <typename C>
+  void filterCellNoiseT (C& aCells) const;
+
   /// Handle for tool to get cell positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsDummyTool", this};
+  ToolHandle<ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool", "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
@@ -130,7 +142,7 @@ private:
   Rndm::Numbers m_gauss;
 
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc;
+  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
 
   /// Decoder for ECal layers
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
