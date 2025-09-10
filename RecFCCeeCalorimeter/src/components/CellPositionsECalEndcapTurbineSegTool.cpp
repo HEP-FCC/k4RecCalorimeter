@@ -93,7 +93,8 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   m_decoder->set(volumeId, "z", 0);
   debug() << "volumeId: " << volumeId << endmsg;
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();
+  dd4hep::Alignment alignment = detelement.nominal();
+  const auto& transformMatrix = alignment.worldTransformation();
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);

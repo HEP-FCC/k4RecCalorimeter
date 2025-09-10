@@ -69,7 +69,8 @@ void CellPositionsHCalBarrelNoSegTool::getPositions(const edm4hep::CalorimeterHi
 dd4hep::Position CellPositionsHCalBarrelNoSegTool::xyzPosition(const uint64_t& aCellId) const {
   // global cartesian coordinates calculated from r,phi,eta, for r=1
   auto detelement = m_volman.lookupDetElement(aCellId);
-  const auto& transform = detelement.nominal().worldTransformation();
+  dd4hep::Alignment alignment = detelement.nominal();
+  const auto& transform = alignment.worldTransformation();
   double global[3];
   double local[3] = {0, 0, 0};
   transform.LocalToMaster(local, global);

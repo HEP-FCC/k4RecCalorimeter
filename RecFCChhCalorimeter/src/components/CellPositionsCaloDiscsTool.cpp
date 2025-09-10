@@ -71,7 +71,8 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId
   m_decoder->set(volumeId, "eta", 0);
   dd4hep::Position outPos;
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation(); // m_volman.worldTransformation(volumeId);
+  dd4hep::Alignment alignment = detelement.nominal();
+  const auto& transformMatrix = alignment.worldTransformation(); // m_volman.worldTransformation(volumeId);
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);

@@ -73,7 +73,8 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& 
   int layer = m_decoder->get(volumeId, "layer");
 
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transform = detelement.nominal().worldTransformation();
+  dd4hep::Alignment alignment = detelement.nominal();
+  const auto& transform = alignment.worldTransformation();
   double global[3];
   double local[3] = {0, 0, 0};
   transform.LocalToMaster(local, global);
