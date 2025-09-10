@@ -174,7 +174,8 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
       newCell.setCellID(cellid);
       if (m_addPosition) {
         auto detelement = m_volman.lookupDetElement(cellid);
-        const auto& transformMatrix = detelement.nominal().worldTransformation();
+        dd4hep::Alignment alignment = detelement.nominal();
+        const auto& transformMatrix = alignment.worldTransformation();
         double outGlobal[3];
         double inLocal[] = {0, 0, 0};
         transformMatrix.LocalToMaster(inLocal, outGlobal);

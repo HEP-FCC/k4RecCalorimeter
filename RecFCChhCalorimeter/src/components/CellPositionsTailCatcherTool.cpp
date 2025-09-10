@@ -71,7 +71,8 @@ dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const uint64_t& aCell
   double radius;
 
   auto detelement = m_volman.lookupDetElement(aCellId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();
+  dd4hep::Alignment alignment = detelement.nominal();
+  const auto& transformMatrix = alignment.worldTransformation();
   double outGlobal[3];
   double inLocal[] = {0, 0, 0};
   transformMatrix.LocalToMaster(inLocal, outGlobal);
