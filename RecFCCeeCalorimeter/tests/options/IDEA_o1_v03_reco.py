@@ -18,7 +18,6 @@ geoservice.detectors = [
     os.path.join(path_to_detector, _det) for _det in detectors_to_use
 ]
 
-
 # retrieve subdetector IDs
 import xml.etree.ElementTree as ET
 tree = ET.parse(path_to_detector + '/FCCee/IDEA/compact/IDEA_o1_v03/DectDimensions_IDEA_o1_v03.xml')
@@ -30,9 +29,6 @@ for constant in root.find('define').findall('constant'):
 # debug
 print("Subdetector IDs:")
 print(IDs)
-
-
-
 
 geoservice.OutputLevel = INFO
 
@@ -60,27 +56,11 @@ constNoiseTool = ConstNoiseTool("ConstNoiseTool",
 
 from Configurables import CaloTopoClusterFCCee
 caloIDs = [IDs["FiberDRCalo"]]
-topoClusterCheren = CaloTopoClusterFCCee("topoClusterCheren",
-    cells = ["DRcaloSiPMreadoutDigiHit"],
-    clusters = "TopoClusterCheren",
-    clusterCells = "TopoClusterCherenCells",
-    useNeighborMap = False,
-    readoutName = "DRcaloSiPMreadout",
-    neigboursTool = None,
-    noiseTool = constNoiseTool,
-    systemEncoding = "system:5",
-    seedSigma = 4,
-    neighbourSigma = 2,
-    lastNeighbourSigma = 0,
-    calorimeterIDs=caloIDs,
-    createClusterCellCollection=True,
-    OutputLevel = INFO
-)
 
-topoClusterScint = CaloTopoClusterFCCee("topoClusterScint",
-    cells = ["DRcaloSiPMreadoutDigiHit_scint"],
-    clusters = "TopoClusterScint",
-    clusterCells = "TopoClusterScintCells",
+topoClusterAll = CaloTopoClusterFCCee("topoClusterAll",
+    cells = ["DRcaloSiPMreadoutDigiHit","DRcaloSiPMreadoutDigiHit_scint"],
+    clusters = "TopoClusterAll",
+    clusterCells = "TopoClusterAllCells",
     useNeighborMap = False,
     readoutName = "DRcaloSiPMreadout",
     neigboursTool = None,
@@ -101,11 +81,10 @@ podiooutput.outputCommands = ["keep *"]
 ApplicationMgr(
     TopAlg = [
         podioinput,
-        topoClusterCheren,
-        topoClusterScint,
+        topoClusterAll,
         podiooutput
     ],
     EvtSel = 'NONE',
-    EvtMax = 10,
+    EvtMax = -1,
     ExtSvc = [dataservice,geoservice]
 )
