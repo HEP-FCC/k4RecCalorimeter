@@ -120,6 +120,7 @@ sipmOptical = SimulateSiPMwithOpticalPhoton("SimulateSiPMwithOpticalPhoton",
         0.173, 0.166, 0.158, 0.15, 0.12,
         0.05
     ],
+    # equalization const using EM shower w/o upstream materials
     scaleADC = 0.00178
 )
 
