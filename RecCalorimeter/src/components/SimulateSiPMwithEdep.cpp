@@ -57,6 +57,25 @@ StatusCode SimulateSiPMwithEdep::initialize() {
     return StatusCode::FAILURE;
   }
 
+  m_geoSvc = service("GeoSvc");
+
+  if (!m_geoSvc) {
+    error() << "Unable to locate Geometry Service. "
+            << "Make sure you have GeoSvc in the configuration." << endmsg;
+
+    return StatusCode::FAILURE;
+  }
+
+  if (m_geoSvc->getDetector()->readouts().find(m_readoutName) ==
+      m_geoSvc->getDetector()->readouts().end()) {
+    error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
+
+    return StatusCode::FAILURE;
+  }
+
+  // get segmentation (cast to type GridDRcalo_k4geo)
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::GridDRcalo_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+
   // initialize SiPM properties
   sipm::SiPMProperties properties;
   properties.setSignalLength(m_sigLength);
@@ -119,7 +138,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
 
   for (unsigned int idx = 0; idx < scintHits->size(); idx++) {
     const auto& scintHit = scintHits->at(idx);
-    const auto sipmPos = scintHit.getPosition(); // assume hit position = SiPM position!!!
+    const auto sipmPos = m_segmentation->sipmPosition(scintHit.getCellID()); // in dd4hep unit
 
     std::vector<double> vecTimes;
     std::vector<double> vecWavelens;
@@ -147,12 +166,12 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
       // calculate photon arrival time at SiPM
       // using the distance from the step to the SiPM
       const double initialTime = contrib->getTime(); // in ns
-      const auto stepPos = contrib->getStepPosition();
+      const auto stepPos = contrib->getStepPosition(); // in edm4hep unit
 
-      const float relX = sipmPos.x - stepPos.x;
-      const float relY = sipmPos.y - stepPos.y;
-      const float relZ = sipmPos.z - stepPos.z;
-      const float dist = std::sqrt(relX * relX + relY * relY + relZ * relZ) * dd4hep::mm; // in mm (edm4hep unit)
+      const float relX = sipmPos.x() - stepPos.x * dd4hep::mm;
+      const float relY = sipmPos.y() - stepPos.y * dd4hep::mm;
+      const float relZ = sipmPos.z() - stepPos.z * dd4hep::mm;
+      const float dist = std::sqrt(relX * relX + relY * relY + relZ * relZ); // in dd4hep unit
 
       const double effSpeedOfLight = dd4hep::c_light / m_refractiveIndex.value();
       const double distTime = dist / effSpeedOfLight;
