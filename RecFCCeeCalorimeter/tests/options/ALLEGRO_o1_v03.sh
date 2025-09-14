@@ -13,7 +13,7 @@ download_file() {
 # Check that the Key4hep environment is set
 if [[ -z "${KEY4HEP_STACK}" ]]; then
   echo "Error: Key4hep environment not set"
-  return 1
+  exit 1
 fi
 
 # run the SIM step (for debug do not run it if files already present. Comment the if and fi lines for production)
