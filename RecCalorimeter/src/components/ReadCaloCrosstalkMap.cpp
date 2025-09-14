@@ -76,4 +76,24 @@ StatusCode ReadCaloCrosstalkMap::finalize() { return AlgTool::finalize(); }
 
 std::vector<uint64_t>& ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) { return m_mapNeighbours[aCellId]; }
 
+const std::vector<uint64_t>&
+ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) const {
+  auto it = m_mapNeighbours.find(aCellId);
+  if (it != m_mapNeighbours.end()) {
+    return it->second;
+  }
+  static const std::vector<uint64_t> empty;
+  return empty;
+}
+
 std::vector<double>& ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) { return m_mapCrosstalks[aCellId]; }
+
+const std::vector<double>&
+ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) const {
+  auto it = m_mapCrosstalks.find(aCellId);
+  if (it != m_mapCrosstalks.end()) {
+    return it->second;
+  }
+  static const std::vector<double> empty;
+  return empty;
+}
