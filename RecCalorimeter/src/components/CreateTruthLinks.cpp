@@ -1,16 +1,17 @@
-#include "CreateHitTruthLinks.h"
+#include "CreateTruthLinks.h"
 
-DECLARE_COMPONENT(CreateHitTruthLinks)
+DECLARE_COMPONENT(CreateTruthLinks)
 
-CreateHitTruthLinks::CreateHitTruthLinks(const std::string& name, ISvcLocator* svcLoc)
+CreateTruthLinks::CreateTruthLinks(const std::string& name, ISvcLocator* svcLoc)
     : Gaudi::Algorithm(name, svcLoc) {
   declareProperty("mcparticles", m_mcparticles, "MC particles collection (input)");
   declareProperty("cell_mcparticle_links", m_cell_mcparticle_links, "The links between cells and MC particles (output)");
+  declareProperty("cluster_mcparticle_links", m_cluster_mcparticle_links, "The links between clusters and MC particles (output)");
 }
 
-CreateHitTruthLinks::~CreateHitTruthLinks() { }
+CreateTruthLinks::~CreateTruthLinks() { }
 
-StatusCode CreateHitTruthLinks::initialize() {
+StatusCode CreateTruthLinks::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
   if (sc.isFailure())
     return sc;
@@ -27,23 +28,68 @@ StatusCode CreateHitTruthLinks::initialize() {
     }
   }
 
-  info() << "CreateHitTruthLinks initialized" << endmsg;
+  for (const auto& col : m_clusterCollections) {
+    debug() << "Creating handle for input cluster collection : " << col << endmsg;
+    try {
+      m_clusterCollectionHandles.push_back(
+          new k4FWCore::DataHandle<edm4hep::ClusterCollection>(col, Gaudi::DataHandle::Reader, this));
+    } catch (...) {
+      error() << "Error creating handle for input collection: " << col << endmsg;
+      return StatusCode::FAILURE;
+    }
+  }
+
+
+  info() << "CreateTruthLinks initialized" << endmsg;
 
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
+StatusCode CreateTruthLinks::execute(const EventContext&) const {
 
   // map from true tracks linked to hit contributions to
   // those that really should have been linked
   std::map< int , int > remap_as_you_go ;
   bool doRemapping = true;  // can turn off for debug
 
+  // This step is needed for clusters, because the first few branchings in the
+  // shower are kept in the MCParticle collection.
+  // We therefore need to back-track to the particle actually entering the calorimeter.
+  // The originator of a hit sometimes IS a generator particle, in which case
+  // there is no problem.
+  // Otherwise, the criteria to keep a particle as a hit originator is:
+  //   The particle is an ancestor of the one initial linked to the hit.
+  //      AND
+  //   [
+  //     The particle is a generator particle
+  //         OR
+  //     The particle starts in the tracker, ends in calorimeter. That it starts in the tracker
+  //     is determined by the fact that it's mother ends there. However, note the possibility of
+  //     "non-destructive interactions", where a particles mother does *not* end at the point where
+  //     the particle is created !
+  //         OR
+  //     The particle, or one of it's ancestors is a back-scatterer. This case is further treated in the
+  //     loop over clusters, to catch the rather common case that a back-scattered particle re-enters the
+  //     calorimeter close to it's start-start point (think 15 MeV charged particle!) and the hits it
+  //     produces is in the same cluster as that of the initiator of the shower the backscatter come from.
+  //     (This can't be detected in this first loop, since we don't know about clusters here)
+  //   ]
+  // A map is set up, so obviously the first check is wether the MCP of the hit has already been
+  // treated when looking at some previous hit, in which case one just thake that association.
+
   // create cell<->particle links
   edm4hep::CaloHitMCParticleLinkCollection* caloHitMCParticleLinkCollection = m_cell_mcparticle_links.createAndPut();
 
+  // create cluster<->particle links
+  edm4hep::ClusterMCParticleLinkCollection* clusterMCParticleLinkCollection = nullptr;
+  if (m_clusterCollections.size()>0) {
+    clusterMCParticleLinkCollection = m_cluster_mcparticle_links.createAndPut();
+  }
+
   // retrieve MC particles
   const edm4hep::MCParticleCollection* mcparticles = m_mcparticles.get();
+
+  debug() << "Creating CaloHit <-> MCParticle links : " << endmsg;
 
   // loop over calo<->sim hit collection
   std::map<int, int> nhits; // map of nhits with given ID in link collections
@@ -62,8 +108,8 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
       debug() << "Sim hit id and index: " << simHit.id() << " " << simHit.id().index << endmsg;
       debug() << "Calo hit id and index: " << caloHit.id() << " " << caloHit.id().index << endmsg;
       if (nhits[simHit.id().index + ih*(1<<24)]>0) {
-        error() << "Sim hit with more than one calo hit!!!" << endmsg;
-        return StatusCode::FAILURE;
+        warning() << "Sim hit with more than one calo hit!!!" << endmsg;  // GM: maybe this will be possible if we split hits based on timing?
+        continue;
       }
       else {
         nhits[simHit.id().index + ih*(1<<24)]=1;
@@ -203,7 +249,7 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
               // calorimeter) based on why we left the while-loop
 
               // here one of the while conditions is false, ie. at least one of
-              // " kid is back-scatter", "no mother" , "mother has no parents", "mother is from
+              // "kid is back-scatter", "no mother" , "mother has no parents", "mother is from
               // generator", or "mother did decay in tracker" must be true. We know that this_Kid
               // fulfills all the while-conditions except the first: obvious if at least one iteration of
               // the loop was done, since it was the mother in the previous iteration,
@@ -249,7 +295,7 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
                 }
               } else {
                 // the other three cases, ie. one or several of "no mother", "no grand-mother",
-                //  "generator particle" + that we know that "mother decayed in calo"
+                // "generator particle" + that we know that "mother decayed in calo"
                 if ( index_mother < 0 ) {
                   // ... which of course implies no grand-mother, and no gen stat
                   // of the mother as well -> should not be possible !
@@ -318,7 +364,7 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
                           // must check that it is the same vertex:
                           // several "non-destructive interactions" can
                           // take place (think delta-rays !)
-                      if ( sister.isBackscatter()) {
+                      if ( sister.isBackscatter() ) {
                         has_bs = 1 ;
                         break ;
                       } else if ( sister.isDecayedInTracker() ) {
@@ -482,10 +528,80 @@ StatusCode CreateHitTruthLinks::execute(const EventContext&) const {
 
   debug() << "Finished linking calo hits to MC particles" << endmsg;
 
+  debug() << "Creating Cluster<->MCParticle links using CaloHit<->MCParticle links, re-assigning the latter in some rare cases" << endmsg;
+  // loop over cluster collections
+  for (size_t ih = 0; ih < m_clusterCollectionHandles.size(); ih++) {
+    debug() << "Processing input cluster collection " << ih << " : "
+            << m_clusterCollectionHandles[ih]->objKey() << endmsg;
+    const edm4hep::ClusterCollection* clusters = m_clusterCollectionHandles[ih]->get();
+    debug() << "Collection size: " << clusters->size() << endmsg;
+
+    // Loop over the clusters, find the associated calo hits, use the linked MCParticles
+    // to calculate the energy contributed by a given particle and set links and weights
+    for (const edm4hep::Cluster &cluster : *clusters){
+
+      std::map< int , double > mcpEnergy;  // map of (index_MCParticle, total energy contributed to the cluster)
+
+      // We need to find all seen hits this clutser is made of, which sim hits each
+      // of the seen hits came from, and finally which true particles actually created
+      // each sim hit. Contrary to the sim tracker hits above, a sim-calo hit can be
+      // made by several true particles. They also have a signal size (energy) value.
+      // In addition, the true particle creating sometimes needs to be back-tracked
+      // to the particle actually entering tha calorimeter.
+
+      debug() << endmsg;
+      debug() << "=================" << endmsg;
+      debug() << "Processing new cluster: " << endmsg;
+      debug() << "Cluster id = "<< cluster.id() << " with E = " << cluster.getEnergy() << " , "  << cluster.hits_size() << " hits " << endmsg;
+
+      double ecalohitsum=0.;
+      double ecalohitsum_known=0.;
+      double ecalohitsum_unknown=0.;
+
+      // loop over the cluster hits
+      for (auto it = cluster.hits_begin(); it != cluster.hits_end(); it++) {
+        auto cell = *it;
+        float eCell = cell.getEnergy();
+        ecalohitsum += eCell;
+
+        // loop over hits -> MCParticle links to calculate contribution from given particle
+        // GM, note: original code in https://github.com/iLCSoft/MarlinReco/blob/02a01cfe6154fa42b31081250bf84c8f8718f0b1/Analysis/RecoMCTruthLink/src/RecoMCTruthLinker.cc#L1167
+        // is quite more complex, and tries to reassign calo->particle links for some rare cases
+        for (const auto &assoc : *caloHitMCParticleLinkCollection){
+          const auto &caloHit = assoc.getFrom();
+          if (caloHit.id() != cell.id()) continue;
+          const auto &mcp = assoc.getTo();
+          double w = assoc.getWeight(); // fraction of energy of this hit due to mcp
+          mcpEnergy[mcp.id().index] += eCell*w;
+          ecalohitsum_known += eCell*w;
+        } // end loop over hits -> MCParticle links
+      } // end loop over cluster hits
+      ecalohitsum_unknown = ecalohitsum - ecalohitsum_known;
+      debug() << "Calo energy in hit: all/known/unknown = " << ecalohitsum << " " << ecalohitsum_known << " " << ecalohitsum_unknown << endmsg;
+
+      double sumw=0.0; // for debug
+      for (const auto &mcp: *mcparticles) {
+        // create cluster<->mc particle associations
+        if (mcpEnergy[mcp.id().index]>0) {
+          auto link = clusterMCParticleLinkCollection->create();
+          link.setFrom(cluster);
+          link.setTo(mcp);
+          double w = mcpEnergy[mcp.id().index] / ecalohitsum;
+          debug() << "Link with weight " << w << " set to particle " << mcp.id()  << " with pdg = " << mcp.getPDG()  << " , energy = " << mcp.getEnergy()  << endmsg;
+          sumw += w;
+          link.setWeight(w);
+        }
+      }
+      debug() << "Sum of weights for this cluster = " << sumw << endmsg;
+    } // end loop over clusters
+  } // end loop over cluster collections
+
+  debug() << "Finished linking clusters to MC particles" << endmsg;
+
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateHitTruthLinks::finalize() {
+StatusCode CreateTruthLinks::finalize() {
   for (size_t ih = 0; ih < m_cell_hit_linkCollectionHandles.size(); ih++)
     delete m_cell_hit_linkCollectionHandles[ih];
 
