@@ -100,7 +100,17 @@ private:
   /// Name of output file
   std::string m_outputFileName;
 
-  // Lookup tables/histograms for cell positions in the barrel and endcap EM calorimeters
+  // Lookup tables/histograms for cell positions in the barrel and endcap EM
+  // calorimeters. The vectors of histograms function as lookups for the module ID  // vs phi, since each histogram has bins in phi with the content set to the
+  // module ID associated with the phi range of that bin.  Each histogram in the
+  // vector represents one layer of the barrel or one rho bin of the endcap.
+  // The vectors of Float_t, on the other hand, store the central value of
+  // theta or phi for a given layer (barrel) or rho bin (endcap).
+  // By filling these vectors at the start of processing, the code can perform
+  // the spatial matching between the barrel and endcap cells without
+  // re-calculating positions inside the double loop over cells that occurs when
+  // looking for neighbors.
+  
   std::vector< TH1F* > m_EMB_h_module_vs_phi;
   std::vector< std::vector<Float_t>> m_EMB_phi_lookup;
   std::vector<Float_t> m_EMB_theta_lookup;

@@ -553,7 +553,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   error() << "Segmentation does not exist." << endmsg;
                   return StatusCode::FAILURE;
                 }
-
+	      
                 std::string segmentationType2 = aSegmentation2->type();
                 if (segmentationType2 == "FCCSWEndcapTurbine_k4geo") {
                   auto endcapDecoder =
@@ -570,10 +570,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   unsigned numECCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
                   // Loop over segmentation cells
                   dd4hep::DDSegmentation::CellID endcapCellId = 0;
-
+		
                   (*endcapDecoder)[m_fieldNamesSegmented[0]].set(endcapCellId, m_fieldValuesSegmented[0]);
-
-                  (*endcapDecoder)["system"].set(endcapCellId, m_ecalEndcapSysId);
+                  (*endcapDecoder)[m_fieldNamesSegmented[iSys2]].set(endcapCellId, m_ecalEndcapSysId);
                   (*endcapDecoder)["z"].set(endcapCellId, 0);
                   (*endcapDecoder)["wheel"].set(endcapCellId, iWheel);
                   (*endcapDecoder)["side"].set(endcapCellId, iSide);
@@ -818,7 +817,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                       dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
                       (*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
 
-                      (*barrelDecoder)["system"].set(barrelVolumeId, m_ecalBarrelSysId);
+                      (*barrelDecoder)[m_fieldNamesSegmented[iSys2]].set(barrelVolumeId, m_ecalBarrelSysId);
                       (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
                       (*barrelDecoder)["layer"].set(barrelVolumeId, iMatchLayer);
 
@@ -1883,7 +1882,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
           dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
           (*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
 
-          (*barrelDecoder)["system"].set(barrelVolumeId, m_ecalBarrelSysId);
+          (*barrelDecoder)[m_fieldNamesSegmented[iSys]].set(barrelVolumeId, m_ecalBarrelSysId);
           (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
           (*barrelDecoder)["layer"].set(barrelVolumeId, iBarrelLayer);
 
