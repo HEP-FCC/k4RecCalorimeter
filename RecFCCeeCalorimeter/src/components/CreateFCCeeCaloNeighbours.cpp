@@ -148,7 +148,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
       }
     }
 
-    // retrieve decoders and other info needed for volume (ECal-HCal) connection
+    // retrieve decoders and other info needed for volume (endcap-barrel) connection
     auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
     if (m_connectBarrels) {
       if (m_fieldNamesSegmented[iSys] == "system" && m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
@@ -497,7 +497,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         dd4hep::DDSegmentation::CellID volumeId = 0;
         // Get VolumeID
         (*decoder)[m_fieldNamesSegmented[iSys]].set(volumeId, m_fieldValuesSegmented[iSys]);
-        (*decoder)["layer"].set(volumeId, ilayer);
+        (*decoder)[m_activeFieldNamesSegmented[iSys]].set(volumeId, ilayer);
         (*decoder)["theta"].set(volumeId, 0);
         (*decoder)["module"].set(volumeId, 0);
         // Get number of segmentation cells within the active volume
@@ -532,7 +532,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
             decoder->set(cellId, "theta", itheta); // start from the minimum existing theta cell in this layer
             uint64_t id = cellId;
             auto neighboursList = det::utils::neighbours_ModuleThetaMerged(
-                *moduleThetaSegmentation, *decoder, {"layer", "module", "theta"}, extrema, id, m_includeDiagonalCells);
+                *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"}, extrema, id, m_includeDiagonalCells);
 
             // check if we are on an edge in theta, and add neighbours in the
             // endcap calorimeter if so
@@ -604,7 +604,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                           << " and barrel phi " << eCalBarrelPhi << endmsg;
                   (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
                   (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
-                  (*endcapDecoder)["layer"].set(endcapCellId,
+                  (*endcapDecoder)[m_activeFieldNamesSegmented[iSys]].set(endcapCellId,
                                                 ecalEndcapTurbineSegmentation->expLayer(iWheel, iMatchRho, 0));
                   neighboursList.push_back(endcapCellId);
                 }
@@ -687,7 +687,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 unsigned iLayerZ = iz / (numCellsZ / numCellsZCalib);
                 unsigned iLayerRho = irho / (numCellsRho / numCellsRhoCalib);
                 unsigned iLayer = layerOffset[iWheel] + iLayerRho * numCellsZCalib + iLayerZ;
-                decoder->set(cellId, "layer", iLayer);
+                decoder->set(cellId, m_activeFieldNamesSegmented[iSys], iLayer);
                 uint64_t id = cellId;
                 debug() << "Mapping cell " << cellId << " " << std::hex << cellId << std::dec << endmsg;
                 auto neighboursList = det::utils::neighbours(*decoder, {"module", "rho", "z"}, extrema, id,
@@ -701,7 +701,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   unsigned correctLayer = layerOffset[iWheel] +
                                           lirho / (numCellsRho / numCellsRhoCalib) * numCellsZCalib +
                                           liz / (numCellsZ / numCellsZCalib);
-                  decoder->set(nCell, "layer", correctLayer);
+                  decoder->set(nCell, m_activeFieldNamesSegmented[iSys], correctLayer);
                   neighboursList[idx] = nCell;
                   idx++;
                 }
@@ -763,7 +763,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                       decoder->set(newCellId, "rho", otherRho);
                       decoder->set(newCellId, "z", newZ + izmod / 1);
                       decoder->set(newCellId, "module", newModule + ibmod / 1);
-                      decoder->set(newCellId, "layer", newLayer);
+                      decoder->set(newCellId, m_activeFieldNamesSegmented[iSys], newLayer);
                       neighboursList.push_back(newCellId);
                     }
                   }
@@ -819,7 +819,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 
                       (*barrelDecoder)[m_fieldNamesSegmented[iSys2]].set(barrelVolumeId, m_ecalBarrelSysId);
                       (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
-                      (*barrelDecoder)["layer"].set(barrelVolumeId, iMatchLayer);
+                      (*barrelDecoder)[m_activeFieldNamesSegmented[iSys2]].set(barrelVolumeId, iMatchLayer);
 
                       numCells = det::utils::numberOfCells(barrelVolumeId, *moduleThetaSegmentation);
 
@@ -1820,7 +1820,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
           for (unsigned iECmodule = 0; iECmodule < numECModules; iECmodule++) {
             (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
             (*endcapDecoder)["rho"].set(endcapCellId, iECrho);
-            (*endcapDecoder)["layer"].set(endcapCellId, ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));
+            (*endcapDecoder)[m_activeFieldNamesSegmented[iSys]].set(endcapCellId, ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));
 
             double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(),
                                             ecalEndcapTurbineSegmentation->position(endcapCellId).x());
@@ -1884,7 +1884,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
           (*barrelDecoder)[m_fieldNamesSegmented[iSys]].set(barrelVolumeId, m_ecalBarrelSysId);
           (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
-          (*barrelDecoder)["layer"].set(barrelVolumeId, iBarrelLayer);
+          (*barrelDecoder)[m_activeFieldNamesSegmented[iSys]].set(barrelVolumeId, iBarrelLayer);
 
           numCells = det::utils::numberOfCells(barrelVolumeId, *moduleThetaSegmentation);
 
