@@ -815,7 +815,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                           m_EMB_h_module_vs_phi[iMatchLayer]->FindBin(endcapPhi));
                       // set volumeID correctly
                       dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
-                      (*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
 
                       (*barrelDecoder)[m_fieldNamesSegmented[iSys2]].set(barrelVolumeId, m_ecalBarrelSysId);
                       (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
@@ -1880,8 +1879,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
         for (unsigned iBarrelModule = 0; iBarrelModule < nModulesBarrel; iBarrelModule++) {
           // set volumeID correctly
           dd4hep::DDSegmentation::CellID barrelVolumeId = 0;
-          (*barrelDecoder)[m_fieldNamesSegmented[0]].set(barrelVolumeId, m_fieldValuesSegmented[0]);
-
           (*barrelDecoder)[m_fieldNamesSegmented[iSys]].set(barrelVolumeId, m_ecalBarrelSysId);
           (*barrelDecoder)["module"].set(barrelVolumeId, iBarrelModule);
           (*barrelDecoder)[m_activeFieldNamesSegmented[iSys]].set(barrelVolumeId, iBarrelLayer);
