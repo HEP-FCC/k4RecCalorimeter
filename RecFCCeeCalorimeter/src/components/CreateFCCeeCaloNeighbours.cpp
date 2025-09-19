@@ -537,7 +537,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
             // check if we are on an edge in theta, and add neighbours in the
             // endcap calorimeter if so
 
-            if ((itheta == extrema[2].first) || (itheta == extrema[2].second)) {
+            if (((itheta == extrema[2].first) || (itheta == extrema[2].second)) && m_connectECal) {
               // find barrel cell position
 
               double eCalBarrelTheta = m_EMB_theta_lookup[ilayer];
@@ -769,7 +769,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   }
                 }
                 // add neighboring cells in the EM barrel calorimeter, if relevant
-                if (nextToEMBarrel) {
+                if (nextToEMBarrel && m_connectECal) {
 
                   double endcapTheta = m_EMEC_theta_lookup[irho];
                   if (iSide == -1)
