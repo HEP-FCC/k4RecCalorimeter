@@ -13,6 +13,10 @@
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/ToolHandle.h"
 
+// geometry (needed for timing, based on the distance btn the step and the rear end of the fiber)
+#include "k4Interface/IGeoSvc.h"
+#include "detectorSegmentations/GridDRcalo_k4geo.h"
+
 // Check for SiPMSensor header location (similar to how DigiSiPM handles this)
 #if __has_include("SiPMSensor.h")
 #include "SiPMSensor.h"
@@ -53,6 +57,13 @@ private:
   SmartIF<IRndmGenSvc> m_randSvc;
   Rndm::Numbers m_rndmUniform;
   Rndm::Numbers m_rndmExp;
+
+  // requires GeoSvc and segmentation to estimate timing & attenuation
+  SmartIF<IGeoSvc> m_geoSvc;
+
+  // readout name and segmentation (of specific type)
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
+  dd4hep::DDSegmentation::GridDRcalo_k4geo* m_segmentation = nullptr;
 
   // input collection names
   Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRcaloSiPMreadout_scint",
@@ -116,7 +127,7 @@ private:
 
   // TB-based empirical values after considering attenuation, NIM time window, etc.
   // set yield to 10^-6 (i.e. keV/GeV) if the stored Edep is equal to the number of photon
-  Gaudi::Property<double> m_scintYield{this, "scintYield", 2.5, "scintillation yield in /keV"};
+  Gaudi::Property<double> m_scintYield{this, "scintYield", 0.565, "scintillation yield in /keV"};
 
   // scale ADC to energy
   Gaudi::Property<double> m_scaleADC{this, "scaleADC", 1., "calibration factor for scaling ADC to energy"};

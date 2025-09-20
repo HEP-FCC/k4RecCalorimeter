@@ -437,18 +437,7 @@ if runHCal:
                                                       links=hcalEndcapLinks)
     TopAlg += [createHCalEndcapCells]
 
-# Create CaloHit<->MCParticle links
-from Configurables import CreateHitTruthLinks
-caloLinks = [ecalBarrelLinks, ecalEndcapLinks]
-if runHCal:
-    caloLinks += [hcalBarrelLinks, hcalEndcapLinks]
-createHitParticleLinks = CreateHitTruthLinks("CreateHitParticleLinks",
-                                             cell_hit_links=caloLinks,
-                                             mcparticles="MCParticles",
-                                             cell_mcparticle_links="CaloHitMCParticleLinks",
-                                             OutputLevel=DEBUG)
-TopAlg += [createHitParticleLinks]
-
+finalClusters = []
 if doSWClustering:
 
     # Produce sliding window clusters
@@ -496,6 +485,7 @@ if doSWClustering:
     createECalBarrelClusters.clusters.Path = "EMBCaloClusters"
     createECalBarrelClusters.clusterCells.Path = "EMBCaloClusterCells"
     TopAlg += [createECalBarrelClusters]
+    finalClusters += ["EMBCaloClusters"]
 
     cells = [ecalEndcapPositionedCellsName]
     caloIDs = [IDs["ECAL_Endcap"]]
@@ -520,12 +510,15 @@ if doSWClustering:
     createECalEndcapClusters.clusters.Path = "EMECCaloClusters"
     createECalEndcapClusters.clusterCells.Path = "EMECCaloClusterCells"
     TopAlg += [createECalEndcapClusters]
+    finalClusters += ["EMECCaloClusters"]
 
     if applyUpDownstreamCorrections:
         from Configurables import CorrectCaloClusters
+        inClusters = createECalBarrelClusters.clusters.Path
+        outClusters = "Corrected" + createECalBarrelClusters.clusters.Path
         correctECalBarrelClusters = CorrectCaloClusters("CorrectECalBarrelClusters",
-                                                        inClusters=createECalBarrelClusters.clusters.Path,
-                                                        outClusters="Corrected" + createECalBarrelClusters.clusters.Path,
+                                                        inClusters=inClusters,
+                                                        outClusters=outClusters,
                                                         systemIDs=[IDs["ECAL_Barrel"]],
                                                         numLayers=[ecalBarrelLayers],
                                                         firstLayerIDs=[0],
@@ -543,9 +536,11 @@ if doSWClustering:
 
     if addShapeParameters:
         from Configurables import AugmentClustersFCCee
+        inClusters=createECalBarrelClusters.clusters.Path
+        outClusters="Augmented" + createECalBarrelClusters.clusters.Path
         augmentECalBarrelClusters = AugmentClustersFCCee("AugmentECalBarrelClusters",
-                                                         inClusters=createECalBarrelClusters.clusters.Path,
-                                                         outClusters="Augmented" + createECalBarrelClusters.clusters.Path,
+                                                         inClusters=inClusters,
+                                                         outClusters=outClusters,
                                                          systemIDs=[IDs["ECAL_Barrel"]],
                                                          systemNames=["EMB"],
                                                          numLayers=[ecalBarrelLayers],
@@ -557,6 +552,8 @@ if doSWClustering:
                                                          OutputLevel=INFO
                                                          )
         TopAlg += [augmentECalBarrelClusters]
+        finalClusters.remove(inClusters)
+        finalClusters += [outClusters]
 
     if applyMVAClusterEnergyCalibration:
         inClusters = ""
@@ -564,11 +561,12 @@ if doSWClustering:
             inClusters = augmentECalBarrelClusters.outClusters.Path
         else:
             inClusters = createECalBarrelClusters.clusters.Path
+        outClusters="Calibrated" + createECalBarrelClusters.clusters.Path
 
         from Configurables import CalibrateCaloClusters
         calibrateECalBarrelClusters = CalibrateCaloClusters("calibrateECalBarrelClusters",
                                                             inClusters=inClusters,
-                                                            outClusters="Calibrated" + createECalBarrelClusters.clusters.Path,
+                                                            outClusters=outClusters,
                                                             systemIDs=[IDs["ECAL_Barrel"]],
                                                             systemNames=["EMB"],
                                                             numLayers=[ecalBarrelLayers],
@@ -580,6 +578,8 @@ if doSWClustering:
                                                             OutputLevel=INFO
                                                             )
         TopAlg += [calibrateECalBarrelClusters]
+        finalClusters.remove(inClusters)
+        finalClusters += [outClusters]
 
     if runPhotonIDTool:
         if not addShapeParameters:
@@ -591,16 +591,19 @@ if doSWClustering:
                 inClusters = calibrateECalBarrelClusters.outClusters.Path
             else:
                 inClusters = augmentECalBarrelClusters.outClusters.Path
+            outClusters="PhotonID" + inClusters;
 
             from Configurables import PhotonIDTool
             photonIDECalBarrelClusters = PhotonIDTool("photonIDECalBarrelClusters",
                                                       inClusters=inClusters,
-                                                      outClusters="PhotonID" + inClusters,
+                                                      outClusters=outClusters,
                                                       mvaModelFile="bdt-photonid-weights-CaloClusters.onnx",
                                                       mvaInputsFile="bdt-photonid-inputs-CaloClusters.json",
                                                       OutputLevel=INFO
                                                       )
             TopAlg += [photonIDECalBarrelClusters]
+            finalClusters.remove(inClusters)
+            finalClusters += [outClusters]
 
     # ECAL + HCAL clusters
     if runHCal:
@@ -633,6 +636,7 @@ if doSWClustering:
         createClusters.clusters.Path = "CaloClusters"
         createClusters.clusterCells.Path = "CaloClusterCells"
         TopAlg += [createClusters]
+        finalClusters += ["CaloClusters"]
 
         # add here E+H cluster calibration tool or anything else for E+H clusters
 
@@ -673,6 +677,7 @@ if doTopoClustering:
                                                         createClusterCellCollection=True,
                                                         OutputLevel=INFO)
     TopAlg += [createECalBarrelTopoClusters]
+    finalClusters += ["EMBCaloTopoClusters"]
 
     # Neighbours map
     ecalEndcapNeighboursMap = "neighbours_map_ecalE_turbine.root"
@@ -689,8 +694,8 @@ if doTopoClustering:
     caloIDs = [IDs["ECAL_Endcap"]]
     createECalEndcapTopoClusters = CaloTopoClusterFCCee("CreateECalEndcapTopoClusters",
                                                         cells=[ecalEndcapPositionedCellsName],
-                                                        clusters="EMECaloTopoClusters",
-                                                        clusterCells="EMECaloTopoClusterCells",
+                                                        clusters="EMECCaloTopoClusters",
+                                                        clusterCells="EMECCaloTopoClusterCells",
                                                         neigboursTool=readECalEndcapNeighboursMap,
                                                         noiseTool=readECalEndcapNoisyCellsMap,
                                                         seedSigma=4,
@@ -700,6 +705,7 @@ if doTopoClustering:
                                                         createClusterCellCollection=True,
                                                         OutputLevel=INFO)
     TopAlg += [createECalEndcapTopoClusters]
+    finalClusters += ["EMECCaloTopoClusters"]
 
     if applyUpDownstreamCorrections:
         from Configurables import CorrectCaloClusters
@@ -724,9 +730,11 @@ if doTopoClustering:
 
     if addShapeParameters:
         from Configurables import AugmentClustersFCCee
+        inClusters=createECalBarrelTopoClusters.clusters.Path
+        outClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path
         augmentECalBarrelTopoClusters = AugmentClustersFCCee("augmentECalBarrelTopoClusters",
-                                                             inClusters=createECalBarrelTopoClusters.clusters.Path,
-                                                             outClusters="Augmented" + createECalBarrelTopoClusters.clusters.Path,
+                                                             inClusters=inClusters,
+                                                             outClusters=outClusters,
                                                              systemIDs=[IDs["ECAL_Barrel"]],
                                                              systemNames=["EMB"],
                                                              numLayers=[ecalBarrelLayers],
@@ -737,6 +745,8 @@ if doTopoClustering:
                                                              do_widthTheta_logE_weights=logEWeightInPhotonID,
                                                              OutputLevel=INFO)
         TopAlg += [augmentECalBarrelTopoClusters]
+        finalClusters.remove(inClusters)
+        finalClusters += [outClusters]
 
         if addPi0RecoTool:
             from Configurables import PairCaloClustersPi0
@@ -758,11 +768,12 @@ if doTopoClustering:
             inClusters = "Augmented" + createECalBarrelTopoClusters.clusters.Path
         else:
             inClusters = createECalBarrelTopoClusters.clusters.Path
+        outClusters="Calibrated" + createECalBarrelTopoClusters.clusters.Path
 
         from Configurables import CalibrateCaloClusters
         calibrateECalBarrelTopoClusters = CalibrateCaloClusters("calibrateECalBarrelTopoClusters",
                                                                 inClusters=inClusters,
-                                                                outClusters="Calibrated" + createECalBarrelTopoClusters.clusters.Path,
+                                                                outClusters=outClusters,
                                                                 systemIDs=[IDs["ECAL_Barrel"]],
                                                                 systemNames=["EMB"],
                                                                 numLayers=[ecalBarrelLayers],
@@ -774,6 +785,8 @@ if doTopoClustering:
                                                                 OutputLevel=INFO
                                                                 )
         TopAlg += [calibrateECalBarrelTopoClusters]
+        finalClusters.remove(inClusters)
+        finalClusters += [outClusters]
 
     if runPhotonIDTool:
         if not addShapeParameters:
@@ -785,15 +798,18 @@ if doTopoClustering:
                 inClusters = calibrateECalBarrelTopoClusters.outClusters.Path
             else:
                 inClusters = augmentECalBarrelTopoClusters.outClusters.Path
+            outClusters="PhotonID" + inClusters
 
             from Configurables import PhotonIDTool
             photonIDECalBarrelTopoClusters = PhotonIDTool("photonIDECalBarrelTopoClusters",
                                                           inClusters=inClusters,
-                                                          outClusters="PhotonID" + inClusters,
+                                                          outClusters=outClusters,
                                                           mvaModelFile="bdt-photonid-weights-CaloTopoClusters.onnx",
                                                           mvaInputsFile="bdt-photonid-inputs-CaloTopoClusters.json",
                                                           OutputLevel=INFO)
             TopAlg += [photonIDECalBarrelTopoClusters]
+            finalClusters.remove(inClusters)
+            finalClusters += [outClusters]
 
     # ECAL + HCAL
     if runHCal:
@@ -820,6 +836,22 @@ if doTopoClustering:
                                                   lastNeighbourSigma=0,
                                                   OutputLevel=INFO)
         TopAlg += [createTopoClusters]
+        finalClusters += ["CaloTopoClusters"]
+
+# Create CaloHit<->MCParticle and Cluster<->MCParticle links
+from Configurables import CreateTruthLinks
+caloLinks = [ecalBarrelLinks, ecalEndcapLinks]
+if runHCal:
+    caloLinks += [hcalBarrelLinks, hcalEndcapLinks]
+createTruthLinks = CreateTruthLinks("CreateTruthLinks",
+                                    cell_hit_links=caloLinks,
+                                    clusters=finalClusters,
+                                    mcparticles="MCParticles",
+                                    cell_mcparticle_links="CaloHitMCParticleLinks",
+                                    cluster_mcparticle_links="ClusterMCParticleLinks",
+                                    OutputLevel=DEBUG)
+TopAlg += [createTruthLinks]
+
 
 # Configure output
 io_svc.outputCommands = ["keep *",
