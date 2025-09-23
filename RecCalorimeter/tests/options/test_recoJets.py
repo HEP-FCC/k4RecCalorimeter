@@ -34,12 +34,14 @@ ExtSvc += [audsvc]
 import os
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc")
-path_to_detector = os.environ.get("K4GEO", "")
-detectors = [
-        'FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml'
+path_to_detector = os.environ.get("K4GEO", "") + '/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/'
+detectors_to_use = [
+    'ALLEGRO_o1_v03.xml'
 ]
-for det in detectors:
-    geoservice.detector += [os.path.join(path_to_detector, det)]
+# prefix all xmls with path_to_detector
+geoservice.detectors = [
+    os.path.join(path_to_detector, _det) for _det in detectors_to_use
+]
 geoservice.OutputLevel = INFO
 ExtSvc += [geoservice]
 
@@ -97,7 +99,7 @@ from Configurables import CreateCaloCells
 createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
                                         doCellCalibration=True,
                                         calibTool=calibEcalBarrel,
-                                        crosstalksTool=readCrosstalkMap,
+                                        crosstalksTool=None,
                                         addCrosstalk=False,
                                         addCellNoise=False,
                                         filterCellNoise=False,
@@ -213,7 +215,8 @@ createJets = CreateCaloJet(
     OutputJetCollection=["Jets"],
     # JetAlg="antikt",
     # JetRadius=0.4,
-    # OutputLevel=INFO
+    # OutputLevel=INFO,
+    MinPt=5
 )
 TopAlg += [createJets]
 

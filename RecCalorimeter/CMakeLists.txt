@@ -33,19 +33,19 @@ target_link_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_LIBRARY_DIRS})
 include(CTest)
 
 add_test(NAME FCC_createJets
-  COMMAND k4run RecCalorimeter/tests/options/runJetReco.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+         COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_recoJets.sh
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(FCC_createJets)
 
 add_test(NAME FCC_createTruthJets
-  COMMAND k4run RecCalorimeter/tests/options/runTruthJetReco.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+         COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_truthJets.sh
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(FCC_createTruthJets)
 
 add_test(NAME simulateSiPM
-  COMMAND sh RecCalorimeter/tests/scripts/testSiPM.sh
+         COMMAND sh RecCalorimeter/tests/scripts/testSiPM.sh
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(simulateSiPM)
