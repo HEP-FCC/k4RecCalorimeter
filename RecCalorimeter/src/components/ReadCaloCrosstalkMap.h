@@ -31,12 +31,14 @@ public:
    *   @param[in] aCellId, cellid of the cell of interest.
    *   @return vector of cellIDs, corresponding to the crosstalk neighbours.
    */
+  virtual const std::vector<uint64_t>& getNeighbours(uint64_t aCellId) const final;
   virtual std::vector<uint64_t>& getNeighbours(uint64_t aCellId) final;
 
   /** Function to be called for the crosstalk coefficients between the input cell and its neighbouring cells.
    *   @param[in] aCellId, cellid of the cell of interest.
    *   @return vector of crosstalk coefficients.
    */
+  virtual const std::vector<double>& getCrosstalks(uint64_t aCellId) const final;
   virtual std::vector<double>& getCrosstalks(uint64_t aCellId) final;
 
 private:
