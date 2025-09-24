@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# set this to 1 to use ee->Z->qq Pythia events, or 0 to use particle guns for e and pi, barrel and endcap
-# not available for ALLEGRO o1_v01, disable
+# set this to 1 to use ee->Z->qq Pythia events, or 0 to use particle guns
 usePythia=0
 
 # Define the unction for downloading files

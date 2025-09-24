@@ -24,22 +24,6 @@ audsvc.Auditors = [chra]
 ExtSvc += [audsvc]
 
 
-# Detector geometry
-# prefix all xmls with path_to_detector
-# if K4GEO is empty, this should use relative path to working directory
-import os
-from Configurables import GeoSvc
-geoservice = GeoSvc("GeoSvc")
-path_to_detectors = os.environ.get("K4GEO", "")
-detectors = [
-        'FCCee/ALLEGRO/compact/ALLEGRO_o1_v01/ALLEGRO_o1_v01.xml'
-]
-for det in detectors:
-    geoservice.detectors += [os.path.join(path_to_detectors, det)]
-geoservice.OutputLevel = INFO
-ExtSvc += [geoservice]
-
-
 # Input/Output handling
 from k4FWCore import IOSvc
 from Configurables import EventDataSvc
