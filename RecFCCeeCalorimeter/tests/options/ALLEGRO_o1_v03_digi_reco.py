@@ -849,7 +849,7 @@ createTruthLinks = CreateTruthLinks("CreateTruthLinks",
                                     mcparticles="MCParticles",
                                     cell_mcparticle_links="CaloHitMCParticleLinks",
                                     cluster_mcparticle_links="ClusterMCParticleLinks",
-                                    OutputLevel=DEBUG)
+                                    OutputLevel=INFO)
 TopAlg += [createTruthLinks]
 
 
