@@ -25,7 +25,7 @@ if [ "$usePythia" -gt 0 ]; then
   fi
   # if ! test -f ALLEGRO_sim_ee_z_qq.root; then
   echo "Performing the Geant4 simulation with ddsim"
-  ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents -1 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
+  ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents 2 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
   # fi
 else
   #if ! test -f ALLEGRO_sim_e_barrel.root; then
