@@ -117,8 +117,8 @@ ExtSvc += [audsvc]
 from Configurables import GeoSvc
 import os
 geoservice = GeoSvc("GeoSvc",
-                    # OutputLevel=INFO
-                    OutputLevel=DEBUG  # set to DEBUG to print dd4hep::DEBUG messages in k4geo C++ drivers
+                    OutputLevel=INFO
+                    # OutputLevel=DEBUG  # set to DEBUG to print dd4hep::DEBUG messages in k4geo C++ drivers
                     )
 
 path_to_detector = os.environ.get("K4GEO", "") + "/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/"
@@ -849,7 +849,7 @@ createTruthLinks = CreateTruthLinks("CreateTruthLinks",
                                     mcparticles="MCParticles",
                                     cell_mcparticle_links="CaloHitMCParticleLinks",
                                     cluster_mcparticle_links="ClusterMCParticleLinks",
-                                    OutputLevel=DEBUG)
+                                    OutputLevel=INFO)
 TopAlg += [createTruthLinks]
 
 

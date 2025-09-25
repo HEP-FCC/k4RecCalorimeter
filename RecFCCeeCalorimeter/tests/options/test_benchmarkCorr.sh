@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # set this to 1 to use ee->Z->qq Pythia events, or 0 to use particle guns for e and pi, barrel and endcap
-usePythia=1
+usePythia=0
 
 # Define the unction for downloading files
 # Attempt to download the file using wget, exit the script if wget failed
@@ -25,15 +25,12 @@ if [ "$usePythia" -gt 0 ]; then
   fi
   # if ! test -f ALLEGRO_sim_ee_z_qq.root; then
   echo "Performing the Geant4 simulation with ddsim"
-  ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents 5 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
+  ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents 2 --outputFile ALLEGRO_sim_ee_z_qq.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
   # fi
 else
   #if ! test -f ALLEGRO_sim_e_barrel.root; then
   echo "Generating events and performing the Geant4 simulation with ddsim"
-  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "90*deg" --gun.thetaMax "90*deg" --gun.particle e- --numberOfEvents 10 --outputFile ALLEGRO_sim_e_barrel.root --random.enableEventSeed --random.seed 4255 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "160*deg" --gun.thetaMax "160*deg" --gun.particle e- --numberOfEvents 10 --outputFile ALLEGRO_sim_e_endcap.root --random.enableEventSeed --random.seed 3426 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  ddsim --enableGun --gun.distribution uniform --gun.energy "50*GeV" --gun.thetaMin "90*deg" --gun.thetaMax "90*deg" --gun.particle pi- --numberOfEvents 10 --outputFile ALLEGRO_sim_pi_barrel.root --random.enableEventSeed --random.seed 4316 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  ddsim --enableGun --gun.distribution uniform --gun.energy "50*GeV" --gun.thetaMin "160*deg" --gun.thetaMax "160*deg" --gun.particle pi- --numberOfEvents 10 --outputFile ALLEGRO_sim_pi_endcap.root --random.enableEventSeed --random.seed 63462 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
+  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "69*deg" --gun.thetaMax "69*deg" --gun.particle pi- --numberOfEvents 2 --outputFile benchmarkCorr_sim.root --random.enableEventSeed --random.seed 4242 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
   #fi
 fi
 
@@ -48,6 +45,7 @@ if ! test -f ./cellNoise_map_endcapTurbine_electronicsNoiseLevel.root; then  # a
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/lgbm_calibration-CaloClusters.onnx"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/lgbm_calibration-CaloTopoClusters.onnx"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalB_thetamodulemerged.root"
+  download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalB_thetamodulemerged_hcalB_hcalEndcap_phitheta.root"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalE_turbine.root"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/neighbours_map_ecalB_thetamodulemerged_ecalE_turbine_hcalB_hcalEndcap_phitheta.root"
   download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/ALLEGRO/ALLEGRO_o1_v03/cellNoise_map_endcapTurbine_electronicsNoiseLevel.root"
@@ -58,10 +56,7 @@ fi
 # run the RECO step
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # workaround to have ctests working
 if [ "$usePythia" -gt 0 ]; then
-  k4run $SCRIPT_DIR/ALLEGRO_o1_v03_digi_reco.py
+  k4run $SCRIPT_DIR/test_benchmarkCorr.py
 else
-  k4run $SCRIPT_DIR/ALLEGRO_o1_v03_digi_reco.py --IOSvc.Input=ALLEGRO_sim_e_barrel.root --IOSvc.Output=ALLEGRO_sim_digi_reco_e_barrel.root || exit 1
-  k4run $SCRIPT_DIR/ALLEGRO_o1_v03_digi_reco.py --IOSvc.Input=ALLEGRO_sim_e_endcap.root --IOSvc.Output=ALLEGRO_sim_digi_reco_e_endcap.root || exit 1
-  k4run $SCRIPT_DIR/ALLEGRO_o1_v03_digi_reco.py --IOSvc.Input=ALLEGRO_sim_pi_barrel.root --IOSvc.Output=ALLEGRO_sim_digi_reco_pi_barrel.root || exit 1
-  k4run $SCRIPT_DIR/ALLEGRO_o1_v03_digi_reco.py --IOSvc.Input=ALLEGRO_sim_pi_endcap.root --IOSvc.Output=ALLEGRO_sim_digi_reco_pi_endcap.root || exit 1
+  k4run $SCRIPT_DIR/test_benchmarkCorr.py --IOSvc.Input=benchmarkCorr_sim.root --IOSvc.Output=benchmarkCorr_rec.root || exit 1
 fi
