@@ -61,7 +61,7 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
   }
 
   // retrieve radii from the LayeredCalorimeterData extension
-  dd4hep::Detector* detector = m_geoSvc->getDetector();
+  const dd4hep::Detector* detector = m_geoSvc->getDetector();
   if (!detector) {
     error() << "Unable to retrieve the detector." << endmsg;
     return StatusCode::FAILURE;
