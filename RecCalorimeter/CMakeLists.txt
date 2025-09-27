@@ -37,12 +37,14 @@ add_test(NAME FCC_createJets
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(FCC_createJets)
+set_tests_properties(FCC_createJets PROPERTIES FIXTURES_SETUP ALLEGRO_sim_files)
 
 add_test(NAME FCC_createTruthJets
          COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_truthJets.sh
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(FCC_createTruthJets)
+set_tests_properties(FCC_createTruthJets PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME simulateSiPM
          COMMAND sh RecCalorimeter/tests/scripts/testSiPM.sh
