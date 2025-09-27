@@ -60,5 +60,21 @@ StatusCode TopoCaloNoisyCells::initialize() {
 
 StatusCode TopoCaloNoisyCells::finalize() { return AlgTool::finalize(); }
 
-double TopoCaloNoisyCells::getNoiseRMSPerCell(uint64_t aCellId) { return m_map[aCellId].first; }
-double TopoCaloNoisyCells::getNoiseOffsetPerCell(uint64_t aCellId) { return m_map[aCellId].second; }
+double TopoCaloNoisyCells::getNoiseRMSPerCell(uint64_t aCellId) const
+{
+  auto it = m_map.find(aCellId);
+  if (it != m_map.end()) {
+    return it->second.first;
+  }
+  return 0;
+}
+
+
+double TopoCaloNoisyCells::getNoiseOffsetPerCell(uint64_t aCellId) const
+{
+  auto it = m_map.find(aCellId);
+  if (it != m_map.end()) {
+    return it->second.second;
+  }
+  return 0;
+}

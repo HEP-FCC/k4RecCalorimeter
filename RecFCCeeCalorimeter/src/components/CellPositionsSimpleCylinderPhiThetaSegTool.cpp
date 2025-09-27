@@ -30,7 +30,7 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
   }
 
   // get the detector
-  dd4hep::Detector* detector = m_geoSvc->getDetector();
+  const dd4hep::Detector* detector = m_geoSvc->getDetector();
   if (!detector) {
     error() << "Unable to retrieve the detector." << endmsg;
     return StatusCode::FAILURE;
@@ -94,7 +94,7 @@ StatusCode CellPositionsSimpleCylinderPhiThetaSegTool::initialize() {
 }
 
 void CellPositionsSimpleCylinderPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                              edm4hep::CalorimeterHitCollection& outputColl) {
+                                                              edm4hep::CalorimeterHitCollection& outputColl) const {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
@@ -144,7 +144,7 @@ dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const u
   return outSeg;
 }
 
-int CellPositionsSimpleCylinderPhiThetaSegTool::layerId(const uint64_t& aCellId) {
+int CellPositionsSimpleCylinderPhiThetaSegTool::layerId(const uint64_t& aCellId) const {
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");

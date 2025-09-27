@@ -61,7 +61,7 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
   }
 
   // retrieve radii from the LayeredCalorimeterData extension
-  dd4hep::Detector* detector = m_geoSvc->getDetector();
+  const dd4hep::Detector* detector = m_geoSvc->getDetector();
   if (!detector) {
     error() << "Unable to retrieve the detector." << endmsg;
     return StatusCode::FAILURE;
@@ -117,7 +117,7 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
 }
 
 void CellPositionsHCalPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                    edm4hep::CalorimeterHitCollection& outputColl) {
+                                                    edm4hep::CalorimeterHitCollection& outputColl) const {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -177,7 +177,7 @@ dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const uint64_t& a
   return outSeg;
 }
 
-int CellPositionsHCalPhiThetaSegTool::layerId(const uint64_t& aCellId) {
+int CellPositionsHCalPhiThetaSegTool::layerId(const uint64_t& aCellId) const {
   int layer;
   layer = m_decoder->get(aCellId, "layer");
   return layer;
