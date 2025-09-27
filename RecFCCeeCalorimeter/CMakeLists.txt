@@ -51,7 +51,7 @@ add_test(NAME FCCeeLAr_benchmarkCorrection
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(FCCeeLAr_benchmarkCorrection)
-set_tests_properties(FCCeeLAr_benchmarkCorrection PROPERTIES FIXTURE_REQUIRED ALLEGRO_sim_files)
+set_tests_properties(FCCeeLAr_benchmarkCorrection PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME IDEA_o1_v03_reco
          COMMAND k4run RecFCCeeCalorimeter/tests/options/IDEA_o1_v03_reco.py
