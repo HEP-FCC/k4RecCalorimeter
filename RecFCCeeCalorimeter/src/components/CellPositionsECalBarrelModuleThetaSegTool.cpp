@@ -49,7 +49,7 @@ StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
 }
 
 void CellPositionsECalBarrelModuleThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                             edm4hep::CalorimeterHitCollection& outputColl) {
+                                                             edm4hep::CalorimeterHitCollection& outputColl) const {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
 
@@ -94,7 +94,7 @@ dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const ui
   return outSeg;
 }
 
-int CellPositionsECalBarrelModuleThetaSegTool::layerId(const uint64_t& aCellId) {
+int CellPositionsECalBarrelModuleThetaSegTool::layerId(const uint64_t& aCellId) const {
   return m_segmentation->layer(aCellId);
 }
 

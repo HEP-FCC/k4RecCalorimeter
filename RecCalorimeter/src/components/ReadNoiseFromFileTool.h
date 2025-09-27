@@ -41,8 +41,12 @@ public:
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise constant from the histogram
-  double getNoiseRMSPerCell(uint64_t aCellID);
-  double getNoiseOffsetPerCell(uint64_t aCellID);
+  virtual double getNoiseRMSPerCell(uint64_t aCellID) const final;
+  virtual double getNoiseRMSPerCell(uint64_t aCellID) final
+  { const auto* cthis = this;  return cthis->getNoiseRMSPerCell(aCellID); }
+  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellID) final
+  { const auto* cthis = this;  return cthis->getNoiseOffsetPerCell(aCellID); }
 
 private:
   /// Add pileup contribution to the electronics noise? (only if read from file)

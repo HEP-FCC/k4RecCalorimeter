@@ -42,7 +42,7 @@ StatusCode CellPositionsCaloDiscsTool::initialize() {
 }
 
 void CellPositionsCaloDiscsTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                              edm4hep::CalorimeterHitCollection& outputColl) {
+                                              edm4hep::CalorimeterHitCollection& outputColl) const {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -87,7 +87,7 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId
   return outPos;
 }
 
-int CellPositionsCaloDiscsTool::layerId(const uint64_t& aCellId) {
+int CellPositionsCaloDiscsTool::layerId(const uint64_t& aCellId) const {
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");
