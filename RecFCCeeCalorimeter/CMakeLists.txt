@@ -32,6 +32,7 @@ add_test(NAME ALLEGRO_o1_v03_sim_reco
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(ALLEGRO_o1_v03_sim_reco)
+set_tests_properties(ALLEGRO_o1_v03_sim_reco PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME FCCeeLAr_benchmarkCalibration
          COMMAND k4run RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
@@ -46,10 +47,11 @@ add_test(NAME FCCeeLAr_xtalkNeighbours
 set_test_env(FCCeeLAr_xtalkNeighbours)
 
 add_test(NAME FCCeeLAr_benchmarkCorrection
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/run_thetamodulemerged_SW_benchmarkCorr.py
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_benchmarkCorr.sh
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
 )
 set_test_env(FCCeeLAr_benchmarkCorrection)
+set_tests_properties(FCCeeLAr_benchmarkCorrection PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME IDEA_o1_v03_reco
          COMMAND k4run RecFCCeeCalorimeter/tests/options/IDEA_o1_v03_reco.py
