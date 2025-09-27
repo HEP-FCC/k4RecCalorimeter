@@ -37,7 +37,7 @@ StatusCode TubeLayerPhiEtaCaloTool::initialize() {
 
 StatusCode TubeLayerPhiEtaCaloTool::finalize() { return AlgTool::finalize(); }
 
-StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
+StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const {
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();
   unsigned int numLayers;
