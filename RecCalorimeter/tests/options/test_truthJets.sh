@@ -16,24 +16,10 @@ if [[ -z "${KEY4HEP_STACK}" ]]; then
   exit 1
 fi
 
-# run the SIM step (for debug do not run it if files already present. Comment the if and fi lines for production)
-if [ "$usePythia" -gt 0 ]; then
-  # download the events to reconstruct
-  if ! test -f ./pythia_ee_z_qq_10evt.hepmc; then
-    echo "Downloading files needed for simulation"
-    download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/gen/pythia_ee_z_qq_10evt.hepmc"
-  fi
-  # if ! test -f truthJets_sim.root; then
-  echo "Performing the Geant4 simulation with ddsim"
-  ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents 5 --outputFile truthJets_sim.root --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
-  # fi
-else
-  #if ! test -f truthJets_sim.root; then
-  echo "Generating events and performing the Geant4 simulation with ddsim"
-  ddsim --enableGun --gun.distribution uniform --gun.energy "10*GeV" --gun.thetaMin "45*deg" --gun.thetaMax "135*deg" --gun.particle e- --numberOfEvents 2 --outputFile truthJets_sim.root --random.enableEventSeed --random.seed 4242 --compactFile $K4GEO/FCCee/ALLEGRO/compact/ALLEGRO_o1_v03/ALLEGRO_o1_v03.xml || exit 1
-  #fi
-fi
-
 # run the RECO step
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # workaround to have ctests working
-k4run $SCRIPT_DIR/test_truthJets.py --IOSvc.Input=truthJets_sim.root --IOSvc.Output=truthJets_rec.root || exit 1
+if [ "$usePythia" -gt 0 ]; then
+    k4run $SCRIPT_DIR/test_truthJets.py --IOSvc.Input=ALLEGRO_sim_ee_z_qq.root --IOSvc.Output=truthJets_rec.root || exit 1
+else
+    k4run $SCRIPT_DIR/test_truthJets.py --IOSvc.Input=ALLEGRO_sim_e.root --IOSvc.Output=truthJets_rec.root || exit 1
+fi
