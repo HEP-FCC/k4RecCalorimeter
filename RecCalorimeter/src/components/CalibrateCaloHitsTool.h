@@ -30,7 +30,9 @@ public:
 
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) final;
+  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const final;
+  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) final
+  { const auto* cthis = this;  cthis->calibrate(aHits); }
 
 private:
   /// Value of 1/sampling fraction

@@ -42,7 +42,7 @@ StatusCode CellPositionsTailCatcherTool::initialize() {
 }
 
 void CellPositionsTailCatcherTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                edm4hep::CalorimeterHitCollection& outputColl) {
+                                                edm4hep::CalorimeterHitCollection& outputColl) const {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -93,6 +93,6 @@ dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const uint64_t& aCell
   return outSeg;
 }
 
-int CellPositionsTailCatcherTool::layerId(const uint64_t& /*aCellId*/) { return 0; }
+int CellPositionsTailCatcherTool::layerId(const uint64_t& /*aCellId*/) const { return 0; }
 
 StatusCode CellPositionsTailCatcherTool::finalize() { return AlgTool::finalize(); }
