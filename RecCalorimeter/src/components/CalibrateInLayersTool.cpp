@@ -26,7 +26,7 @@ StatusCode CalibrateInLayersTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-void CalibrateInLayersTool::calibrate(std::unordered_map<uint64_t, double>& aHits) {
+void CalibrateInLayersTool::calibrate(std::unordered_map<uint64_t, double>& aHits) const {
   auto decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   // Loop through energy deposits, multiply energy to get cell energy at electromagnetic scale
   std::for_each(aHits.begin(), aHits.end(), [this, decoder](std::pair<const uint64_t, double>& p) {

@@ -71,34 +71,34 @@ StatusCode ConstNoiseTool::finalize() {
   return sc;
 }
 
-double ConstNoiseTool::getNoiseRMSPerCell(uint64_t aCellId) {
+double ConstNoiseTool::getNoiseRMSPerCell(uint64_t aCellId) const {
 
-  double noiseRMS = 0.;
   // Get cells global coordinate "system"
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, "system");
   // cell noise in system
-  if (m_systemNoiseRMSMap.count(cellSystem))
-    noiseRMS = m_systemNoiseRMSMap[cellSystem];
-  else
+  auto it = m_systemNoiseRMSMap.find(cellSystem);
+  if (it == m_systemNoiseRMSMap.end()) {
     warning() << "No noise RMS set for subsystem " << cellSystem << "! Noise RMS of cell set to 0. " << endmsg;
-  return noiseRMS;
+    return 0;
+  }
+  return it->second;
 }
 
-double ConstNoiseTool::getNoiseOffsetPerCell(uint64_t aCellId) {
+double ConstNoiseTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
 
   if (!m_setNoiseOffset) {
     return 0.;
   }
 
-  double noiseOffset = 0.;
   // Get cells global coordinate "system"
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, "system");
   // cell noise in system
-  if (m_systemNoiseOffsetMap.count(cellSystem))
-    noiseOffset = m_systemNoiseOffsetMap[cellSystem];
-  else
+  auto it = m_systemNoiseOffsetMap.find(cellSystem);
+  if (it == m_systemNoiseOffsetMap.end()) {
     warning() << "No noise offset set for subsystem " << cellSystem << "! Noise offset of cell set to 0. " << endmsg;
-  return noiseOffset;
+    return 0;
+  }
+  return it->second;
 }
