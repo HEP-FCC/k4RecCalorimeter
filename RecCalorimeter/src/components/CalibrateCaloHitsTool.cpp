@@ -16,7 +16,7 @@ StatusCode CalibrateCaloHitsTool::initialize() {
   return sc;
 }
 
-void CalibrateCaloHitsTool::calibrate(std::unordered_map<uint64_t, double>& aHits) {
+void CalibrateCaloHitsTool::calibrate(std::unordered_map<uint64_t, double>& aHits) const {
   // Loop through energy deposits, multiply energy to get cell energy at electromagnetic scale
   std::for_each(aHits.begin(), aHits.end(),
                 [this](std::pair<const uint64_t, double>& p) { p.second *= m_invSamplingFraction; });
