@@ -97,13 +97,13 @@ StatusCode NoiseCaloCellsFromFileTool::initialize() {
   return sc;
 }
 
-void NoiseCaloCellsFromFileTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) {
+void NoiseCaloCellsFromFileTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
   std::for_each(aCells.begin(), aCells.end(), [this](std::pair<const uint64_t, double>& p) {
     p.second += (getNoiseRMSPerCell(p.first) * m_gauss.shoot());
   });
 }
 
-void NoiseCaloCellsFromFileTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) {
+void NoiseCaloCellsFromFileTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
   // Erase a cell if it has energy bellow a threshold from the vector
   auto it = aCells.begin();
   while ((it = std::find_if(it, aCells.end(), [this](std::pair<const uint64_t, double>& p) {
@@ -179,7 +179,7 @@ StatusCode NoiseCaloCellsFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
+double NoiseCaloCellsFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = m_segmentationPhiEta;
   if (segmentation == nullptr) {
     segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(

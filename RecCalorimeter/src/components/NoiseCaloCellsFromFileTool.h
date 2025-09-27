@@ -42,15 +42,19 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) final;
+  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const final;
+  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) final
+  { const auto* cthis = this;  cthis->addRandomCellNoise(aCells); }
   /** @brief Remove cells with energy bellow threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) final;
+  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const final;
+  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) final
+  { const auto* cthis = this;  cthis->filterCellNoise(aCells); }
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise RMS from the histogram
-  double getNoiseRMSPerCell(uint64_t aCellID);
+  double getNoiseRMSPerCell(uint64_t aCellID) const;
 
 private:
   /// Handle for tool to get cell positions
