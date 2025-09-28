@@ -33,7 +33,9 @@ public:
    *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
    *   return Status code.
    */
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) final;
+  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const final;
+  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) final
+  { auto const* cthis = this;  return cthis->prepareEmptyCells(aCells); }
 
 private:
   /// Pointer to the geometry service

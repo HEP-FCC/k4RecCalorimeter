@@ -41,7 +41,7 @@ StatusCode TubeLayerModuleThetaCaloTool::initialize() {
 
 StatusCode TubeLayerModuleThetaCaloTool::finalize() { return AlgTool::finalize(); }
 
-StatusCode TubeLayerModuleThetaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
+StatusCode TubeLayerModuleThetaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const {
   // Get the total number of active volumes in the geometry
   unsigned int numLayers = m_activeVolumesNumber;
   info() << "Number of active layers " << numLayers << endmsg;
