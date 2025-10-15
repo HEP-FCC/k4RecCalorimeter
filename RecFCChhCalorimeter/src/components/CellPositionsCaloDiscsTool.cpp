@@ -71,18 +71,16 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId
   m_decoder->set(volumeId, "eta", 0);
   dd4hep::Position outPos;
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation(); // m_volman.worldTransformation(volumeId);
-  double outGlobal[3];
   double inLocal[] = {0, 0, 0};
-  transformMatrix.LocalToMaster(inLocal, outGlobal);
-  debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-          << outGlobal[2] / dd4hep::mm << endmsg;
+  const auto outGlobal = detelement.nominal().localToWorld(inLocal);
+  debug() << "Position of volume (mm) : \t" << outGlobal.X() / dd4hep::mm << "\t" << outGlobal.Y() / dd4hep::mm << "\t"
+          << outGlobal.Z() / dd4hep::mm << endmsg;
   // radius calculated from segmenation + z postion of volumes
   auto inSeg = m_segmentation->position(aCellId);
   double eta = m_segmentation->eta(aCellId);
-  radius = outGlobal[2] / std::sinh(eta);
+  radius = outGlobal.Z() / std::sinh(eta);
   debug() << "Radius : " << radius << endmsg;
-  outPos.SetCoordinates(inSeg.x() * radius, inSeg.y() * radius, outGlobal[2]);
+  outPos.SetCoordinates(inSeg.x() * radius, inSeg.y() * radius, outGlobal.Z());
 
   return outPos;
 }
