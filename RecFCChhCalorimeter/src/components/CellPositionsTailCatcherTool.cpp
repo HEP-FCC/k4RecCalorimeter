@@ -71,22 +71,20 @@ dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const uint64_t& aCell
   double radius;
 
   auto detelement = m_volman.lookupDetElement(aCellId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();
-  double outGlobal[3];
   double inLocal[] = {0, 0, 0};
-  transformMatrix.LocalToMaster(inLocal, outGlobal);
+  const auto outGlobal = detelement.nominal().localToWorld(inLocal);
 
-  debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-          << outGlobal[2] / dd4hep::mm << endmsg;
+  debug() << "Position of volume (mm) : \t" << outGlobal.X() / dd4hep::mm << "\t" << outGlobal.Y() / dd4hep::mm << "\t"
+          << outGlobal.Z() / dd4hep::mm << endmsg;
 
   // radius calculated from segmenation + z postion of volumes
   auto inSeg = m_segmentation->position(aCellId);
   double eta = m_segmentation->eta(aCellId);
-  radius = outGlobal[2] / std::sinh(eta);
+  radius = outGlobal.Z() / std::sinh(eta);
   debug() << "Radius : " << radius << endmsg;
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, outGlobal[2]);
+  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, outGlobal.Z());
 
-  if (outGlobal[2] == 0) {    // central tail catcher
+  if (outGlobal.Z() == 0) {   // central tail catcher
     radius = m_centralRadius; // 901.5cm
     outSeg.SetCoordinates(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
   }

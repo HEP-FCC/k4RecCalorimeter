@@ -73,15 +73,13 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& 
   int layer = m_decoder->get(volumeId, "layer");
 
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transform = detelement.nominal().worldTransformation();
-  double global[3];
   double local[3] = {0, 0, 0};
-  transform.LocalToMaster(local, global);
+  const auto global = detelement.nominal().localToWorld(local);
 
   auto inSeg = m_segmentation->position(aCellId);
   // get radius in cm
   double radius = m_radii[layer];
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global[2]);
+  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 
   return outSeg;
 }

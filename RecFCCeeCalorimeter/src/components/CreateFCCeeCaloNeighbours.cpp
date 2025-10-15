@@ -1492,11 +1492,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
       // for a normal phi grid it would suffice to use the segmentation phi(cellId) method
       dd4hep::VolumeManager volman = m_geoSvc->getDetector()->volumeManager();
       auto detelement = volman.lookupDetElement(volumeIdECal);
-      const auto& transformMatrix = detelement.nominal().worldTransformation();
-      double outGlobal[3];
       double inLocal[] = {0, 0, 0};
-      transformMatrix.LocalToMaster(inLocal, outGlobal);
-      eCalPhiOffset = std::atan2(outGlobal[1], outGlobal[0]);
+      const auto outGlobal = detelement.nominal().localToWorld(inLocal);
+      eCalPhiOffset = std::atan2(outGlobal.Y(), outGlobal.X());
       info() << "ECAL modules : " << eCalModules << " , phi of module 0 in last ECAL layer : " << eCalPhiOffset
              << endmsg;
       eCalPhiSize = TMath::TwoPi() / eCalModules;
@@ -1893,11 +1891,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
           dd4hep::VolumeManager volman = m_geoSvc->getDetector()->volumeManager();
 
           auto detelement = volman.lookupDetElement(barrelVolumeId);
-          const auto& transformMatrix = detelement.nominal().worldTransformation();
-          double outGlobal[3];
           double inLocal[] = {0, 0, 0};
-          transformMatrix.LocalToMaster(inLocal, outGlobal);
-          double eCalBarrelPhiOffset = std::atan2(outGlobal[1], outGlobal[0]);
+          const auto outGlobal = detelement.nominal().localToWorld(inLocal);
+          double eCalBarrelPhiOffset = std::atan2(outGlobal.Y(), outGlobal.X());
           double eCalBarrelPhi = eCalBarrelPhiOffset;
           double eCalBarrelTheta = moduleThetaSegmentation->theta(barrelVolumeId);
 
