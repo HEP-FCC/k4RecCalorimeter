@@ -17,6 +17,7 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       ROOT::Hist
                       onnxruntime::onnxruntime
                       nlohmann_json::nlohmann_json
+                      RecCaloCommon
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
