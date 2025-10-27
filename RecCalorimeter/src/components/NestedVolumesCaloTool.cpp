@@ -33,7 +33,7 @@ StatusCode NestedVolumesCaloTool::initialize() {
 
 StatusCode NestedVolumesCaloTool::finalize() { return AlgTool::finalize(); }
 
-StatusCode NestedVolumesCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) {
+StatusCode NestedVolumesCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const {
   // Take readout bitfield decoder from GeoSvc
   auto decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   if (m_fieldNames.size() != m_fieldValues.size()) {

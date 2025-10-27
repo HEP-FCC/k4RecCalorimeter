@@ -41,7 +41,7 @@ StatusCode CellPositionsHCalBarrelPhiSegTool::initialize() {
 }
 
 void CellPositionsHCalBarrelPhiSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                     edm4hep::CalorimeterHitCollection& outputColl) {
+                                                     edm4hep::CalorimeterHitCollection& outputColl) const {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -73,20 +73,18 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& 
   int layer = m_decoder->get(volumeId, "layer");
 
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transform = detelement.nominal().worldTransformation();
-  double global[3];
   double local[3] = {0, 0, 0};
-  transform.LocalToMaster(local, global);
+  const auto global = detelement.nominal().localToWorld(local);
 
   auto inSeg = m_segmentation->position(aCellId);
   // get radius in cm
   double radius = m_radii[layer];
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global[2]);
+  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 
   return outSeg;
 }
 
-int CellPositionsHCalBarrelPhiSegTool::layerId(const uint64_t& aCellId) {
+int CellPositionsHCalBarrelPhiSegTool::layerId(const uint64_t& aCellId) const {
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");

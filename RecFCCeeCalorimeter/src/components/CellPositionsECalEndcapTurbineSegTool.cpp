@@ -52,7 +52,7 @@ StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
 }
 
 void CellPositionsECalEndcapTurbineSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                         edm4hep::CalorimeterHitCollection& outputColl) {
+                                                         edm4hep::CalorimeterHitCollection& outputColl) const {
 
   debug() << "Input collection size : " << aCells.size() << endmsg;
 
@@ -93,16 +93,14 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   m_decoder->set(volumeId, "z", 0);
   debug() << "volumeId: " << volumeId << endmsg;
   auto detelement = m_volman.lookupDetElement(volumeId);
-  const auto& transformMatrix = detelement.nominal().worldTransformation();
-  double outGlobal[3];
   double inLocal[] = {0, 0, 0};
-  transformMatrix.LocalToMaster(inLocal, outGlobal);
-  debug() << "Position of volume (mm) : \t" << outGlobal[0] / dd4hep::mm << "\t" << outGlobal[1] / dd4hep::mm << "\t"
-          << outGlobal[2] / dd4hep::mm << endmsg;
+  const auto outGlobal = detelement.nominal().localToWorld(inLocal);
+  debug() << "Position of volume (mm) : \t" << outGlobal.X() / dd4hep::mm << "\t" << outGlobal.Y() / dd4hep::mm << "\t"
+          << outGlobal.Z() / dd4hep::mm << endmsg;
 
   // get R, phi of volume
-  radius = std::sqrt(std::pow(outGlobal[0], 2) + std::pow(outGlobal[1], 2));
-  double phi = std::atan2(outGlobal[1], outGlobal[0]);
+  radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
+  double phi = std::atan2(outGlobal.Y(), outGlobal.X());
   debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
 
   // now get offset in theta and in phi from cell ID (due to theta grid + merging in theta/modules)
@@ -118,7 +116,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   return outSeg;
 }
 
-int CellPositionsECalEndcapTurbineSegTool::layerId(const uint64_t& aCellId) {
+int CellPositionsECalEndcapTurbineSegTool::layerId(const uint64_t& aCellId) const {
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");

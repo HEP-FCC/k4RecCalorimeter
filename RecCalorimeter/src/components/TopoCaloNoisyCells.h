@@ -32,13 +32,17 @@ public:
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double getNoiseRMSPerCell(uint64_t aCellId) final;
+  virtual double getNoiseRMSPerCell(uint64_t aCellId) const final;
+  virtual double getNoiseRMSPerCell(uint64_t aCellId) final
+  { const auto* cthis = this;  return cthis->getNoiseRMSPerCell(aCellId); }
 
   /** Expected noise per cell in terms of mean of distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double getNoiseOffsetPerCell(uint64_t aCellId) final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellId) const final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellId) final
+  { const auto* cthis = this;  return cthis->getNoiseOffsetPerCell(aCellId); }
 
 private:
   /// Name

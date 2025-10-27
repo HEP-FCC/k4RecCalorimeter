@@ -138,7 +138,7 @@ StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
+double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
 
   double elecNoiseRMS = 0.;
   double pileupNoiseRMS = 0.;
@@ -190,7 +190,7 @@ double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) {
   return totalNoiseRMS;
 }
 
-double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) {
+double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
 
   if (!m_setNoiseOffset)
     return 0.;

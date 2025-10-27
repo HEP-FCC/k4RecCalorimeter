@@ -42,7 +42,7 @@ StatusCode CellPositionsHCalBarrelNoSegTool::initialize() {
 }
 
 void CellPositionsHCalBarrelNoSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                                                    edm4hep::CalorimeterHitCollection& outputColl) {
+                                                    edm4hep::CalorimeterHitCollection& outputColl) const {
   debug() << "Input collection size : " << aCells.size() << endmsg;
   // Loop through cell collection
   for (const auto& cell : aCells) {
@@ -69,11 +69,9 @@ void CellPositionsHCalBarrelNoSegTool::getPositions(const edm4hep::CalorimeterHi
 dd4hep::Position CellPositionsHCalBarrelNoSegTool::xyzPosition(const uint64_t& aCellId) const {
   // global cartesian coordinates calculated from r,phi,eta, for r=1
   auto detelement = m_volman.lookupDetElement(aCellId);
-  const auto& transform = detelement.nominal().worldTransformation();
-  double global[3];
-  double local[3] = {0, 0, 0};
-  transform.LocalToMaster(local, global);
-  double zPos = global[2];
+  double local[] = {0, 0, 0};
+  const auto global = detelement.nominal().localToWorld(local);
+  double zPos = global.Z();
 
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
   m_decoder->set(volumeId, "phi", 0);
@@ -91,7 +89,7 @@ dd4hep::Position CellPositionsHCalBarrelNoSegTool::xyzPosition(const uint64_t& a
   return outSeg;
 }
 
-int CellPositionsHCalBarrelNoSegTool::layerId(const uint64_t& aCellId) {
+int CellPositionsHCalBarrelNoSegTool::layerId(const uint64_t& aCellId) const {
   int layer;
   dd4hep::DDSegmentation::CellID cID = aCellId;
   layer = m_decoder->get(cID, "layer");
