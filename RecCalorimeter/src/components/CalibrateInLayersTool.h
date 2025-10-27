@@ -5,6 +5,8 @@
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
+#include "DDSegmentation/BitFieldCoder.h"
+
 // k4FWCore
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 class IGeoSvc;
@@ -26,28 +28,31 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class CalibrateInLayersTool : public AlgTool, virtual public ICalibrateCaloHitsTool {
+class CalibrateInLayersTool : public extends<AlgTool, ICalibrateCaloHitsTool> {
 public:
-  CalibrateInLayersTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using base_class::base_class;
   ~CalibrateInLayersTool() = default;
   /**  Initialize.
    *   @return status code
    */
   virtual StatusCode initialize() final;
-  /**  Finalize.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
 
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
   virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const final;
   virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) final
   { const auto* cthis = this;  cthis->calibrate(aHits); }
+  virtual void calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const final;
 
 private:
+  /// Do calibration for a single cell.
+  void calibrateCell (uint64_t cID, double& energy) const;
+
+  /// Decoder associated with this readout.
+  dd4hep::DDSegmentation::BitFieldCoder* m_decoder = nullptr;
+
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc;
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "Name of the detector readout"};
   /// Name of the cells/layer field

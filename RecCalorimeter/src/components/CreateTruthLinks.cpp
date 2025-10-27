@@ -1,4 +1,5 @@
 #include "CreateTruthLinks.h"
+#include <cmath>
 
 DECLARE_COMPONENT(CreateTruthLinks)
 
@@ -358,9 +359,9 @@ StatusCode CreateTruthLinks::execute(const EventContext&) const {
 
                       const edm4hep::MCParticle& sister = mother.getDaughters()[kkk];
                       if ( sister.id() == mcparticles->at(index_this_Kid).id() ) continue;
-                      if ( abs(sister.getVertex()[0]-mcparticles->at(index_this_Kid).getVertex()[0]) > 0.1 ||
-                            abs(sister.getVertex()[1]-mcparticles->at(index_this_Kid).getVertex()[1]) > 0.1 ||
-                            abs(sister.getVertex()[2]-mcparticles->at(index_this_Kid).getVertex()[2]) > 0.1 ) continue;
+                      if ( std::abs(sister.getVertex()[0]-mcparticles->at(index_this_Kid).getVertex()[0]) > 0.1 ||
+                           std::abs(sister.getVertex()[1]-mcparticles->at(index_this_Kid).getVertex()[1]) > 0.1 ||
+                           std::abs(sister.getVertex()[2]-mcparticles->at(index_this_Kid).getVertex()[2]) > 0.1 ) continue;
                           // must check that it is the same vertex:
                           // several "non-destructive interactions" can
                           // take place (think delta-rays !)
