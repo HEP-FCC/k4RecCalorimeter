@@ -65,7 +65,7 @@ edm4hep::Vector3d PairCaloClustersPi0::projectMomentum(double energy, edm4hep::V
   double dirx = position.x-origin.x;
   double diry = position.y-origin.y;
   double dirz = position.z-origin.z;
-  double quadsum_dir = sqrt( abs( pow(dirx,2) + pow(diry,2) + pow(dirz,2) ) );
+  double quadsum_dir = sqrt( pow(dirx,2) + pow(diry,2) + pow(dirz,2) );
   double px = energy * dirx / quadsum_dir;
   double py = energy * diry / quadsum_dir;
   double pz = energy * dirz / quadsum_dir;
