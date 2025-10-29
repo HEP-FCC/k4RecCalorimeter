@@ -121,6 +121,9 @@ private:
 
   // scale ADC to energy
   Gaudi::Property<double> m_scaleADC{this, "scaleADC", 1., "calibration factor for scaling ADC to energy"};
+
+  // option to store full waveform (for debugging)
+  Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
 };
 
 #endif // RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H

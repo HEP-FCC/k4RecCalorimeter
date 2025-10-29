@@ -142,13 +142,29 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
     vecTimes.reserve(static_cast<unsigned>(simHit.getEnergy()));
     vecWavelengths.reserve(static_cast<unsigned>(simHit.getEnergy()));
 
+    // SimSiPM ignores negative time photons, so translate the whole time structure if needed
+    double minTime = 0.;
+
+    for (unsigned int bin = 0; bin < timeStruct.adcCounts_size(); bin++) {
+      int counts = static_cast<int>(timeStruct.getAdcCounts(bin));
+
+      if (counts == 0)
+        continue;
+
+      double timeBin = timeStruct.getTime() + timeStruct.getInterval() * static_cast<float>(bin);
+
+      if (timeBin < minTime)
+        minTime = timeBin;
+    }
+
+    // now fill the photon vectors
     for (unsigned int bin = 0; bin < timeStruct.adcCounts_size(); bin++) {
       int counts = static_cast<int>(timeStruct.getAdcCounts(bin));
       double timeBin = timeStruct.getTime() + timeStruct.getInterval() * (static_cast<float>(bin) + 0.5);
 
       // Add a photon arrival time for each count in this bin
       for (int num = 0; num < counts; num++) {
-        vecTimes.emplace_back(timeBin);
+        vecTimes.emplace_back(timeBin - minTime); // shift to non-negative time
 
         // generate wavelength
         const double randval = integralSpectrum.back() * m_rndmUniform.shoot();
@@ -183,9 +199,8 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
     // Compute integral (energy) and time of arrival
     // if the signal never exceeds the threshold, it will return -1.
     const double integral =
-        std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
-    const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
-    const double gateEnd = m_gateStart.value() + m_gateL.value();
+        std::max(0., anaSignal.integral(m_gateStart - minTime, m_gateL, m_thres));           // (intStart, intGate, threshold)
+    const double toa = std::max(0., anaSignal.toa(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
 
     // Set digitized hit properties
     digiHit.setEnergy(integral * m_scaleADC.value());
@@ -196,29 +211,34 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
 
     // Set waveform properties
     waveform.setInterval(m_sampling);
-    waveform.setTime(toa + m_gateStart);
+    waveform.setTime(m_storeFullWaveform.value() ? minTime : toa + m_gateStart);
     waveform.setCellID(timeStruct.getCellID());
 
     // Fill the waveform with amplitude values
     // The sipm::SiPMAnalogSignal can be iterated as an std::vector<double>
+    const double gateEnd = m_gateStart.value() + m_gateL.value();
+
     if (integral > 0.) {
       for (unsigned bin = 0; bin < anaSignal.size(); bin++) {
         float amp = anaSignal[bin];
 
-        double tStart = static_cast<double>(bin) * m_sampling;
-        double tEnd = static_cast<double>(bin + 1) * m_sampling;
+        double tStart = static_cast<double>(bin) * m_sampling + minTime;
+        double tEnd = static_cast<double>(bin + 1) * m_sampling + minTime;
         double center = (tStart + tEnd) / 2.;
 
         // Only include samples within our time window of interest
-        if (center < timeStruct.getTime())
-          continue;
+        if (!m_storeFullWaveform.value()) {
+          if (center < toa + m_gateStart)
+            continue;
 
-        if (center > gateEnd)
-          continue;
+          if (center > gateEnd)
+            continue;
 
-        // only store over threshold
-        if (amp > m_thres)
-          waveform.addToAmplitude(amp);
+          if (amp < m_thres)
+            continue;
+        }
+
+        waveform.addToAmplitude(amp);
       }
     }
   }
