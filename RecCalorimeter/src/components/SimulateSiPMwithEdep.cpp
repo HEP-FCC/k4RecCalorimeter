@@ -92,6 +92,10 @@ StatusCode SimulateSiPMwithEdep::initialize() {
   properties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
   properties.setPdeSpectrum(m_wavelen, m_sipmEff);
 
+  // set other parameters if provided
+  for (const auto& [key, value] : m_params.value())
+    properties.setProperty(key, value);
+
   m_sensor = std::make_unique<sipm::SiPMSensor>(properties); // must be constructed from SiPMProperties
 
   info() << "SimulateSiPMwithEdep initialized" << endmsg;

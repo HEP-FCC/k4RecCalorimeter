@@ -58,6 +58,10 @@ StatusCode SimulateSiPMwithOpticalPhoton::initialize() {
   // Set the PDE spectrum
   properties.setPdeSpectrum(m_wavelen.value(), m_sipmEff.value());
 
+  // set other parameters if provided
+  for (const auto& [key, value] : m_params.value())
+    properties.setProperty(key, value);
+
   // Create the SiPM sensor model
   m_sensor = std::make_unique<sipm::SiPMSensor>(properties);
 
