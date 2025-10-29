@@ -139,6 +139,9 @@ private:
   Gaudi::Property<bool> m_switchTime{this, "switchTime", false,
                                      "switch to use the stored edm4hep::CaloHitContribution::getTime() as it is"};
 
+  // option to store full waveform (for debugging)
+  Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
+
   // integral table - initialized at SimulateSiPMwithEdep::initialize()
   std::vector<double> m_integral;
   double m_efficiency;
