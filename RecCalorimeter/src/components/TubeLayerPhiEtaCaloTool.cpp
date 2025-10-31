@@ -4,40 +4,12 @@
 #include "DD4hep/Detector.h"
 #include "DD4hep/MultiSegmentation.h"
 #include "detectorCommon/DetUtils_k4geo.h"
-#include "k4Interface/IGeoSvc.h"
 
 DECLARE_COMPONENT(TubeLayerPhiEtaCaloTool)
 
-TubeLayerPhiEtaCaloTool::TubeLayerPhiEtaCaloTool(const std::string& type, const std::string& name,
-                                                 const IInterface* parent)
-    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
-  declareInterface<ICalorimeterTool>(this);
-}
 
-StatusCode TubeLayerPhiEtaCaloTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry Service. "
-            << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
-    return StatusCode::FAILURE;
-  }
-  if (m_readoutName != "") {
-    // Check if readouts exist
-    info() << "Readout: " << m_readoutName << endmsg;
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
-      error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
-      return StatusCode::FAILURE;
-    }
-  }
-  return sc;
-}
-
-StatusCode TubeLayerPhiEtaCaloTool::finalize() { return AlgTool::finalize(); }
-
-StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const {
+StatusCode TubeLayerPhiEtaCaloTool::collectCells(std::vector<uint64_t>& cells) const
+{
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();
   unsigned int numLayers;
@@ -52,22 +24,22 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
   // get PhiEta segmentation
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
   const dd4hep::DDSegmentation::MultiSegmentation* segmentationMulti = nullptr;
-  segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+      readout().segmentation().segmentation());
   if (segmentation == nullptr) {
-    segmentationMulti = dynamic_cast<dd4hep::DDSegmentation::MultiSegmentation*>(
-        m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+    segmentationMulti = dynamic_cast<const dd4hep::DDSegmentation::MultiSegmentation*>(
+        readout().segmentation().segmentation());
     if (segmentationMulti == nullptr) {
-      error() << "There is no phi-eta or multi- segmentation for the readout " << m_readoutName << " defined."
+      error() << "There is no phi-eta or multi- segmentation for the readout " << readoutName() << " defined."
               << endmsg;
       return StatusCode::FAILURE;
     } else {
       // check if multisegmentation contains only phi-eta sub-segmentations
       const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* subsegmentation = nullptr;
       for (const auto& subSegm : segmentationMulti->subSegmentations()) {
-        subsegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
+        subsegmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(subSegm.segmentation);
         if (subsegmentation == nullptr) {
-          error() << "At least one of the sub-segmentations in MultiSegmentation named " << m_readoutName
+          error() << "At least one of the sub-segmentations in MultiSegmentation named " << readoutName()
                   << " is not a phi-eta grid." << endmsg;
           return StatusCode::FAILURE;
         } else {
@@ -87,7 +59,7 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
            << segmentation->offsetPhi() << endmsg;
   }
   // Take readout bitfield decoder from GeoSvc
-  auto decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+  auto decoder = readout().idSpec().decoder();
   if (m_fieldNames.size() != m_fieldValues.size()) {
     error() << "Volume readout field descriptors (names and values) have different size." << endmsg;
     return StatusCode::FAILURE;
@@ -119,7 +91,7 @@ StatusCode TubeLayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_
         decoder->set(volumeID, "phi", iphi);
         decoder->set(volumeID, "eta", ieta + numCells[2]); // start from the minimum existing eta cell in this layer
         dd4hep::DDSegmentation::CellID cellId = volumeID;
-        aCells.insert(std::pair<dd4hep::DDSegmentation::CellID, double>(cellId, 0));
+        cells.push_back(cellId);
       }
     }
   }

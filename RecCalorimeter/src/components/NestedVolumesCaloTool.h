@@ -1,13 +1,7 @@
 #ifndef RECCALORIMETER_NESTEDVOLUMESCALOTOOL_H
 #define RECCALORIMETER_NESTEDVOLUMESCALOTOOL_H
 
-// Gaudi
-#include "GaudiKernel/AlgTool.h"
-
-// k4FWCore
-#include "k4Interface/ICalorimeterTool.h"
-
-class IGeoSvc;
+#include "RecCaloCommon/CalorimeterToolBase.h"
 
 /** @class NestedVolumesCaloTool Reconstruction/RecCalorimeter/src/components/NestedVolumesCaloTool.h
  *NestedVolumesCaloTool.h
@@ -19,29 +13,19 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class NestedVolumesCaloTool : public AlgTool, virtual public ICalorimeterTool {
+class NestedVolumesCaloTool : public CalorimeterToolBase {
 public:
-  NestedVolumesCaloTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using CalorimeterToolBase::CalorimeterToolBase;
   virtual ~NestedVolumesCaloTool() = default;
-  virtual StatusCode initialize() final;
-  virtual StatusCode finalize() final;
-  /** Prepare a map of all existing cells in current geometry.
-   *   Active volumes are looked in the geometry manager by name ('\b activeVolumeName').
-   *   Corresponding bitfield name is given in '\b activeFieldName'.
-   *   If more than one name is given, it is assumed that volumes are nested.
-   *   For more explanation please [see reconstruction documentation](@ref md_reconstruction_doc_reccalorimeter).
-   *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
-   *   return Status code.
+
+
+protected:
+  /** Fill vector with all existing cells for this geometry.
    */
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const final;
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) final
-  { auto const* cthis = this;  return cthis->prepareEmptyCells(aCells); }
+  virtual StatusCode collectCells(std::vector<uint64_t>& cells) const final;
+
 
 private:
-  /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc;
-  /// Name of the detector readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalHitsPhiEta", "Name of the detector readout"};
   /// Name of active volumes (if different than all)
   Gaudi::Property<std::vector<std::string>> m_activeVolumeName{
       this, "activeVolumeName", {"LAr_sensitive"}, "Name of active volumes (if different than all)"};
