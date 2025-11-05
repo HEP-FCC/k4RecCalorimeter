@@ -174,12 +174,10 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
       newCell.setCellID(cellid);
       if (m_addPosition) {
         auto detelement = m_volman.lookupDetElement(cellid);
-        const auto& transformMatrix = detelement.nominal().worldTransformation();
-        double outGlobal[3];
         double inLocal[] = {0, 0, 0};
-        transformMatrix.LocalToMaster(inLocal, outGlobal);
+        const auto outGlobal = detelement.nominal().localToWorld(inLocal);
         edm4hep::Vector3f position =
-            edm4hep::Vector3f(outGlobal[0] / dd4hep::mm, outGlobal[1] / dd4hep::mm, outGlobal[2] / dd4hep::mm);
+            edm4hep::Vector3f(outGlobal.X() / dd4hep::mm, outGlobal.Y() / dd4hep::mm, outGlobal.Z() / dd4hep::mm);
         newCell.setPosition(position);
       }
     }

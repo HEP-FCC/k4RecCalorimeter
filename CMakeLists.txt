@@ -2,6 +2,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
 
 project(k4RecCalorimeter LANGUAGES CXX)
 
+cmake_policy(SET CMP0144 NEW)
+cmake_policy(SET CMP0167 NEW)
+
 include(GNUInstallDirs)
 include(CTest)
 include(cmake/Key4hepConfig.cmake)
@@ -21,7 +24,7 @@ find_package(Gaudi REQUIRED)
 find_package(k4FWCore 1.3.0 REQUIRED)
 find_package(EDM4HEP REQUIRED) # implicit: Podio
 find_package(DD4hep REQUIRED)
-find_package(k4geo REQUIRED)
+find_package(k4geo 0.23 REQUIRED)
 find_package(FastJet REQUIRED)
 find_package(sipm REQUIRED)
 # New versions of ONNRuntime package provide onnxruntime-Config.cmake

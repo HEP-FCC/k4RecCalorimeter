@@ -128,10 +128,14 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   // 1. Merge energy deposits into cells
   // If running with noise, map was already prepared in initialize().
   // Otherwise it is being created below
-  for (const auto& hit : *hits) {
+
+  // Keep track of hits by ID, to avoid N^2 behavior in making links.
+  std::unordered_multimap<size_t, size_t> hitIndices;
+  for (size_t ihit=0; const auto& hit : *hits) {
     auto id = hit.getCellID();
     verbose() << "CellID : " << id << endmsg;
     m_cellsMap[id] += hit.getEnergy();
+    hitIndices.emplace (id, ihit++);
   }
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 
@@ -263,14 +267,13 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   edm4hep::CaloHitSimCaloHitLinkCollection* edmCellHitLinksCollection = new edm4hep::CaloHitSimCaloHitLinkCollection();
   for (const auto& cell : *edmCellsCollection) {
     auto cellID = cell.getCellID();
-    for (const auto& hit : *hits) {
-      auto hitID = hit.getCellID();
-      if (hitID == cellID) {
-        // create Sim<->Reco hit associations
-        auto link = edmCellHitLinksCollection->create();
-        link.setFrom(cell);
-        link.setTo(hit);
-      }
+    auto range = hitIndices.equal_range(cellID);
+    for (auto it = range.first; it != range.second; ++it) {
+      auto hit = (*hits)[it->second];
+      // create Sim<->Reco hit associations
+      auto link = edmCellHitLinksCollection->create();
+      link.setFrom(cell);
+      link.setTo(hit);
     }
   }
 

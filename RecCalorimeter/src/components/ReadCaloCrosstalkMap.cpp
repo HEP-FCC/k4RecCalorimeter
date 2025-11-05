@@ -1,4 +1,5 @@
 #include "ReadCaloCrosstalkMap.h"
+#include "RecCaloCommon/k4RecCalorimeter_check.h"
 
 #include "TBranch.h"
 #include "TFile.h"
@@ -6,11 +7,6 @@
 #include "TTree.h"
 
 DECLARE_COMPONENT(ReadCaloCrosstalkMap)
-
-ReadCaloCrosstalkMap::ReadCaloCrosstalkMap(const std::string& type, const std::string& name, const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICaloReadCrosstalkMap>(this);
-}
 
 StatusCode ReadCaloCrosstalkMap::initialize() {
   // prevent to initialize the tool if not intended (input file path empty)
@@ -23,12 +19,9 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
     return StatusCode::SUCCESS;
   }
 
-  {
-    StatusCode sc = AlgTool::initialize();
-    info() << "Loading crosstalk map..." << endmsg;
-    if (sc.isFailure())
-      return sc;
-  }
+  info() << "Loading crosstalk map..." << endmsg;
+
+  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
 
   // Check if crosstalk file exists
   if (gSystem->AccessPathName(m_fileName.value().c_str())) {
@@ -72,10 +65,6 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode ReadCaloCrosstalkMap::finalize() { return AlgTool::finalize(); }
-
-std::vector<uint64_t>& ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) { return m_mapNeighbours[aCellId]; }
-
 const std::vector<uint64_t>&
 ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) const {
   auto it = m_mapNeighbours.find(aCellId);
@@ -85,8 +74,6 @@ ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) const {
   static const std::vector<uint64_t> empty;
   return empty;
 }
-
-std::vector<double>& ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) { return m_mapCrosstalks[aCellId]; }
 
 const std::vector<double>&
 ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) const {
