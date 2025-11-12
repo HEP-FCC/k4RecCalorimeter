@@ -108,7 +108,10 @@ StatusCode AugmentClustersFCCee::initialize() {
         nMergedThetaCells.push_back(1);
         nMergedModules.push_back(1);
       }
-    } else {
+    } else if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
+      nModules.push_back(0);
+    }
+    else {
       error() << "Segmentation type not handled, aborting..." << endmsg;
       return StatusCode::FAILURE;
     }
@@ -243,7 +246,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
         // retrieve layer and module ID
         uint layer = decoder->get(cID, layerField);
-        int module_id = decoder->get(cID, moduleField);
         unsigned int layerToFill = layer + startPositionToFill;
 
         // retrieve cell energy, update sum of cell energies per layer, total energy, and max cell energy
@@ -260,10 +262,13 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
           phiMin = phi;
         if (phi > phiMax)
           phiMax = phi;
-        if (module_id > module_id_Max)
-          module_id_Max = module_id;
-        if (module_id < module_id_Min)
-          module_id_Min = module_id;
+        if (systemID == systemID_EMB) {
+          int module_id = decoder->get(cID, moduleField);
+          if (module_id > module_id_Max)
+            module_id_Max = module_id;
+          if (module_id < module_id_Min)
+            module_id_Min = module_id;
+        }
 
         // add cell 4-momentum to cluster 4-momentum
         TVector3 pCell = v * (eCell / v.Mag());
@@ -281,11 +286,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
     debug() << "phiMin, phiMax : " << phiMin << " " << phiMax << endmsg;
     debug() << "Cluster is near phi=pi : " << isClusterPhiNearPi << endmsg;
-
-    bool isResetModuleID = false;
-    // near the 1535..0 transition, reset module ID
-    if (module_id_Max - module_id_Min > nModules[0] * .9)
-      isResetModuleID = true;
 
     // calculate the theta positions with log(E) weighting in each layer
     // for phi use standard E weighting
@@ -370,10 +370,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (sysId != systemID)
           continue;
         uint layer = decoder->get(cID, layerField);
-        int theta_id = decoder->get(cID, thetaField);
-        int module_id = decoder->get(cID, moduleField);
         unsigned int layerToFill = layer + startPositionToFill;
-
         double eCell = cell->getEnergy();
         double weightLog =
             std::max(0., m_thetaRecalcLayerWeights[k][layer] + log(eCell / sumEnLayer[layerToFill]));
@@ -391,10 +388,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (isClusterPhiNearPi && phi < 0.) {
           phi += TMath::TwoPi();
         }
-        if (systemID == systemID_EMB && isResetModuleID && module_id > nModules[k] / 2) {
-          module_id -= nModules[k]; // transition near 1535..0, reset the module ID
-        }
-
         if (m_thetaRecalcLayerWeights[k][layer] < 0) {
           sumThetaLayer[layerToFill] += (eCell * theta);
           layerCentroids[layerToFill] += (eCell * v);
@@ -408,6 +401,18 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
         // do pi0/photon shape var only for EMB
         if (m_do_photon_shapeVar && systemID == systemID_EMB) {
+
+          int theta_id = decoder->get(cID, thetaField);
+          int module_id = decoder->get(cID, moduleField);
+          bool isResetModuleID = false;
+          // near the 1535..0 transition, reset module ID
+          if (module_id_Max - module_id_Min > nModules[k] * .9) {
+            isResetModuleID = true;
+          }
+          if (isResetModuleID && module_id > nModules[k] / 2) {
+            module_id -= nModules[k]; // transition near 1535..0, reset the module ID
+          }
+
           // E, theta_id, and module_id of cells in layer
           vec_E_cell_layer[layerToFill].push_back(eCell);
           vec_theta_cell_layer[layerToFill].push_back(theta_id);
@@ -1015,45 +1020,47 @@ StatusCode AugmentClustersFCCee::FitLayerCentroids(
       return StatusCode::FAILURE;
     }
 
-    std::vector<TVector3> fitPoints(endLayer-startLayer, TVector3(0., 0., 0.));
+    std::vector<TVector3> fitPoints;
+    fitPoints.reserve(endLayer - startLayer);
 
     TVector3 clusterCentroid(0.f, 0.f, 0.f);
-    TVector3 clusterOrientation(0.f, 0.f, 0.f);
+    TVector3 clusterOrientation(0.f, 0.f, 1.f);
     double sumWeights(0.0);
-    unsigned int layerToFill(0);
+    unsigned int goodStartLayer(9999999), goodEndLayer(0);
+    unsigned int nFitPoints(0);
     for (unsigned int layer = startLayer; layer < endLayer; layer++)
     {
       if (layerWeights[layer] <= 0.0) {
         warning() << "Layer weight for layer " << layer << " is non-positive, will be skipped: " << layerWeights[layer] << endmsg;
-        // decrease number of fit points (remove last element)
-        fitPoints.pop_back();
         continue;
       }
       debug() << "Weight for layer " << layer << " : " << layerWeights[layer] << endmsg;
-      fitPoints[layerToFill++] = layerCentroids[layer];
-          
+      fitPoints.push_back(layerCentroids[layer]);
+      nFitPoints++;
+      if (layer<=goodStartLayer) goodStartLayer = layer;
+      if (layer>goodEndLayer) goodEndLayer = layer;
+
       sumWeights += layerWeights[layer];
       clusterCentroid += layerCentroids[layer] * layerWeights[layer];
-      if (layer == startLayer) {
-        clusterOrientation -= layerCentroids[layer];
-      } else if (layer == endLayer - 1) {
-        clusterOrientation += layerCentroids[layer];
-      }
     }
-    clusterCentroid *= (1.0 / sumWeights);
-    // TODO: fix for endcap...
-    clusterOrientation.SetZ(0.);
-    clusterOrientation = clusterOrientation.Unit();
-
     // the fit
-    const unsigned int nFitPoints( fitPoints.size() );
     debug() << "Number of points for fit: " << nFitPoints << endmsg;
+    debug() << "Good start layer: " << goodStartLayer << endmsg;
+    debug() << "Good end layer: " << goodEndLayer << endmsg;
 
+    clusterCentroid *= (1.0 / sumWeights);
     if (nFitPoints < 2) {
       warning() << "Not enough points for fit" << endmsg;
+      clusterBarycenter = clusterCentroid;  // return centroid as nominal barycenter
+      clusterDirection = clusterOrientation;  // return +z
       return StatusCode::SUCCESS;
     }
 
+    clusterOrientation = layerCentroids[goodEndLayer] - layerCentroids[goodStartLayer];
+    // GM: not sure we need to project along direction orthogonal to detector - especially given our cells are not rectangular xy cells
+    // Just take as initial guess the line from last to first centroid
+    //clusterOrientation.SetZ(0.);
+    clusterOrientation = clusterOrientation.Unit();
     return PerformLinearFit(
       fitPoints,
       clusterCentroid,
