@@ -124,6 +124,7 @@ StatusCode AugmentClustersFCCee::initialize() {
     const char* detector = m_detectorNames[k].c_str();
     for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
       showerShapeDecorations.push_back(Form("energy_fraction_%s_layer_%d", detector, layer));
+      showerShapeDecorations.push_back(Form("rho_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("theta_%s_layer_%d", detector, layer));
       showerShapeDecorations.push_back(Form("phi_%s_layer_%d", detector, layer));
       // pi0/photon shape var only calculated in EMB
@@ -677,6 +678,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         sumPhiLayer[layerToFill] = layerCentroids[layerToFill].Phi();
 
         newCluster.addToShapeParameters(sumEnLayer[layerToFill] / E); // E fraction of layer
+        newCluster.addToShapeParameters(layerCentroids[layerToFill].Perp());
         newCluster.addToShapeParameters(sumThetaLayer[layerToFill]);
         newCluster.addToShapeParameters(sumPhiLayer[layerToFill]);
 
