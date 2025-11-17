@@ -27,22 +27,16 @@ class IGeoSvc;
  *
  */
 
-class ConstNoiseTool : public AlgTool, virtual public INoiseConstTool {
+class ConstNoiseTool : public extends<AlgTool, INoiseConstTool> {
 public:
-  ConstNoiseTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using base_class::base_class;
   virtual ~ConstNoiseTool() = default;
 
-  virtual StatusCode initialize() final;
-
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() override final;
 
   /// Find the appropriate noise constant from the histogram
-  virtual double getNoiseRMSPerCell(uint64_t aCellID) const final;
-  virtual double getNoiseRMSPerCell(uint64_t aCellID) final
-  { const auto* cthis = this;  return cthis->getNoiseRMSPerCell(aCellID); }
-  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const final;
-  virtual double getNoiseOffsetPerCell(uint64_t aCellID) final
-  { const auto* cthis = this;  return cthis->getNoiseOffsetPerCell(aCellID); }
+  virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
 
 private:
   std::map<uint, double> m_systemNoiseRMSMap;
@@ -74,8 +68,8 @@ private:
   /// System encoding string
   Gaudi::Property<std::string> m_systemEncoding{this, "systemEncoding", "system:4", "System encoding string"};
 
-  /// Pointer to the geometry service
-  SmartIF<IGeoSvc> m_geoSvc;
+  /// Handle to the geometry service
+  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
 
   /// Decoder
   std::unique_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;

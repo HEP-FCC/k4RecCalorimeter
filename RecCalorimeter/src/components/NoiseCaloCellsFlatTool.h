@@ -26,29 +26,25 @@ class NoiseCaloCellsFlatTool : public extends<AlgTool,  INoiseCaloCellsTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsFlatTool() = default;
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const final;
-  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) final
-  { const auto* cthis = this;  cthis->addRandomCellNoise(aCells); }
+  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const override final;
 
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const final;
+  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const final;
-  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) final
-  { const auto* cthis = this;  cthis->filterCellNoise(aCells); }
+  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const final;
+  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
 
 
 private:

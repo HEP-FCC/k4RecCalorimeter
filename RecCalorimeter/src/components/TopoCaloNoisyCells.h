@@ -18,31 +18,26 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class TopoCaloNoisyCells : public AlgTool, virtual public INoiseConstTool {
+class TopoCaloNoisyCells : public extends<AlgTool, INoiseConstTool> {
 public:
-  TopoCaloNoisyCells(const std::string& type, const std::string& name, const IInterface* parent);
+  using base_class::base_class;
   virtual ~TopoCaloNoisyCells() = default;
   /** Read a root file and the stored TTree of cellIDs to noise values.
    * return StatusCode
    */
-  virtual StatusCode initialize() final;
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() override final;
 
   /** Expected noise per cell in terms of sigma of Gaussian distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double getNoiseRMSPerCell(uint64_t aCellId) const final;
-  virtual double getNoiseRMSPerCell(uint64_t aCellId) final
-  { const auto* cthis = this;  return cthis->getNoiseRMSPerCell(aCellId); }
+  virtual double getNoiseRMSPerCell(uint64_t aCellId) const override final;
 
   /** Expected noise per cell in terms of mean of distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double getNoiseOffsetPerCell(uint64_t aCellId) const final;
-  virtual double getNoiseOffsetPerCell(uint64_t aCellId) final
-  { const auto* cthis = this;  return cthis->getNoiseOffsetPerCell(aCellId); }
+  virtual double getNoiseOffsetPerCell(uint64_t aCellId) const override final;
 
 private:
   /// Name
