@@ -3,39 +3,12 @@
 // segm
 #include "DD4hep/Detector.h"
 #include "detectorCommon/DetUtils_k4geo.h"
-#include "k4Interface/IGeoSvc.h"
 
 DECLARE_COMPONENT(LayerPhiEtaCaloTool)
 
-LayerPhiEtaCaloTool::LayerPhiEtaCaloTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICalorimeterTool>(this);
-}
 
-StatusCode LayerPhiEtaCaloTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry Service. "
-            << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
-    return StatusCode::FAILURE;
-  }
-  if (m_readoutName != "") {
-    // Check if readouts exist
-    info() << "Readout: " << m_readoutName << endmsg;
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
-      error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
-      return StatusCode::FAILURE;
-    }
-  }
-  return sc;
-}
-
-StatusCode LayerPhiEtaCaloTool::finalize() { return AlgTool::finalize(); }
-
-StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const {
+StatusCode LayerPhiEtaCaloTool::collectCells(std::vector<uint64_t>& cells) const
+{
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();
   unsigned int numLayers;
@@ -48,9 +21,9 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
   info() << "Number of active layers " << numLayers << endmsg;
 
   // get PhiEta segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation;
-  segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation;
+  segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
+      readout().segmentation().segmentation());
   if (segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;
@@ -61,7 +34,7 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
          << segmentation->offsetPhi() << endmsg;
 
   // Take readout bitfield decoder from GeoSvc
-  auto decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+  auto decoder = readout().idSpec().decoder();
   if (m_fieldNames.size() != m_fieldValues.size()) {
     error() << "Volume readout field descriptors (names and values) have different size." << endmsg;
     return StatusCode::FAILURE;
@@ -105,7 +78,7 @@ StatusCode LayerPhiEtaCaloTool::prepareEmptyCells(std::unordered_map<uint64_t, d
         decoder->set(volumeID, "eta", ieta + numCells[2]); // start from the minimum existing eta cell in this layer
         dd4hep::DDSegmentation::CellID cellId = volumeID;
         // debug() << "CellID: " <<  cellId<< endmsg;
-        aCells.insert(std::pair<dd4hep::DDSegmentation::CellID, double>(cellId, 0));
+        cells.push_back(cellId);
       }
     }
   }
