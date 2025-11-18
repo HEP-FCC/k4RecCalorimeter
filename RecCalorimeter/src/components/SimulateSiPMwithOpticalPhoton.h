@@ -111,6 +111,9 @@ private:
   Gaudi::Property<double> m_gateL{this, "gateLength", 95., "Integration gate length in ns"};
   Gaudi::Property<double> m_thres{this, "threshold", 1.5, "Integration threshold in photoelectrons"};
 
+  // other parameters (attention, will override above parameters if set)
+  Gaudi::Property<std::map<std::string,double>> m_params{this, "params", {}, "optional parameters"};
+
   // SiPM efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{
       this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
@@ -118,6 +121,9 @@ private:
 
   // scale ADC to energy
   Gaudi::Property<double> m_scaleADC{this, "scaleADC", 1., "calibration factor for scaling ADC to energy"};
+
+  // option to store full waveform (for debugging)
+  Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
 };
 
 #endif // RECCALORIMETER_SimulateSiPMwithOpticalPhoton_H
