@@ -28,6 +28,9 @@ namespace DDSegmentation {
 } // namespace DDSegmentation
 } // namespace dd4hep
 
+// ROOT
+#include "TVector3.h"
+
 /** @class AugmentClustersFCCee
  *
  *  Add to the cluster shape parameters the sum of the cluster cells energy and barycenter theta/phi coordinates
@@ -105,6 +108,17 @@ private:
                                         "maximum number of debug/warning messages from execute()"};
 
   void PrintDebugMessage(MsgStream stream, const std::string& text) const;
+
+  // methods for fitting the cluster direction and intercept
+  StatusCode FitLayerCentroids(
+    const std::vector<TVector3>& layerCentroids, const std::vector<double>& layerWeights,
+    const unsigned int startLayer, const unsigned int endLayer,
+    TVector3 &clusterBarycenter, TVector3 &clusterDirection) const;
+
+  StatusCode PerformLinearFit(
+    const std::vector<TVector3> &clusterFitPointList,
+    const TVector3 &centralPosition, const TVector3 &centralDirection,
+    TVector3 &clusterBarycenter, TVector3 &clusterDirection) const;
 };
 
 #endif /* RECFCCEECALORIMETER_AUGMENTCLUSTERSFCCEE_H */
