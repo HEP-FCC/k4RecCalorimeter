@@ -111,18 +111,20 @@
             WhiteningMatrix = new TMatrixD(eigenVecs, TMatrixD::kMult, sqrtDiag);
             (*WhiteningMatrix) *= eigenVecs.T();
 
-            // info() << "Eigenvalues: " << endmsg;
-            // eigenVals.Print();
+            if (msgLevel(MSG::DEBUG)) {
+                debug() << "Eigenvalues: " << endmsg;
+                eigenVals.Print();
 
-            // info() << "Eigenvecs: " << endmsg;
-            // eigenVecs.Print();
+                debug() << "Eigenvecs: " << endmsg;
+                eigenVecs.Print();
 
-            // info() << "sqrt(corr^-1): " << endmsg;
-            // WhiteningMatrix->Print();
-
+                debug() << "sqrt(corr^-1): " << endmsg;
+                WhiteningMatrix->Print();
+            }
             info() << "Sqrt of Corr^(-1) done!" << endmsg;
         }
 
+        // Cholesky decomposition to be added in the future
         // else if (m_filterName.value().c_str() == "Cholesky"){
 
         // }

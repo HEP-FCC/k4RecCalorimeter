@@ -2,29 +2,33 @@ from Gaudi.Configuration import INFO
 from Configurables import CaloDigitizerFunc, CaloFilterFunc, CaloAddNoise2Digits, CaloWhitening
 from k4FWCore import ApplicationMgr, IOSvc
 
+
+#Additional information on this algorithm can be found in https://indico.cern.ch/event/1580025/contributions/6686602/attachments/3133485/5559196/FCCDigitization4BNLWorkshopEndOfWeekUpdate.pdf
+
 Nevts = 10                              # -1 means all events
-DigitInitTime = 0.0
+DigitInitTime = 0.0                     # Defining the initial time for digitization
 DigitEndTime = 775.0                  # time range of the digitization
 PulseSampleLen = 31                   # number of samples in the signal pulse shape
 ecalBarrelInputName = "ECalBarrelModuleThetaMerged"  # name of the ECal barrel readout in input file
 ecalBarrelSignalShapePath = "SignalPulseShapes.root"  # path to the root file with the signal pulse shapes
 PulseShapeName = "Gaussian"             # name of the signal pulse shape
-GaussianMean = 100.0
-GaussianSigma = 20.0
-FilterSize = 5
+GaussianMean = 100.0                    # Mean of the Gaussian pulse shape used to represent a "signal"
+GaussianSigma = 20.0                    # Standard deviation of the Gaussian pulse shape used to represent a "signal"
+FilterSize = 5                          # Size of the matched filter to consider
 
-NumberOfNoiseSamplesToSimulate = 2000
-NoiseEnergy = 0.001 # 1 MeV +/- 0.1 MeV
-NoiseWidth = 0.0001
-NoiseSampleSimulationFName="NoiseInfoTest_New_Modded4InvCorr.root"
+NumberOfNoiseSamplesToSimulate = 2000   # Number of noise samples to simulate
+NoiseEnergy = 0.001                     # Noise mean value to consider (simulation is Gaussian and units are in GeV)
+NoiseWidth = 0.0001                     # Width of noise to consider (units in GeV)
+NoiseSampleSimulationFName="NoiseInfoTest_New_Modded4InvCorr.root" # File name to save the correlation matrix after simulating noise
 
-WhiteningFilterName2Apply = "ZCA"
+WhiteningFilterName2Apply = "ZCA"       # Algorithm to calculate whitening filter
 
 io_svc = IOSvc()
 
-io_svc.Input = "OutDDSim/sample_10GeV_theta90_theta90.root"
+io_svc.Input = "OutDDSim/sample_10GeV_theta90_theta90.root" # Input filename
 
-io_svc.Output = "output_k4test_exampledata_transformer.root"
+io_svc.Output = "output_k4test_exampledata_transformer.root" # Output filename
+
 # The collections that we don't drop will also be present in the output file
 io_svc.outputCommands = ["drop Lumi*", 
                          "drop Vertex*", 

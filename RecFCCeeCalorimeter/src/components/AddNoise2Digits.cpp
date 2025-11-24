@@ -60,7 +60,7 @@
         std::vector<double> means(m_lenSample.value(), 0.0); // Pulse size to calculate means
         createNoiseSampleMatrix(&NoiseSampleMat, &means);
         
-        TMatrixDSym covMat = ComputeCovvarianceMatrix(NoiseSampleMat, means);
+        TMatrixDSym covMat = ComputeCovarianceMatrix(NoiseSampleMat, means);
         TMatrixDSym corMat = ComputeCorrelationMatrix(covMat);
         TMatrixDSym invCorrMat(corMat);
         invCorrMat.Invert(); // Invert correlation matrix to then save
@@ -134,7 +134,7 @@
 
     // Computes the correlation coefficient matrix from a TMatrixD of observations
     // data: TMatrixD with rows = observations, cols = variables
-    TMatrixDSym ComputeCovvarianceMatrix(const TMatrixD& data, const std::vector<double>& means) {
+    TMatrixDSym ComputeCovarianceMatrix(const TMatrixD& data, const std::vector<double>& means) {
         // Compute covariance matrix
         int nVars = data.GetNcols();
         TMatrixDSym cov(nVars);
@@ -158,7 +158,7 @@
         for (int i = 0; i < nVars; ++i) {
             for (int j = i; j < nVars; ++j) {
                 double denom = std::sqrt(cov(i, i) * cov(j, j));
-                // std::cout << "Covariance: " << cov(i, j) << ", Denominator: " << denom << std::endl;
+                debug() << "Covariance: " << cov(i, j) << ", Denominator: " << denom << std::endl;
                 double val = denom != 0.0 ? cov(i, j) / denom : 0.0;
                 corr(i, j) = val;
                 if (i != j) corr(j, i) = val;
@@ -172,7 +172,7 @@
         for (int j = 0; j < m_lenSample.value(); ++j) {
             for (int i = 0; i < m_noiseSimSamples.value(); ++i) {
                 (*NoiseSampleMat)(i, j) = r3->Gaus(m_noiseEnergy.value(), m_noiseWidth.value());
-                // std::cout << "NoiseSampleMat(" << i << ", " << j << ") = " << (*NoiseSampleMat)(i, j) << std::endl;
+                debug() << "NoiseSampleMat(" << i << ", " << j << ") = " << (*NoiseSampleMat)(i, j) << std::endl;
                 (*means)[j] += (*NoiseSampleMat)(i, j);
             }
             (*means)[j] /= m_noiseSimSamples.value(); // Calculate mean for each pulse sample
