@@ -1,13 +1,7 @@
-#ifndef RECFCCEECALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H
-#define RECFCCEECALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H
+#ifndef RECFCCEECALORIMETER_TUBELAYERMODULETHETACALOTOOL_H
+#define RECFCCEECALORIMETER_TUBELAYERMODULETHETACALOTOOL_H
 
-// from Gaudi
-#include "GaudiKernel/AlgTool.h"
-
-// k4FWCore
-#include "k4Interface/ICalorimeterTool.h"
-
-class IGeoSvc;
+#include "RecCaloCommon/CalorimeterToolBase.h"
 
 /** @class TubeLayerModuleThetaCaloTool
  * k4RecCalorimeter/RecFCCeeCalorimeter/src/components/TubeLayerModuleThetaCaloTool.h TubeLayerModuleThetaCaloTool.h
@@ -19,33 +13,19 @@ class IGeoSvc;
  *  @author Zhibo Wu
  */
 
-class TubeLayerModuleThetaCaloTool : public AlgTool, virtual public ICalorimeterTool {
+class TubeLayerModuleThetaCaloTool : public CalorimeterToolBase {
 public:
-  TubeLayerModuleThetaCaloTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using CalorimeterToolBase::CalorimeterToolBase;
   virtual ~TubeLayerModuleThetaCaloTool() = default;
-  virtual StatusCode initialize() final;
-  virtual StatusCode finalize() final;
-  /** Prepare a map of all existing cells in current geometry.
-   *   Active layers (cylindrical tubes) are looked in the geometry manager by name ('\b activeVolumeName').
-   *   Corresponding bitfield name is given in '\b activeFieldName'.
-   *   If users wants to limit the number of active layers, it is possible by setting '\b activeVolumesNumber'.
-   *   The total number of cells N = n_layer * n_theta * n_phi, where
-   *   n_layer is number of layers (taken from geometry if activeVolumesNumber not set),
-   *   n_theta is number of eta bins in that layer,
-   *   n_phi is number of phi bins (the same for each layer).
-   *   For more explanation please [see reconstruction documentation](@ref md_reconstruction_doc_reccalorimeter).
-   *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
-   *   return Status code.
+
+
+protected:
+  /** Fill vector with all existing cells for this geometry.
    */
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const final;
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) final
-  { auto const* cthis = this;  return cthis->prepareEmptyCells(aCells); }
+  virtual StatusCode collectCells(std::vector<uint64_t>& cells) const final;
+
 
 private:
-  /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc;
-  /// Name of the detector readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", ""};
   /// Name of active volumes
   Gaudi::Property<std::string> m_activeVolumeName{this, "activeVolumeName", "LAr_sensitive"};
   /// Name of active layers for sampling calorimeter
@@ -58,4 +38,4 @@ private:
   Gaudi::Property<unsigned int> m_activeVolumesNumber{this, "activeVolumesNumber", 0};
 };
 
-#endif /* RECFCCEECALORIMETER_TUBELAYERMODULETHETAMERGEDCALOTOOL_H */
+#endif /* RECFCCEECALORIMETER_TUBELAYERMODULETHETACALOTOOL_H */

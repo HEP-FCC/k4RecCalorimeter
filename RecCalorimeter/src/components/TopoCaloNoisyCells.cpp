@@ -1,4 +1,5 @@
 #include "TopoCaloNoisyCells.h"
+#include "RecCaloCommon/k4RecCalorimeter_check.h"
 
 #include "TBranch.h"
 #include "TFile.h"
@@ -7,17 +8,8 @@
 
 DECLARE_COMPONENT(TopoCaloNoisyCells)
 
-TopoCaloNoisyCells::TopoCaloNoisyCells(const std::string& type, const std::string& name, const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<INoiseConstTool>(this);
-}
-
 StatusCode TopoCaloNoisyCells::initialize() {
-  {
-    StatusCode sc = AlgTool::initialize();
-    if (sc.isFailure())
-      return sc;
-  }
+  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
 
   // Check if file exists
   if (m_fileName.empty()) {
@@ -57,8 +49,6 @@ StatusCode TopoCaloNoisyCells::initialize() {
 
   return StatusCode::SUCCESS;
 }
-
-StatusCode TopoCaloNoisyCells::finalize() { return AlgTool::finalize(); }
 
 double TopoCaloNoisyCells::getNoiseRMSPerCell(uint64_t aCellId) const
 {
