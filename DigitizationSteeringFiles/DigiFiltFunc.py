@@ -10,7 +10,6 @@ DigitInitTime = 0.0                     # Defining the initial time for digitiza
 DigitEndTime = 775.0                  # time range of the digitization
 PulseSampleLen = 31                   # number of samples in the signal pulse shape
 ecalBarrelInputName = "ECalBarrelModuleThetaMerged"  # name of the ECal barrel readout in input file
-ecalBarrelSignalShapePath = "SignalPulseShapes.root"  # path to the root file with the signal pulse shapes
 PulseShapeName = "Gaussian"             # name of the signal pulse shape
 GaussianMean = 100.0                    # Mean of the Gaussian pulse shape used to represent a "signal"
 GaussianSigma = 20.0                    # Standard deviation of the Gaussian pulse shape used to represent a "signal"
@@ -39,8 +38,6 @@ io_svc.outputCommands = ["drop Lumi*",
                          "drop HCal*"]
 
 CaloDigitizer = CaloDigitizerFunc("CaloDigitizerFunc",
-                                signalFileName=ecalBarrelSignalShapePath, # Path to a file that stores all cell IDs
-                                treename="Signal_shape", # Treename to access the cell IDs in the above file
                                 InputCollection=[ecalBarrelInputName], # Name of input collection
                                 pulseInitTime = DigitInitTime, # Time of pulse start [ns]
                                 pulseEndTime = DigitEndTime, # Time of pulse ending [ns]
