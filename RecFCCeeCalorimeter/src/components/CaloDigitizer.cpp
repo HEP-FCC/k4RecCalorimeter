@@ -45,55 +45,6 @@
         {KeyValues("OutputCollection", {"DigitsFloat"})}) {}
  
     StatusCode initialize() override{
-        // Check if file exists
-        if (m_SignalFileName.empty()) {
-            error() << "Name of the file with the pulse shapes not provided!" << endmsg;
-            return StatusCode::FAILURE;
-        }
-        if (gSystem->AccessPathName(m_SignalFileName.value().c_str())) {
-            error() << "Provided file with the pulse shape values not found!" << endmsg;
-            error() << "File path: " << m_SignalFileName.value() << endmsg;
-            return StatusCode::FAILURE;
-        }
-
-        // Open the file with the pulse shape values
-        std::unique_ptr<TFile> pulseShapesFile(TFile::Open(m_SignalFileName.value().c_str(), "READ"));
-        if (pulseShapesFile->IsZombie()) {
-            error() << "Unable to open the file with the pulse shape values!" << endmsg;
-            error() << "File path: " << m_SignalFileName.value() << endmsg;
-            return StatusCode::FAILURE;
-        } else {
-            info() << "Using the following file with pulse shape values: "
-                << m_SignalFileName.value() << endmsg;
-        }
-
-        // Read TTree and save the pulse shapes into map
-        TTree* tree = nullptr;
-        pulseShapesFile->GetObject(m_treename.value().c_str(), tree);
-        ULong64_t readCellId;
-        std::vector<float>* readPulse = nullptr;
-
-        tree->SetBranchStatus("cellId", 1); tree->SetBranchAddress("cellId", &readCellId);
-        tree->SetBranchStatus("PulseAmplitude", 1); tree->SetBranchAddress("PulseAmplitude", &readPulse);
-
-        for (uint i = 0; i < tree->GetEntries(); i++) {
-            tree->GetEntry(i);
-            debug() << "cell ID: " << readCellId << endmsg;
-            debug() << "PulseAmplitude size: " << readPulse->size() << endmsg;
-            m_map_pulseShape[readCellId] = *readPulse;
-        }
-
-        info() << "Read " << m_map_pulseShape.size() << " cellIDs with pulse shapes from the file." << endmsg;
-        info() << "Nentries in tree: " << tree->GetEntries() << endmsg;
-        if (m_map_pulseShape.size() != static_cast<std::unordered_map<uint64_t, std::vector<float>>::size_type>(tree->GetEntries())) {
-            error() << "Number of entries in the tree does not match the number of cellIDs read!" << endmsg;
-            return StatusCode::FAILURE;
-        }
-
-        // Delete the tree and close the file
-        delete tree;
-        pulseShapesFile->Close();
-
         // Decide which pulse shape to use and create the pulse shape and derivative vectors on the fly
         m_samplingInterval = (m_pulseEndTime.value() - m_pulseInitTime.value()) / m_lenSample.value();
         
@@ -126,35 +77,27 @@
         debug() << "Hit energy: " << energy << endmsg;
         auto Contributions = hit.getContributions();   
 
-        // If cellID exists then create DigitVectorSum
-        if (m_map_pulseShape.find(cellID) != m_map_pulseShape.end()) {
-            std::vector<float> DigitVectorSum(PulseShape.size(), 0.0f);
+        std::vector<float> DigitVectorSum(PulseShape.size(), 0.0f);
 
-            // Loop over contributions to get the energy and time
-            for (const auto& contribution : Contributions) {
-                auto DigitVector = Hit2DigitFloat(contribution.getEnergy(), contribution.getTime(), PulseShape, PulseShapeDeriv);
-                
-                // Sum the contributions
-                std::transform(DigitVectorSum.begin(), DigitVectorSum.end(), DigitVector.begin(), DigitVectorSum.begin(), std::plus<float>());
-
-                // Print the contribution info
-                debug() << "Contribution (energy, time): (" << contribution.getEnergy() << ", " << contribution.getTime() << ")" << endmsg;
-            }
-            auto Digit = DigitsCollection.create();
-            Digit.setCellID(cellID);
-            Digit.setTime(0.0); // Placeholder for time info
-            Digit.setInterval(m_samplingInterval); // Set the interval for the digitized pulse in ns
-
-            for (unsigned int i = 0; i < DigitVectorSum.size(); i++) {
-                Digit.addToAmplitude(DigitVectorSum[i]);
-            }
-
+        // Loop over contributions to get the energy and time
+        for (const auto& contribution : Contributions) {
+            auto DigitVector = Hit2DigitFloat(contribution.getEnergy(), contribution.getTime(), PulseShape, PulseShapeDeriv);
             
-        
-        } else {
-            // If cellID is not in m_map, error!!
-            error() << "CellID " << cellID << " not found in the map with pulse shapes!" << endmsg;
+            // Sum the contributions
+            std::transform(DigitVectorSum.begin(), DigitVectorSum.end(), DigitVector.begin(), DigitVectorSum.begin(), std::plus<float>());
+
+            // Print the contribution info
+            debug() << "Contribution (energy, time): (" << contribution.getEnergy() << ", " << contribution.getTime() << ")" << endmsg;
         }
+        auto Digit = DigitsCollection.create();
+        Digit.setCellID(cellID);
+        Digit.setTime(0.0); // Placeholder for time info
+        Digit.setInterval(m_samplingInterval); // Set the interval for the digitized pulse in ns
+
+        for (unsigned int i = 0; i < DigitVectorSum.size(); i++) {
+            Digit.addToAmplitude(DigitVectorSum[i]);
+        }
+
     }
      return DigitsCollection;
    }
@@ -190,11 +133,6 @@
 
  
  private:
-   /// Name of input root file that contains the TTree with cellID->vec<PulseAmplitude>
-  Gaudi::Property<std::string> m_SignalFileName{this, "signalFileName", "PulseShape_map.root"};
-  /// Name of the TTree in the input root file
-  Gaudi::Property<std::string> m_treename{this, "treename", "Signal_shape"};
-
   // Type of pulse to create
   Gaudi::Property<std::string> m_pulseType {this, "pulseType", "Gaussian", "Type of pulse to create" };
   // Initial time of the pulse
@@ -206,10 +144,6 @@
   // Gaussian pulse properties
   Gaudi::Property<float> m_mu {this, "mu", 100.0, "Mean of Gaussian pulse" };
   Gaudi::Property<float> m_sigma {this, "sigma", 20.0, "Sigma of Gaussian pulse" };
-
-  
-  std::unordered_map<uint64_t, std::vector<float>> m_map_pulseShape;
-  std::unordered_map<uint64_t, std::vector<float>> m_map_pulseShapeDeriv;
   
   std::vector<float> PulseShape;
   std::vector<float> PulseShapeDeriv;
