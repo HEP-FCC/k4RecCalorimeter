@@ -79,18 +79,10 @@ void CellPositionsECalBarrelModuleThetaSegTool::getPositions(const edm4hep::Calo
 dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
 
   // find position of volume corresponding to first of group of merged cells
-  debug() << "cellID: " << aCellId << endmsg;
   dd4hep::DDSegmentation::CellID volumeId = m_segmentation->volumeID(aCellId);
-  debug() << "volumeID: " << volumeId << endmsg;
   dd4hep::VolumeManagerContext* vc = m_volman.lookupContext(volumeId);
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
-  debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
-          << inSeg.z() / dd4hep::mm << endmsg;
   dd4hep::Position outSeg = vc->localToWorld(dd4hep::Position(inSeg));
-  debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
-          << outSeg.z() / dd4hep::mm << "\n"
-          << endmsg;
-
   return outSeg;
 }
 
