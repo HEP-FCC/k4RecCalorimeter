@@ -1,21 +1,37 @@
-/*
-* Copyright (c) 2014-2025 Key4hep-Project.
-*
-* This file is part of Key4hep.
-* See https://key4hep.github.io/key4hep-doc/ for further info.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+/** @class CaloDigitizerFunc_v01
+ * Gaudi Transformer for ALLEGRO digitization
+ *
+ * @author Sahibjeet Singh
+ * @date   2025-12-01
+ *
+ * Gaudi Transformer that digitises a SimCalorimeterHitCollection from noble liquid calorimeter to edm4hep::TimeSeriesCollection of digitized hits.
+ *
+ * The digitization uses a Gaussian pulse shape to simulate the response of the readout electronics. The mean and sigma of the Gaussian pulse can be defined via properties.
+ * The digitization in v01 follows the LAr digitization as defined in https://cds.cern.ch/record/1057879/files/larg-pub-2007-011.pdf?version=1. Note that currently, the pedestal is not conisdered, noise is a work in progress, the ADC2MEV conversion is not considered, and the sampling fraction correction is a work in progress.
+ * A more detailed explaination of the digitization procedure in v01, with the noise simulation can be found at: https://indico.cern.ch/event/1580025/contributions/6686602/attachments/3133485/5559196/FCCDigitization4BNLWorkshopEndOfWeekUpdate.pdf.
+ * Note that fundamentally, each hit belonging to the geometric area of a given cell is converted to a digitized pulse in the corresponding cell, which are then summed to give the final digitized pulse in that cell.
+ *
+ *The unit system used here is GeV and ns throughout.
+ * Inputs:
+ *     - SimCalorimeterHitCollection (SimCalorimeterHits from ddsim).
+ *
+ * Properties:
+ *     - @param m_pulseType The name of pulse shape to use for digitization. Currently only "Gaussian" is implemented.
+ *     - @param m_mu Mean of the Gaussian pulse shape in ns.
+ *      - @param m_sigma Standard deviation of the Gaussian pulse shape in ns.
+ *     - @param m_lenSample Number of samples in the digitized pulse.
+ *     - @param m_pulseInitTime Start time of the digitized pulse in ns.
+ *     - @param m_pulseEndTime End time of the digitized pulse in ns.
+ *
+ * Outputs:
+ *     - TimeSeriesCollection: Digitised hits collection for each cell
+ *
+ * LIMITATIONS: (status 01/12/2025)
+ *     - The digitization does not yet include the full noise simulation but a simpler one, in conjunction with AddNoise2Digits.cpp.
+ *     - The digitization does not yet include the sampling fraction correction, but this will be added in the future via a separate algorithm.
+ *     - The digitization does not yet include the ADC2MEV conversion
+ *     - A more realistic pulse shape will be added in the future.
+ */
 
 #include "Gaudi/Property.h"
 

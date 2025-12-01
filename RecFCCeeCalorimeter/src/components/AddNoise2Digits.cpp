@@ -1,21 +1,35 @@
-/*
-* Copyright (c) 2014-2025 Key4hep-Project.
-*
-* This file is part of Key4hep.
-* See https://key4hep.github.io/key4hep-doc/ for further info.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+/** @class CaloAddNoise2Digits_v01
+ * Gaudi Transformer to add noise to digitized pulses in a TimeSeriesCollection
+ *
+ * @author Sahibjeet Singh
+ * @date   2025-12-01
+ *
+ * Gaudi Transformer that transforms a TimeSeriesCollection of digitized pulses per cell to a TimeSeriesCollection of digitized pulses with additional noise.
+ *
+ * The current algorithm adds Gaussian noise to the digitized pulses. For use in conjunction with the whitening filter, the noise correlation matrix is computed from an independent set of noise samples (using the same parameters as the noise added to the digitized pulses). This information is saved to a ROOT file during initialization, which can then be used by the whitening filter to perform the whitening operation. The ROOT file contains the noise sample matrix, a vector of the means per sample, the covariance matrix, the correlation matrix, and the inverse correlation matrix. The names are currently hardcoded.
+ *
+ * Futher information for v01 can be found at: https://indico.cern.ch/event/1580025/contributions/6686602/attachments/3133485/5559196/FCCDigitization4BNLWorkshopEndOfWeekUpdate.pdf.
+ *
+ *The unit system used here is GeV and ns throughout.
+ * Inputs:
+ *     - TimeSeriesCollection (digitized pulses per cell, see CaloDigitizerFunc for more detail).
+ *
+ * Properties:
+ *     - @param m_noiseInfoFileName The name of the ROOT file to save the noise correlation matrix.
+ *     - @param m_noiseEnergy The mean of the Gaussian noise to be added to each sample in the digitized pulse. This is currently defined with units of energy (GeV).
+ *     - @param m_noiseWidth The standard deviation of the Gaussian noise to be added to each sample in the digitized pulse. This is currently defined with units of energy (GeV).
+ *     - @param m_noiseSimSamples The number of noise samples to be used to compute the noise correlation matrix during initialization.
+ *     - @param m_noiseSeed The seed for the random number generator used to generate the Gaussian noise.
+ *     - @param m_lenSample The number of samples in the digitized pulse.
+
+ *
+ * Outputs:
+ *     - TimeSeriesCollection: Collection of digitized pulses with added noise per cell
+ *
+ * LIMITATIONS: (status 01/12/2025)
+ *     - Only Gaussian noise is currently implemented.
+ *     - Noise that is correlated between samples is not yet implemented. This will be added in the future and will use as input, the noise correlation matrix.
+ */
 
 #include "Gaudi/Property.h"
 

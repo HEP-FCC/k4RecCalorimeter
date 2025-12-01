@@ -1,21 +1,50 @@
-/*
-* Copyright (c) 2014-2025 Key4hep-Project.
-*
-* This file is part of Key4hep.
-* See https://key4hep.github.io/key4hep-doc/ for further info.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+/** @class CaloFilterFunc_v01
+ * Gaudi MultiTransformer to apply a filter to a digitized pulse, defined as a TimeSeriesCollection object.
+ *
+ * @author Sahibjeet Singh
+ * @date   2025-12-01
+ *
+ * Gaudi MultiTransformer that applies a filter to a TimeSeriesCollection of digitized pulses per cell, in order to extract the output of this filter, the most likely energy, and the timing information for each cell as an index of the pulse.
+ *
+ * This is a MultiTransformer that in v01 applies a matched filter to the digitized pulses. The matched filter is defined using the time-reversed and conjugate of a known pulse shape (currently a Gaussian) of length \f$N\f$. This is then convolved with the digitized pulse in order to extract the best estimate of the energy and timing information for each cell. The matched filter provides the best signal to noise ratio in the presence of additive stochastic noise. More information on the matched filter can be found at: https://en.wikipedia.org/wiki/Matched_filter and for this specific application, see: https://indico.cern.ch/event/1580025/contributions/6686602/attachments/3133485/5559196/FCCDigitization4BNLWorkshopEndOfWeekUpdate.pdf.
+ *
+ * In mathematical terms, a correctly normalized matched filter is defined as: 
+ * \f$ \vec{M} = \frac{\Sigma^{-1} \vec{s}}{s^T \Sigma^{-1} s} \f$
+ * \f$ \vec{M} \f$ is the vector defining the matched filter.
+ * \f$ \Sigma^{-1} \f$ is the inverse of the noise correlation matrix. Must be provided via a ROOT file during initialization.
+ * \f$ \vec{s} \f$ is the time reversed conjugate of the known signal shape. Currently assumed to be a Gausian shape with a size < the number of samples in the digitized pulse.
+ *
+ * The output of the matched filter is then computed by convolving \f$ \vec{M} \f$ with the digitized pulse \f$ \vec{D} \f$ as: \f$ \vec{O} = \vec{M} * \vec{D} \f$
+ *
+ * Note that the length of \f$ \vec{O} \f$ is set to be of the same size as \f$ \vec{D} \f$ in the convolution.
+ * The maximum value of \f$ \vec{O} \f$ is taken as the best estimate of the energy in the cell, and the index of this maximum value is taken as the best estimate of the timing.
+ *
+ * Future iterations of this MultiTransformer will include other filter types.
+ *
+ *The unit system used here is GeV and ns throughout.
+ * Inputs:
+ *     - TimeSeriesCollection (digitized pulses per cell, see CaloDigitizerFunc for more detail).
+ *
+ * Properties:
+ *     - @param m_filterName The name of the filter to apply. Currently only "Matched_Gaussian" is implemented.
+ *     - @param m_mu Mean of the Gaussian pulse shape in ns.
+ *     - @param m_sigma Standard deviation of the Gaussian pulse shape in ns.
+ *     - @param m_filterTemplateSize The size of the known pulse shape to use for the matched filter. This should be a number less than the number of samples in the digitized pulse. Odd number are preferred since even numbers can lead to migration effects. This is typically (~4 or 5 in LAr).
+ *     - @param m_pulseInitTime Start time of the digitized pulse in ns.
+ *     - @param m_pulseEndTime End time of the digitized pulse in ns
+ *     - @param m_lenSample Number of samples in the full digitized pulse (typically ~30 in LAr).
+ *     - @param m_noiseInfoFileName The name of the ROOT file to load the noise correlation matrix from.
+ *     - @param m_invCorrMatName The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
+ *
+ * Outputs:
+ *     - TimeSeriesCollection: Collection of digitized pulses after applying the filter.
+ *     - int: Index representing the best estimate of the timing information.
+ *     - float: The best estimate of the energy in the cell.
+ *
+ * LIMITATIONS: (status 01/12/2025)
+ *     - Only the matched filter, assuming a Gaussian signal pulse shape, is currently implemented. The OFC method might be added in the future.
+ *     - A nicer way to provide the signal shape would be good to have in the future, rather than hardcoding a Gaussian shape.
+ */
 
 #include "Gaudi/Property.h"
 

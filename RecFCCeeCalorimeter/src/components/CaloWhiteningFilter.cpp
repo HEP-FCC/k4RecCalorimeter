@@ -1,21 +1,38 @@
-/*
-* Copyright (c) 2014-2024 Key4hep-Project.
-*
-* This file is part of Key4hep.
-* See https://key4hep.github.io/key4hep-doc/ for further info.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+/** @class CaloWhitening_v01
+ * Gaudi Transformer to apply a whitening filter to a TimeSeriesCollection
+ *
+ * @author Sahibjeet Singh
+ * @date   2025-12-01
+ *
+ * Gaudi Transformer that applies a whitening filter to a TimeSeriesCollection of digitized pulses per cell.
+ *
+ * The whitening filter is used to decorrelate noise between samples in the digitized pulses. The whitening matrix is computed from the inverse of the noise correlation matrix, which is provided via a ROOT file during initialization. The mean vector of the noise is also provided via the same ROOT file and is subtracted from each digitized pulse before applying the whitening filter. The whitening operation is performed using the ZCA (Zero-phase Component Analysis) method but there are other methods that can be implemented in the future.
+ *
+ * In mathematical terms, the ZCA method is: 
+ * \f$ \vec{W} = \Sigma^{-1/2} (\vec{D} - \vec{\mu})\f$
+ * \f$ \vec{W} \f$ is a vector of the whitened pulse.
+ * \f$ \Sigma^{-1/2} \f$ is the whitening matrix, defined as the inverse square root of the noise correlation matrix. This should be precomputed and provided via the ROOT file.
+ * \f$ \vec{D} \f$ is a vector of the digitized pulse.
+ * \f$ \vec{\mu} \f$ is the mean vector of the noise. This should also be provided via the ROOT file.
+ * Note that the vectors \f$ \vec{W} \f$, \f$ \vec{D} \f$, and \f$ \vec{\mu} \f$ have a length equal to the number of samples in the digitized pulse and are thus defined per sample.
+ * More details for v01 be found at: https://indico.cern.ch/event/1580025/contributions/6686602/attachments/3133485/5559196/FCCDigitization4BNLWorkshopEndOfWeekUpdate.pdf.
+ *
+ *The unit system used here is GeV and ns throughout.
+ * Inputs:
+ *     - TimeSeriesCollection (digitized pulses per cell, see CaloDigitizerFunc for more detail).
+ *
+ * Properties:
+ *     - @param m_noiseInfoFileName The name of the ROOT file to load the noise correlation matrix from.
+ *     - @param m_invCorrMatName The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
+ *     - @param m_muVecName The name of the ROOT TVectorD that represents the mean vector of the noise.
+ *    - @param m_filterName The name of the whitening filter to apply. Currently only "ZCA" is implemented. 
+ *
+ * Outputs:
+ *     - TimeSeriesCollection: Collection of digitized pulses after applying the whitening filter.
+ *
+ * LIMITATIONS: (status 01/12/2025)
+ *     - Only the ZCA whitening method is currently implemented.
+ */
 
 #include "Gaudi/Property.h"
 
