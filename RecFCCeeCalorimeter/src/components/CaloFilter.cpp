@@ -136,10 +136,10 @@ struct CaloFilterFunc final
     }
    
     // This is the function that will be called to transform the data
-   // Note that the function has to be const, as well as all pointers to collections
-   // we get from the input
-   std::tuple<FilterColl, MatchedSampleIdxColl, MatchedSampleEnergyColl> operator()(const DigitsColl& DigitsPulse) const override {
-     info() << "Digitized pulse collection size: " << DigitsPulse.size() << endmsg;
+    // Note that the function has to be const, as well as all pointers to collections
+    // we get from the input
+    std::tuple<FilterColl, MatchedSampleIdxColl, MatchedSampleEnergyColl> operator()(const DigitsColl& DigitsPulse) const override {
+        info() << "Digitized pulse collection size: " << DigitsPulse.size() << endmsg;
 
     DigitsColl FilteredDigitsCollection;
     MatchedSampleIdxColl MaxIdxCollection;
