@@ -163,7 +163,7 @@
 
         for (unsigned int i = 0; i < WhitenedPulse.size(); i++) {
             WhitenedDigit.addToAmplitude(WhitenedPulse[i]);
-            // std::cout << "WhitenedPulse[" << i << "] = " << WhitenedPulse[i] << std::endl;
+            debug() << "WhitenedPulse[" << i << "] = " << WhitenedPulse[i] << endmsg;
         }
     }
      return WhitenedDigitsCollection;
@@ -175,8 +175,8 @@
        // Loop over the DigitVector
        for (unsigned int i = 0; i < Digits.size(); ++i) {
            Pulse[i] = Digits[i] - (*MuVec)[i]; // Subtract mean
-        //    std::cout << "Digits w/ noise, no mu subtraction[" << i << "] = " << Digits[i] << std::endl;
-        //    std::cout << "Pulse after Mu subtraction[" << i << "] = " << Pulse[i] << std::endl;
+            debug() << "Digits w/ noise, no mu subtraction[" << i << "] = " << Digits[i] << endmsg;
+           debug() << "Pulse after Mu subtraction[" << i << "] = " << Pulse[i] << endmsg;
        }
        auto WhitenedPulse = (*WhiteningMatrix) * Pulse;
        return WhitenedPulse;
