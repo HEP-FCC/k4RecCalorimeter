@@ -141,39 +141,39 @@ struct CaloFilterFunc final
     std::tuple<FilterColl, MatchedSampleIdxColl, MatchedSampleEnergyColl> operator()(const DigitsColl& DigitsPulse) const override {
         info() << "Digitized pulse collection size: " << DigitsPulse.size() << endmsg;
 
-    DigitsColl FilteredDigitsCollection;
-    MatchedSampleIdxColl MaxIdxCollection;
-    MatchedSampleEnergyColl EnergyCollection;
+        DigitsColl FilteredDigitsCollection;
+        MatchedSampleIdxColl MaxIdxCollection;
+        MatchedSampleEnergyColl EnergyCollection;
     
-    // Loop over DigitsPulse to extract the pulse amplitudes
-    for (const auto& Digit : DigitsPulse) {
-        const auto InputPulse = Digit.getAmplitude();
+        // Loop over DigitsPulse to extract the pulse amplitudes
+        for (const auto& Digit : DigitsPulse) {
+            const auto InputPulse = Digit.getAmplitude();
 
-        auto FilteredDigit = FilteredDigitsCollection.create();
-        FilteredDigit.setCellID(Digit.getCellID());
+            auto FilteredDigit = FilteredDigitsCollection.create();
+            FilteredDigit.setCellID(Digit.getCellID());
 
-        FilteredDigit.setTime(0.0); // Placeholder for time info
-        FilteredDigit.setInterval(Digit.getInterval()); // Set the interval for the digitized pulse in ns
+            FilteredDigit.setTime(0.0); // Placeholder for time info
+            FilteredDigit.setInterval(Digit.getInterval()); // Set the interval for the digitized pulse in ns
 
-        // Apply matched filter
-        auto Out = applyMatchedFilter(InputPulse, *FilterTemplate);
+            // Apply matched filter
+            auto Out = applyMatchedFilter(InputPulse, *FilterTemplate);
 
-        for (unsigned int i = 0; i < Out.size(); i++) {
-            FilteredDigit.addToAmplitude(Out[i]);
+            for (unsigned int i = 0; i < Out.size(); i++) {
+                FilteredDigit.addToAmplitude(Out[i]);
+            }
+
+            // Calculate the energy of the matched filter and the matched sample index
+            auto MaxIdx = std::distance(Out.begin(), std::max_element(Out.begin(), Out.end()));
+            auto Energy = *std::max_element(Out.begin(), Out.end());
+
+            debug() << "Cell ID" << Digit.getCellID() << ", MaxIdx: " << MaxIdx << ", Energy - max val: " << Energy << endmsg;
+
+            // Store the matched sample index and energy
+            MaxIdxCollection.push_back(MaxIdx);
+            EnergyCollection.push_back(Energy);
+
+
         }
-
-        // Calculate the energy of the matched filter and the matched sample index
-        auto MaxIdx = std::distance(Out.begin(), std::max_element(Out.begin(), Out.end()));
-        auto Energy = *std::max_element(Out.begin(), Out.end());
-
-        debug() << "Cell ID" << Digit.getCellID() << ", MaxIdx: " << MaxIdx << ", Energy - max val: " << Energy << endmsg;
-
-        // Store the matched sample index and energy
-        MaxIdxCollection.push_back(MaxIdx);
-        EnergyCollection.push_back(Energy);
-
-
-    }
 
     return std::make_tuple(std::move(FilteredDigitsCollection), std::move(MaxIdxCollection), std::move(EnergyCollection));
     }
