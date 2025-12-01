@@ -104,10 +104,6 @@
             }
 
             // Compute square root: V * sqrt(D) * V^T
-            // TMatrixD WhiteningMat = TMatrixD(eigenVecs, TMatrixD::kMult, sqrtDiag); // Does not overwrite anything. ROOT is stupid......
-            // WhiteningMat *= eigenVecs.T(); // Overwrites WhiteningMatrix w/ WhiteningMat *= eigenVecs.T()
-            // WhiteningMatrix = &WhiteningMat; // Assign to the member variable
-
             WhiteningMatrix = new TMatrixD(eigenVecs, TMatrixD::kMult, sqrtDiag);
             (*WhiteningMatrix) *= eigenVecs.T();
 
