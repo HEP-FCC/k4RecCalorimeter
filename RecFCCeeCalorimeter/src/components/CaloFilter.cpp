@@ -61,6 +61,7 @@
 
 #include "k4FWCore/Transformer.h"
 
+#include <cstddef>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -162,7 +163,7 @@ struct CaloFilterFunc final
                 (*FilterTemplate)[i - DownIdx] = Temp[i] / Norm;
             } // Should be subvector of Temp --> Temp[DownIdx:UpIdx], divided by Norm of course
 
-            for (int i = 0; i < FilterTemplate->size(); ++i) {
+            for (size_t i = 0; i < FilterTemplate->size(); ++i) {
                 info() << "FilterTemplate[" << i << "] = " << (*FilterTemplate)[i] << endmsg;
             }
 

@@ -75,7 +75,7 @@
         if (std::strcmp(m_pulseType.value().c_str(), "Gaussian") == 0) {
             debug() << "Using Gaussian pulse shape!" << endmsg;
 
-            for (size_t i = 0; i < m_lenSample.value(); ++i) {
+            for (int i = 0; i < m_lenSample.value(); ++i) {
                 PulseShape.push_back(Gaussian(i * m_samplingInterval, m_mu.value(), m_sigma.value()));
                 PulseShapeDeriv.push_back(GaussianDerivative(i * m_samplingInterval, m_mu.value(), m_sigma.value()));
                 info() << "PulseShape[" << i * m_samplingInterval << "]: " << PulseShape[i] << ", PulseShapeDeriv[" << i * m_samplingInterval << "]: " << PulseShapeDeriv[i] << endmsg;
