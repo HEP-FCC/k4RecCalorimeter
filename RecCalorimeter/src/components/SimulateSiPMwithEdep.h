@@ -108,6 +108,9 @@ private:
   Gaudi::Property<double> m_thres{this, "threshold", 1.5,
                                   "Integration threshold"}; // Threshold in p.e. (1.5 to suppress DCR)
 
+  // other parameters (attention, will override above parameters if set)
+  Gaudi::Property<std::map<std::string,double>> m_params{this, "params", {}, "optional parameters"};
+
   // SiPM efficiency, filter efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{
       this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
@@ -135,6 +138,9 @@ private:
   // switch to use the stored edm4hep::CaloHitContribution::getTime() as it is
   Gaudi::Property<bool> m_switchTime{this, "switchTime", false,
                                      "switch to use the stored edm4hep::CaloHitContribution::getTime() as it is"};
+
+  // option to store full waveform (for debugging)
+  Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
 
   // integral table - initialized at SimulateSiPMwithEdep::initialize()
   std::vector<double> m_integral;
