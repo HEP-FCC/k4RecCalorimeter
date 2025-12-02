@@ -1,4 +1,4 @@
-/** @class CaloDigitizerFunc_v01
+/** @class CaloDigitizerFunc
  * Gaudi Transformer for ALLEGRO digitization
  *
  * @author Sahibjeet Singh
@@ -13,15 +13,15 @@
  *
  *The unit system used here is GeV and ns throughout.
  * Inputs:
- *     - SimCalorimeterHitCollection (SimCalorimeterHits from ddsim).
+ *     - SimCalorimeterHitCollection: Collection of simulated calorimeter hits from ddsim/G4.
  *
  * Properties:
- *     - @param m_pulseType The name of pulse shape to use for digitization. Currently only "Gaussian" is implemented.
- *     - @param m_mu Mean of the Gaussian pulse shape in ns.
- *      - @param m_sigma Standard deviation of the Gaussian pulse shape in ns.
- *     - @param m_lenSample Number of samples in the digitized pulse.
- *     - @param m_pulseInitTime Start time of the digitized pulse in ns.
- *     - @param m_pulseEndTime End time of the digitized pulse in ns.
+ *     - @param m_pulseType: The name of pulse shape to use for digitization. Currently only "Gaussian" is implemented.
+ *     - @param m_mu: Mean of the Gaussian pulse shape in ns.
+ *     - @param m_sigma: Standard deviation of the Gaussian pulse shape in ns.
+ *     - @param m_lenSample: Number of samples in the digitized pulse.
+ *     - @param m_pulseInitTime: Start time of the digitized pulse in ns.
+ *     - @param m_pulseEndTime: End time of the digitized pulse in ns.
  *
  * Outputs:
  *     - TimeSeriesCollection: Digitised hits collection for each cell
@@ -59,7 +59,15 @@
        : Transformer(name, svcLoc, 
         {KeyValues("InputCollection", {"SimCaloHitsCollection"})},
         {KeyValues("OutputCollection", {"DigitsFloat"})}) {}
- 
+        
+    /**
+    * \brief Computes the pulse shape and its derivative.
+    *
+    * This function computes the pulse shape and its derivative based on the specified pulse type (currently only Gaussian is implemented) and the provided mean and sigma values. The pulse shape and its derivative are stored in member variables for later use during digitization.
+    *
+    * \param None -> See class parameters for inputs.
+    * \return StatusCode indicating success or failure.
+    */
     StatusCode initialize() override{
         // Decide which pulse shape to use and create the pulse shape and derivative vectors on the fly
         m_samplingInterval = (m_pulseEndTime.value() - m_pulseInitTime.value()) / m_lenSample.value();
@@ -78,9 +86,14 @@
         return StatusCode::SUCCESS;
     }
    
-   // This is the function that will be called to transform the data
-   // Note that the function has to be const, as well as all pointers to collections
-   // we get from the input
+   /**
+    * \brief Digitizes the simulated calorimeter hits from Geant4.
+    *
+    * This function takes as input a SimCalorimeterHitCollection and digitizes each hit using the predefined pulse shape and its derivative. The digitized pulses are stored in a TimeSeriesCollection, which is returned as output.
+    *
+    * \param CaloHits: The input SimCalorimeterHitCollection.
+    * \return TimeSeriesCollection of digitized hits.
+    */
    edm4hep::TimeSeriesCollection operator()(const edm4hep::SimCalorimeterHitCollection& CaloHits) const override {
      info() << "calorimeter hits collection size: " << CaloHits.size() << endmsg;
 
@@ -118,6 +131,17 @@
      return DigitsCollection;
    }
 
+   /**
+    * \brief Function to convert a hit to a digitized pulse.
+    *
+    * This function takes as input the energy and time of a hit, along with the pulse shape and its derivative, and computes the corresponding digitized pulse samples. The digitized pulse is represented as a vector of floats. See ATLAS LAr digitization note for details.
+    *
+    * \param Energy: The energy of the hit.
+    * \param time: The time of the hit.
+    * \param pulseShape: The pulse shape vector.
+    * \param pulseShapeDeriv: The derivative of the pulse shape vector.
+    * \return Vector<float> representing the digitized pulse samples.
+    */
    std::vector<float> Hit2DigitFloat(float Energy, float time, const std::vector<float>& pulseShape, const std::vector<float>& pulseShapeDeriv) const
    {     
         // Basing this off of LArDigitization pub note: https://inspirehep.net/files/8b92316ea8786d3954cccbfaa0d10ada
@@ -136,13 +160,38 @@
         return DigitVector;
    }
 
+    /**
+    * \brief Finalizes the transformer but does nothing in this case.
+    * \return StatusCode indicating success or failure.
+    */
    StatusCode finalize() override{return StatusCode::SUCCESS;}
 
+    /**
+    * \brief Computes the value of a Gaussian function analytically.
+    *
+    * This function computes \f$ G(x) = \frac{1}{\sigma \sqrt{2 \pi}} e^{-\frac{1}{2} \left( \frac{x - \mu}{\sigma} \right)^2} \f$ for given x, mu, and sigma.
+    *
+    * \param x: The input variable.
+    * \param mu: The mean of the Gaussian.
+    * \param sigma: The standard deviation of the Gaussian.
+    * \return The value of the Gaussian function at x.
+    */
    float Gaussian(float x, float mu = 0.0, float sigma = 1.0) const {
         return (1.0 / (sigma * sqrt(2 * M_PI))) * exp(-0.5 * pow((x - mu) / sigma, 2));
     }
 
-    float GaussianDerivative(float x, float mu = 0.0, float sigma = 1.0) const {
+
+    /**
+    * \brief Computes the derivative of a Gaussian function analytically.
+    * 
+    * This function computes the derivative of the Gaussian \f$ G'(x) = -\left(\frac{x - \mu}{\sigma^2}\right) \cdot G(x) \f$
+    *
+    * \param x: The input variable.
+    * \param mu: The mean of the Gaussian.
+    * \param sigma: The standard deviation of the Gaussian.
+    * \return The value of the derivative of the Gaussian function at x.
+    */
+   float GaussianDerivative(float x, float mu = 0.0, float sigma = 1.0) const {
         return - (x - mu) / (sigma * sigma) * Gaussian(x, mu, sigma);
     }
 

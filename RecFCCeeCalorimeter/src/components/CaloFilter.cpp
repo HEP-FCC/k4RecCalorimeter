@@ -1,4 +1,4 @@
-/** @class CaloFilterFunc_v01
+/** @class CaloFilterFunc
  * Gaudi MultiTransformer to apply a filter to a digitized pulse, defined as a TimeSeriesCollection object.
  *
  * @author Sahibjeet Singh
@@ -23,18 +23,18 @@
  *
  *The unit system used here is GeV and ns throughout.
  * Inputs:
- *     - TimeSeriesCollection (digitized pulses per cell, see CaloDigitizerFunc for more detail).
+ *     - TimeSeriesCollection: Collection of digitized pulses per cell (see CaloDigitizerFunc for more detail).
  *
  * Properties:
- *     - @param m_filterName The name of the filter to apply. Currently only "Matched_Gaussian" is implemented.
- *     - @param m_mu Mean of the Gaussian pulse shape in ns.
- *     - @param m_sigma Standard deviation of the Gaussian pulse shape in ns.
- *     - @param m_filterTemplateSize The size of the known pulse shape to use for the matched filter. This should be a number less than the number of samples in the digitized pulse. Odd number are preferred since even numbers can lead to migration effects. This is typically (~4 or 5 in LAr).
- *     - @param m_pulseInitTime Start time of the digitized pulse in ns.
- *     - @param m_pulseEndTime End time of the digitized pulse in ns
- *     - @param m_lenSample Number of samples in the full digitized pulse (typically ~30 in LAr).
- *     - @param m_noiseInfoFileName The name of the ROOT file to load the noise correlation matrix from.
- *     - @param m_invCorrMatName The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
+ *     - @param m_filterName: The name of the filter to apply. Currently only "Matched_Gaussian" is implemented.
+ *     - @param m_mu: Mean of the Gaussian pulse shape in ns.
+ *     - @param m_sigma: Standard deviation of the Gaussian pulse shape in ns.
+ *     - @param m_filterTemplateSize: The size of the known pulse shape to use for the matched filter. This should be a number less than the number of samples in the digitized pulse. Odd number are preferred since even numbers can lead to migration effects. This is typically (~4 or 5 in LAr).
+ *     - @param m_pulseInitTime: Start time of the digitized pulse in ns.
+ *     - @param m_pulseEndTime: End time of the digitized pulse in ns
+ *     - @param m_lenSample: Number of samples in the full digitized pulse (typically ~30 in LAr).
+ *     - @param m_noiseInfoFileName: The name of the ROOT file to load the noise correlation matrix from.
+ *     - @param m_invCorrMatName: The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
  *
  * Outputs:
  *     - TimeSeriesCollection: Collection of digitized pulses after applying the filter.
@@ -44,6 +44,7 @@
  * LIMITATIONS: (status 01/12/2025)
  *     - Only the matched filter, assuming a Gaussian signal pulse shape, is currently implemented. The OFC method might be added in the future.
  *     - A nicer way to provide the signal shape would be good to have in the future, rather than hardcoding a Gaussian shape.
+ *     - The matched filter should technically be a conjugate but since we are dealing with real numbers only, this is not done. Beware if complex pulse shapes are to be used in the future.
  */
 
 #include "Gaudi/Property.h"
@@ -89,6 +90,15 @@ struct CaloFilterFunc final
                         }) {}
 
 
+
+    /**
+    * \brief Computes the quantities necessary for the filter.
+    *
+    * This function computes the filter template (signal like part) based on the specified filter type (currently only matched filter with Gaussian pulse shape is implemented) and the provided parameters. The inverse correlation matrix is also loaded from a ROOT file for use in the filter computation.
+    *
+    * \param None -> See class parameters for inputs.
+    * \return StatusCode indicating success or failure.
+    */
     StatusCode initialize() override{
         // Get matched filter template
         if (m_filterName.value() == "Matched_Gaussian"){
@@ -164,9 +174,14 @@ struct CaloFilterFunc final
         return StatusCode::SUCCESS;
     }
    
-    // This is the function that will be called to transform the data
-    // Note that the function has to be const, as well as all pointers to collections
-    // we get from the input
+    /**
+    * \brief Applies the matched filter to the digitized pulses.
+    *
+    * This function takes as input a collection of digitized pulses and applies the matched filter to each pulse. The filtered pulses, along with the best estimate of the energy (max(filtered sample)) and timing (sample index of the energy) for each pulse, are returned.
+    *
+    * \param DigitsPulse: The input collection of digitized pulses.
+    * \return A tuple containing the filtered pulses, sample index representing the timing estimate, and the best estimate for the energy.
+    */
     std::tuple<FilterColl, MatchedSampleIdxColl, MatchedSampleEnergyColl> operator()(const DigitsColl& DigitsPulse) const override {
         info() << "Digitized pulse collection size: " << DigitsPulse.size() << endmsg;
 
@@ -207,9 +222,20 @@ struct CaloFilterFunc final
     return std::make_tuple(std::move(FilteredDigitsCollection), std::move(MaxIdxCollection), std::move(EnergyCollection));
     }
 
-   StatusCode finalize() override{return StatusCode::SUCCESS;}
 
-   StatusCode GetInvCorrMat(){
+    /**    
+    * \brief Finalizes the transformer but does nothing in this case.
+    * \return StatusCode indicating success or failure.
+    */
+    StatusCode finalize() override{return StatusCode::SUCCESS;}
+
+    /**
+    * \brief Read inverse correlation matrix from file.
+    *
+    * \param None -> uses class parameters for inputs.
+    * \return StatusCode indicating success or failure.
+    */
+    StatusCode GetInvCorrMat(){
         // Check if file exists
         if (m_noiseInfoFileName.empty()) {
             error() << "Name of the file with the noise info not provided!" << endmsg;
@@ -243,7 +269,15 @@ struct CaloFilterFunc final
         return StatusCode::SUCCESS;
     }
 
-    // Method to apply matched filter
+    /**
+    * \brief Apply the matched filter to a digitized pulse.
+    *
+    * This function takes as input a digitized pulse and the matched filter template. It convolves the digitized pulse with the time reversed version of the matched filter template and returns the filtered pulse. 
+    *
+    * \param pulse: The input digitized pulse.
+    * \param Cfilter: The matched filter template. This should NOT be time reversedyet.
+    * \return Vector<float> of the filtered pulse after applying the matched filter.
+    */
     std::vector<float> applyMatchedFilter(const  podio::RelationRange<float>& pulse, const std::vector<float>& Cfilter) const {
         // Reverse filter
         std::vector<float> filter = Cfilter;
@@ -252,14 +286,42 @@ struct CaloFilterFunc final
         return ConvolveSame(pulse, filter);
         }
 
+    /**
+    * \brief Computes the value of a Gaussian function analytically.
+    *
+    * This function computes \f$ G(x) = \frac{1}{\sigma \sqrt{2 \pi}} e^{-\frac{1}{2} \left( \frac{x - \mu}{\sigma} \right)^2} \f$ for given x, mu, and sigma.
+    *
+    * \param x: The input variable.
+    * \param mu: The mean of the Gaussian.
+    * \param sigma: The standard deviation of the Gaussian.
+    * \return The value of the Gaussian function at x.
+    */
     float Gaussian(float x, float mu = 0.0, float sigma = 1.0) const {
         return (1.0 / (sigma * sqrt(2 * M_PI))) * exp(-0.5 * pow((x - mu) / sigma, 2));
     }
 
+    /**
+    * \brief Computes the derivative of a Gaussian function analytically.
+    * 
+    * This function computes the derivative of the Gaussian \f$ G'(x) = -\left(\frac{x - \mu}{\sigma^2}\right) \cdot G(x) \f$
+    *
+    * \param x: The input variable.
+    * \param mu: The mean of the Gaussian.
+    * \param sigma: The standard deviation of the Gaussian.
+    * \return The value of the derivative of the Gaussian function at x.
+    */
     float GaussianNoNorm(float x, float mu = 0.0, float sigma = 1.0) const {
         return exp(-0.5 * pow((x - mu) / sigma, 2));
     }
 
+    /**
+    * \brief Computes the convolution of two vectors and returns a result of the same size as the input pulse.
+    *
+    * This function computes the convolution of the input pulse with the provided filter and returns a vector of the same size as the input pulse. This is the equivalent of np.convolve(..., mode='same') in Python.
+    * \param pulse: The input digitized pulse.
+    * \param filter: The filter to convolve with the pulse.
+    * \return Vector<float> representing the convolved pulse of the same size as the input pulse.
+    */
     std::vector<float> ConvolveSame(const podio::RelationRange<float>& pulse, const std::vector<float>& filter) const {
         int n = pulse.size();
         int m = filter.size();

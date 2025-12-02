@@ -1,4 +1,4 @@
-/** @class CaloWhitening_v01
+/** @class CaloWhitening
  * Gaudi Transformer to apply a whitening filter to a TimeSeriesCollection
  *
  * @author Sahibjeet Singh
@@ -19,13 +19,13 @@
  *
  *The unit system used here is GeV and ns throughout.
  * Inputs:
- *     - TimeSeriesCollection (digitized pulses per cell, see CaloDigitizerFunc for more detail).
+ *     - TimeSeriesCollection: Collection of digitized pulses per cell (see CaloDigitizerFunc for more detail).
  *
  * Properties:
- *     - @param m_noiseInfoFileName The name of the ROOT file to load the noise correlation matrix from.
- *     - @param m_invCorrMatName The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
- *     - @param m_muVecName The name of the ROOT TVectorD that represents the mean vector of the noise.
- *    - @param m_filterName The name of the whitening filter to apply. Currently only "ZCA" is implemented. 
+ *     - @param m_noiseInfoFileName: The name of the ROOT file to load the noise correlation matrix from.
+ *     - @param m_invCorrMatName: The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
+ *     - @param m_muVecName: The name of the ROOT TVectorD that represents the mean vector of the noise.
+ *    - @param m_filterName: The name of the whitening filter to apply. Currently only "ZCA" is implemented. 
  *
  * Outputs:
  *     - TimeSeriesCollection: Collection of digitized pulses after applying the whitening filter.
@@ -64,6 +64,14 @@
         {KeyValues("InputCollection", {"DigitsFloat"})},
         {KeyValues("OutputCollection", {"WhitenedDigitsCollection"})}) {}
  
+    /**
+    * \brief Computes the quantities necessary for the filter.
+    *
+    * This function computes the stuff needed for the whitening filter (currently only ZCA whitening is implemented) and the provided parameters. The inverse correlation matrix is also loaded from a ROOT file for use in the filter computation.
+    *
+    * \param None -> See class parameters for inputs.
+    * \return StatusCode indicating success or failure.
+    */
     StatusCode initialize() override{
         // Check if file exists
         if (m_noiseInfoFileName.empty()) {
@@ -151,9 +159,14 @@
    
 
 
-   // This is the function that will be called to transform the data
-   // Note that the function has to be const, as well as all pointers to collections
-   // we get from the input
+   /**
+    * \brief Applies the whitening filter to the digitized pulses.
+    *
+    * This function takes as input a TimeSeriesCollection of digitized pulses per cell and applies the whitening filter to each pulse. The resulting TimeSeriesCollection with whitened pulses is returned.
+    *
+    * \param DigitsPulse: The input TimeSeriesCollection of digitized pulses.
+    * \return TimeSeriesCollection of whitened pulses.
+    */
    edm4hep::TimeSeriesCollection operator()(const edm4hep::TimeSeriesCollection& DigitsPulse) const override {
     info() << "Input digitized pulse collection size: " << DigitsPulse.size() << endmsg;
 
@@ -182,6 +195,15 @@
      return WhitenedDigitsCollection;
    }
 
+   /**
+    * \brief Applies the whitening filter to the digitized pulses.
+    *
+    * This function applies the whitening filter to a single digitized pulse by subtracting the mean vector and multiplying by the whitening matrix.
+    * \f$ \vec{W} = \Sigma^{-1/2} (\vec{D} - \vec{\mu})\f$
+    *
+    * \param Digits: The input digitized pulse.
+    * \return TVectorD representing the whitened pulse.
+    */
    TVectorD ApplyWhiteningMat(const podio::RelationRange<float> Digits) const
    {
        TVectorD Pulse(Digits.size());
@@ -196,6 +218,10 @@
    }
 
 
+    /**    
+    * \brief Finalizes the transformer but does nothing in this case.
+    * \return StatusCode indicating success or failure.
+    */
     StatusCode finalize() override{
         return StatusCode::SUCCESS;
     }
