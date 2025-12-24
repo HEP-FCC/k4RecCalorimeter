@@ -216,7 +216,7 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
         for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
           const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
           for (const auto& hit : *coll) {
-            if(hit.id() == protoCell.id()){
+            if(hit.getCellID() == protoCell.getCellID()){
               cluster.addToHits(hit);
             }
           }
