@@ -222,3 +222,11 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
 
   return totalNoiseOffset;
 }
+
+
+std::pair<double, double>
+ReadNoiseFromFileTool::getNoisePerCell(uint64_t aCellId) const
+{
+  return std::make_pair (getNoiseRMSPerCell(aCellId),
+                         getNoiseOffsetPerCell(aCellId));
+}
