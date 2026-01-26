@@ -58,6 +58,7 @@ gaudi_add_module(k4RecCalorimeterTests
                  SOURCES
                    tests/src/CaloCellConstantsSvcTestAlg.cpp
                    tests/src/CaloCellIndexerSvcTestAlg.cpp
+                   tests/src/ReadCaloCrosstalkMapTestAlg.cpp
                  LINK k4FWCore::k4FWCore
                       k4FWCore::k4Interface
                       Gaudi::GaudiKernel
@@ -74,6 +75,12 @@ add_test(NAME CaloCellIndexerSvc_test
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(CaloCellIndexerSvc_test)
+
+add_test(NAME ReadCaloCrosstalkMap_test
+         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/ReadCaloCrosstalkMap_test.py
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(ReadCaloCrosstalkMap_test)
 
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
