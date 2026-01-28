@@ -68,3 +68,20 @@ add_test(NAME FCCeeCalo_DigitizationWhiteningFilter
 )
 set_test_env(FCCeeCalo_DigitizationWhiteningFilter)
 set_tests_properties(FCCeeCalo_DigitizationWhiteningFilter PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
+
+
+if(BUILD_TESTING)
+  gaudi_add_module( k4RecFCCeeCalorimeterTests
+                    SOURCES tests/src/TubeLayerModuleThetaCaloToolTestAlg.cpp
+                    LINK k4FWCore::k4FWCore
+                    k4FWCore::k4Interface
+                    Gaudi::GaudiKernel
+                    RecCaloCommon
+                  )
+
+  add_test( NAME TubeLayerModuleThetaCaloTool_test
+            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TubeLayerModuleThetaCaloTool_test.py
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+          )
+  set_test_env( TubeLayerModuleThetaCaloTool_test )
+endif()
