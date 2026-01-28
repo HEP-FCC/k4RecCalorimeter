@@ -32,5 +32,11 @@ if(BUILD_TESTING)
     LINK DD4hep::DDCore Boost::timer
     TEST)
   target_include_directories(IDMap_test.exe PUBLIC include)
-endif()
 
+
+  gaudi_add_executable(IDMapIndexer_test.exe
+    SOURCES tests/IDMapIndexer_test.cpp
+    LINK DD4hep::DDCore k4FWCore::k4Interface k4FWCore::k4FWCore
+    TEST)
+  target_include_directories(IDMapIndexer_test.exe AFTER PUBLIC include)
+endif()
