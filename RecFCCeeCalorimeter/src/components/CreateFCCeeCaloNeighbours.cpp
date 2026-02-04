@@ -927,7 +927,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         maxLayerIdEndcap[1] = minMaxLayerId[1].second;
 
         // create the endcap cellID that should become the neighbour for the barrel cell
-        dd4hep::DDSegmentation::CellID endcapCellID;
+        dd4hep::DDSegmentation::CellID endcapCellID = 0;
         (*decoderHCalEndcap)[m_fieldNamesSegmented[hcalEndcapId]].set(endcapCellID,
                                                                       m_fieldValuesSegmented[hcalEndcapId]);
         (*decoderHCalEndcap)["phi"].set(endcapCellID, iphi);
@@ -1209,7 +1209,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         maxLayerIdEndcap[1] = minMaxLayerId[1].second;
 
         // create the endcap cellID that should become the neighbour for the barrel cell
-        dd4hep::DDSegmentation::CellID endcapCellID;
+        dd4hep::DDSegmentation::CellID endcapCellID = 0;
         (*decoderHCalEndcap)[m_fieldNamesSegmented[hcalEndcapId]].set(endcapCellID,
                                                                       m_fieldValuesSegmented[hcalEndcapId]);
         (*decoderHCalEndcap)["phi"].set(endcapCellID, iphi);
