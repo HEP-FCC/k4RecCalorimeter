@@ -14,10 +14,6 @@
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/ToolHandle.h"
 
-// geometry (needed for timing, based on the distance btn the step and the rear end of the fiber)
-#include "k4Interface/IGeoSvc.h"
-#include "detectorSegmentations/GridDRcalo_k4geo.h"
-
 // Check for SiPMSensor header location (similar to how DigiSiPM handles this)
 #if __has_include("SiPMSensor.h")
 #include "SiPMSensor.h"
@@ -27,9 +23,12 @@
 
 /** @class SimulateSiPMwithContrib
  *
- *  Algorithm for digitizing the SiPM response using photolectrons
- *  stored as calo hit contributions,
- *  producing a CalorimeterHitCollection (ADC count from SiPM) as output.
+ *  This algorithm was created to apply the SiPM response ovet the
+ *  hit created with IDEA_o2 simulation.
+ *  Contributions from such hits containts the photo-electrons (fired cells)
+ *  and their time of arrivals at SiPMs.
+ *  This algorithm takes all the input collections form the IDEA_o2
+ *  hadronic calorimeter and returns corresponding digitized hits.
  *
  *  The algorithm simulates SiPM response including effects like:
  *  - Dark count rate (DCR)
@@ -55,11 +54,10 @@ private:
 
   // Random Number Service
   SmartIF<IRndmGenSvc> m_randSvc;
-  Rndm::Numbers m_rndmUniform;
   Rndm::Numbers m_rndmExp;
 
   // readout name and segmentation (of specific type)
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
+  //Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
 
   mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{"", Gaudi::DataHandle::Reader, this};
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"", Gaudi::DataHandle::Writer, this};
@@ -95,14 +93,10 @@ private:
   // other parameters (attention, will override above parameters if set)
   Gaudi::Property<std::map<std::string,double>> m_params{this, "params", {}, "optional parameters"};
 
-  // switch to use the stored edm4hep::CaloHitContribution::getTime() as it is
-  Gaudi::Property<bool> m_switchTime{this, "switchTime", false,
-                                     "switch to use the stored edm4hep::CaloHitContribution::getTime() as it is"};
-
   // switch to select if you are processing scintillation or Cherenkov hits
   Gaudi::Property<bool> m_isCherenkov{this, "isCherenkov", false,
                                      "switch to select if you are processing scintillation or Cherenkov hits"};
-  // SiPM efficiency, filter efficiency
+  // SiPM efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{
       this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
   Gaudi::Property<std::vector<double>> m_sipmEff{this, "sipmEfficiency", {1.0, 1.0}, "SiPM efficiency vs wavelength"};

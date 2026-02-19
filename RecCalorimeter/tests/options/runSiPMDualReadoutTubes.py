@@ -28,7 +28,7 @@ sipmContribBTScin = SimulateSiPMwithContrib("sipmContribBTScin",
     OutputLevel=DEBUG,
     inputHitCollection = "DRBTScin",
     outputHitCollection = "DRBTScin_digi",
-    readoutName = "DRTcaloSiPMreadout",
+    #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = False,
     # wavelength in nm (decreasing order)
     wavelength = [900.,300.],
@@ -39,7 +39,7 @@ sipmContribETScinLeft = SimulateSiPMwithContrib("sipmContribETScinLeft",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETScinLeft",
     outputHitCollection = "DRETScinLeft_digi",
-    readoutName = "DRTcaloSiPMreadout",
+    #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = False,
     # wavelength in nm (decreasing order)
     wavelength = [900.,300.],
@@ -50,7 +50,7 @@ sipmContribETScinRight = SimulateSiPMwithContrib("sipmContribETScinRight",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETScinRight",
     outputHitCollection = "DRETScinRight_digi",
-    readoutName = "DRTcaloSiPMreadout",
+    #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = False,
     # wavelength in nm (decreasing order)
     wavelength = [900.,300.],
@@ -61,7 +61,7 @@ sipmContribBTCher = SimulateSiPMwithContrib("sipmContribBTCher",
     OutputLevel=DEBUG,
     inputHitCollection = "DRBTCher",
     outputHitCollection = "DRBTCher_digi",
-    readoutName = "DRTcaloSiPMreadout",
+    #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = True,
     # wavelength in nm (decreasing order)
     wavelength = [900.,300.],
@@ -72,8 +72,8 @@ sipmContribETCherLeft = SimulateSiPMwithContrib("sipmContribETCherLeft",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETCherLeft",
     outputHitCollection = "DRETCherLeft_digi",
-    readoutName = "DRTcaloSiPMreadout",
-    isCherenkov = False,
+    #readoutName = "DRTcaloSiPMreadout",
+    isCherenkov = True,
     # wavelength in nm (decreasing order)
     wavelength = [900.,300.],
     sipmEfficiency = [1.0,1.0]
@@ -83,13 +83,12 @@ sipmContribETCherRight = SimulateSiPMwithContrib("sipmContribETCherRight",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETCherRight",
     outputHitCollection = "DRETCherRight_digi",
-    readoutName = "DRTcaloSiPMreadout",
-    isCherenkov = False,
+    #readoutName = "DRTcaloSiPMreadout",
+    isCherenkov = True,
     # wavelength in nm (decreasing order)
     wavelength = [900.,300.],
     sipmEfficiency = [1.0,1.0]
 )
-
 
 from Configurables import PodioOutput
 podiooutput = PodioOutput("PodioOutput", filename = "IDEA_o2_v01_digi.root", OutputLevel = DEBUG)
