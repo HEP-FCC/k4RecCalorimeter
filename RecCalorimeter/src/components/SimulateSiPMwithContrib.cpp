@@ -7,7 +7,7 @@ DECLARE_COMPONENT(SimulateSiPMwithContrib)
 SimulateSiPMwithContrib::SimulateSiPMwithContrib(const std::string& aName, ISvcLocator* aSvcLoc)
     : Gaudi::Algorithm(aName, aSvcLoc) {
     
-  // Questo collega la stringa della Property al DataHandle
+  // register DataHandles with hit collection names
   declareProperty("inputHitCollection", m_simHits, "input calo collection name");
   declareProperty("outputHitCollection", m_digiHits, "output calo collection name");
 }
@@ -23,11 +23,6 @@ StatusCode SimulateSiPMwithContrib::initialize() {
 
   if (!m_randSvc) {
     error() << "Couldn't get RndmGenSvc!" << endmsg;
-    return StatusCode::FAILURE;
-  }
-
-  if (m_rndmUniform.initialize(m_randSvc, Rndm::Flat(0., 1.)).isFailure()) {
-    error() << "Couldn't initialize RndmGenSvc!" << endmsg;
     return StatusCode::FAILURE;
   }
 
