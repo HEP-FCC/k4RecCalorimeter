@@ -61,17 +61,9 @@ private:
   // readout name and segmentation (of specific type)
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
 
-  // input collection names
-  Gaudi::Property<std::string> m_hitColl{this, "inputHitCollection", "DRBTScin",
-                                         "input calo collection name"};
-  Gaudi::Property<std::string> m_outColl{this, "outputHitCollection", "DRBTScin_digi",
-                                         "output calo collection name"};
-
-  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_scintHits{m_hitColl, Gaudi::DataHandle::Reader,
-                                                                                 this};
-  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{m_outColl, Gaudi::DataHandle::Writer,
-                                                                             this};
-
+  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{"", Gaudi::DataHandle::Reader, this};
+  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"", Gaudi::DataHandle::Writer, this};
+  
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
 
   // Hamamatsu S14160-1310PS
@@ -107,6 +99,9 @@ private:
   Gaudi::Property<bool> m_switchTime{this, "switchTime", false,
                                      "switch to use the stored edm4hep::CaloHitContribution::getTime() as it is"};
 
+  // switch to select if you are processing scintillation or Cherenkov hits
+  Gaudi::Property<bool> m_isCherenkov{this, "isCherenkov", false,
+                                     "switch to select if you are processing scintillation or Cherenkov hits"};
   // SiPM efficiency, filter efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{
       this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};

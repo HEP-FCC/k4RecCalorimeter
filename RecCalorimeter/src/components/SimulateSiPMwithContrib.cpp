@@ -5,7 +5,12 @@
 DECLARE_COMPONENT(SimulateSiPMwithContrib)
 
 SimulateSiPMwithContrib::SimulateSiPMwithContrib(const std::string& aName, ISvcLocator* aSvcLoc)
-    : Gaudi::Algorithm(aName, aSvcLoc) {}
+    : Gaudi::Algorithm(aName, aSvcLoc) {
+    
+  // Questo collega la stringa della Property al DataHandle
+  declareProperty("inputHitCollection", m_simHits, "input calo collection name");
+  declareProperty("outputHitCollection", m_digiHits, "output calo collection name");
+}
 
 StatusCode SimulateSiPMwithContrib::initialize() {
   StatusCode sc = Gaudi::Algorithm::initialize();
@@ -60,7 +65,7 @@ StatusCode SimulateSiPMwithContrib::initialize() {
 }
 
 StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
-  const edm4hep::SimCalorimeterHitCollection* scintHits = m_scintHits.get();
+  const edm4hep::SimCalorimeterHitCollection* scintHits = m_simHits.get();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
 
   // loop through the hits (each hit corresponds to a fiber)
@@ -89,11 +94,14 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
 
       // get the photon arrival time at SiPM
       const double time = contrib->getTime(); // in IDEA_o2 this it the toa at SiPM in ns
-      // add scintillation decay time
-      double scintTime = time + m_rndmExp.shoot();
+      double thisTime = time;
+      // if it is a scintillation hit, add scintillation decay time
+      if (!m_isCherenkov){
+        thisTime += m_rndmExp.shoot();
+      }
 
       for (unsigned int pe=0; pe<npe; pe++){
-        vecTimes.push_back(scintTime);
+        vecTimes.push_back(thisTime);
         vecWavelens.push_back(1.);
       }
     } // contrib
