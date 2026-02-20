@@ -10,6 +10,7 @@ SimulateSiPMwithContrib::SimulateSiPMwithContrib(const std::string& aName, ISvcL
   // register DataHandles with hit collection names
   declareProperty("inputHitCollection", m_simHits, "input calo collection name");
   declareProperty("outputHitCollection", m_digiHits, "output calo collection name");
+  declareProperty("outputLinkCollection", m_hitLinks, "output links collection name");
 }
 
 StatusCode SimulateSiPMwithContrib::initialize() {
@@ -44,7 +45,7 @@ StatusCode SimulateSiPMwithContrib::initialize() {
   properties.setFallTimeFast(m_falltimeFast);
   properties.setRiseTime(m_risetime);
   properties.setSnr(m_snr);
-  properties.setPdeType(sipm::SiPMProperties::PdeType::kNoPde);
+  properties.setPdeType(sipm::SiPMProperties::PdeType::kNoPde); // this forces efficiency to 1
   properties.setPdeSpectrum(m_wavelen, m_sipmEff);
 
   // set other parameters if provided
@@ -62,7 +63,8 @@ StatusCode SimulateSiPMwithContrib::initialize() {
 StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
   const edm4hep::SimCalorimeterHitCollection* scintHits = m_simHits.get();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
-
+  auto* links = m_hitLinks.createAndPut();
+  
   // loop through the hits (each hit corresponds to a fiber)
   for (unsigned int idx = 0; idx < scintHits->size(); idx++) {
     const auto& scintHit = scintHits->at(idx);
@@ -97,7 +99,7 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
 
       for (unsigned int pe=0; pe<npe; pe++){
         vecTimes.push_back(thisTime);
-        vecWavelens.push_back(1.);
+        vecWavelens.push_back(1.); // photons wavelengths are dummy, we are using photo-electrons
       }
     } // contrib
 
@@ -118,12 +120,16 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
         std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
     const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
 
-    digiHit.setEnergy(integral/* * m_scaleADC.value()*/); // convert ADC to GeV
+    digiHit.setEnergy(integral/* * m_scaleADC.value()*/); // convertition from ADC to GeV can be added here
     digiHit.setEnergyError(/*m_scaleADC.value() **/ std::sqrt(integral));
     digiHit.setPosition(scintHit.getPosition());
     digiHit.setCellID(scintHit.getCellID());
     // Toa and m_gateStart are in ns
     digiHit.setTime(toa + m_gateStart);
+
+    auto link = links->create();
+    link.setFrom(digiHit);
+    link.setTo(scintHit);
   }
 
   return StatusCode::SUCCESS;
