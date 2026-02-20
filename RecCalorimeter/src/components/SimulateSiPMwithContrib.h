@@ -23,9 +23,9 @@
 
 /** @class SimulateSiPMwithContrib
  *
- *  This algorithm was created to apply the SiPM response ovet the
+ *  This algorithm was created to apply the SiPM response over the
  *  hit created with IDEA_o2 simulation.
- *  Contributions from such hits containts the photo-electrons (fired cells)
+ *  Contributions from such hits containt the photo-electrons (fired cells)
  *  and their time of arrivals at SiPMs.
  *  This algorithm takes all the input collections form the IDEA_o2
  *  hadronic calorimeter and returns corresponding digitized hits.
@@ -57,11 +57,13 @@ private:
   Rndm::Numbers m_rndmExp;
 
   // readout name and segmentation (of specific type)
+  // Not used for the moment, might be used in future
   //Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
 
   mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{"", Gaudi::DataHandle::Reader, this};
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"", Gaudi::DataHandle::Writer, this};
-  
+  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_hitLinks{"", Gaudi::DataHandle::Writer, this};
+
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
 
   // Hamamatsu S14160-1310PS
@@ -104,7 +106,8 @@ private:
   Gaudi::Property<double> m_scintDecaytime{this, "scintDecaytime", 2.8, "scintillation decay time in ns"};
 
   // option to store full waveform (for debugging)
-  Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
+  // Not used for the moment, might be used in future for debugging
+  //Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
 
 };
 

@@ -7,7 +7,7 @@ dataservice = k4DataSvc("EventDataSvc", input="IDEA_o2_v01.root")
 from Configurables import PodioInput
 podioinput = PodioInput("PodioInput",
     collections = [
-         "DRBTScin",
+         "DRBTScin", # collections from IDEA_o2 hadronic calo
          "DRBTScinContributions",
          "DRBTCher",
          "DRBTCherContributions",
@@ -23,11 +23,17 @@ podioinput = PodioInput("PodioInput",
     OutputLevel = DEBUG
 )
 
+# SimulateSiPMwithContrib applied sipm digitization
+# over the output format of the IDEA_o2 hadronic calorimeter.
+# In this format we do not store photons but photo-electrons (fired cells)
+# therefore the wavelength and sipmEfficiency is dummy:
+# all photo-electrons are converted.
 from Configurables import SimulateSiPMwithContrib
 sipmContribBTScin = SimulateSiPMwithContrib("sipmContribBTScin",
     OutputLevel=DEBUG,
     inputHitCollection = "DRBTScin",
     outputHitCollection = "DRBTScin_digi",
+    outputLinkCollection = "DRBTScin_links",
     #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = False,
     # wavelength in nm (decreasing order)
@@ -39,6 +45,7 @@ sipmContribETScinLeft = SimulateSiPMwithContrib("sipmContribETScinLeft",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETScinLeft",
     outputHitCollection = "DRETScinLeft_digi",
+    outputLinkCollection = "DRETScinLeft_links",
     #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = False,
     # wavelength in nm (decreasing order)
@@ -50,6 +57,7 @@ sipmContribETScinRight = SimulateSiPMwithContrib("sipmContribETScinRight",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETScinRight",
     outputHitCollection = "DRETScinRight_digi",
+    outputLinkCollection = "DRETScinRight_links",
     #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = False,
     # wavelength in nm (decreasing order)
@@ -61,6 +69,7 @@ sipmContribBTCher = SimulateSiPMwithContrib("sipmContribBTCher",
     OutputLevel=DEBUG,
     inputHitCollection = "DRBTCher",
     outputHitCollection = "DRBTCher_digi",
+    outputLinkCollection = "DRBTCher_links",
     #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = True,
     # wavelength in nm (decreasing order)
@@ -72,6 +81,7 @@ sipmContribETCherLeft = SimulateSiPMwithContrib("sipmContribETCherLeft",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETCherLeft",
     outputHitCollection = "DRETCherLeft_digi",
+    outputLinkCollection = "DRETCherLeft_links",
     #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = True,
     # wavelength in nm (decreasing order)
@@ -83,6 +93,7 @@ sipmContribETCherRight = SimulateSiPMwithContrib("sipmContribETCherRight",
     OutputLevel=DEBUG,
     inputHitCollection = "DRETCherRight",
     outputHitCollection = "DRETCherRight_digi",
+    outputLinkCollection = "DRETCherRight_links",
     #readoutName = "DRTcaloSiPMreadout",
     isCherenkov = True,
     # wavelength in nm (decreasing order)
