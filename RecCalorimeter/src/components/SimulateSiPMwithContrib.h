@@ -1,10 +1,10 @@
 #ifndef SimulateSiPMwithContrib_h
 #define SimulateSiPMwithContrib_h 1
 
+#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/EventHeaderCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
-#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 #include "edm4hep/TimeSeriesCollection.h"
 
 #include "k4FWCore/DataHandle.h"
@@ -51,18 +51,18 @@ public:
   StatusCode finalize();
 
 private:
-
   // Random Number Service
   SmartIF<IRndmGenSvc> m_randSvc;
   Rndm::Numbers m_rndmExp;
 
   // readout name and segmentation (of specific type)
   // Not used for the moment, might be used in future
-  //Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
+  // Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "name of the readout"};
 
   mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_simHits{"", Gaudi::DataHandle::Reader, this};
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_digiHits{"", Gaudi::DataHandle::Writer, this};
-  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_hitLinks{"", Gaudi::DataHandle::Writer, this};
+  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_hitLinks{"", Gaudi::DataHandle::Writer,
+                                                                                    this};
 
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
 
@@ -93,11 +93,11 @@ private:
                                   "Integration threshold"}; // Threshold in p.e. (1.5 to suppress DCR)
 
   // other parameters (attention, will override above parameters if set)
-  Gaudi::Property<std::map<std::string,double>> m_params{this, "params", {}, "optional parameters"};
+  Gaudi::Property<std::map<std::string, double>> m_params{this, "params", {}, "optional parameters"};
 
   // switch to select if you are processing scintillation or Cherenkov hits
   Gaudi::Property<bool> m_isCherenkov{this, "isCherenkov", false,
-                                     "switch to select if you are processing scintillation or Cherenkov hits"};
+                                      "switch to select if you are processing scintillation or Cherenkov hits"};
   // SiPM efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{
       this, "wavelength", {1000., 100.}, "wavelength vector in nm (decreasing order)"};
@@ -107,8 +107,7 @@ private:
 
   // option to store full waveform (for debugging)
   // Not used for the moment, might be used in future for debugging
-  //Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
-
+  // Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
 };
 
 #endif
