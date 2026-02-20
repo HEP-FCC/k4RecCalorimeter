@@ -6,7 +6,7 @@ DECLARE_COMPONENT(SimulateSiPMwithContrib)
 
 SimulateSiPMwithContrib::SimulateSiPMwithContrib(const std::string& aName, ISvcLocator* aSvcLoc)
     : Gaudi::Algorithm(aName, aSvcLoc) {
-    
+
   // register DataHandles with hit collection names
   declareProperty("inputHitCollection", m_simHits, "input calo collection name");
   declareProperty("outputHitCollection", m_digiHits, "output calo collection name");
@@ -64,22 +64,22 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
   const edm4hep::SimCalorimeterHitCollection* scintHits = m_simHits.get();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
   auto* links = m_hitLinks.createAndPut();
-  
+
   // loop through the hits (each hit corresponds to a fiber)
   for (unsigned int idx = 0; idx < scintHits->size(); idx++) {
     const auto& scintHit = scintHits->at(idx);
 
     if (!scintHit.isAvailable()) {
-    std::cout << "ERROR: Hit not available!" << std::endl;
-    continue;
+      std::cout << "ERROR: Hit not available!" << std::endl;
+      continue;
     }
 
     std::vector<double> vecTimes;
     std::vector<double> vecWavelens;
-    
+
     // loop through the hit contributions
     for (auto contrib = scintHit.contributions_begin(); contrib != scintHit.contributions_end(); ++contrib) {
-	
+
       if (!contrib->isAvailable()) {
         std::cerr << "ERROR: Hit contribution not available!" << std::endl;
         continue;
@@ -93,11 +93,11 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
       const double time = contrib->getTime(); // in IDEA_o2 this it the toa at SiPM in ns
       double thisTime = time;
       // if it is a scintillation hit, add scintillation decay time
-      if (!m_isCherenkov){
+      if (!m_isCherenkov) {
         thisTime += m_rndmExp.shoot();
       }
 
-      for (unsigned int pe=0; pe<npe; pe++){
+      for (unsigned int pe = 0; pe < npe; pe++) {
         vecTimes.push_back(thisTime);
         vecWavelens.push_back(1.); // photons wavelengths are dummy, we are using photo-electrons
       }
@@ -108,7 +108,7 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
 
     m_sensor->resetState();
     m_sensor->addPhotons(vecTimes, vecWavelens); // Sets photon times & wavelengths
-    m_sensor->runEvent(); // Runs the simulation
+    m_sensor->runEvent();                        // Runs the simulation
 
     auto digiHit = digiHits->create();
 
@@ -120,7 +120,7 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
         std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
     const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
 
-    digiHit.setEnergy(integral/* * m_scaleADC.value()*/); // convertition from ADC to GeV can be added here
+    digiHit.setEnergy(integral /* * m_scaleADC.value()*/); // convertition from ADC to GeV can be added here
     digiHit.setEnergyError(/*m_scaleADC.value() **/ std::sqrt(integral));
     digiHit.setPosition(scintHit.getPosition());
     digiHit.setCellID(scintHit.getCellID());
