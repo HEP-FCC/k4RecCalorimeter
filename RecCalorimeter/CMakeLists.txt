@@ -65,6 +65,7 @@ add_test(NAME CaloCellConstantsSvc_test
          COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellConstantsSvc_test.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
+set_test_env(CaloCellConstantsSvc_test)
 
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
