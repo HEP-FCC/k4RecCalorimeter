@@ -83,6 +83,15 @@ dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const ui
   dd4hep::VolumeManagerContext* vc = m_volman.lookupContext(volumeId);
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   dd4hep::Position outSeg = vc->localToWorld(dd4hep::Position(inSeg));
+  if (this->msgLevel(MSG::DEBUG)) { [[unlikely]]
+    debug() << "cellID: " << aCellId << endmsg;
+    debug() << "volumeID: " << volumeId << endmsg;
+    debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
+            << inSeg.z() / dd4hep::mm << endmsg;
+    debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
+            << outSeg.z() / dd4hep::mm << "\n"
+            << endmsg;
+  }
   return outSeg;
 }
 
