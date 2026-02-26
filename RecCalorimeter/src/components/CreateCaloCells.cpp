@@ -7,6 +7,7 @@
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
+#include "DD4hep/DetType.h"
 #include "DD4hep/Detector.h"
 #include "DD4hep/Volumes.h"
 #include "TGeoManager.h"
@@ -38,6 +39,7 @@ StatusCode CreateCaloCells::initialize() {
   info() << "remove cells below threshold : " << m_filterCellNoise << endmsg;
   info() << "add position information to the cell : " << m_addPosition << endmsg;
   info() << "emulate crosstalk : " << m_addCrosstalk << endmsg;
+
 
   // Initialization of tools
   // Cell crosstalk tool
@@ -90,6 +92,13 @@ StatusCode CreateCaloCells::initialize() {
   }
   m_cellsCellIDEncoding.put(hitsEncoding.value());
 
+  m_decoder = dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
+  m_systemIndex = m_decoder.index ("system");
+  m_layerIndex = m_decoder.index ("layer");
+
+  // Find the calorimeter type word for each system ID.
+  findCaloTypes();
+
   return StatusCode::SUCCESS;
 }
 
@@ -97,6 +106,17 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
   // Get the input collection with Geant4 hits
   const edm4hep::SimCalorimeterHitCollection* hits = m_hits.get();
   debug() << "Input Hit collection size: " << hits->size() << endmsg;
+
+  // Find calorimeter type.
+  int calotype = 0;
+  if (!hits->empty()) {
+    uint64_t cellid = hits->begin()->getCellID();
+    unsigned detid = m_decoder.get (cellid, m_systemIndex);
+    if (detid < m_caloTypes.size()) calotype = m_caloTypes[detid];
+    if (calotype == 0) {
+      error() << "detector id " << detid << " is not a calorimeter" << endmsg;
+    }
+  }
 
   // 0. Clear all cells
   if (m_addCellNoise) {
@@ -179,6 +199,8 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
         edm4hep::Vector3f position =
             edm4hep::Vector3f(outGlobal.X() / dd4hep::mm, outGlobal.Y() / dd4hep::mm, outGlobal.Z() / dd4hep::mm);
         newCell.setPosition(position);
+        int layer = m_decoder.get(cellid, m_layerIndex);
+        newCell.setType (calotype + 10000 * layer);
       }
     }
   }
@@ -191,4 +213,42 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateCaloCells::finalize() { return Gaudi::Algorithm::finalize(); }
+
+/// Build m_caloTypes, giving calorimeter type per system ID.
+void CreateCaloCells::findCaloTypes()
+{
+  for (const auto& p : m_geoSvc->getDetector()->detectors()) {
+    dd4hep::DetElement det (p.second);
+    dd4hep::DetType detType(det.typeFlag());
+    int id = det.id();
+    if (detType.is(dd4hep::DetType::CALORIMETER)) {
+      int calotype = 0;
+      int caloid = 0;
+      int layout = 0;
+      if (detType.is(dd4hep::DetType::ELECTROMAGNETIC)) {
+        calotype = 0;
+        caloid = 1;
+      } else if (detType.is(dd4hep::DetType::HADRONIC)) {
+        calotype = 1;
+        caloid = 2;
+      } else if (detType.is(dd4hep::DetType::MUON)) {
+        calotype = 2;
+        caloid = 3;
+      } else {
+        warning() << "Detector type for calorimeter " << id << " is neither ELECTROMAGNETIC, HADRONIC nor MUON" << endmsg;
+      }
+      if (detType.is(dd4hep::DetType::BARREL)) {
+        layout = 1;
+      } else if (detType.is(dd4hep::DetType::ENDCAP)) {
+        layout = 2;
+      } else {
+        warning() << "Detector type for calorimeter " << id << " is neither BARREL nor ENDCAP" << endmsg;
+      }
+
+      if (static_cast<int>(m_caloTypes.size()) <= id) {
+        m_caloTypes.resize (id+1);
+      }
+      m_caloTypes[id] = calotype + 10 * caloid + 1000 * layout;
+    }
+  }
+}
