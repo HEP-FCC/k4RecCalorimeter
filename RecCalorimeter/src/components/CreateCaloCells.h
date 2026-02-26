@@ -55,13 +55,15 @@ class CreateCaloCells : public Gaudi::Algorithm {
 public:
   CreateCaloCells(const std::string& name, ISvcLocator* svcLoc);
 
-  StatusCode initialize();
+  virtual StatusCode initialize() override;
 
-  StatusCode execute(const EventContext&) const;
+  virtual StatusCode execute(const EventContext&) const override;
 
-  StatusCode finalize();
 
 private:
+  /// Build m_caloTypes, giving calorimeter type per system ID.
+  void findCaloTypes();
+
   /// Handle for the calorimeter cells crosstalk tool
   mutable ToolHandle<ICaloReadCrosstalkMap> m_crosstalksTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
@@ -95,21 +97,6 @@ private:
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes
-  Gaudi::Property<std::string> m_activeVolumeName{this, "activeVolumeName", "_sensitive", "Name of the active volumes"};
-  /// Name of active layers for sampling calorimeter
-  Gaudi::Property<std::string> m_activeFieldName{this, "activeFieldName", "active_layer",
-                                                 "Name of active layers for sampling calorimeter"};
-  /// Name of the bit-fields (in the readout) describing the volume
-  Gaudi::Property<std::vector<std::string>> m_fieldNames{
-      this, "fieldNames", {}, "Name of the bit-fields (in the readout) describing the volume"};
-  /// Values of the fields that identify the volume to change segmentation (e.g.
-  /// ID of the ECal)
-  Gaudi::Property<std::vector<int>> m_fieldValues{this,
-                                                  "fieldValues",
-                                                  {},
-                                                  "Value of the field that identifies the volume "
-                                                  "to to change segmentation (e.g. ID of the "
-                                                  "ECal)"};
 
   /// Pointer to the geometry service
   ServiceHandle<IGeoSvc> m_geoSvc;
@@ -120,6 +107,19 @@ private:
   mutable std::unordered_map<uint64_t, double> m_CrosstalkCellsMap;
   /// Maps of cell IDs with zero energy, for all cells in calo (needed if addCellNoise and filterCellNoise are both set)
   mutable std::unordered_map<uint64_t, double> m_emptyCellsMap;
+
+  /// Indexed by system ID, giving the calorimeter type word.
+  /// Non-calorimeter system IDs are set to 0.
+  /// We record this for all system IDs since we build this during
+  /// initialization, before we know which system ID we're handling.
+  std::vector<int> m_caloTypes;
+
+  /// Cell ID decoder.
+  dd4hep::DDSegmentation::BitFieldCoder m_decoder;
+
+  /// Field indices for detector ID and layer.
+  unsigned m_systemIndex = -1;
+  unsigned m_layerIndex = -1;
 };
 
 #endif /* RECCALORIMETER_CREATECALOCELLS_H */
