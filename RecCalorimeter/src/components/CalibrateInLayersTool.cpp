@@ -18,6 +18,7 @@ StatusCode CalibrateInLayersTool::initialize() {
     return StatusCode::FAILURE;
   }
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
+  m_layerIndex = m_decoder->index(m_layerFieldName);
   return StatusCode::SUCCESS;
 }
 
@@ -37,7 +38,7 @@ void CalibrateInLayersTool::calibrate(std::vector<std::pair<uint64_t, double> >&
 void CalibrateInLayersTool::calibrateCell(uint64_t cID, double& energy) const
 {
   // shift layer id if the numbering does not start at 0
-  uint layer = m_decoder->get(cID, m_layerFieldName) - m_firstLayerId;
+  uint layer = m_decoder->get(cID, m_layerIndex) - m_firstLayerId;
   if (layer < m_samplingFraction.size()) {
     energy /= m_samplingFraction[layer];
   } else {
