@@ -62,5 +62,7 @@ private:
   /// Values of sampling fraction
   Gaudi::Property<std::vector<double>> m_samplingFraction{
       this, "samplingFraction", {}, "Values of sampling fraction per layer"};
+
+  int m_layerIndex = -1;
 };
 #endif /* RECCALORIMETER_CALIBRATEINLAYERSTOOL_H */
