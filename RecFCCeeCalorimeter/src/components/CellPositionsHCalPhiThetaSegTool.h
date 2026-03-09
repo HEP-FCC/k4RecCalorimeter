@@ -46,26 +46,19 @@ namespace DDSegmentation {
  *  @author Michaela Mlynarikova
  */
 
-class CellPositionsHCalPhiThetaSegTool : public AlgTool, virtual public ICellPositionsTool {
+class CellPositionsHCalPhiThetaSegTool : public extends<AlgTool, ICellPositionsTool> {
 public:
-  CellPositionsHCalPhiThetaSegTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using base_class::base_class;
   ~CellPositionsHCalPhiThetaSegTool() = default;
 
-  virtual StatusCode initialize() final;
-
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() override final;
 
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                            edm4hep::CalorimeterHitCollection& outputColl) const final;
-  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                            edm4hep::CalorimeterHitCollection& outputColl) final
-  { const auto* cthis = this;  cthis->getPositions(aCells, outputColl); }
+                            edm4hep::CalorimeterHitCollection& outputColl) const override final;
 
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
+  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const override final;
 
-  virtual int layerId(const uint64_t& aCellId) const final;
-  virtual int layerId(const uint64_t& aCellId) final
-  { const auto* cthis = this;  return cthis->layerId(aCellId); }
+  virtual int layerId(const uint64_t& aCellId) const override final;
 
   virtual std::vector<double> calculateLayerRadii(unsigned int startIndex, unsigned int endIndex);
 
@@ -74,8 +67,8 @@ public:
   virtual std::vector<double> calculateLayerRadiiEndcap();
 
 private:
-  /// Pointer to the geometry service
-  SmartIF<IGeoSvc> m_geoSvc;
+  /// Handle to the geometry service
+  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
   /// Name of the hadronic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "HCalBarrelReadout"};
   /// Name of the hadronic calorimeter
