@@ -1,24 +1,14 @@
 #include "CellPositionsHCalBarrelTool.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CellPositionsHCalBarrelTool)
 
-CellPositionsHCalBarrelTool::CellPositionsHCalBarrelTool(const std::string& type, const std::string& name,
-                                                         const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsHCalBarrelTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+
   // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
@@ -38,7 +28,7 @@ StatusCode CellPositionsHCalBarrelTool::initialize() {
   if (iter == fields.end()) {
     error() << "Readout does not contain field: 'layer'" << endmsg;
   }
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsHCalBarrelTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -86,5 +76,3 @@ int CellPositionsHCalBarrelTool::layerId(const uint64_t& aCellId) const {
   layer = m_decoder->get(aCellId, "layer");
   return layer;
 }
-
-StatusCode CellPositionsHCalBarrelTool::finalize() { return AlgTool::finalize(); }

@@ -75,6 +75,15 @@ ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) const {
   return empty;
 }
 
+std::span<const uint64_t>
+ReadCaloCrosstalkMap::getNeighboursSpan(uint64_t aCellId) const {
+  auto it = m_mapNeighbours.find(aCellId);
+  if (it != m_mapNeighbours.end()) {
+    return it->second;
+  }
+  return std::span<const uint64_t>();
+}
+
 const std::vector<double>&
 ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) const {
   auto it = m_mapCrosstalks.find(aCellId);
@@ -83,4 +92,13 @@ ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) const {
   }
   static const std::vector<double> empty;
   return empty;
+}
+
+std::span<const double>
+ReadCaloCrosstalkMap::getCrosstalksSpan(uint64_t aCellId) const {
+  auto it = m_mapCrosstalks.find(aCellId);
+  if (it != m_mapCrosstalks.end()) {
+    return it->second;
+  }
+  return std::span<const double>();
 }

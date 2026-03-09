@@ -35,14 +35,12 @@ public:
   /**  Initialize.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const final;
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) final
-  { const auto* cthis = this;  cthis->calibrate(aHits); }
-  virtual void calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const final;
+  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const override final;
+  virtual void calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const override final;
 
 private:
   /// Do calibration for a single cell.
