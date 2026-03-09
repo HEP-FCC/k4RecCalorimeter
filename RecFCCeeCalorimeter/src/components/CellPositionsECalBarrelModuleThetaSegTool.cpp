@@ -2,27 +2,15 @@
 
 // EDM
 #include "edm4hep/CalorimeterHitCollection.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include <cmath>
 
 DECLARE_COMPONENT(CellPositionsECalBarrelModuleThetaSegTool)
 
-CellPositionsECalBarrelModuleThetaSegTool::CellPositionsECalBarrelModuleThetaSegTool(const std::string& type,
-                                                                                     const std::string& name,
-                                                                                     const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
 
   // get segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
@@ -45,7 +33,7 @@ StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
 
   m_volman = m_geoSvc->getDetector()->volumeManager();
 
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsECalBarrelModuleThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -98,5 +86,3 @@ dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const ui
 int CellPositionsECalBarrelModuleThetaSegTool::layerId(const uint64_t& aCellId) const {
   return m_segmentation->layer(aCellId);
 }
-
-StatusCode CellPositionsECalBarrelModuleThetaSegTool::finalize() { return AlgTool::finalize(); }

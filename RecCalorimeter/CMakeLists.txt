@@ -27,6 +27,7 @@ install(TARGETS k4RecCalorimeterPlugins
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
   COMPONENT dev)
 
+
 target_include_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_INCLUDE_DIRS})
 target_link_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_LIBRARY_DIRS})
 
@@ -51,6 +52,21 @@ add_test(NAME simulateSiPM
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 set_test_env(simulateSiPM)
+
+
+gaudi_add_module(k4RecCalorimeterTests
+                 SOURCES tests/src/CaloCellConstantsSvcTestAlg.cpp
+                 LINK k4FWCore::k4FWCore
+                      k4FWCore::k4Interface
+                      Gaudi::GaudiKernel
+                      RecCaloCommon
+                      )
+add_test(NAME CaloCellConstantsSvc_test
+         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellConstantsSvc_test.py
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(CaloCellConstantsSvc_test)
+
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
 #
