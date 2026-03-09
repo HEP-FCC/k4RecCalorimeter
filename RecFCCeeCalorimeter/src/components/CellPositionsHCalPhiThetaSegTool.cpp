@@ -1,4 +1,5 @@
 #include "CellPositionsHCalPhiThetaSegTool.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include "edm4hep/CalorimeterHitCollection.h"
 #include <DDRec/DetectorData.h>
@@ -7,21 +8,9 @@ using dd4hep::DetElement;
 
 DECLARE_COMPONENT(CellPositionsHCalPhiThetaSegTool)
 
-CellPositionsHCalPhiThetaSegTool::CellPositionsHCalPhiThetaSegTool(const std::string& type, const std::string& name,
-                                                                   const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
 
   // get the segmentation class type
   m_segmentationType = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation()->type();
@@ -117,7 +106,7 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
       }
     }
   }
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsHCalPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -237,5 +226,3 @@ std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiEndcap(
 
   return radii;
 }
-
-StatusCode CellPositionsHCalPhiThetaSegTool::finalize() { return AlgTool::finalize(); }
