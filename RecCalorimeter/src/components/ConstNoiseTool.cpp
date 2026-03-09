@@ -62,7 +62,7 @@ StatusCode ConstNoiseTool::initialize() {
 
 double ConstNoiseTool::getNoiseRMSPerCell(uint64_t aCellId) const {
 
-  // Get cells global coordinate "system"
+  // Determine sub detector containing the cell and retrieve corresponding noise
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, m_systemIndex);
   if (cellSystem >= m_noise.size()) return 0;
