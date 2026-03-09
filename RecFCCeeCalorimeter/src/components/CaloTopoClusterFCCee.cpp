@@ -266,20 +266,26 @@ CaloTopoClusterFCCee::findSeeds(const edm4hep::CalorimeterHitCollection* allCell
 
   for (const auto& cell : *allCells) {
 
-    verbose() << "cellID   = " << cell.getCellID() << endmsg;
+    if (this->msgLevel(MSG::VERBOSE)) {
+      verbose() << "cellID   = " << cell.getCellID() << endmsg;
+    }
 
     // retrieve the noise const and offset assigned to cell
     double offset = m_noiseTool->getNoiseOffsetPerCell(cell.getCellID());
     double rms = m_noiseTool->getNoiseRMSPerCell(cell.getCellID());
     double threshold = offset + rms * m_seedSigma;
 
-    debug() << "======================================" << endmsg;
-    debug() << "noise offset    = " << offset << " GeV " << endmsg;
-    debug() << "noise rms       = " << rms << " GeV " << endmsg;
-    debug() << "seed threshold  = " << threshold << " GeV " << endmsg;
-    debug() << "======================================" << endmsg;
+    if (this->msgLevel(MSG::DEBUG)) {
+      debug() << "======================================" << endmsg;
+      debug() << "noise offset    = " << offset << " GeV " << endmsg;
+      debug() << "noise rms       = " << rms << " GeV " << endmsg;
+      debug() << "seed threshold  = " << threshold << " GeV " << endmsg;
+      debug() << "======================================" << endmsg;
+    }
     if (std::fabs(cell.getEnergy()) > threshold) {
-      debug() << "Found seed" << endmsg;
+      if (this->msgLevel(MSG::DEBUG)) {
+        debug() << "Found seed" << endmsg;
+      }
       seedCellsVec.emplace_back(cell);
     }
   }
