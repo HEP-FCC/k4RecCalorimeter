@@ -87,3 +87,22 @@ CalorimeterToolBase::segmentation() const
   }
   return nullptr;
 }
+
+
+/** Return the name specified for the readout.
+ */
+const std::string& CalorimeterToolBase::readoutName() const
+{
+  return m_readoutName;
+}
+
+
+/** Return the subdetector ID.
+ */
+int CalorimeterToolBase::id() const
+{
+  if (!m_readout) {
+    error() << name() << ": " << "Readout not found; can't find detector ID" << endmsg;
+  }
+  return m_readout.segmentation().detector()->id;
+}

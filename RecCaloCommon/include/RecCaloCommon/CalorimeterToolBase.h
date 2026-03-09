@@ -53,9 +53,16 @@ public:
    */
   virtual const dd4hep::DDSegmentation::Segmentation* segmentation() const final;
 
+  /** Return the name specified for the readout.
+   */
+  virtual const std::string& readoutName() const final;
+
+  /** Return the subdetector ID.
+   */
+  virtual int id() const final;
+
+
 protected:
-  /// Return the name specified for the readout.
-  const std::string& readoutName() const { return m_readoutName; }
 
   /// Return the resolved readout.
   const dd4hep::Readout readout() const { return m_readout; }
