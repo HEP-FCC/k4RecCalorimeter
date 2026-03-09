@@ -68,3 +68,13 @@ double TopoCaloNoisyCells::getNoiseOffsetPerCell(uint64_t aCellId) const
   }
   return 0;
 }
+
+std::pair<double,double>
+TopoCaloNoisyCells::getNoisePerCell(uint64_t aCellId) const
+{
+  auto it = m_map.find(aCellId);
+  if (it != m_map.end()) {
+    return it->second;
+  }
+  return std::make_pair(0., 0.);
+}
