@@ -38,7 +38,7 @@
  *    to larger widths.
  *  - One specific value of the payload type that is invalid.  (This will
  *    be used to indicate non-existent entries.)
- *  - The list of all identifiers for this subdetector.  Should be sorte
+ *  - The list of all identifiers for this subdetector.  Should be sorted
  *    for best results.
  *  - A function to return the payload value for a given index in the
  *    identifier list.  This will be used to initialize the mapping.
@@ -47,12 +47,12 @@
  * either the mapped value or the invalid value.
  *
  * In principle, it would be possible to allow inserting/changing mappings
- * after the map has been created, but i currently don't have a use-case
+ * after the map has been created, but I currently don't have a use-case
  * for that, so let's just keep things simple for now.
  *
  * IDMap<PAYLOAD> will work for a variable number of fields (up to a
  * compile-time maximum).  However, for a small number of fields, performance
- * can be signifncantly better if the number of fields is fixed
+ * can be significantly better if the number of fields is fixed
  * at compile time.  That can be implemented with IDMapN<PAYLOAD, N>
  * (deriving from IDMap<PAYLOAD>).  Here, N is the number of fields,
  * and the constructor will abort if an incorrect number of fields
@@ -619,7 +619,7 @@ void IDMap<PAYLOAD>::insert (key_t k, payload_t v)
     index_t next_pos = node[ndx];
     if (!next_pos) {
       // It hasn't been set yet.  We need to make a new node.
-      // It goes at the end of the data vetor.
+      // It goes at the end of the data vector.
       next_pos = m_data.size();
       if (ifield < m_nfields-1) {
         // A non-leaf node.
