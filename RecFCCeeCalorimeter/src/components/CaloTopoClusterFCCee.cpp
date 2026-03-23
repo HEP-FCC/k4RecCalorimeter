@@ -271,8 +271,7 @@ CaloTopoClusterFCCee::findSeeds(const edm4hep::CalorimeterHitCollection* allCell
     }
 
     // retrieve the noise const and offset assigned to cell
-    double offset = m_noiseTool->getNoiseOffsetPerCell(cell.getCellID());
-    double rms = m_noiseTool->getNoiseRMSPerCell(cell.getCellID());
+    auto [rms, offset] = m_noiseTool->getNoisePerCell(cell.getCellID());
     double threshold = offset + rms * m_seedSigma;
 
     if (this->msgLevel(MSG::DEBUG)) {
@@ -424,8 +423,7 @@ std::vector<std::pair<uint64_t, uint32_t>> CaloTopoClusterFCCee::searchForNeighb
       bool addNeighbour = false;
       int cellType = 2;
       // retrieve the cell noise level [GeV]
-      double offset = m_noiseTool->getNoiseOffsetPerCell(neighbourID);
-      double rms = m_noiseTool->getNoiseRMSPerCell(neighbourID);
+      auto [rms, offset] = m_noiseTool->getNoisePerCell(neighbourID);
       double thr = offset + rms * aNumSigma;
       if (std::fabs(neighbouringCellEnergy) > thr)
         addNeighbour = true;
