@@ -32,13 +32,13 @@ public:
   using base_class::base_class;
   virtual ~ConstNoiseTool() = default;
 
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /// Find the appropriate noise constant from the histogram
-  virtual double getNoiseRMSPerCell(uint64_t aCellID) const final;
-  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const final;
+  virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
   virtual std::pair<double, double>
-  getNoisePerCell(uint64_t aCellID) const final;
+  getNoisePerCell(uint64_t aCellID) const override final;
 
 private:
   // rms, offset

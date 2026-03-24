@@ -25,26 +25,26 @@ public:
   /** Read a root file and the stored TTree of cellIDs to noise values.
    * return StatusCode
    */
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /** Expected noise per cell in terms of sigma of Gaussian distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double getNoiseRMSPerCell(uint64_t aCellId) const final;
+  virtual double getNoiseRMSPerCell(uint64_t aCellId) const override final;
 
   /** Expected noise per cell in terms of mean of distibution.
    *   @param[in] aCellId of the cell of interest.
    *   return double.
    */
-  virtual double getNoiseOffsetPerCell(uint64_t aCellId) const final;
+  virtual double getNoiseOffsetPerCell(uint64_t aCellId) const override final;
 
   /** Expected noise per cell.
    *   @param[in] aCellId of the cell of interest.
    *   return [rms, offset]
    */
   virtual std::pair<double, double>
-  getNoisePerCell(uint64_t aCellId) const final;
+  getNoisePerCell(uint64_t aCellId) const override final;
 
 private:
   /// Name
