@@ -8,7 +8,7 @@
 DECLARE_COMPONENT(TubeLayerPhiEtaCaloTool)
 
 
-StatusCode TubeLayerPhiEtaCaloTool::collectCells(std::vector<uint64_t>& cells) const
+StatusCode TubeLayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const
 {
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();

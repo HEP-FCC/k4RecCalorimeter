@@ -13,7 +13,7 @@
 
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
-#include "k4Interface/ICalorimeterTool.h"
+#include "RecCaloCommon/ICalorimeterTool.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DD4hep/Readout.h"
 #include <vector>
@@ -25,28 +25,28 @@
  * This factors out the implementations of prepareEmptyCells/cellIDs
  * in terms of a common method collectCells().
  */
-class CalorimeterToolBase : public extends<AlgTool, ICalorimeterTool>
+class CalorimeterToolBase : public extends<AlgTool, k4::recCalo::ICalorimeterTool>
 {
 public:
   using base_class::base_class;
 
   /** Standard Gaudi initialize method.
    */
-  virtual StatusCode initialize();
+  virtual StatusCode initialize() override;
 
   /** Return a vector of all existing cells in the current geometry.
    *
    * The result is sorted and unique.
    * Returns an empty vector on error.
    */
-  virtual const std::vector<uint64_t>& cellIDs() const final;
+  virtual const std::vector<CellID>& cellIDs() const final;
 
   /** Prepare a map of all existing cells in current geometry.
    *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
    *   return Status code.
    */
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const final;
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) final
+  virtual StatusCode prepareEmptyCells(std::unordered_map<CellID, double>& aCells) const final;
+  virtual StatusCode prepareEmptyCells(std::unordered_map<CellID, double>& aCells) final override
   { const auto* cthis = this;  return cthis->prepareEmptyCells(aCells); }
 
   /** Return the segmentation associated with this geometry.
@@ -69,7 +69,7 @@ protected:
 
   /** Fill vector with all existing cells for this geometry.
    */
-  virtual StatusCode collectCells(std::vector<uint64_t>& cells) const = 0;
+  virtual StatusCode collectCells(std::vector<CellID>& cells) const = 0;
 
 
 private:
@@ -85,7 +85,7 @@ private:
   // The vector of cells is filled once, the first time we need it.
   mutable std::mutex m_mutex;
   mutable bool m_filledCells = false;
-  mutable std::vector<uint64_t> m_cells;
+  mutable std::vector<CellID> m_cells;
 };
 
 
