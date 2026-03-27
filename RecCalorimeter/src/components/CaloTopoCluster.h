@@ -12,8 +12,7 @@
 #include "k4FWCore/MetaDataHandle.h"
 
 // Interfaces
-#include "k4Interface/ICaloReadNeighboursMap.h"
-#include "k4Interface/ICalorimeterTool.h"
+#include "RecCaloCommon/ICaloReadNeighboursMap.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/INoiseConstTool.h"
 #include "k4Interface/ITopoClusterInputTool.h"
@@ -120,7 +119,7 @@ private:
   /// Handle for the cells noise tool
   mutable ToolHandle<INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
-  mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
+  mutable ToolHandle<k4::recCalo::ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel
   mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel

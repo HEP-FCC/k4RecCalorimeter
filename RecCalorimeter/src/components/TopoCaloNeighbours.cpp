@@ -1,4 +1,5 @@
 #include "TopoCaloNeighbours.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include "TBranch.h"
 #include "TFile.h"
@@ -7,17 +8,8 @@
 
 DECLARE_COMPONENT(TopoCaloNeighbours)
 
-TopoCaloNeighbours::TopoCaloNeighbours(const std::string& type, const std::string& name, const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICaloReadNeighboursMap>(this);
-}
-
 StatusCode TopoCaloNeighbours::initialize() {
-  {
-    StatusCode sc = AlgTool::initialize();
-    if (sc.isFailure())
-      return sc;
-  }
+  K4_GAUDI_CHECK( base_class::initialize() );
 
   // Check if neighbours map file exists
   if (m_fileName.empty()) {
@@ -65,6 +57,11 @@ StatusCode TopoCaloNeighbours::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode TopoCaloNeighbours::finalize() { return AlgTool::finalize(); }
-
-std::vector<uint64_t>& TopoCaloNeighbours::neighbours(uint64_t aCellId) { return m_map[aCellId]; }
+auto TopoCaloNeighbours::neighbours(CellID aCellId) const -> const std::vector<CellID>&
+{
+  auto it = m_map.find(aCellId);
+  if (it != m_map.end())
+    return it->second;
+  static const std::vector<CellID> empty;
+  return empty;
+}
