@@ -54,12 +54,11 @@ void CellPositionsCaloDiscsTool::getPositions(const edm4hep::CalorimeterHitColle
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const CellID aCellId) const {
   double radius;
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
   m_decoder->set(volumeId, "phi", 0);
   m_decoder->set(volumeId, "eta", 0);
-  dd4hep::Position outPos;
   auto detelement = m_volman.lookupDetElement(volumeId);
   double inLocal[] = {0, 0, 0};
   const auto outGlobal = detelement.nominal().localToWorld(inLocal);
@@ -70,14 +69,10 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const uint64_t& aCellId
   double eta = m_segmentation->eta(aCellId);
   radius = outGlobal.Z() / std::sinh(eta);
   debug() << "Radius : " << radius << endmsg;
-  outPos.SetCoordinates(inSeg.x() * radius, inSeg.y() * radius, outGlobal.Z());
 
-  return outPos;
+  return dd4hep::Position (inSeg.x() * radius, inSeg.y() * radius, outGlobal.Z());
 }
 
-int CellPositionsCaloDiscsTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsCaloDiscsTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }

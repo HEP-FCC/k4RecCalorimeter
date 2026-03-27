@@ -13,7 +13,7 @@
 
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DD4hep/Segmentations.h"
 #include "DD4hep/Volumes.h"
@@ -22,7 +22,7 @@
 /** Generic tool to find positions of calorimeter cells.
  */
 class CaloCellPositionsTool
-  : public extends<AlgTool, ICellPositionsTool>
+  : public extends<AlgTool, k4::recCalo::ICellPositionsTool>
 {
 public:
   using base_class::base_class;
@@ -33,7 +33,7 @@ public:
 
   /** Return the cartesian global coordinates of a cell center
    */
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final override;
+  virtual dd4hep::Position xyzPosition(const CellID aCellId) const final override;
 
   /** Copy cells from aCells to outputColl filling in cell positions.
    */
@@ -42,7 +42,7 @@ public:
 
   /** Return the layer number of a cell.
    */
-  virtual int              layerId(const uint64_t& aCellId)     const final override;
+  virtual int              layerId(const CellID aCellId)     const final override;
 
 
 private:

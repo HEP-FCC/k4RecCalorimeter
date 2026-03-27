@@ -58,8 +58,7 @@ void CellPositionsECalBarrelPhiThetaSegTool::getPositions(const edm4hep::Calorim
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsECalBarrelPhiThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
-  double radius;
+dd4hep::Position CellPositionsECalBarrelPhiThetaSegTool::xyzPosition(const CellID aCellId) const {
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
   m_decoder->set(volumeId, "phi", 0);
   m_decoder->set(volumeId, "theta", 0);
@@ -70,15 +69,11 @@ dd4hep::Position CellPositionsECalBarrelPhiThetaSegTool::xyzPosition(const uint6
   //         << outGlobal[2] / dd4hep::mm << endmsg;
   //  radius calculated from segmentation + z position of volumes
   auto inSeg = m_segmentation->position(aCellId);
-  radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
+  double radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
 
-  return outSeg;
+  return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
 }
 
-int CellPositionsECalBarrelPhiThetaSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsECalBarrelPhiThetaSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }

@@ -7,8 +7,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
+
+// Interfaces
 #include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/INoiseConstTool.h"
 
 // k4geo
