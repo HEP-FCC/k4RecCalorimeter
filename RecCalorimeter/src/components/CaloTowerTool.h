@@ -9,7 +9,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ITowerTool.h"
 class IGeoSvc;
 
 // dd4hep
@@ -47,18 +49,13 @@ class Cluster;
  *  @author Jana Faltova
  */
 
-class CaloTowerTool : public AlgTool, virtual public ITowerTool {
+class CaloTowerTool : public extends<AlgTool, k4::recCalo::ITowerTool> {
 public:
   CaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent);
-  virtual ~CaloTowerTool() = default;
   /**  Initialize.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
   /**  Find number of calorimeter towers.
    *   Number of towers in phi is calculated from full azimuthal angle (2 pi) and the size of tower in phi ('\b
    * deltaPhiTower').
@@ -67,39 +64,39 @@ public:
    *   @param[out] nEta Number of towers in eta.
    *   @param[out] nPhi Number of towers in phi.
    */
-  virtual void towersNumber(int& nEta, int& nPhi) final;
+  virtual void towersNumber(int& nEta, int& nPhi) final override;
   /**  Build calorimeter towers.
    *   Tower is defined by a segment in eta and phi, with the energy from all layers (no r segmentation).
    *   @param[out] aTowers Calorimeter towers.
    *   @param[in] fillTowersCells Whether to fill maps of cells into towers, for later use in attachCells
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells = true) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells = true) final override;
 
   /**  Get the radius for the position calculation.
    *   @return Radius
    */
-  virtual float radiusForPosition() const final;
+  virtual float radiusForPosition() const final override;
   /**  Get the tower IDs in eta.
    *   @param[in] aEta Position of the calorimeter cell in eta
    *   @return ID (eta) of a tower
    */
-  virtual uint idEta(float aEta) const final;
+  virtual uint idEta(float aEta) const final override;
   /**  Get the tower IDs in phi.
    *   @param[in] aPhi Position of the calorimeter cell in phi
    *   @return ID (phi) of a tower
    */
-  virtual uint idPhi(float aPhi) const final;
+  virtual uint idPhi(float aPhi) const final override;
   /**  Get the eta position of the centre of the tower.
    *   @param[in] aIdEta ID (eta) of a tower
    *   @return Position of the centre of the tower
    */
-  virtual float eta(int aIdEta) const final;
+  virtual float eta(int aIdEta) const final override;
   /**  Get the phi position of the centre of the tower.
    *   @param[in] aIdPhi ID (phi) of a tower
    *   @return Position of the centre of the tower
    */
-  virtual float phi(int aIdPhi) const final;
+  virtual float phi(int aIdPhi) const final override;
   /**  Find cells belonging to a cluster.
    *   @param[in] aEta Position of the middle tower of a cluster in eta
    *   @param[in] aPhi Position of the middle tower of a cluster in phi
@@ -109,7 +106,7 @@ public:
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
                            edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells,
-                           bool aEllipse = false) final;
+                           bool aEllipse = false) final override;
 
 private:
   /// Type of the segmentation
