@@ -16,7 +16,7 @@
 #include "k4Interface/ICalorimeterTool.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/INoiseConstTool.h"
-#include "k4Interface/ITopoClusterInputTool.h"
+#include "RecCaloCommon/ITopoClusterInputTool.h"
 
 class IGeoSvc;
 
@@ -116,7 +116,7 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool
-  mutable ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
+  mutable ToolHandle<k4::recCalo::ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
   /// Handle for the cells noise tool
   mutable ToolHandle<INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool

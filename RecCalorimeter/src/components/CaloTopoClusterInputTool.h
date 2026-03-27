@@ -5,7 +5,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITopoClusterInputTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ITopoClusterInputTool.h"
 
 class IGeoSvc;
 
@@ -32,7 +34,7 @@ namespace DDSegmentation {
  *  @author Coralie Neubueser
  */
 
-class CaloTopoClusterInputTool : public AlgTool, virtual public ITopoClusterInputTool {
+class CaloTopoClusterInputTool : public extends<AlgTool, k4::recCalo::ITopoClusterInputTool> {
 public:
   CaloTopoClusterInputTool(const std::string& type, const std::string& name, const IInterface* parent);
   virtual ~CaloTopoClusterInputTool() = default;
@@ -42,16 +44,11 @@ public:
    */
   virtual StatusCode initialize() final;
 
-  /**  Finalize.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
-
   /** cellIDMap
    * Fills the given map with all cellIDs pointing to the cells energy.
    *  @return status code
    */
-  virtual StatusCode cellIDMap(std::unordered_map<uint64_t, double>& aCells) final;
+  virtual StatusCode cellIDMap(std::unordered_map<CellID, double>& aCells) const final override;
 
 private:
   /// Handle for electromagnetic barrel cells (input collection)
