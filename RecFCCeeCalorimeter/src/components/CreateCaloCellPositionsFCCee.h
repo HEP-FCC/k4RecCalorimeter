@@ -4,7 +4,7 @@
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"

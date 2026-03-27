@@ -3,10 +3,10 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICaloReadNeighboursMap.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloInterface/ICaloReadNeighboursMap.h"
+#include "RecCaloInterface/ICalorimeterTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
+#include "RecCaloInterface/INoiseConstTool.h"
 
 // DD4hep
 #include "DDSegmentation/Segmentation.h"

@@ -3,9 +3,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICalibrateCaloHitsTool.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
+#include "RecCaloInterface/ICalibrateCaloHitsTool.h"
+#include "RecCaloInterface/ICalorimeterTool.h"
+#include "RecCaloInterface/INoiseCaloCellsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"

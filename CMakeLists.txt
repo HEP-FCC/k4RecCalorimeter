@@ -61,6 +61,7 @@ function(set_test_env _testname)
 endfunction()
 
 
+add_subdirectory(RecCaloInterface)
 add_subdirectory(RecCaloCommon)
 add_subdirectory(RecCalorimeter)
 add_subdirectory(RecFCChhCalorimeter)

@@ -13,7 +13,7 @@
 
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DD4hep/Segmentations.h"
 #include "DD4hep/Volumes.h"

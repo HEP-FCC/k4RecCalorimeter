@@ -5,7 +5,7 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITopoClusterInputTool.h"
+#include "RecCaloInterface/ITopoClusterInputTool.h"
 
 class IGeoSvc;
 

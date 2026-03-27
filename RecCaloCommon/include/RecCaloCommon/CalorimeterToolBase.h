@@ -13,7 +13,7 @@
 
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
-#include "k4Interface/ICalorimeterTool.h"
+#include "RecCaloInterface/ICalorimeterTool.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DD4hep/Readout.h"
 #include <vector>

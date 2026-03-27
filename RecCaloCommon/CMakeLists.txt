@@ -10,6 +10,7 @@ gaudi_add_library(RecCaloCommon
                        EDM4HEP::edm4hep
                        k4FWCore::k4FWCore
                        k4FWCore::k4Interface
+                       RecCaloInterface
                        DD4hep::DDCore
                        ${FASTJET_LIBRARIES}
 )

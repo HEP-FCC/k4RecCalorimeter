@@ -6,7 +6,7 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
 
 // EDM4HEP
 #include "edm4hep/CalorimeterHit.h"

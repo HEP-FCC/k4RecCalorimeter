@@ -16,9 +16,9 @@
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ICaloReadNeighboursMap.h"
+#include "RecCaloInterface/ICaloReadNeighboursMap.h"
 #include "k4Interface/IGeoSvc.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloInterface/INoiseConstTool.h"
 
 // EDM4HEP
 namespace edm4hep {

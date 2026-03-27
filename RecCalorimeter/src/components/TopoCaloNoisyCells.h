@@ -5,7 +5,7 @@
 #include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloInterface/INoiseConstTool.h"
 
 class IGeoSvc;
 

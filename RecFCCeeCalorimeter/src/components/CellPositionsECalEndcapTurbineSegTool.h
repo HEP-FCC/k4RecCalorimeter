@@ -7,7 +7,7 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo

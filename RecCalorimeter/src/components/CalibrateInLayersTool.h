@@ -8,7 +8,7 @@
 #include "DDSegmentation/BitFieldCoder.h"
 
 // k4FWCore
-#include "k4Interface/ICalibrateCaloHitsTool.h"
+#include "RecCaloInterface/ICalibrateCaloHitsTool.h"
 class IGeoSvc;
 
 #include <vector>

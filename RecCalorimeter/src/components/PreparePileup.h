@@ -3,8 +3,8 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ITowerTool.h"
+#include "RecCaloInterface/ICalorimeterTool.h"
+#include "RecCaloInterface/ITowerTool.h"
 class IGeoSvc;
 
 // FCC Detectors

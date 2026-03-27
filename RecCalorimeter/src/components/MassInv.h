@@ -8,7 +8,7 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerTool.h"
+#include "RecCaloInterface/ITowerTool.h"
 class IGeoSvc;
 class IRndmGenSvc;
 class ITHistSvc;

@@ -8,7 +8,7 @@
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ITowerToolThetaModule.h"
+#include "RecCaloInterface/ITowerToolThetaModule.h"
 
 // edm4hep
 namespace edm4hep {

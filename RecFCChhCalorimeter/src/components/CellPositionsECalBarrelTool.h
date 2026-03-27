@@ -9,7 +9,7 @@
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep

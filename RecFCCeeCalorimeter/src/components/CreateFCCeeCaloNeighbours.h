@@ -6,8 +6,8 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloInterface/ICaloCreateMap.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo

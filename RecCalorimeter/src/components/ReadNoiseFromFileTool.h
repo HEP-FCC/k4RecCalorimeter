@@ -7,9 +7,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloInterface/ICalorimeterTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
+#include "RecCaloInterface/INoiseConstTool.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"

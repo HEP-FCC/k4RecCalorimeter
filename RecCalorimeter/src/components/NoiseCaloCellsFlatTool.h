@@ -7,7 +7,7 @@
 #include "GaudiKernel/RndmGenerators.h"
 
 // k4FWCore
-#include "k4Interface/INoiseCaloCellsTool.h"
+#include "RecCaloInterface/INoiseCaloCellsTool.h"
 
 /** @class NoiseCaloCellsFlatTool
  *

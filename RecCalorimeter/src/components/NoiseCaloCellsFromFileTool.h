@@ -10,8 +10,8 @@
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // k4FWCore
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
+#include "RecCaloInterface/ICellPositionsTool.h"
+#include "RecCaloInterface/INoiseCaloCellsTool.h"
 class IGeoSvc;
 
 // DD4hep

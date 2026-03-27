@@ -5,7 +5,7 @@
 #include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
-#include "k4Interface/ICalibrateCaloHitsTool.h"
+#include "RecCaloInterface/ICalibrateCaloHitsTool.h"
 
 #include <vector>
 

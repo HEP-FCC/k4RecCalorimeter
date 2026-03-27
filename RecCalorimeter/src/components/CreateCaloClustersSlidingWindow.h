@@ -7,7 +7,7 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerTool.h"
+#include "RecCaloInterface/ITowerTool.h"
 
 // edm4hep
 namespace edm4hep {

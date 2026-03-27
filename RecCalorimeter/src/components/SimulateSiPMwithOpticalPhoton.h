@@ -15,6 +15,7 @@
 #include "GaudiKernel/IRndmGenSvc.h"
 #include "GaudiKernel/RndmGenerators.h"
 #include "GaudiKernel/ToolHandle.h"
+#include "Gaudi/Property.h"
 
 // Check for SiPMSensor header location (similar to how DigiSiPM handles this)
 #if __has_include("SiPMSensor.h")
@@ -22,6 +23,8 @@
 #elif __has_include("sipm/SiPMSensor.h")
 #include "sipm/SiPMSensor.h"
 #endif
+
+#include <string>
 
 /** @class SimulateSiPMwithOpticalPhoton
  *

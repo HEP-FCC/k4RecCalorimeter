@@ -5,7 +5,7 @@
 #include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
-#include "k4Interface/ICaloReadCrosstalkMap.h"
+#include "RecCaloInterface/ICaloReadCrosstalkMap.h"
 #include <span>
 
 class IGeoSvc;

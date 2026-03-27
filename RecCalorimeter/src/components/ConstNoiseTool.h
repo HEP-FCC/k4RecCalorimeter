@@ -9,7 +9,7 @@ class IRndmGenSvc;
 #include "DDSegmentation/BitFieldCoder.h"
 
 // k4FWCore
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloInterface/INoiseConstTool.h"
 class IGeoSvc;
 
 #include <map>

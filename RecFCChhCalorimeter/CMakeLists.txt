@@ -15,6 +15,7 @@ gaudi_add_module(k4RecFCChhCalorimeterPlugins
                       DD4hep::DDG4
                       ROOT::Core
                       ROOT::Hist
+                      RecCaloCommon
                       )
 
 install(TARGETS k4RecFCChhCalorimeterPlugins

@@ -5,7 +5,7 @@
 #include "GaudiKernel/AlgTool.h"
 
 // k4FWCore
-#include "k4Interface/ICaloReadNeighboursMap.h"
+#include "RecCaloInterface/ICaloReadNeighboursMap.h"
 
 class IGeoSvc;
 
