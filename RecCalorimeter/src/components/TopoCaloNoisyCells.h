@@ -39,6 +39,13 @@ public:
    */
   virtual double getNoiseOffsetPerCell(uint64_t aCellId) const override final;
 
+  /** Expected noise per cell.
+   *   @param[in] aCellId of the cell of interest.
+   *   return [rms, offset]
+   */
+  virtual std::pair<double, double>
+  getNoisePerCell(uint64_t aCellId) const override final;
+
 private:
   /// Name
   Gaudi::Property<std::string> m_fileName{this, "fileName",

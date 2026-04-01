@@ -37,10 +37,12 @@ public:
   /// Find the appropriate noise constant from the histogram
   virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
   virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
+  virtual std::pair<double, double>
+  getNoisePerCell(uint64_t aCellID) const override final;
 
 private:
-  std::map<uint, double> m_systemNoiseRMSMap;
-  std::map<uint, double> m_systemNoiseOffsetMap;
+  // rms, offset
+  std::vector<std::pair<double, double> > m_noise;
 
   /// List of subdetector names (they must match what is defined in DectDimension)
   Gaudi::Property<std::vector<std::string>> m_detectors{
@@ -73,6 +75,9 @@ private:
 
   /// Decoder
   std::unique_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;
+
+  /// Index of system field.
+  size_t m_systemIndex;
 };
 
 #endif /* RECCALORIMETER_CONSTNOISETOOL_H */

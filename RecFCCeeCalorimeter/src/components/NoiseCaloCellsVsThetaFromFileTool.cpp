@@ -262,3 +262,11 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId
 
   return totalNoiseOffset;
 }
+
+
+std::pair<double, double>
+NoiseCaloCellsVsThetaFromFileTool::getNoisePerCell(uint64_t aCellId) const
+{
+  return std::make_pair (getNoiseRMSPerCell(aCellId),
+                         getNoiseOffsetPerCell(aCellId));
+}

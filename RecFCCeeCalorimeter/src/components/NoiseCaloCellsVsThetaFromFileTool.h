@@ -60,13 +60,15 @@ public:
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells)    const final;
+  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells)    const override final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise RMS from the histogram
   virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
   virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
+  virtual std::pair<double, double>
+  getNoisePerCell(uint64_t aCellID) const override final;
 
 private:
   template <typename C>

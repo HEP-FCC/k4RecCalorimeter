@@ -41,6 +41,8 @@ public:
   /// Find the appropriate noise constant from the histogram
   virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
   virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
+  virtual std::pair<double, double>
+  getNoisePerCell(uint64_t aCellID) const override final;
 
 private:
   /// Add pileup contribution to the electronics noise? (only if read from file)
