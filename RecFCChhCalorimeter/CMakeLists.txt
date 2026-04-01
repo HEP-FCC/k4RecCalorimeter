@@ -28,6 +28,12 @@ install(TARGETS k4RecFCChhCalorimeterPlugins
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCChhCalorimeter)
 
 
+add_test(NAME FCChh_recocells
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCChhCalorimeter/tests/options/test_FCChh_recocells.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(FCChh_recocells)
+
 #gaudi_add_test(simulateFullCaloSystemForCellPositions
 #	       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 #	       FRAMEWORK ../RecCalorimeter/tests/options/runFullCaloSystem_SimAndDigitisation.py)
