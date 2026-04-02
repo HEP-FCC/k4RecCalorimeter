@@ -9,7 +9,6 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICaloReadNeighboursMap.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "k4Interface/ICellPositionsTool.h"
@@ -108,9 +107,6 @@ private:
   // Cluster cells in collection
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
       "calo/clusterCells", Gaudi::DataHandle::Writer, this};
-  /// Handle for the cluster shape metadata to write
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
-      m_clusterCollection, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool

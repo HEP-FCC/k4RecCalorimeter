@@ -3,7 +3,6 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 #include "k4Interface/ICaloReadCrosstalkMap.h"
 #include "k4Interface/ICalorimeterTool.h"
@@ -59,7 +58,6 @@ public:
 
   virtual StatusCode execute(const EventContext&) const override;
 
-
 private:
   /// Build m_caloTypes, giving calorimeter type per system ID.
   void findCaloTypes();
@@ -87,13 +85,8 @@ private:
 
   /// Handle for calo hits (input collection)
   mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
-  /// Handle for the cellID encoding string of the input collection
-  k4FWCore::MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding,
-                                                             Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
-  k4FWCore::MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding,
-                                                              Gaudi::DataHandle::Writer};
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalBarrelPhiEta", "Name of the detector readout"};
   /// Name of active volumes

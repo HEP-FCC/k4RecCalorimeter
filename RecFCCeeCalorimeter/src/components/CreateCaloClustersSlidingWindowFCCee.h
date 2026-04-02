@@ -7,7 +7,6 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ITowerToolThetaModule.h"
 
 // edm4hep
@@ -92,10 +91,6 @@ private:
   /// Handle for calo cluster cells (output collection)
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells",
                                                                                  Gaudi::DataHandle::Writer, this};
-  /// Output collection metadata handles (saving a map of ID:collection does not work)
-  k4FWCore::MetaDataHandle<std::vector<int>> m_caloIDsMetaData{m_clusters, "inputSystemIDs", Gaudi::DataHandle::Writer};
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_cellsMetaData{m_clusters, "inputCellCollections",
-                                                                     Gaudi::DataHandle::Writer};
   /// Handle for the tower building tool
   mutable ToolHandle<ITowerToolThetaModule> m_towerTool;
   /// Calorimeter towers

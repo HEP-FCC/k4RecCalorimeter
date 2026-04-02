@@ -1,11 +1,8 @@
 #ifndef RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 #define RECCALORIMETER_CREATEPOSITIONEDCALOCELLS_H
 
-#include "edm4hep/Constants.h"
-
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 #include "k4Interface/ICaloReadCrosstalkMap.h"
 #include "k4Interface/ICalorimeterTool.h"
@@ -85,17 +82,11 @@ private:
 
   /// Handle for calo hits (input collection)
   mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
-  /// Handle for the cellID encoding string of the input hit collection
-  k4FWCore::MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding,
-                                                             Gaudi::DataHandle::Reader};
   /// Handle for calo cells (output collection)
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
   /// Handle for hit<->cell link (output collection)
   mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_links{"links", Gaudi::DataHandle::Writer,
                                                                                  this};
-  /// Handle for the cellID encoding of the output cell collection
-  k4FWCore::MetaDataHandle<std::string> m_cellsCellIDEncoding{m_cells, edm4hep::labels::CellIDEncoding,
-                                                              Gaudi::DataHandle::Writer};
   /// Maps of cell IDs (corresponding to DD4hep IDs) vs digitised cell energies
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk

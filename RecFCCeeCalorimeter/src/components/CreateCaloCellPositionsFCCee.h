@@ -3,7 +3,6 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 #include "k4Interface/ICellPositionsTool.h"
 
 // Gaudi
@@ -13,7 +12,6 @@
 // edm4hep
 #include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/CalorimeterHitCollection.h"
-#include "edm4hep/Constants.h"
 
 #include <unordered_map>
 
@@ -51,15 +49,9 @@ private:
   ToolHandle<ICellPositionsTool> m_cellPositionsTool{};
   /// Input collection
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
-  /// Input collection metadata handle
-  k4FWCore::MetaDataHandle<std::string> m_hitsCellIDEncoding{m_hits, edm4hep::labels::CellIDEncoding,
-                                                             Gaudi::DataHandle::Reader};
   /// Output collection
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_positionedHits{"hits/positionedHits",
                                                                                    Gaudi::DataHandle::Writer, this};
-  /// Output collection metadata handle
-  k4FWCore::MetaDataHandle<std::string> m_positionedHitsCellIDEncoding{
-      m_positionedHits, edm4hep::labels::CellIDEncoding, Gaudi::DataHandle::Writer};
 
   // Cache
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
