@@ -132,7 +132,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
         debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
         m_histoPileupNoiseOffset.push_back(
             *dynamic_cast<TH1F*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
-        if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
+        if (m_histoPileupNoiseOffset.at(i).GetNbinsX() < 1) {
           error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
                   << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
           return StatusCode::FAILURE;
