@@ -27,6 +27,12 @@ install(TARGETS k4RecFCChhCalorimeterPlugins
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCChhCalorimeter)
 
+add_test(NAME FCChhBaselineSimDigiReco
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCChhCalorimeter/tests/options/FCChhBaselineSimDigiReco.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(FCChhBaselineSimDigiReco)
+# set_tests_properties(FCChhBaselineSimDigiReco PROPERTIES FIXTURES_REQUIRED FCChhBaseline_sim_files)
 
 #gaudi_add_test(simulateFullCaloSystemForCellPositions
 #	       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
