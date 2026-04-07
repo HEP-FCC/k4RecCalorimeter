@@ -50,7 +50,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
         m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
-      error() << "There is no phi-eta segmentation!!!!" << endmsg;
+      error() << "There is no phi-eta segmentation for readout " << m_readoutNamesSegmented[iSys] << "!!!!" << endmsg;
       return StatusCode::FAILURE;
     }
 
