@@ -3,7 +3,7 @@
 
 // FCCSW
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
@@ -43,19 +43,19 @@ public:
 
 private:
   /// Handle for tool to get positions in ECal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool;
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelTool;
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalExtBarrelTool;
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsEMECTool;
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsHECTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHECTool;
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsEMFwdTool;
   /// Handle for tool to get positions in Calo Discs
-  ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool;
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHFwdTool;
   /// Decoder for system ID
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = new dd4hep::DDSegmentation::BitFieldCoder("system:4");
   /// Input collection

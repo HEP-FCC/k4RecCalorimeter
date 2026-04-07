@@ -6,17 +6,12 @@
 // #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
-// #include "detectorCommon/DetUtils_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
-// #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 
 // DD4hep
-// #include "DD4hep/Readout.h"
-// #include "DD4hep/Volumes.h"
 #include "DDSegmentation/Segmentation.h"
-// #include "TGeoManager.h"
 
 class IGeoSvc;
 namespace DD4hep {
@@ -36,7 +31,7 @@ namespace DDSegmentation {
  *  @author Giovanni Marchiori
  */
 
-class CellPositionsSimpleCylinderPhiThetaSegTool : public extends<AlgTool, ICellPositionsTool> {
+class CellPositionsSimpleCylinderPhiThetaSegTool : public extends<AlgTool, k4::recCalo::ICellPositionsTool> {
 public:
   using base_class::base_class;
   ~CellPositionsSimpleCylinderPhiThetaSegTool() = default;
@@ -46,9 +41,9 @@ public:
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
                             edm4hep::CalorimeterHitCollection& outputColl) const override final;
 
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const override final;
+  virtual dd4hep::Position xyzPosition(const CellID aCellId) const override final;
 
-  virtual int layerId(const uint64_t& aCellId) const override final;
+  virtual int layerId(const CellID aCellId) const override final;
 
 private:
   /// Handle to the geometry service

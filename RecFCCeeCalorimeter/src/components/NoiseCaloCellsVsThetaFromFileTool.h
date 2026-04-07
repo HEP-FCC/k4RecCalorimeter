@@ -9,8 +9,8 @@
 // k4geo
 // #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
-// k4FWCore
-#include "k4Interface/ICellPositionsTool.h"
+// Interfaces
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/INoiseCaloCellsTool.h"
 #include "k4Interface/INoiseConstTool.h"
 
@@ -77,7 +77,7 @@ private:
   void filterCellNoiseT (C& aCells) const;
 
   /// Handle for tool to get cell positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool", "Handle for tool to retrieve cell positions"};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool", "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,

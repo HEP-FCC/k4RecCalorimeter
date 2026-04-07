@@ -55,7 +55,7 @@ void CellPositionsHCalBarrelPhiSegTool::getPositions(const edm4hep::CalorimeterH
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const CellID aCellId) const {
   // global cartesian coordinates calculated from r,phi,eta, for r=1
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
   m_decoder->set(volumeId, "phi", 0);
@@ -69,14 +69,10 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& 
   auto inSeg = m_segmentation->position(aCellId);
   // get radius in cm
   double radius = m_radii[layer];
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 
-  return outSeg;
+  return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 }
 
-int CellPositionsHCalBarrelPhiSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsHCalBarrelPhiSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }

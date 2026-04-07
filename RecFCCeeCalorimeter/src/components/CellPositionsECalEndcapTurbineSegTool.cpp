@@ -67,10 +67,7 @@ void CellPositionsECalEndcapTurbineSegTool::getPositions(const edm4hep::Calorime
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64_t& aCellId) const {
-
-  dd4hep::Position outSeg;
-  double radius;
+dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const CellID aCellId) const {
 
   // find position of volume corresponding to first of group of merged cells
   debug() << "cellID: " << aCellId << endmsg;
@@ -87,7 +84,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
           << outGlobal.Z() / dd4hep::mm << endmsg;
 
   // get R, phi of volume
-  radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
+  double radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
   double phi = std::atan2(outGlobal.Y(), outGlobal.X());
   debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
 
@@ -96,6 +93,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
           << inSeg.z() / dd4hep::mm << endmsg;
+  dd4hep::Position outSeg;
   outSeg = inSeg;
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
           << outSeg.z() / dd4hep::mm << "\n"
@@ -104,9 +102,6 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   return outSeg;
 }
 
-int CellPositionsECalEndcapTurbineSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsECalEndcapTurbineSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }
