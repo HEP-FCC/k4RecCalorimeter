@@ -4,10 +4,9 @@
 // Gaudi
 #include "GaudiKernel/Service.h"
 
-// k4FWCore
+// Interfaces
 #include "k4FWCore/DataHandle.h"
 #include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo

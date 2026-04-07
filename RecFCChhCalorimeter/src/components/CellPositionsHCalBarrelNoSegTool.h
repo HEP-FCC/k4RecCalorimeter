@@ -8,7 +8,7 @@
 // FCCSW
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
@@ -35,7 +35,7 @@ namespace DDSegmentation {
  *  @author Coralie Neubueser
  */
 
-class CellPositionsHCalBarrelNoSegTool : public extends<AlgTool, ICellPositionsTool> {
+class CellPositionsHCalBarrelNoSegTool : public extends<AlgTool, k4::recCalo::ICellPositionsTool> {
 public:
   using base_class::base_class;
   ~CellPositionsHCalBarrelNoSegTool() = default;
@@ -45,9 +45,9 @@ public:
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
                             edm4hep::CalorimeterHitCollection& outputColl) const override final;
 
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
+  virtual dd4hep::Position xyzPosition(const CellID aCellId) const final;
 
-  virtual int layerId(const uint64_t& aCellId) const override final;
+  virtual int layerId(const CellID aCellId) const override final;
 
 private:
   /// Handle to the geometry service

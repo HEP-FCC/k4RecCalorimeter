@@ -6,10 +6,12 @@
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
+
+// Interfaces
 #include "k4Interface/ICalibrateCaloHitsTool.h"
 #include "k4Interface/ICaloReadCrosstalkMap.h"
 #include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/INoiseCaloCellsTool.h"
 
 // Gaudi
@@ -63,7 +65,7 @@ public:
 
 private:
   /// Handle for tool to get cells positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
   /// Handle for the calorimeter cells crosstalk tool
   mutable ToolHandle<ICaloReadCrosstalkMap> m_crosstalkTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool

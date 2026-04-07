@@ -105,7 +105,7 @@ void CellPositionsSimpleCylinderPhiThetaSegTool::getPositions(const edm4hep::Cal
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const CellID aCellId) const {
   debug() << "Cell ID: " << aCellId << endmsg;
 
   int layer = m_decoder->get(aCellId, "layer");
@@ -125,14 +125,9 @@ dd4hep::Position CellPositionsSimpleCylinderPhiThetaSegTool::xyzPosition(const u
   // get position scaled to R=1
   auto inSeg = m_segmentation->position(aCellId);
   // rescale by radius
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
-
-  return outSeg;
+  return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
 }
 
-int CellPositionsSimpleCylinderPhiThetaSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsSimpleCylinderPhiThetaSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }
