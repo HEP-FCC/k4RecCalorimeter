@@ -8,8 +8,10 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
+
+// Interfaces
 #include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/INoiseConstTool.h"
 
 // DD4hep
@@ -77,11 +79,11 @@ private:
                                                                              Gaudi::DataHandle::Writer, this};
 
   /// Handle for tool to get positions in ECal Barrel
-  ToolHandle<ICellPositionsTool> m_cellPositionsECalTool{"CellPositionsECalBarrelTool", this};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalTool{"CellPositionsHCalBarrelTool", this};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalTool{"CellPositionsHCalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  ToolHandle<ICellPositionsTool> m_cellPositionsHCalNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
 
   mutable TH1F* m_energyScale;
   mutable TH1F* m_benchmark;
