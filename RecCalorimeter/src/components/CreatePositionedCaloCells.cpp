@@ -213,7 +213,7 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
           } else if (detType.is(dd4hep::DetType::ENDCAP)) {
             m_layout = 2;
           } else if (detType.is(dd4hep::DetType::FORWARD)) {
-            layout = 3;
+            m_layout = 3;
           } else {
             warning() << "Detector type is neither BARREL nor ENDCAP" << endmsg;
           }
