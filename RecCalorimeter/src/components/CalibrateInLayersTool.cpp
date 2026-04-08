@@ -22,20 +22,20 @@ StatusCode CalibrateInLayersTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-void CalibrateInLayersTool::calibrate(std::unordered_map<uint64_t, double>& aHits) const {
+void CalibrateInLayersTool::calibrate(std::unordered_map<CellID, double>& aHits) const {
   // Loop through energy deposits, multiply energy to get cell energy at electromagnetic scale
   for (auto& p : aHits) {
     calibrateCell (p.first, p.second);
   }
 }
 
-void CalibrateInLayersTool::calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const {
+void CalibrateInLayersTool::calibrate(std::vector<std::pair<CellID, double> >& aHits) const {
   for (auto& p : aHits) {
     calibrateCell (p.first, p.second);
   }
 }
 
-void CalibrateInLayersTool::calibrateCell(uint64_t cID, double& energy) const
+void CalibrateInLayersTool::calibrateCell(CellID cID, double& energy) const
 {
   // shift layer id if the numbering does not start at 0
   uint layer = m_decoder->get(cID, m_layerIndex) - m_firstLayerId;
