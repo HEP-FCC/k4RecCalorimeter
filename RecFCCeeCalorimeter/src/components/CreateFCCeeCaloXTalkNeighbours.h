@@ -6,7 +6,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICaloCreateMap.h"
+
+// Interface
+#include "RecCaloCommon/ICaloCreateMap.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo
@@ -31,20 +33,14 @@ class IGeoSvc;
  *  @author Zhibo Wu
  */
 
-class CreateFCCeeCaloXTalkNeighbours : public extends1<Service, ICaloCreateMap> {
+class CreateFCCeeCaloXTalkNeighbours : public extends<Service, k4::recCalo::ICaloCreateMap> {
 public:
   /// Standard constructor
   explicit CreateFCCeeCaloXTalkNeighbours(const std::string& aName, ISvcLocator* aSL);
-  /// Standard destructor
-  virtual ~CreateFCCeeCaloXTalkNeighbours();
   /**  Initialize the map creator service.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize the map creator service.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
 
 private:
   /// Pointer to the geometry service
