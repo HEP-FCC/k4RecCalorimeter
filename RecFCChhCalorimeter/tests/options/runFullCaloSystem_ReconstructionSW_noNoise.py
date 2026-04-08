@@ -139,7 +139,7 @@ rewriteHCalEC.inhits.Path = "HCalEndcapCells"
 rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 TopAlg += [rewriteHCalEC]
 
-#Create calo clusters
+# Create calo clusters
 from Configurables import CreateCaloClustersSlidingWindow, CaloTowerTool
 from GaudiKernel.PhysicalConstants import pi
 
