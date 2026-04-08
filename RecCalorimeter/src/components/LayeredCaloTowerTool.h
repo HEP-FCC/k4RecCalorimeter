@@ -9,7 +9,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ITowerTool.h"
 class IGeoSvc;
 
 // edm4hep
@@ -51,18 +53,13 @@ namespace DDSegmentation {
  *  @author Jana Faltova
  */
 
-class LayeredCaloTowerTool : public AlgTool, virtual public ITowerTool {
+class LayeredCaloTowerTool : public extends<AlgTool, k4::recCalo::ITowerTool> {
 public:
   LayeredCaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent);
-  virtual ~LayeredCaloTowerTool() = default;
   /**  Initialize.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
   /**  Find number of calorimeter towers.
    *   Number of towers in phi is calculated from full azimuthal angle (2 pi)
    * and the size of tower in phi ('\b deltaPhiTower').
@@ -71,14 +68,14 @@ public:
    *   @param[out] nEta number of towers in eta.
    *   @param[out] nPhi number of towers in phi.
    */
-  virtual void towersNumber(int& nEta, int& nPhi) final;
+  virtual void towersNumber(int& nEta, int& nPhi) final override;
   /**  Build calorimeter towers.
    *   Tower is segmented in eta and phi, with the energy from all layers
    *   (no segmentation).
    *   @param[out] aTowers Calorimeter towers.
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells = true) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowerCells = true) final override;
   /**  Get the radius (in mm) for the position calculation.
    *   Reconstructed cluster has eta and phi position, without the radial
    * coordinate. The cluster in EDM contains
@@ -86,12 +83,12 @@ public:
    * calorimeter) needs to be specified. By default it is equal to 1.
    *   @return Radius
    */
-  virtual float radiusForPosition() const final;
+  virtual float radiusForPosition() const final override;
   /**  Get the tower IDs in eta.
    *   @param[in] aEta Position of the calorimeter cell in eta
    *   @return ID (eta) of a tower
    */
-  virtual uint idEta(float aEta) const final;
+  virtual uint idEta(float aEta) const final override;
   /**  Get the tower IDs in phi.
    *   Tower IDs are shifted so they start at 0 (middle of cell with ID=0 is
    * phi=0, phi is defined form -pi to pi). No
@@ -99,19 +96,19 @@ public:
    *   @param[in] aPhi Position of the calorimeter cell in phi
    *   @return ID (phi) of a tower
    */
-  virtual uint idPhi(float aPhi) const final;
+  virtual uint idPhi(float aPhi) const final override;
   /**  Get the eta position of the centre of the tower.
    *   Tower IDs are shifted so they start at 0 (middle of cell with ID=0 is
    * eta=0). No segmentation offset is taken into account.
    *   @param[in] aIdEta ID (eta) of a tower
    *   @return Position of the centre of the tower
    */
-  virtual float eta(int aIdEta) const final;
+  virtual float eta(int aIdEta) const final override;
   /**  Get the phi position of the centre of the tower.
    *   @param[in] aIdPhi ID (phi) of a tower
    *   @return Position of the centre of the tower
    */
-  virtual float phi(int aIdPhi) const final;
+  virtual float phi(int aIdPhi) const final override;
   /**  Correct way to access the neighbour of the phi tower, taking into account
    * the full coverage in phi.
    *   Full coverage means that first tower in phi, with ID = 0 is a direct
@@ -131,7 +128,7 @@ public:
    */
   virtual void attachCells(float aEta, float aPhi, uint aHalfEtaFinal, uint aHalfPhiFinal,
                            edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells,
-                           bool aEllipse = false) final;
+                           bool aEllipse = false) final override;
   std::shared_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;
 
 private:

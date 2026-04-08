@@ -24,8 +24,6 @@ CreateFCCeeCaloXTalkNeighbours::CreateFCCeeCaloXTalkNeighbours(const std::string
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCCeeCaloXTalkNeighbours::~CreateFCCeeCaloXTalkNeighbours() {}
-
 StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -234,5 +232,3 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
 
   return StatusCode::SUCCESS;
 }
-
-StatusCode CreateFCCeeCaloXTalkNeighbours::finalize() { return Service::finalize(); }
