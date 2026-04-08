@@ -60,7 +60,7 @@ StatusCode ConstNoiseTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-double ConstNoiseTool::getNoiseRMSPerCell(uint64_t aCellId) const {
+double ConstNoiseTool::getNoiseRMSPerCell(CellID aCellId) const {
 
   // Determine sub detector containing the cell and retrieve corresponding noise
   dd4hep::DDSegmentation::CellID cID = aCellId;
@@ -69,7 +69,7 @@ double ConstNoiseTool::getNoiseRMSPerCell(uint64_t aCellId) const {
   return m_noise[cellSystem].first;
 }
 
-double ConstNoiseTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
+double ConstNoiseTool::getNoiseOffsetPerCell(CellID aCellId) const {
 
   if (!m_setNoiseOffset) {
     return 0.;
@@ -83,7 +83,7 @@ double ConstNoiseTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
 }
 
 std::pair<double, double>
-ConstNoiseTool::getNoisePerCell(uint64_t aCellId) const
+ConstNoiseTool::getNoisePerCell(CellID aCellId) const
 {
   // Get cells global coordinate "system"
   dd4hep::DDSegmentation::CellID cID = aCellId;
