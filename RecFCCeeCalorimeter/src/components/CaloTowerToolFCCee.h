@@ -6,9 +6,12 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerToolThetaModule.h"
+
+// Interfaces
+#include "RecCaloCommon/ITowerToolThetaModule.h"
 
 #include <cmath>
+#include <memory>
 
 // edm4hep
 namespace edm4hep {
@@ -32,18 +35,14 @@ class Cluster;
  *  @author Giovanni Marchiori: cleanup, generalise
  */
 
-class CaloTowerToolFCCee : public AlgTool, virtual public ITowerToolThetaModule {
+class CaloTowerToolFCCee : public extends<AlgTool, k4::recCalo::ITowerToolThetaModule> {
 public:
-  CaloTowerToolFCCee(const std::string& type, const std::string& name, const IInterface* parent);
-  virtual ~CaloTowerToolFCCee() = default;
+  using base_class::base_class;
+
   /**  Initialize.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
   /**  Find number of calorimeter towers.
    *   Number of towers in phi is calculated from full azimuthal angle (2 pi) and the size of tower in phi ('\b
    * deltaPhiTower').
@@ -52,38 +51,38 @@ public:
    *   @param[out] nTheta Number of towers in theta.
    *   @param[out] nPhi Number of towers in phi.
    */
-  virtual void towersNumber(int& nTheta, int& nPhi) final;
+  virtual void towersNumber(int& nTheta, int& nPhi) final override;
   /**  Build calorimeter towers.
    *   Tower is defined by a segment in theta and phi, with the energy from all layers (no r segmentation).
    *   @param[out] aTowers Calorimeter towers.
    *   @param[in] fillTowersCells Whether to fill maps of cells into towers, for later use in attachCells
    *   @return Size of the cell collection.
    */
-  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells = true) final;
+  virtual uint buildTowers(std::vector<std::vector<float>>& aTowers, bool fillTowersCells = true) final override;
   /**  Get the map of cells contained within a tower.
    *   @return Map of cells in a tower
    */
-  virtual std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> cellsInTowers() const final;
+  virtual std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> cellsInTowers() const final override;
   /**  Get the tower IDs in theta.
    *   @param[in] aTheta Position of the calorimeter cell in theta
    *   @return ID (theta) of a tower
    */
-  virtual uint idTheta(float aTheta) const final;
+  virtual uint idTheta(float aTheta) const final override;
   /**  Get the tower IDs in phi.
    *   @param[in] aPhi Position of the calorimeter cell in phi
    *   @return ID (phi) of a tower
    */
-  virtual uint idPhi(float aPhi) const final;
+  virtual uint idPhi(float aPhi) const final override;
   /**  Get the theta position of the centre of the tower.
    *   @param[in] aIdTheta ID (theta) of a tower
    *   @return Position of the centre of the tower
    */
-  virtual float theta(int aIdTheta) const final;
+  virtual float theta(int aIdTheta) const final override;
   /**  Get the phi position of the centre of the tower.
    *   @param[in] aIdPhi ID (phi) of a tower
    *   @return Position of the centre of the tower
    */
-  virtual float phi(int aIdPhi) const final;
+  virtual float phi(int aIdPhi) const final override;
   /**  Find cells belonging to a cluster.
    *   @param[in] aTheta Position of the middle tower of a cluster in theta
    *   @param[in] aPhi Position of the middle tower of a cluster in phi
@@ -94,7 +93,7 @@ public:
    */
   virtual void attachCells(float aTheta, float aPhi, uint aHalfThetaFinal, uint aHalfPhiFinal,
                            edm4hep::MutableCluster& aEdmCluster, edm4hep::CalorimeterHitCollection* aEdmClusterCells,
-                           bool aEllipse = false) final;
+                           bool aEllipse = false) final override;
 
   /** Get the list of input cell collections
    *  @return List of input cell collections
@@ -146,7 +145,7 @@ private:
   Gaudi::Property<std::vector<int>> m_caloIDs{this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
   /// The vector of input k4FWCore::DataHandles for the input cell collections
-  std::vector<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
+  std::vector<std::unique_ptr<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> > > m_cellCollectionHandles;
 
   /// Maximum theta of towers
   /// Can be left to pi, it won't hurt
