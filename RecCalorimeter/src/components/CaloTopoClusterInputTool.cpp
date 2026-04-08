@@ -15,7 +15,7 @@ DECLARE_COMPONENT(CaloTopoClusterInputTool)
 
 CaloTopoClusterInputTool::CaloTopoClusterInputTool(const std::string& type, const std::string& name,
                                                    const IInterface* parent)
-    : AlgTool(type, name, parent) {
+    : base_class(type, name, parent) {
   declareProperty("ecalBarrelCells", m_ecalBarrelCells, "");
   declareProperty("ecalEndcapCells", m_ecalEndcapCells, "");
   declareProperty("ecalFwdCells", m_ecalFwdCells, "");
@@ -23,7 +23,6 @@ CaloTopoClusterInputTool::CaloTopoClusterInputTool(const std::string& type, cons
   declareProperty("hcalExtBarrelCells", m_hcalExtBarrelCells, "");
   declareProperty("hcalEndcapCells", m_hcalEndcapCells, "");
   declareProperty("hcalFwdCells", m_hcalFwdCells, "");
-  declareInterface<ITopoClusterInputTool>(this);
 }
 
 StatusCode CaloTopoClusterInputTool::initialize() {
@@ -40,9 +39,7 @@ StatusCode CaloTopoClusterInputTool::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CaloTopoClusterInputTool::finalize() { return AlgTool::finalize(); }
-
-StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<uint64_t, double>& aCells) {
+StatusCode CaloTopoClusterInputTool::cellIDMap(std::unordered_map<CellID, double>& aCells) const {
   [[maybe_unused]] uint totalNumberOfCells = 0;
 
   // 1. ECAL barrel
