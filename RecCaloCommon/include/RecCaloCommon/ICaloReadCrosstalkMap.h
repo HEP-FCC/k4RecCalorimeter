@@ -40,8 +40,8 @@ public:
 
   DeclareInterfaceID(ICaloReadCrosstalkMap, 1, 0);
 
-  virtual std::vector<CellID> const& getNeighbours(CellID cellID) const = 0;
-  virtual std::vector<double> const& getCrosstalks(CellID cellID) const = 0;
+  virtual std::span<const CellID> getNeighbours(CellID cellID) const = 0;
+  virtual std::span<const double> getCrosstalks(CellID cellID) const = 0;
 };
 
 
