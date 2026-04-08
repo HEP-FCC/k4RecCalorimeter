@@ -25,21 +25,19 @@ public:
   using base_class::base_class;
   virtual ~ReadCaloCrosstalkMap() = default;
 
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /** Function to be called for the crosstalk neighbours of a cell.
    *   @param[in] aCellId, cellid of the cell of interest.
    *   @return vector of cellIDs, corresponding to the crosstalk neighbours.
    */
-  virtual const std::vector<CellID>& getNeighbours(CellID aCellId) const final;
-  virtual std::span<const CellID> getNeighboursSpan(CellID aCellId) const final;
+  virtual std::span<const CellID> getNeighbours(CellID aCellId) const final override;
 
   /** Function to be called for the crosstalk coefficients between the input cell and its neighbouring cells.
    *   @param[in] aCellId, cellid of the cell of interest.
    *   @return vector of crosstalk coefficients.
    */
-  virtual const std::vector<double>& getCrosstalks(CellID aCellId) const override final;
-  virtual std::span<const double> getCrosstalksSpan(CellID aCellId) const final;
+  virtual std::span<const double> getCrosstalks(CellID aCellId) const final override;
 
 private:
   /// Name of input root file that contains the TTree with cellID->vec<list_crosstalk_neighboursCellID> and

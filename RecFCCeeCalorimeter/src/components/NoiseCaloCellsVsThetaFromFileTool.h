@@ -11,8 +11,8 @@
 
 // Interfaces
 #include "RecCaloCommon/ICellPositionsTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloCommon/INoiseCaloCellsTool.h"
+#include "RecCaloCommon/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -38,8 +38,10 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsVsThetaFromFileTool : public extends<AlgTool, INoiseCaloCellsTool,  INoiseConstTool> {
+class NoiseCaloCellsVsThetaFromFileTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool,  k4::recCalo::INoiseConstTool> {
 public:
+  using CellID = k4::recCalo::INoiseCaloCellsTool::CellID;
+
   using base_class::base_class;
   virtual ~NoiseCaloCellsVsThetaFromFileTool() = default;
   virtual StatusCode initialize() override final;
@@ -47,28 +49,28 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const override final;
+  virtual void addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const override final;
 
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
+  virtual void addRandomCellNoise(std::vector<std::pair<CellID, double> >& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const override final;
+  virtual void filterCellNoise(std::unordered_map<CellID, double>& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells)    const override final;
+  virtual void filterCellNoise(std::vector<std::pair<CellID, double> >& aCells)    const override final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise RMS from the histogram
-  virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
-  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
+  virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
+  virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
   virtual std::pair<double, double>
-  getNoisePerCell(uint64_t aCellID) const override final;
+  getNoisePerCell(CellID aCellID) const override final;
 
 private:
   template <typename C>
