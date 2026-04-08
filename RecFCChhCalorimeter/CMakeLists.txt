@@ -32,16 +32,15 @@ add_test(NAME FCChhBaselineSimDigiReco
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(FCChhBaselineSimDigiReco)
-# set_tests_properties(FCChhBaselineSimDigiReco PROPERTIES FIXTURES_REQUIRED FCChhBaseline_sim_files)
+set_tests_properties(FCChhBaselineSimDigiReco PROPERTIES FIXTURES_SETUP FCChhBaseline_digi_files)
 
-#gaudi_add_test(simulateFullCaloSystemForCellPositions
-#	       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-#	       FRAMEWORK ../RecCalorimeter/tests/options/runFullCaloSystem_SimAndDigitisation.py)
-#
-#gaudi_add_test(reconstructFullCaloSystemCellPositions
-#               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-#	       DEPENDS simulateFullCaloSystemForCellPositions
-#	       FRAMEWORK tests/options/recoPositions_fullCaloSystem.py)
+add_test(NAME FCChhBaselineCellPositions
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCChhCalorimeter/tests/options/FCChhBaselineCellPositions.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(FCChhBaselineCellPositions)
+set_tests_properties(FCChhBaselineCellPositions PROPERTIES FIXTURES_REQUIRED FCChhBaseline_digi_files)
+
 #
 #gaudi_add_test(buildingCellNoiseMap
 #               WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

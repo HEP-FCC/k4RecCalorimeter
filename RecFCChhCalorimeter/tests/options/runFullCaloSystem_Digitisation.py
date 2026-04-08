@@ -1,13 +1,7 @@
-import os
-
-from GaudiKernel.SystemOfUnits import MeV,GeV
-
 # simulations setup
 Nevts = 3
 inputfile = "FCChh_sim_e_50GeV.root"
 outputfile = "output_fullCalo_SimAndDigi_e_50GeV_"+str(Nevts)+"events.root"
-
-from Gaudi.Configuration import INFO
 
 # ECAL readouts
 ecalBarrelReadoutName = "ECalBarrelEta"
@@ -33,6 +27,8 @@ volumeName = "layer"
 TopAlg = []  # alg sequence
 ExtSvc = []  # list of external services
 
+from Gaudi.Configuration import INFO, DEBUG
+
 # Event counter
 from Configurables import EventCounter
 eventCounter = EventCounter("EventCounter",
@@ -57,7 +53,7 @@ geoservice = GeoSvc("GeoSvc",
                     # OutputLevel=DEBUG  # set to DEBUG to print dd4hep::DEBUG messages in k4geo C++ drivers
                     )
 
-path_to_detector = os.environ.get("K4GEO", "") + "/FCChh//compact/FCChhBaseline/"
+path_to_detector = os.environ.get("K4GEO", "") + "/FCChh/compact/FCChhBaseline/"
 detectors_to_use = [
     'FCChh_DectMaster.xml'
 ]
@@ -102,11 +98,13 @@ createEcalBarrelCellsStep1 = CreateCaloCells("CreateECalBarrelCellsStep1",
                                              filterCellNoise=False,
                                              OutputLevel=INFO,
                                              hits=ecalBarrelReadoutName,
-                                             cells="ECalBarrelCellsStep1")
+                                             cells="ECalBarrelCellsStep1",
+                                             addPosition=True)
 TopAlg += [createEcalBarrelCellsStep1]
 
 # Ecal barrel cell positions
-# does not work
+# does not work - should not needed since only x-y position is needed, which is correctly
+# calculated by CreateCaloCells with addPosition=True
 # from Configurables import CreateVolumeCaloPositions
 # positionsEcalBarrel = CreateVolumeCaloPositions("positionsBarrelEcal", OutputLevel = INFO)
 # positionsEcalBarrel.hits.Path = "ECalBarrelCellsStep1"
