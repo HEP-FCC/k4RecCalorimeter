@@ -15,8 +15,6 @@ CreateFCChhCaloNeighbours::CreateFCChhCaloNeighbours(const std::string& aName, I
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCChhCaloNeighbours::~CreateFCChhCaloNeighbours() {}
-
 StatusCode CreateFCChhCaloNeighbours::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -471,5 +469,3 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
 
   return StatusCode::SUCCESS;
 }
-
-StatusCode CreateFCChhCaloNeighbours::finalize() { return Service::finalize(); }
