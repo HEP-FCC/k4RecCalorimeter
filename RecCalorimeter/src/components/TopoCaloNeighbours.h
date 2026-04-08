@@ -4,8 +4,8 @@
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
 
-// k4FWCore
-#include "k4Interface/ICaloReadNeighboursMap.h"
+// Interfaces
+#include "RecCaloCommon/ICaloReadNeighboursMap.h"
 
 class IGeoSvc;
 
@@ -19,27 +19,26 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class TopoCaloNeighbours : public AlgTool, virtual public ICaloReadNeighboursMap {
+class TopoCaloNeighbours : public extends<AlgTool, k4::recCalo::ICaloReadNeighboursMap>
+{
 public:
-  TopoCaloNeighbours(const std::string& type, const std::string& name, const IInterface* parent);
-  virtual ~TopoCaloNeighbours() = default;
+  using base_class::base_class;
 
   /** Read a map of cellIDs to vector of cellIDs (neighbours).
    */
-  virtual StatusCode initialize() final;
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
 
   /** Function to be called for the neighbours of a cell.
    *   @param[in] aCellId, cellid of the cell of interest.
    *   @return vector of cellIDs, corresponding to the cells neighbours.
    */
-  virtual std::vector<uint64_t>& neighbours(uint64_t aCellId) final;
+  virtual const std::vector<CellID>& neighbours(CellID aCellId) const final override;
 
 private:
   /// Name of input root file that contains the TTree with cellID->vec<neighboursCellID>
   Gaudi::Property<std::string> m_fileName{this, "fileName", "neighbours_map.root"};
   /// Output map to be used for the fast lookup in the topo-clusering algorithm
-  std::unordered_map<uint64_t, std::vector<uint64_t>> m_map;
+  std::unordered_map<CellID, std::vector<CellID>> m_map;
 };
 
 #endif /* RECCALORIMETER_TOPOCALONEIGHBOURS_H */
