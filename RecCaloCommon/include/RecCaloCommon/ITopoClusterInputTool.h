@@ -26,10 +26,6 @@
 
 #include <unordered_map>
 
-namespace edm4hep {
-class CalorimeterHit;
-}
-
 
 namespace k4::recCalo {
 
