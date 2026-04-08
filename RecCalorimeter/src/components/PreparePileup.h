@@ -3,8 +3,10 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
+
+// Interfaces
 #include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ITowerTool.h"
+#include "RecCaloCommon/ITowerTool.h"
 class IGeoSvc;
 
 // FCC Detectors
@@ -65,7 +67,7 @@ private:
   /// Handle for geometry tool (used to prepare map of all existing cellIDs for the system)
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
   /// Handle for the tower building tool
-  mutable ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<k4::recCalo::ITowerTool> m_towerTool;
   // calorimeter towers
   mutable std::vector<std::vector<float>> m_towers;
   /// number of towers in eta (calculated from m_deltaEtaTower and the eta size of the first layer)

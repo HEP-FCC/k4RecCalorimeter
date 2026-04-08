@@ -13,9 +13,8 @@
 DECLARE_COMPONENT(LayeredCaloTowerTool)
 
 LayeredCaloTowerTool::LayeredCaloTowerTool(const std::string& type, const std::string& name, const IInterface* parent)
-    : AlgTool(type, name, parent), m_geoSvc("GeoSvc", name) {
+    : base_class(type, name, parent), m_geoSvc("GeoSvc", name) {
   declareProperty("cells", m_cells, "Cells to create towers from (input)");
-  declareInterface<ITowerTool>(this);
 }
 
 StatusCode LayeredCaloTowerTool::initialize() {
@@ -60,8 +59,6 @@ StatusCode LayeredCaloTowerTool::initialize() {
   info() << "Maximum layer : " << m_maximumLayer << endmsg;
   return StatusCode::SUCCESS;
 }
-
-StatusCode LayeredCaloTowerTool::finalize() { return AlgTool::finalize(); }
 
 void LayeredCaloTowerTool::towersNumber(int& nEta, int& nPhi) {
   // maximum eta of the detector (== eta offset + half of the cell size)
