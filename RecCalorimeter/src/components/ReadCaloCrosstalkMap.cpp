@@ -49,8 +49,8 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
   tree->SetBranchAddress("list_crosstalks", &read_crosstalks);
   for (uint i = 0; i < tree->GetEntries(); i++) {
     tree->GetEntry(i);
-    m_mapNeighbours.insert(std::pair<uint64_t, std::vector<uint64_t>>(read_cellId, *read_neighbours));
-    m_mapCrosstalks.insert(std::pair<uint64_t, std::vector<double>>(read_cellId, *read_crosstalks));
+    m_mapNeighbours.insert(std::pair<CellID, std::vector<CellID>>(read_cellId, *read_neighbours));
+    m_mapCrosstalks.insert(std::pair<CellID, std::vector<double>>(read_cellId, *read_crosstalks));
   }
 
   info() << "Crosstalk input: " << m_fileName.value().c_str() << endmsg;
@@ -65,27 +65,29 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
   return StatusCode::SUCCESS;
 }
 
-const std::vector<uint64_t>&
-ReadCaloCrosstalkMap::getNeighbours(uint64_t aCellId) const {
+auto
+ReadCaloCrosstalkMap::getNeighbours(CellID aCellId) const -> const std::vector<CellID>&
+{
   auto it = m_mapNeighbours.find(aCellId);
   if (it != m_mapNeighbours.end()) {
     return it->second;
   }
-  static const std::vector<uint64_t> empty;
+  static const std::vector<CellID> empty;
   return empty;
 }
 
-std::span<const uint64_t>
-ReadCaloCrosstalkMap::getNeighboursSpan(uint64_t aCellId) const {
+auto
+ReadCaloCrosstalkMap::getNeighboursSpan(CellID aCellId) const -> std::span<const CellID>
+{
   auto it = m_mapNeighbours.find(aCellId);
   if (it != m_mapNeighbours.end()) {
     return it->second;
   }
-  return std::span<const uint64_t>();
+  return std::span<const CellID>();
 }
 
 const std::vector<double>&
-ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) const {
+ReadCaloCrosstalkMap::getCrosstalks(CellID aCellId) const {
   auto it = m_mapCrosstalks.find(aCellId);
   if (it != m_mapCrosstalks.end()) {
     return it->second;
@@ -95,7 +97,7 @@ ReadCaloCrosstalkMap::getCrosstalks(uint64_t aCellId) const {
 }
 
 std::span<const double>
-ReadCaloCrosstalkMap::getCrosstalksSpan(uint64_t aCellId) const {
+ReadCaloCrosstalkMap::getCrosstalksSpan(CellID aCellId) const {
   auto it = m_mapCrosstalks.find(aCellId);
   if (it != m_mapCrosstalks.end()) {
     return it->second;

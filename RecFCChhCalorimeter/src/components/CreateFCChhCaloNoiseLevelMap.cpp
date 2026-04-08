@@ -17,8 +17,6 @@ CreateFCChhCaloNoiseLevelMap::CreateFCChhCaloNoiseLevelMap(const std::string& aN
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCChhCaloNoiseLevelMap::~CreateFCChhCaloNoiseLevelMap() {}
-
 StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -228,4 +226,3 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreateFCChhCaloNoiseLevelMap::finalize() { return Service::finalize(); }

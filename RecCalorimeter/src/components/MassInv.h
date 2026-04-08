@@ -8,7 +8,9 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ITowerTool.h"
 class IGeoSvc;
 class IRndmGenSvc;
 class ITHistSvc;
@@ -263,7 +265,7 @@ private:
 
   // ISOLATION
   /// Handle for the tower building tool
-  mutable ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<k4::recCalo::ITowerTool> m_towerTool;
   // calorimeter towers
   mutable std::vector<std::vector<float>> m_towers;
   /// number of towers in eta (calculated from m_deltaEtaTower and the eta size of the first layer)
