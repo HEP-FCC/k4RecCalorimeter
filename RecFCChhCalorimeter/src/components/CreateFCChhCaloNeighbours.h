@@ -3,7 +3,7 @@
 
 // Gaudi
 #include "GaudiKernel/Service.h"
-#include "k4Interface/ICaloCreateMap.h"
+#include "RecCaloCommon/ICaloCreateMap.h"
 class IGeoSvc;
 
 /** @class CreateFCChhCaloNeighbours
@@ -15,20 +15,14 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class CreateFCChhCaloNeighbours : public extends1<Service, ICaloCreateMap> {
+class CreateFCChhCaloNeighbours : public extends<Service, k4::recCalo::ICaloCreateMap> {
 public:
   /// Standard constructor
   explicit CreateFCChhCaloNeighbours(const std::string& aName, ISvcLocator* aSL);
-  /// Standard destructor
-  virtual ~CreateFCChhCaloNeighbours();
   /**  Initialize the map creator service.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize the map creator service.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
 
 private:
   /// Pointer to the geometry service

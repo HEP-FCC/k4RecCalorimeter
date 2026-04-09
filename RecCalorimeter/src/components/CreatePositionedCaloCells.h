@@ -8,11 +8,11 @@
 #include "k4FWCore/MetaDataHandle.h"
 
 // Interfaces
-#include "k4Interface/ICalibrateCaloHitsTool.h"
-#include "k4Interface/ICaloReadCrosstalkMap.h"
+#include "RecCaloCommon/ICalibrateCaloHitsTool.h"
+#include "RecCaloCommon/ICaloReadCrosstalkMap.h"
 #include "k4Interface/ICalorimeterTool.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
+#include "RecCaloCommon/INoiseCaloCellsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
@@ -67,11 +67,11 @@ private:
   /// Handle for tool to get cells positions
   ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
   /// Handle for the calorimeter cells crosstalk tool
-  mutable ToolHandle<ICaloReadCrosstalkMap> m_crosstalkTool{"ReadCaloCrosstalkMap", this};
+  mutable ToolHandle<k4::recCalo::ICaloReadCrosstalkMap> m_crosstalkTool{"ReadCaloCrosstalkMap", this};
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
-  mutable ToolHandle<ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
+  mutable ToolHandle<k4::recCalo::ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
-  mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
+  mutable ToolHandle<k4::recCalo::INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
 

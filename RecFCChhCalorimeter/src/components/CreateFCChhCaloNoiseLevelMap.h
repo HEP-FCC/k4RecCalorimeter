@@ -3,8 +3,8 @@
 
 // Gaudi
 #include "GaudiKernel/Service.h"
-#include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloCommon/ICaloCreateMap.h"
+#include "RecCaloCommon/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -17,30 +17,24 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class CreateFCChhCaloNoiseLevelMap : public extends1<Service, ICaloCreateMap> {
+class CreateFCChhCaloNoiseLevelMap : public extends<Service, k4::recCalo::ICaloCreateMap> {
 public:
   /// Standard constructor
   explicit CreateFCChhCaloNoiseLevelMap(const std::string& aName, ISvcLocator* aSL);
-  /// Standard destructor
-  virtual ~CreateFCChhCaloNoiseLevelMap();
   /**  Initialize the map creator service.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize the map creator service.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
 
 private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
 
   /// Handle for the cells noise tool in ECal
-  ToolHandle<INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+  ToolHandle<k4::recCalo::INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 5};
   /// Handle for the cells noise tool in HCal
-  ToolHandle<INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+  ToolHandle<k4::recCalo::INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
   Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
 
   /// Names of the detector readout for volumes with eta-phi segmentation

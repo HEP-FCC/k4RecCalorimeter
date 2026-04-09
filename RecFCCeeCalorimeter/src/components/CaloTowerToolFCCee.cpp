@@ -10,11 +10,6 @@
 
 DECLARE_COMPONENT(CaloTowerToolFCCee)
 
-CaloTowerToolFCCee::CaloTowerToolFCCee(const std::string& type, const std::string& name, const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ITowerToolThetaModule>(this);
-}
-
 StatusCode CaloTowerToolFCCee::initialize() {
   if (AlgTool::initialize().isFailure()) {
     return StatusCode::FAILURE;
@@ -24,8 +19,8 @@ StatusCode CaloTowerToolFCCee::initialize() {
   for (const auto& col : m_cellCollections) {
     debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
     try {
-      m_cellCollectionHandles.push_back(
-          new k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>(col, Gaudi::DataHandle::Reader, this));
+      m_cellCollectionHandles.emplace_back(
+          std::make_unique<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> >(col, Gaudi::DataHandle::Reader, this));
     } catch (...) {
       error() << "Error creating handle for input collection: " << col << endmsg;
       return StatusCode::FAILURE;
@@ -45,16 +40,6 @@ StatusCode CaloTowerToolFCCee::initialize() {
           << m_deltaPhiTower.value() << ", nPhiTower " << m_nPhiTower << endmsg;
 
   return StatusCode::SUCCESS;
-}
-
-StatusCode CaloTowerToolFCCee::finalize() {
-  for (auto& towerInMap : m_cellsInTowers) {
-    towerInMap.second.clear();
-  }
-
-  for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++)
-    delete m_cellCollectionHandles[ih];
-  return AlgTool::finalize();
 }
 
 void CaloTowerToolFCCee::towersNumber(int& nTheta, int& nPhi) {

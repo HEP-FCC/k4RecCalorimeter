@@ -5,10 +5,8 @@
 #include "k4FWCore/DataHandle.h"
 
 // Interfaces
-#include "k4Interface/ICaloReadNeighboursMap.h"
-#include "k4Interface/ICalorimeterTool.h"
+#include "RecCaloCommon/ICaloReadNeighboursMap.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
-#include "k4Interface/INoiseConstTool.h"
 
 // DD4hep
 #include "DDSegmentation/Segmentation.h"
@@ -101,7 +99,7 @@ private:
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_newCells{"calo/calibClusterCells",
                                                                              Gaudi::DataHandle::Writer, this};
   /// Handle for neighbours tool
-  mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
+  mutable ToolHandle<k4::recCalo::ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
 
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
