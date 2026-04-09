@@ -63,7 +63,7 @@ set_test_env(IDEA_o1_v03_reco)
 set_tests_properties(IDEA_o1_v03_reco PROPERTIES DEPENDS simulateSiPM)
 
 add_test(NAME FCCeeCalo_DigitizationWhiteningFilter
-         COMMAND k4run RecFCCeeCalorimeter/tests/options/runDigitizationAndMatchedFilter.py
+         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runDigitizationAndMatchedFilter.py
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 set_test_env(FCCeeCalo_DigitizationWhiteningFilter)
