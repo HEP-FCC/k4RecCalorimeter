@@ -16,36 +16,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RECCALOCOMMON_ICALOREADCROSSTALKMAP_H
-#define RECCALOCOMMON_ICALOREADCROSSTALKMAP_H
+#ifndef RECCALOCOMMON_INOISECALOCELLSTOOL_H
+#define RECCALOCOMMON_INOISECALOCELLSTOOL_H
 
 #include "DDSegmentation/BitFieldCoder.h" // CellID
 
-// Gaudi
+// from Gaudi
 #include "GaudiKernel/IAlgTool.h"
 
 
 namespace k4::recCalo {
 
 
-/** @class ICaloReadCrosstalkMap k4Interface/include/k4Interface/ICaloReadCrosstalkMap.h ICaloReadCrosstalkMap.h
+/** @class INoiseCaloCellsTool
  *
- *  Interface to the service reading the crosstalk map for ALLEGRO ECAL barrel.
+ *  Abstract interface for tools that add or filter noise to calorimeter cells
  *
- *  @author Zhibo Wu
+ *  @author Jana Faltova
+ *  @date   2016-09
  */
-class ICaloReadCrosstalkMap : virtual public IAlgTool {
+
+class INoiseCaloCellsTool : virtual public IAlgTool {
 public:
   using CellID = dd4hep::DDSegmentation::CellID;
 
-  DeclareInterfaceID(ICaloReadCrosstalkMap, 1, 0);
+  DeclareInterfaceID(INoiseCaloCellsTool, 1, 0);
 
-  virtual std::span<const CellID> getNeighbours(CellID cellID) const = 0;
-  virtual std::span<const double> getCrosstalks(CellID cellID) const = 0;
+  virtual void addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const = 0;
+  virtual void filterCellNoise(std::unordered_map<CellID, double>& aCells) const = 0;
+
+  virtual void addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const = 0;
+  virtual void filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const = 0;
 };
 
 
 } // namespace k4::recCalo
 
 
-#endif /* RECCALOCOMMON_ICALOREADCROSSTALKMAP_H */
+#endif /* RECCALOCOMMON_INOISECALOCELLSTOOL_H */

@@ -119,7 +119,7 @@ StatusCode ReadNoiseFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
+double ReadNoiseFromFileTool::getNoiseRMSPerCell(CellID aCellId) const {
 
   double elecNoiseRMS = 0.;
   double pileupNoiseRMS = 0.;
@@ -171,7 +171,7 @@ double ReadNoiseFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
   return totalNoiseRMS;
 }
 
-double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
+double ReadNoiseFromFileTool::getNoiseOffsetPerCell(CellID aCellId) const {
 
   if (!m_setNoiseOffset)
     return 0.;
@@ -225,7 +225,7 @@ double ReadNoiseFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
 
 
 std::pair<double, double>
-ReadNoiseFromFileTool::getNoisePerCell(uint64_t aCellId) const
+ReadNoiseFromFileTool::getNoisePerCell(CellID aCellId) const
 {
   return std::make_pair (getNoiseRMSPerCell(aCellId),
                          getNoiseOffsetPerCell(aCellId));

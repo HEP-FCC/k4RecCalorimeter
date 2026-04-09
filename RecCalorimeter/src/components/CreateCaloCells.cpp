@@ -150,8 +150,8 @@ StatusCode CreateCaloCells::execute(const EventContext&) const {
     // loop over cells with nominal energies
     for (const auto& this_cell : m_cellsMap) {
       uint64_t this_cellId = this_cell.first;
-      auto vec_neighbours = m_crosstalksTool->getNeighbours(this_cellId); // a vector of neighbour IDs
-      auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a vector of crosstalk coefficients
+      auto vec_neighbours = m_crosstalksTool->getNeighbours(this_cellId); // a span of neighbour IDs
+      auto vec_crosstalks = m_crosstalksTool->getCrosstalks(this_cellId); // a span of crosstalk coefficients
       // loop over crosstalk neighbours of the cell under study
       for (unsigned int i_cell = 0; i_cell < vec_neighbours.size(); i_cell++) {
         // signal transfer = energy deposit brought by EM shower hits * crosstalk coefficient

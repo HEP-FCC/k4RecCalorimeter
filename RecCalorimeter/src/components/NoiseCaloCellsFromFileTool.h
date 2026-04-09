@@ -11,7 +11,7 @@
 
 // Interfaces
 #include "RecCaloCommon/ICellPositionsTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
+#include "RecCaloCommon/INoiseCaloCellsTool.h"
 class IGeoSvc;
 
 // DD4hep
@@ -32,7 +32,7 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsFromFileTool : public extends<AlgTool, INoiseCaloCellsTool> {
+class NoiseCaloCellsFromFileTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsFromFileTool() = default;

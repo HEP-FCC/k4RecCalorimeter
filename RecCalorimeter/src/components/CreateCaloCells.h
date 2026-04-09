@@ -9,7 +9,7 @@
 #include "RecCaloCommon/ICalibrateCaloHitsTool.h"
 #include "RecCaloCommon/ICaloReadCrosstalkMap.h"
 #include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
+#include "RecCaloCommon/INoiseCaloCellsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
@@ -71,7 +71,7 @@ private:
   /// Handle for tool to calibrate Geant4 energy to EM scale tool
   mutable ToolHandle<k4::recCalo::ICalibrateCaloHitsTool> m_calibTool{"CalibrateCaloHitsTool", this};
   /// Handle for the calorimeter cells noise tool
-  mutable ToolHandle<INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
+  mutable ToolHandle<k4::recCalo::INoiseCaloCellsTool> m_noiseTool{"NoiseCaloCellsFlatTool", this};
   /// Handle for the geometry tool
   ToolHandle<ICalorimeterTool> m_geoTool{"", this};
 
