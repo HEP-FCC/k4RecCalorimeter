@@ -7,9 +7,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseConstTool.h"
+
+// Interfaces
+#include "RecCaloCommon/INoiseConstTool.h"
 
 // k4geo
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
@@ -29,7 +29,7 @@ class TH1F;
  *
  */
 
-class ReadNoiseFromFileTool : public extends<AlgTool, INoiseConstTool> {
+class ReadNoiseFromFileTool : public extends<AlgTool, k4::recCalo::INoiseConstTool> {
 public:
   using base_class::base_class;
   virtual ~ReadNoiseFromFileTool() = default;
@@ -39,8 +39,10 @@ public:
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise constant from the histogram
-  virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
-  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
+  virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
+  virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
+  virtual std::pair<double, double>
+  getNoisePerCell(CellID aCellID) const override final;
 
 private:
   /// Add pileup contribution to the electronics noise? (only if read from file)

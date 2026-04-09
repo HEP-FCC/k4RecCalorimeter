@@ -1,25 +1,14 @@
 #include "CellPositionsDummyTool.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CellPositionsDummyTool)
 
-CellPositionsDummyTool::CellPositionsDummyTool(const std::string& type, const std::string& name,
-                                               const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsDummyTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
-  return sc;
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsDummyTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -45,15 +34,10 @@ void CellPositionsDummyTool::getPositions(const edm4hep::CalorimeterHitCollectio
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsDummyTool::xyzPosition(const uint64_t& /*aCellId*/) const {
-  dd4hep::Position outPos;
-  outPos.SetCoordinates(0, 0, 0);
-  return outPos;
+dd4hep::Position CellPositionsDummyTool::xyzPosition(const CellID /*aCellId*/) const {
+  return dd4hep::Position(0, 0, 0);
 }
 
-int CellPositionsDummyTool::layerId(const uint64_t& /*aCellId*/) const {
-  int layer = 0;
-  return layer;
+int CellPositionsDummyTool::layerId(const CellID /*aCellId*/) const {
+  return 0;
 }
-
-StatusCode CellPositionsDummyTool::finalize() { return AlgTool::finalize(); }

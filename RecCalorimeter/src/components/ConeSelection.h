@@ -6,7 +6,9 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ICellPositionsTool.h"
 
 // EDM4HEP
 #include "edm4hep/CalorimeterHit.h"
@@ -37,7 +39,7 @@ public:
 
 private:
   /// Handle for tool to get cell positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{"CellPositionsTool", this};
 
   /// Handle for calo hits (input collection)
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Reader, this};

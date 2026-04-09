@@ -9,7 +9,7 @@ class IRndmGenSvc;
 #include "DDSegmentation/BitFieldCoder.h"
 
 // k4FWCore
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloCommon/INoiseConstTool.h"
 class IGeoSvc;
 
 #include <map>
@@ -27,7 +27,7 @@ class IGeoSvc;
  *
  */
 
-class ConstNoiseTool : public extends<AlgTool, INoiseConstTool> {
+class ConstNoiseTool : public extends<AlgTool, k4::recCalo::INoiseConstTool> {
 public:
   using base_class::base_class;
   virtual ~ConstNoiseTool() = default;
@@ -35,12 +35,14 @@ public:
   virtual StatusCode initialize() override final;
 
   /// Find the appropriate noise constant from the histogram
-  virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
-  virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
+  virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
+  virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
+  virtual std::pair<double, double>
+  getNoisePerCell(CellID aCellID) const override final;
 
 private:
-  std::map<uint, double> m_systemNoiseRMSMap;
-  std::map<uint, double> m_systemNoiseOffsetMap;
+  // rms, offset
+  std::vector<std::pair<double, double> > m_noise;
 
   /// List of subdetector names (they must match what is defined in DectDimension)
   Gaudi::Property<std::vector<std::string>> m_detectors{
@@ -73,6 +75,9 @@ private:
 
   /// Decoder
   std::unique_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;
+
+  /// Index of system field.
+  size_t m_systemIndex;
 };
 
 #endif /* RECCALORIMETER_CONSTNOISETOOL_H */

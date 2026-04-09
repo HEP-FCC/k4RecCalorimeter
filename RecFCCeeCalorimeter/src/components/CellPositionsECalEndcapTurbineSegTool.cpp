@@ -1,4 +1,5 @@
 #include "CellPositionsECalEndcapTurbineSegTool.h"
+#include "k4FWCore/GaudiChecks.h"
 
 // EDM
 #include "edm4hep/CalorimeterHitCollection.h"
@@ -7,22 +8,9 @@
 
 DECLARE_COMPONENT(CellPositionsECalEndcapTurbineSegTool)
 
-CellPositionsECalEndcapTurbineSegTool::CellPositionsECalEndcapTurbineSegTool(const std::string& type,
-                                                                             const std::string& name,
-                                                                             const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
 
   // get segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(
@@ -48,7 +36,7 @@ StatusCode CellPositionsECalEndcapTurbineSegTool::initialize() {
     error() << "Readout does not contain field: 'layer'" << endmsg;
   }
 
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsECalEndcapTurbineSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -79,10 +67,7 @@ void CellPositionsECalEndcapTurbineSegTool::getPositions(const edm4hep::Calorime
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64_t& aCellId) const {
-
-  dd4hep::Position outSeg;
-  double radius;
+dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const CellID aCellId) const {
 
   // find position of volume corresponding to first of group of merged cells
   debug() << "cellID: " << aCellId << endmsg;
@@ -99,7 +84,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
           << outGlobal.Z() / dd4hep::mm << endmsg;
 
   // get R, phi of volume
-  radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
+  double radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
   double phi = std::atan2(outGlobal.Y(), outGlobal.X());
   debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
 
@@ -108,6 +93,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
           << inSeg.z() / dd4hep::mm << endmsg;
+  dd4hep::Position outSeg;
   outSeg = inSeg;
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
           << outSeg.z() / dd4hep::mm << "\n"
@@ -116,11 +102,6 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const uint64
   return outSeg;
 }
 
-int CellPositionsECalEndcapTurbineSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsECalEndcapTurbineSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }
-
-StatusCode CellPositionsECalEndcapTurbineSegTool::finalize() { return AlgTool::finalize(); }

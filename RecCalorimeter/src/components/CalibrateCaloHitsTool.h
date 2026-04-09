@@ -4,8 +4,8 @@
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
 
-// k4FWCore
-#include "k4Interface/ICalibrateCaloHitsTool.h"
+// Interface
+#include "RecCaloCommon/ICalibrateCaloHitsTool.h"
 
 #include <vector>
 
@@ -21,18 +21,16 @@
  *  @date   2016-09
  */
 
-class CalibrateCaloHitsTool : public extends<AlgTool, ICalibrateCaloHitsTool> {
+class CalibrateCaloHitsTool : public extends<AlgTool, k4::recCalo::ICalibrateCaloHitsTool> {
 public:
   using base_class::base_class;
   ~CalibrateCaloHitsTool() = default;
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const final;
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) final
-  { const auto* cthis = this;  cthis->calibrate(aHits); }
-  virtual void calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const final;
+  virtual void calibrate(std::unordered_map<CellID, double>& aHits) const override final;
+  virtual void calibrate(std::vector<std::pair<CellID, double> >& aHits) const override final;
 
 private:
   /// Value of 1/sampling fraction

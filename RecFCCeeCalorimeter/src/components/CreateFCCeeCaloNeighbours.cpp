@@ -28,8 +28,6 @@ CreateFCCeeCaloNeighbours::CreateFCCeeCaloNeighbours(const std::string& aName, I
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCCeeCaloNeighbours::~CreateFCCeeCaloNeighbours() {}
-
 StatusCode CreateFCCeeCaloNeighbours::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -67,9 +65,17 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
   dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* ecalBarrelPhiThetaSegmentation = nullptr;
   dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo* ecalEndcapTurbineSegmentation = nullptr;
 
+  // precalculate lookup tables for ECAL barrel-endcap connection
+  if (m_connectECal) {
+    info() << "Will connect ECal barrel and endcap cells. Precalculating lookup tables needed for connection" << endmsg;
+    StatusCode st = initialize_lookups();
+    if (st != StatusCode::SUCCESS)
+      return st;
+  }
+
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readout exists
-    debug() << "Readout: " << m_readoutNamesSegmented[iSys] << endmsg;
+    info() << "Creating neighbours for readout: " << m_readoutNamesSegmented[iSys] << endmsg;
     if (m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]) ==
         m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutNamesSegmented[iSys] << ">> does not exist." << endmsg;
@@ -85,7 +91,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
     }
 
     std::string segmentationType = aSegmentation->type();
-    debug() << "Segmentation type : " << segmentationType << endmsg;
+    info() << "Segmentation: type " << segmentationType << endmsg;
 
     dd4hep::DDSegmentation::GridTheta_k4geo* segmentation = nullptr;
     dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo* phiThetaSegmentation = nullptr;
@@ -118,11 +124,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         (ecalEndcapTurbineSegmentation == nullptr)) {
       error() << "Unable to cast segmentation pointer!!!!" << endmsg;
       return StatusCode::FAILURE;
-    }
-
-    if ((segmentationType != "FCCSWHCalPhiRow_k4geo") && (segmentationType != "FCCSWEndcapTurbine_k4geo")) {
-      info() << "Segmentation: size in Theta " << segmentation->gridSizeTheta() << endmsg;
-      info() << "Segmentation: offset in Theta " << segmentation->offsetTheta() << endmsg;
     }
 
     if ((segmentationType != "FCCSWHCalPhiRow_k4geo") && (segmentationType != "FCCSWEndcapTurbine_k4geo")) {
@@ -204,12 +205,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
           return StatusCode::FAILURE;
         }
       }
-    }
-
-    if (m_connectECal) {
-      StatusCode st = initialize_lookups();
-      if (st != StatusCode::SUCCESS)
-        return st;
     }
 
     // Loop over all cells in the calorimeter and retrieve existing cellIDs and find neihbours
@@ -461,6 +456,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
               decoder->set(cellId, "phi", iphi);
               decoder->set(cellId, "row",
                            irow + numCells[2]); // start from the minimum existing cell index in this layer
+              unsigned int pseudoLayer = hcalPhiRowSegmentation->definePseudoLayer(cellId);
+              decoder->set(cellId, "pseudoLayer", pseudoLayer);
               uint64_t id = cellId;
               map.insert(std::pair<uint64_t, std::vector<uint64_t>>(id, hcalPhiRowSegmentation->neighbours(id)));
             }
@@ -479,6 +476,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
               dd4hep::DDSegmentation::CellID cellId = volumeId;
               decoder->set(cellId, "phi", iphi);
               decoder->set(cellId, "row", irow + numCells[2]); // start from the minimum cell index in this layer
+              unsigned int pseudoLayer = hcalPhiRowSegmentation->definePseudoLayer(cellId);
+              decoder->set(cellId, "pseudoLayer", pseudoLayer);
               uint64_t id = cellId;
               map.insert(std::pair<uint64_t, std::vector<uint64_t>>(id, hcalPhiRowSegmentation->neighbours(id)));
             }
@@ -539,7 +538,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 
             if (((itheta == extrema[2].first) || (itheta == extrema[2].second)) && m_connectECal) {
               // find barrel cell position
-
               double eCalBarrelTheta = m_EMB_theta_lookup[ilayer];
               if (itheta == extrema[2].second)
                 eCalBarrelTheta = TMath::Pi() - eCalBarrelTheta;
@@ -574,7 +572,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   // Loop over segmentation cells
                   dd4hep::DDSegmentation::CellID endcapCellId = 0;
 		
-                  (*endcapDecoder)[m_fieldNamesSegmented[0]].set(endcapCellId, m_fieldValuesSegmented[0]);
                   (*endcapDecoder)[m_fieldNamesSegmented[iSys2]].set(endcapCellId, m_ecalEndcapSysId);
                   (*endcapDecoder)["z"].set(endcapCellId, 0);
                   (*endcapDecoder)["wheel"].set(endcapCellId, iWheel);
@@ -860,25 +857,21 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
         }
       }
     }
-    info() << "total number of cells:  " << map.size() << endmsg;
+    info() << "total number of cells in map so far:  " << map.size() << endmsg;
   }
 
   //////////////////////////////////////////////////
   ///   connection HCAL Barrel + HCAL Endcap     ///
   //////////////////////////////////////////////////
-  if ((hcalBarrelSegmentation || hcalEndcapSegmentation) &&
-      (hcalBarrelPhiRowSegmentation || hcalEndcapPhiRowSegmentation)) {
-    error() << "Please provide either PhiTheta or PhiRow segmentation readout for HCal..." << endmsg;
-    return StatusCode::FAILURE;
-  }
-  // FCCSWHCalPhiTheta segmentation
-  else if (m_connectHCal && hcalBarrelSegmentation && hcalEndcapSegmentation) {
-    debug() << "Linking the HCal Barrel and HCal Endcap" << endmsg;
+  // FCCSWHCalPhiTheta segmentation for Barrel while FCCSWHCalPhiTheta/FCCSWHCalPhiRow for Endcap
+  if (m_connectHCal && hcalBarrelSegmentation && (hcalEndcapSegmentation || hcalEndcapPhiRowSegmentation)) {
+    info() << "Linking the HCal Barrel and HCal Endcap" << endmsg;
 
     // Get the part1 and part2 endcap layer indexes that will be used to connect Barrel cells to the Endcap cells
     std::vector<int> minLayerIdEndcap = {0, 0};
     std::vector<int> maxLayerIdEndcap = {0, 0};
-    std::vector<std::pair<uint, uint>> minMaxLayerId(hcalEndcapSegmentation->getMinMaxLayerId());
+    std::vector<std::pair<uint, uint>> minMaxLayerId((hcalEndcapSegmentation) ? hcalEndcapSegmentation->getMinMaxLayerId() :
+                                                                                hcalEndcapPhiRowSegmentation->getMinMaxLayerId());
     if (minMaxLayerId.empty()) {
       error() << "hcalEndcap segmentation is not configured correctly, cannot link Endcap and Barrel!" << endmsg;
       return StatusCode::FAILURE;
@@ -938,14 +931,27 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
           (*decoderHCalEndcap)[m_activeFieldNamesSegmented[hcalEndcapId]].set(endcapCellID, part1LayerId);
 
           // get cell indexes in the given endcap layer
-          std::vector<int> endcapThetaBins(hcalEndcapSegmentation->thetaBins(part1LayerId));
+          std::vector<int> endcapCellIndexes( (hcalEndcapSegmentation) ? hcalEndcapSegmentation->thetaBins(part1LayerId) :
+                                                                         hcalEndcapPhiRowSegmentation->cellIndexes(part1LayerId) );
 
           // consider all cells in the first layer of part1 endcap
           if (part1LayerId == minLayerIdEndcap[0]) {
-            for (auto bin : endcapThetaBins) {
-              decoderHCalEndcap->set(endcapCellID, "theta", bin);
+            for (auto idx : endcapCellIndexes) {
+              if(hcalEndcapSegmentation) // phi-theta segmentation
+              {
+                decoderHCalEndcap->set(endcapCellID, "theta", idx);
+              }
+              else // phi-row segmentation
+              {
+                decoderHCalEndcap->set(endcapCellID, "row", idx);
+                // set the pseudo-layer bit field if the phi-row segmentation is used for the Endcap
+                unsigned int pseudoLayer = hcalEndcapPhiRowSegmentation->definePseudoLayer(endcapCellID);
+                decoderHCalEndcap->set(endcapCellID, "pseudoLayer", pseudoLayer);
+              }
+
               // get thetaMin and thetaMax of the endcap cell
-              std::array<double, 2> cTheta = hcalEndcapSegmentation->cellTheta(endcapCellID);
+              std::array<double, 2> cTheta = (hcalEndcapSegmentation) ? hcalEndcapSegmentation->cellTheta(endcapCellID) :
+                                                                        hcalEndcapPhiRowSegmentation->cellTheta(endcapCellID);
               // add in the neighbours list if it overlaps with first barrel cell in theta
               if ((cTheta[0] <= minCellIdTheta[0] && cTheta[1] > minCellIdTheta[0]) ||
                   (cTheta[0] > minCellIdTheta[0] && cTheta[0] < minCellIdTheta[1])) {
@@ -959,18 +965,18 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 map[barrelCellID[0]].push_back(
                     endcapCellID); // add to the neighbours list of the first cell in the barrel layer
                 map[endcapCellID].push_back(
-                    barrelCellID[0]); // add the last barrel cell to the list of the endcap cell neighbours
+                    barrelCellID[0]); // add the first barrel cell to the list of the endcap cell neighbours
                 // next: if the current is the last bin (id = phiBins - 1) then the next is the first bin (id = 0) else
                 // current + 1
                 (*decoderHCalEndcap)["phi"].set(endcapCellID, (iphi == (nPhiBins - 1)) ? 0 : (iphi + 1));
                 map[barrelCellID[0]].push_back(
                     endcapCellID); // add to the neighbours list of the first cell in the barrel layer
                 map[endcapCellID].push_back(
-                    barrelCellID[0]); // add the last barrel cell to the list of the endcap cell neighbours
+                    barrelCellID[0]); // add the first barrel cell to the list of the endcap cell neighbours
                 // restore back the iphi value
                 (*decoderHCalEndcap)["phi"].set(endcapCellID, iphi);
               }
-              // add in the neighbours list if it overlaps with first barrel cell in theta
+              // add in the neighbours list if it overlaps with the last barrel cell in theta
               if ((cTheta[0] <= maxCellIdTheta[0] && cTheta[1] > maxCellIdTheta[0]) ||
                   (cTheta[0] > maxCellIdTheta[0] && cTheta[0] < maxCellIdTheta[1])) {
                 map[barrelCellID[1]].push_back(
@@ -997,13 +1003,26 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
             }
           } else // consider only the first cell
           {
-            std::array<double, 2> cTheta;
-            decoderHCalEndcap->set(
-                endcapCellID, "theta",
-                endcapThetaBins[endcapThetaBins.size() / 2 -
-                                1]); // first cell (highest theta bin) in the positive-z part endcap layer
-            // add in the neighbours list if it overlaps with first barrel cell in theta
-            cTheta = hcalEndcapSegmentation->cellTheta(endcapCellID); // get thetaMin and thetaMax of the endcap cell
+            // consider the the first cell (highest theta) from the positive-z part endcap layer
+            // to be added in the neighbours list of the first barrel cell (lowest theta bin)
+            if(hcalEndcapSegmentation) // phi-theta segmentation
+            {
+              decoderHCalEndcap->set(endcapCellID, "theta",
+                endcapCellIndexes[endcapCellIndexes.size() / 2 - 1]);
+            }
+            else // phi-row segmentation
+            {
+              decoderHCalEndcap->set(endcapCellID, "row",
+                endcapCellIndexes[0]);
+              // set the pseudo-layer bit field if the phi-row segmentation is used for the Endcap
+              unsigned int pseudoLayer = hcalEndcapPhiRowSegmentation->definePseudoLayer(endcapCellID);
+              decoderHCalEndcap->set(endcapCellID, "pseudoLayer", pseudoLayer);
+            }
+
+            // get thetaMin and thetaMax of the endcap cell
+            std::array<double, 2> cTheta = (hcalEndcapSegmentation) ? hcalEndcapSegmentation->cellTheta(endcapCellID) :
+                                                                      hcalEndcapPhiRowSegmentation->cellTheta(endcapCellID);
+            // add in the neighbours list if it overlaps in theta with the first barrel cell (lowest theta bin)
             if ((cTheta[0] <= minCellIdTheta[0] && cTheta[1] > minCellIdTheta[0]) ||
                 (cTheta[0] > minCellIdTheta[0] && cTheta[0] < minCellIdTheta[1])) {
               map[barrelCellID[0]].push_back(
@@ -1027,11 +1046,27 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
               // restore back the iphi value
               (*decoderHCalEndcap)["phi"].set(endcapCellID, iphi);
             }
-            decoderHCalEndcap->set(endcapCellID, "theta",
-                                   endcapThetaBins[endcapThetaBins.size() / 2]); // first cell (lowest theta bin) in the
-                                                                                 // negative-z part endcap layer
-            // add in the neighbours list if it overlaps with the last barrel cell in theta
-            cTheta = hcalEndcapSegmentation->cellTheta(endcapCellID); // get thetaMin and thetaMax of the endcap cell
+
+            // consider the the first cell (lowest theta) from the negative-z part endcap layer
+            // to be added in the neighbours list of the last barrel cell (highest theta bin)
+            if(hcalEndcapSegmentation) // phi-theta segmentation
+            {
+              decoderHCalEndcap->set(endcapCellID, "theta",
+                endcapCellIndexes[endcapCellIndexes.size() / 2]);
+            }
+            else // phi-row segmentation
+            {
+              decoderHCalEndcap->set(endcapCellID, "row",
+                endcapCellIndexes[endcapCellIndexes.size() / 2]);
+              // set the pseudo-layer bit field if the phi-row segmentation is used for the Endcap
+              unsigned int pseudoLayer = hcalEndcapPhiRowSegmentation->definePseudoLayer(endcapCellID);
+              decoderHCalEndcap->set(endcapCellID, "pseudoLayer", pseudoLayer);
+            }
+
+            // get thetaMin and thetaMax of the endcap cell
+            cTheta = (hcalEndcapSegmentation) ? hcalEndcapSegmentation->cellTheta(endcapCellID) :
+                                                                      hcalEndcapPhiRowSegmentation->cellTheta(endcapCellID);
+            // add in the neighbours list if it overlaps in theta with the last barrel cell (highest theta bin)
             if ((cTheta[0] <= maxCellIdTheta[0] && cTheta[1] > maxCellIdTheta[0]) ||
                 (cTheta[0] > maxCellIdTheta[0] && cTheta[0] < maxCellIdTheta[1])) {
               map[barrelCellID[1]].push_back(
@@ -1065,12 +1100,24 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
           (*decoderHCalEndcap)[m_activeFieldNamesSegmented[hcalEndcapId]].set(endcapCellID, part2LayerId);
 
           // get cell indexes in the given endcap layer
-          std::vector<int> endcapThetaBins(hcalEndcapSegmentation->thetaBins(part2LayerId));
+          std::vector<int> endcapCellIndexes( (hcalEndcapSegmentation) ? hcalEndcapSegmentation->thetaBins(part2LayerId) :
+                                                                         hcalEndcapPhiRowSegmentation->cellIndexes(part2LayerId) );
 
-          std::array<double, 2> cTheta;
-          decoderHCalEndcap->set(endcapCellID, "theta",
-                                 endcapThetaBins[endcapThetaBins.size() / 2 - 1]); // first cell (highest theta bin) in
-                                                                                   // the positive-z part endcap layer
+          // consider the the first cell (highest theta) from the positive-z part endcap layer
+          // to be added in the neighbours list of the first barrel cell (lowest theta bin)
+          if(hcalEndcapSegmentation) // phi-theta segmentation
+          {
+            decoderHCalEndcap->set(endcapCellID, "theta",
+              endcapCellIndexes[endcapCellIndexes.size() / 2 - 1]);
+          }
+          else // phi-row segmentation
+          {
+            decoderHCalEndcap->set(endcapCellID, "row",
+              endcapCellIndexes[0]);
+            // set the pseudo-layer bit field if the phi-row segmentation is used for the Endcap
+            unsigned int pseudoLayer = hcalEndcapPhiRowSegmentation->definePseudoLayer(endcapCellID);
+            decoderHCalEndcap->set(endcapCellID, "pseudoLayer", pseudoLayer);
+          }
 
           // we do not want to add the part2 layer cells that have part1 cells in the neighbours list
           // try to find if there is a part1 cell in the list of neighbours
@@ -1086,8 +1133,10 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
             }
           }
 
-          // add in the neighbours list if it overlaps with first barrel cell in theta
-          cTheta = hcalEndcapSegmentation->cellTheta(endcapCellID); // get thetaMin and thetaMax of the endcap cell
+          // get thetaMin and thetaMax of the endcap cell
+          std::array<double, 2> cTheta = (hcalEndcapSegmentation) ? hcalEndcapSegmentation->cellTheta(endcapCellID) :
+                                                                    hcalEndcapPhiRowSegmentation->cellTheta(endcapCellID);
+          // add in the neighbours list if it overlaps in theta with the first barrel cell (lowest theta bin)
           if ((cTheta[0] <= minCellIdTheta[0] && cTheta[1] > minCellIdTheta[0]) ||
               (cTheta[0] > minCellIdTheta[0] && cTheta[0] < minCellIdTheta[1])) {
             map[barrelCellID[0]].push_back(
@@ -1111,11 +1160,27 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
             // restore back the iphi value
             (*decoderHCalEndcap)["phi"].set(endcapCellID, iphi);
           }
-          decoderHCalEndcap->set(endcapCellID, "theta",
-                                 endcapThetaBins[endcapThetaBins.size() / 2]); // first cell (lowest theta bin) in the
-                                                                               // negative-z part endcap layer
-          // add in the neighbours list if it overlaps with the last barrel cell in theta
-          cTheta = hcalEndcapSegmentation->cellTheta(endcapCellID); // get thetaMin and thetaMax of the endcap cell
+
+          // consider the the first cell (lowest theta) from the negative-z part endcap layer
+          // to be added in the neighbours list of the last barrel cell (highest theta bin)
+          if(hcalEndcapSegmentation) // phi-theta segmentation
+          {
+            decoderHCalEndcap->set(endcapCellID, "theta",
+              endcapCellIndexes[endcapCellIndexes.size() / 2]);
+          }
+          else // phi-row segmentation
+          {
+            decoderHCalEndcap->set(endcapCellID, "row",
+              endcapCellIndexes[endcapCellIndexes.size() / 2]);
+              // set the pseudo-layer bit field if the phi-row segmentation is used for the Endcap
+              unsigned int pseudoLayer = hcalEndcapPhiRowSegmentation->definePseudoLayer(endcapCellID);
+              decoderHCalEndcap->set(endcapCellID, "pseudoLayer", pseudoLayer);
+          }
+
+          // get thetaMin and thetaMax of the endcap cell
+          cTheta = (hcalEndcapSegmentation) ? hcalEndcapSegmentation->cellTheta(endcapCellID) :
+                                                                      hcalEndcapPhiRowSegmentation->cellTheta(endcapCellID);
+          // add in the neighbours list if it overlaps in theta with the last barrel cell (highest theta bin)
           if ((cTheta[0] <= maxCellIdTheta[0] && cTheta[1] > maxCellIdTheta[0]) ||
               (cTheta[0] > maxCellIdTheta[0] && cTheta[0] < maxCellIdTheta[1])) {
             map[barrelCellID[1]].push_back(
@@ -1153,9 +1218,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
       } // iphi loop
     } // loop over the barrel layers
   }
-  // FCCSWHCalPhiRow segmentation
+  // FCCSWHCalPhiRow segmentation for both Barrel and Endcap
   else if (m_connectHCal && hcalBarrelPhiRowSegmentation && hcalEndcapPhiRowSegmentation) {
-    debug() << "Linking the HCal Barrel and HCal Endcap" << endmsg;
+    info() << "Linking the HCal Barrel and HCal Endcap" << endmsg;
 
     // Get the part1 and part2 endcap layer indexes that will be used to connect Barrel cells to the Endcap cells
     std::vector<int> minLayerIdEndcap = {0, 0};
@@ -1435,8 +1500,16 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 << " neighbours added after connecting Barrel+Endcap." << endmsg;
       } // iphi loop
     } // loop over the barrel layers
-  } else if (m_connectHCal)
-    error() << "Unable to connect the HCal Barrel and HCal Endcap! segmentations are not handled correctly." << endmsg;
+  }
+  else if (m_connectHCal)
+  {
+    error() << "Unable to connect the HCal Barrel and HCal Endcap! segmentations are not handled correctly. -->\n"
+            << "Please provide one of the following:\n"
+            << "  PhiTheta segmentation readout for both HCal Barrel and HCal Endcap;\n"
+            << "  PhiRow segmentation readout for both HCal Barrel and HCal Endcap;\n"
+            << "  PhiTheta segmentation readout for HCal Barrel while PhiRow segmentation for HCal Endcap." << endmsg;
+    return StatusCode::FAILURE;
+  }
 
   //////////////////////////////////////////////////
   ///      BARREL: connection ECAL + HCAL        ///
@@ -1445,6 +1518,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
   std::set<dd4hep::DDSegmentation::CellID> linkedCells;
 
   if (m_connectBarrels) {
+    info() << "Linking the ECal and HCal Barrels" << endmsg;
     // first check if ECAL barrel and HCal barrel are configured
     if (decoderECalBarrel == nullptr || decoderHCalBarrel == nullptr) {
       error() << "ECAL barrel and/or HCal barrel are not configured correctly, cannot link barrels!" << endmsg;
@@ -1761,7 +1835,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
 
 StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
-  // initialize lookups for endcap cells
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // get segmentation
     dd4hep::DDSegmentation::Segmentation* aSegmentation =
@@ -1773,6 +1846,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
     std::string segmentationType = aSegmentation->type();
     if (segmentationType == "FCCSWEndcapTurbine_k4geo") {
+      // initialize lookups for endcap cells
+      info() << "Creating lookup tables for ECal endcap segmentation of type " << segmentationType << endmsg;
       auto ecalEndcapTurbineSegmentation =
           dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(aSegmentation);
       auto endcapDecoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
@@ -1786,88 +1861,80 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
       unsigned numECModules = ecalEndcapTurbineSegmentation->nModules(iWheel);
       unsigned numECCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
+      info() << "wheel = " << iWheel << ", modules = " << numECModules << ", rho cells = " << numECCellsRho << endmsg;
 
-      m_EMEC_h_module_vs_phi_pos.reserve(numECModules);
-      m_EMEC_h_module_vs_phi_neg.reserve(numECModules);
+      // GM: dont think this is actually needed since we do push_back later..
+      m_EMEC_h_module_vs_phi_pos.reserve(numECCellsRho);
+      m_EMEC_h_module_vs_phi_neg.reserve(numECCellsRho);
 
-      m_EMEC_pos_phi_lookup.reserve(numECModules);
-      m_EMEC_neg_phi_lookup.reserve(numECModules);
-      // start by sizing the vectors appropriately
-      for (unsigned iModule = 0; iModule < numECModules; iModule++) {
-        m_EMEC_pos_phi_lookup[iModule].reserve(numECCellsRho);
-        m_EMEC_neg_phi_lookup[iModule].reserve(numECCellsRho);
-      }
+      // unused vectors
+      //m_EMEC_pos_phi_lookup.reserve(numECCellsRho);
+      //m_EMEC_neg_phi_lookup.reserve(numECCellsRho);
+
+      // start sizing the vectors appropriately
+      //for (unsigned iECRho = 0; iECRhoe < numECCellsRho; iECRho++) {
+      //  m_EMEC_pos_phi_lookup[iECRho].reserve(numECModules);
+      //  m_EMEC_neg_phi_lookup[iECRho].reserve(numECModules);
+      //}
 
       // Loop over segmentation cells
       unsigned iECz = 0;
 
       dd4hep::DDSegmentation::CellID endcapCellId = 0;
 
-      (*endcapDecoder)[m_fieldNamesSegmented[0]].set(endcapCellId, m_fieldValuesSegmented[0]);
-
-      (*endcapDecoder)["system"].set(endcapCellId, m_ecalEndcapSysId);
+      (*endcapDecoder)[m_fieldNamesSegmented[iSys]].set(endcapCellId, m_fieldValuesSegmented[iSys]);
       (*endcapDecoder)["z"].set(endcapCellId, iECz);
       (*endcapDecoder)["wheel"].set(endcapCellId, iWheel);
+
       for (int iSide = -1; iSide < 2; iSide += 2) {
         (*endcapDecoder)["side"].set(endcapCellId, iSide);
 
         for (unsigned iECrho = 0; iECrho < numECCellsRho; iECrho++) {
-          std::string histname_pos = "h_modulevphi_pos_" + std::to_string(iECrho);
-          std::string histname_neg = "h_modulevphi_neg_" + std::to_string(iECrho);
-          TH1F* h_pos = new TH1F(histname_pos.c_str(), histname_pos.c_str(), numECModules, -TMath::Pi(), TMath::Pi());
-          TH1F* h_neg = new TH1F(histname_neg.c_str(), histname_neg.c_str(), numECModules, -TMath::Pi(), TMath::Pi());
-          m_EMEC_h_module_vs_phi_pos.push_back(h_neg);
-          for (unsigned iECmodule = 0; iECmodule < numECModules; iECmodule++) {
+          TH1F* h_neg = 0;
+          TH1F* h_pos = 0;
+          if (iSide ==-1) {
+            std::string histname_neg = "h_modulevphi_neg_" + std::to_string(iECrho);
+            h_neg = new TH1F(histname_neg.c_str(), histname_neg.c_str(), numECModules, -TMath::Pi(), TMath::Pi());
+            m_EMEC_h_module_vs_phi_neg.push_back(h_neg);
+          }
+          else {
+            std::string histname_pos = "h_modulevphi_pos_" + std::to_string(iECrho);
+            h_pos = new TH1F(histname_pos.c_str(), histname_pos.c_str(), numECModules, -TMath::Pi(), TMath::Pi());
+            m_EMEC_h_module_vs_phi_pos.push_back(h_pos);
+          }
+          for (unsigned int iECmodule = 0; iECmodule < numECModules; iECmodule++) {
             (*endcapDecoder)["module"].set(endcapCellId, iECmodule);
             (*endcapDecoder)["rho"].set(endcapCellId, iECrho);
             (*endcapDecoder)[m_activeFieldNamesSegmented[iSys]].set(endcapCellId, ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));
 
             double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(),
                                             ecalEndcapTurbineSegmentation->position(endcapCellId).x());
-
             double endcapRho = ecalEndcapTurbineSegmentation->rho(endcapCellId);
-
-            double endcapTheta = TMath::ATan2(endcapRho, ecalEndcapTurbineSegmentation->z(endcapCellId));
+            double endcapZ = ecalEndcapTurbineSegmentation->z(endcapCellId);
+            double endcapTheta = TMath::ATan2(endcapRho, endcapZ);
 
             if (iSide == -1) {
-              m_EMEC_neg_phi_lookup[iECrho].push_back(endcapPhi);
+              //m_EMEC_neg_phi_lookup[iECrho].push_back(endcapPhi);
               h_neg->SetBinContent(h_neg->FindBin(endcapPhi), iECmodule);
             } else {
-              m_EMEC_pos_phi_lookup[iECrho].push_back(endcapPhi);
+              //m_EMEC_pos_phi_lookup[iECrho].push_back(endcapPhi);
               h_pos->SetBinContent(h_pos->FindBin(endcapPhi), iECmodule);
             }
             if (iECmodule == 0 && iSide == 1)
               m_EMEC_theta_lookup.push_back(endcapTheta);
           }
-          if (iSide == 1) {
-            m_EMEC_h_module_vs_phi_pos.push_back(h_pos);
-          }
-          if (iSide == -1) {
-            m_EMEC_h_module_vs_phi_neg.push_back(h_neg);
-          }
         }
       }
     }
-  }
 
-  // initialize barrel lookup tables
-  for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
-    // get segmentation
-    dd4hep::DDSegmentation::Segmentation* aSegmentation =
-        m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation();
-    if (aSegmentation == nullptr) {
-      error() << "Segmentation does not exist." << endmsg;
-      return StatusCode::FAILURE;
-    }
-
-    std::string segmentationType = aSegmentation->type();
-    if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
+    else if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
+      // initialize lookups for barrel cells
+      info() << "Creating lookup tables for ECal barrel segmentation of type " << segmentationType << endmsg;
       auto moduleThetaSegmentation =
           dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
       auto barrelDecoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
       m_geoSvc->getDetector()->readouts().find(m_readoutNamesSegmented[iSys]);
       // Loop over all relevant cells in the barrel and find position
-
       unsigned nBarrelLayers = m_activeVolumesNumbersSegmented[iSys];
       m_EMB_phi_lookup.reserve(nBarrelLayers);
       auto numCells = det::utils::numberOfCells(m_ecalBarrelSysId, *moduleThetaSegmentation);
@@ -1915,5 +1982,3 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
   debug() << "Lookup test " << m_EMEC_theta_lookup[9] << endmsg;
   return StatusCode::SUCCESS;
 }
-
-StatusCode CreateFCCeeCaloNeighbours::finalize() { return Service::finalize(); }

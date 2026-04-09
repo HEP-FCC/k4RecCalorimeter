@@ -50,7 +50,7 @@ StatusCode TopoCaloNoisyCells::initialize() {
   return StatusCode::SUCCESS;
 }
 
-double TopoCaloNoisyCells::getNoiseRMSPerCell(uint64_t aCellId) const
+double TopoCaloNoisyCells::getNoiseRMSPerCell(CellID aCellId) const
 {
   auto it = m_map.find(aCellId);
   if (it != m_map.end()) {
@@ -60,11 +60,21 @@ double TopoCaloNoisyCells::getNoiseRMSPerCell(uint64_t aCellId) const
 }
 
 
-double TopoCaloNoisyCells::getNoiseOffsetPerCell(uint64_t aCellId) const
+double TopoCaloNoisyCells::getNoiseOffsetPerCell(CellID aCellId) const
 {
   auto it = m_map.find(aCellId);
   if (it != m_map.end()) {
     return it->second.second;
   }
   return 0;
+}
+
+std::pair<double,double>
+TopoCaloNoisyCells::getNoisePerCell(CellID aCellId) const
+{
+  auto it = m_map.find(aCellId);
+  if (it != m_map.end()) {
+    return it->second;
+  }
+  return std::make_pair(0., 0.);
 }

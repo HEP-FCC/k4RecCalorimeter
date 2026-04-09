@@ -197,10 +197,9 @@ def prepare_double_canvas(name, title, factor = 1):
 
 def prepare_divided_canvas(name, title, N):
    c = TCanvas(name, title, 1200, 900)
-   print N
    c.Divide(int(ceil(sqrt(N))), int(ceil(N / ceil(sqrt(N)))))
-   print("=====> Dividing canvas into : ",N, sqrt(N),ceil(sqrt(N)), N / ceil(sqrt(N)), ceil(N / ceil(sqrt(N))))
-   print("=====> Dividing canvas into : ",ceil(sqrt(N)), ceil(N / ceil(sqrt(N))) )
+   print("=====> N : ", N)
+   print("=====> Dividing canvas into : ", int(ceil(sqrt(N))), int(ceil(N / ceil(sqrt(N)))) )
    for ipad in range(1, N+1):
       pad = c.cd(ipad)
       pad.SetTopMargin(0.01)

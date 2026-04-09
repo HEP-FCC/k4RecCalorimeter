@@ -23,8 +23,6 @@ CreateFCCeeCaloNoiseLevelMap::CreateFCCeeCaloNoiseLevelMap(const std::string& aN
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCCeeCaloNoiseLevelMap::~CreateFCCeeCaloNoiseLevelMap() {}
-
 StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -188,19 +186,16 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
               decoder->set(cellId, "theta",
                            itheta + numCells[2]); // start from the minimum existing theta cell in this layer
               uint64_t id = cellId;
-              double noiseRMS = 0.;
-              double noiseOffset = 0.;
+              std::pair<double, double> noise { 0, 0 };
               if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
-                noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
-                noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
+                noise = m_ecalBarrelNoiseTool->getNoisePerCell(id);
               } else if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId) {
-                noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
-                noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
+                noise = m_hcalBarrelNoiseTool->getNoisePerCell(id);
               } else {
                 warning() << "Unexpected system value for phi-theta readout " << m_fieldValuesSegmented[iSys]
                           << ", setting noise RMS and offset to 0.0" << endmsg;
               }
-              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
             }
           }
         } else if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
@@ -229,16 +224,14 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                                itheta * moduleThetaSegmentation->mergedThetaCells(
                                             ilayer)); // start from the minimum existing theta cell in this layer
               uint64_t id = cellId;
-              double noiseRMS = 0.;
-              double noiseOffset = 0.;
+              std::pair<double, double> noise { 0, 0 };
               if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
-                noiseRMS = m_ecalBarrelNoiseTool->getNoiseRMSPerCell(id);
-                noiseOffset = m_ecalBarrelNoiseTool->getNoiseOffsetPerCell(id);
+                noise = m_ecalBarrelNoiseTool->getNoisePerCell(id);
               } else {
                 warning() << "Unexpected system value for module-theta readout " << m_fieldValuesSegmented[iSys]
                           << ", setting noise RMS and offset to 0.0" << endmsg;
               }
-              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+              map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
             }
           }
         }
@@ -297,9 +290,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 if (iSide == 1 && iWheel == 2 && imodule == 113 && irho == 19 && iz == 1) {
                   debug() << "in test cell, iLayer = " << iLayer << " and cell ID = " << id << endmsg;
                 }
-                double noiseRMS = m_ecalEndcapNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_ecalEndcapNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_ecalEndcapNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               } // end loop over z
             } // end loop over rho
           } // end loop over module
@@ -345,9 +337,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 decoder->set(cellId, "theta",
                              itheta + numCells[2]); // start from the minimum existing theta cell in this layer
                 uint64_t id = cellId;
-                double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_hcalBarrelNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               }
             }
           } // barrel
@@ -378,9 +369,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 decoder->set(cellId, "theta",
                              itheta + numCells[2]); // start from the minimum existing theta cell in this layer
                 uint64_t id = cellId;
-                double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_hcalEndcapNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               }
             }
 
@@ -398,9 +388,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 decoder->set(cellId, "theta",
                              itheta + numCells[2]); // start from the minimum existing theta cell in this layer
                 uint64_t id = cellId;
-                double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_hcalEndcapNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               }
             }
           } // Endcap
@@ -442,9 +431,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 decoder->set(cellId, "row",
                              irow + numCells[2]); // start from the minimum existing cell index in this layer
                 uint64_t id = cellId;
-                double noiseRMS = m_hcalBarrelNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_hcalBarrelNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_hcalBarrelNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               }
             }
           } // barrel
@@ -474,9 +462,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 decoder->set(cellId, "row",
                              irow + numCells[2]); // start from the minimum existing cell index in this layer
                 uint64_t id = cellId;
-                double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_hcalEndcapNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               }
             }
 
@@ -493,9 +480,8 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                 decoder->set(cellId, "phi", iphi);
                 decoder->set(cellId, "row", irow + numCells[2]); // start from the minimum cell index in this layer
                 uint64_t id = cellId;
-                double noiseRMS = m_hcalEndcapNoiseTool->getNoiseRMSPerCell(id);
-                double noiseOffset = m_hcalEndcapNoiseTool->getNoiseOffsetPerCell(id);
-                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, std::make_pair(noiseRMS, noiseOffset)));
+                std::pair<double, double> noise = m_hcalEndcapNoiseTool->getNoisePerCell(id);
+                map.insert(std::pair<uint64_t, std::pair<double, double>>(id, noise));
               }
             }
           } // Endcap
@@ -531,5 +517,3 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
 
   return StatusCode::SUCCESS;
 }
-
-StatusCode CreateFCCeeCaloNoiseLevelMap::finalize() { return Service::finalize(); }

@@ -1,29 +1,19 @@
 #include "CellPositionsHCalBarrelPhiSegTool.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include "edm4hep/CalorimeterHitCollection.h"
 
 DECLARE_COMPONENT(CellPositionsHCalBarrelPhiSegTool)
 
-CellPositionsHCalBarrelPhiSegTool::CellPositionsHCalBarrelPhiSegTool(const std::string& type, const std::string& name,
-                                                                     const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsHCalBarrelPhiSegTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+
   // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
-    error() << "There is no phi-eta segmentation!!!!" << endmsg;
+    error() << "There is no phi-eta segmentation for readout " << m_readoutName << "!!!!" << endmsg;
   }
   // Take readout bitfield decoder from GeoSvc
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
@@ -37,7 +27,7 @@ StatusCode CellPositionsHCalBarrelPhiSegTool::initialize() {
   if (iter == fields.end()) {
     error() << "Readout does not contain field: 'layer'" << endmsg;
   }
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsHCalBarrelPhiSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -65,7 +55,7 @@ void CellPositionsHCalBarrelPhiSegTool::getPositions(const edm4hep::CalorimeterH
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const CellID aCellId) const {
   // global cartesian coordinates calculated from r,phi,eta, for r=1
   dd4hep::DDSegmentation::CellID volumeId = aCellId;
   m_decoder->set(volumeId, "phi", 0);
@@ -79,16 +69,10 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const uint64_t& 
   auto inSeg = m_segmentation->position(aCellId);
   // get radius in cm
   double radius = m_radii[layer];
-  dd4hep::Position outSeg(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 
-  return outSeg;
+  return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 }
 
-int CellPositionsHCalBarrelPhiSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsHCalBarrelPhiSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }
-
-StatusCode CellPositionsHCalBarrelPhiSegTool::finalize() { return AlgTool::finalize(); }
