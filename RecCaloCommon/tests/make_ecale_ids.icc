@@ -1,0 +1,100 @@
+/**
+ * @file RecCaloCommon/tests/make_ecale_ids.cpp
+ * @author scott snyder <snyder@bnl.gov>
+ * @date Feb, 2026
+ * @brief Helper to make a list of IDs for testing.
+ *        Hardcoded to match the set of Allegro ECal endcap IDs as of this writing.
+ */
+
+
+const char* const ecale_descstr = "system:4,cryo:1,type:3,subtype:3,side:-2,wheel:3,layer:12,module:11,rho:8,z:8";
+
+
+struct ECalEndcapParams
+{
+  ECalEndcapParams (int nmodules_, int nrho_, int nrho_calib_, int nz_, int nz_calib_)
+    : nmodules (nmodules_),
+      nrho (nrho_),
+      nrho_calib (nrho_calib_),
+      nrho_per_calib (nrho / nrho_calib),
+      nz (nz_),
+      nz_calib (nz_calib_),
+      nz_per_calib (nz / nz_calib)
+  {
+  }
+  int nmodules;
+  int nrho;
+  int nrho_calib;
+  int nrho_per_calib;
+  int nz;
+  int nz_calib;
+  int nz_per_calib;
+  int layer_offset = 0;
+};
+
+
+int ecale_layer (const ECalEndcapParams& w, int irho, int iz)
+{
+  return w.layer_offset +
+    iz / w.nz_per_calib +
+    w.nz_calib * (irho / w.nrho_per_calib);
+}
+
+
+std::vector<mapkey_t> make_ecale_ids()
+{
+  std::vector<mapkey_t> ids;
+  ids.reserve (1203200);
+  dd4hep::IDDescriptor desc ("desc", ecale_descstr);
+  auto decoder = desc.decoder();
+
+  int nwheels = 3;
+  std::vector<ECalEndcapParams> params;
+  params.emplace_back ( 384, 10, 10, 10, 5);
+  params.emplace_back ( 720, 14, 14, 10, 1);
+  params.emplace_back (1360, 34, 34, 10, 1);
+  for (int iwheel = 1; iwheel < nwheels; ++iwheel) {
+    const ECalEndcapParams& prev = params[iwheel-1];
+    params[iwheel].layer_offset = prev.layer_offset + prev.nrho_calib*prev.nz_calib;
+  }
+
+  int wheel_index = decoder->index ("wheel");
+  int module_index = decoder->index ("module");
+  int rho_index = decoder->index ("rho");
+  int z_index = decoder->index ("z");
+  int layer_index = decoder->index ("layer");
+
+  int sides[2] = {-1, 1};
+  for (int iside : sides) {
+    mapkey_t id = 0;
+    decoder->set (id, "system", 5);
+    decoder->set (id, "cryo", 0);
+    decoder->set (id, "type", 0);
+    decoder->set (id, "subtype", 0);
+    decoder->set (id, "side", iside);
+    decoder->set (id, wheel_index, 0);
+    decoder->set (id, module_index, 0);
+    decoder->set (id, rho_index, 0);
+    decoder->set (id, z_index, 0);
+    decoder->set (id, layer_index, 0);
+
+    for (int iwheel = 0; iwheel < nwheels; ++iwheel) {
+      const ECalEndcapParams& w = params[iwheel];
+      decoder->set (id, wheel_index, iwheel);
+      for (int imodule = 0; imodule < w.nmodules; ++imodule) {
+        decoder->set (id, module_index, imodule);
+        for (int irho = 0; irho < w.nrho; ++irho) {
+          decoder->set (id, rho_index, irho);
+          for (int iz = 0; iz < w.nz; ++iz) {
+            decoder->set (id, z_index, iz);
+            decoder->set (id, layer_index, ecale_layer (w, irho, iz));
+            ids.push_back (id);
+          }
+        }
+      }
+    }
+  }
+
+  std::ranges::sort (ids);
+  return ids;
+}
