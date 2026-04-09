@@ -4,6 +4,7 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/EventHeaderCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
+#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 #include "edm4hep/TimeSeriesCollection.h"
 
 #include "k4FWCore/DataHandle.h"
@@ -72,6 +73,8 @@ private:
                                          "output calo collection name"};
   Gaudi::Property<std::string> m_outTimeColl{this, "outputTimeStructCollection", "DRcaloSiPMreadoutDigiWaveform_scint",
                                              "output waveform collection name"};
+  Gaudi::Property<std::string> m_outLinkColl{this, "outputHitLinkCollection", "DRcaloSiPMreadoutDigiHit_scint_link",
+                                             "output calo hit to sim calo hit link collection name"};
 
   mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_scintHits{m_hitColl, Gaudi::DataHandle::Reader,
                                                                                  this};
@@ -79,6 +82,8 @@ private:
                                                                              this};
   mutable k4FWCore::DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{m_outTimeColl, Gaudi::DataHandle::Writer,
                                                                           this};
+  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_hitLinks{m_outLinkColl, Gaudi::DataHandle::Writer,
+                                                                                    this};
 
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
 

@@ -137,6 +137,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
   const edm4hep::SimCalorimeterHitCollection* scintHits = m_scintHits.get();
   edm4hep::CalorimeterHitCollection* digiHits = m_digiHits.createAndPut();
   edm4hep::TimeSeriesCollection* waveforms = m_waveforms.createAndPut();
+  edm4hep::CaloHitSimCaloHitLinkCollection* hitLinks = m_hitLinks.createAndPut();
 
   const double yield = m_scintYield.value() / dd4hep::keV;
 
@@ -254,6 +255,9 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
 
     auto digiHit = digiHits->create();
     auto waveform = waveforms->create();
+    auto hitLink = hitLinks->create();
+    hitLink.setFrom(digiHit);
+    hitLink.setTo(scintHit);
 
     // Using only analog signal (ADC conversion is still experimental)
     const sipm::SiPMAnalogSignal anaSignal = m_sensor->signal();

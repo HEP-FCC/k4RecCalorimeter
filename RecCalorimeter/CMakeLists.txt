@@ -27,6 +27,7 @@ install(TARGETS k4RecCalorimeterPlugins
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
   COMPONENT dev)
 
+
 target_include_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_INCLUDE_DIRS})
 target_link_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_LIBRARY_DIRS})
 
@@ -34,23 +35,38 @@ include(CTest)
 
 add_test(NAME FCC_createJets
          COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_recoJets.sh
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(FCC_createJets)
 set_tests_properties(FCC_createJets PROPERTIES FIXTURES_SETUP ALLEGRO_sim_files)
 
 add_test(NAME FCC_createTruthJets
          COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_truthJets.sh
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build/Testing/Temporary
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(FCC_createTruthJets)
 set_tests_properties(FCC_createTruthJets PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME simulateSiPM
-         COMMAND sh RecCalorimeter/tests/scripts/testSiPM.sh
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+         COMMAND sh ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/scripts/testSiPM.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 set_test_env(simulateSiPM)
+
+
+gaudi_add_module(k4RecCalorimeterTests
+                 SOURCES tests/src/CaloCellConstantsSvcTestAlg.cpp
+                 LINK k4FWCore::k4FWCore
+                      k4FWCore::k4Interface
+                      Gaudi::GaudiKernel
+                      RecCaloCommon
+                      )
+add_test(NAME CaloCellConstantsSvc_test
+         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellConstantsSvc_test.py
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(CaloCellConstantsSvc_test)
+
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
 #

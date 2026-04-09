@@ -7,8 +7,8 @@
 
 #include "DDSegmentation/BitFieldCoder.h"
 
-// k4FWCore
-#include "k4Interface/ICalibrateCaloHitsTool.h"
+// Interfaces
+#include "RecCaloCommon/ICalibrateCaloHitsTool.h"
 class IGeoSvc;
 
 #include <vector>
@@ -28,25 +28,23 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class CalibrateInLayersTool : public extends<AlgTool, ICalibrateCaloHitsTool> {
+class CalibrateInLayersTool : public extends<AlgTool, k4::recCalo::ICalibrateCaloHitsTool> {
 public:
   using base_class::base_class;
   ~CalibrateInLayersTool() = default;
   /**  Initialize.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
+  virtual StatusCode initialize() override final;
 
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const final;
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) final
-  { const auto* cthis = this;  cthis->calibrate(aHits); }
-  virtual void calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const final;
+  virtual void calibrate(std::unordered_map<CellID, double>& aHits) const override final;
+  virtual void calibrate(std::vector<std::pair<CellID, double> >& aHits) const override final;
 
 private:
   /// Do calibration for a single cell.
-  void calibrateCell (uint64_t cID, double& energy) const;
+  void calibrateCell (CellID cID, double& energy) const;
 
   /// Decoder associated with this readout.
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = nullptr;
@@ -62,5 +60,7 @@ private:
   /// Values of sampling fraction
   Gaudi::Property<std::vector<double>> m_samplingFraction{
       this, "samplingFraction", {}, "Values of sampling fraction per layer"};
+
+  int m_layerIndex = -1;
 };
 #endif /* RECCALORIMETER_CALIBRATEINLAYERSTOOL_H */

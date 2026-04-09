@@ -9,7 +9,7 @@
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
@@ -29,30 +29,23 @@ namespace DDSegmentation {
  *
  */
 
-class CellPositionsHCalBarrelTool : public AlgTool, virtual public ICellPositionsTool {
+class CellPositionsHCalBarrelTool : public extends<AlgTool, k4::recCalo::ICellPositionsTool> {
 public:
-  CellPositionsHCalBarrelTool(const std::string& type, const std::string& name, const IInterface* parent);
+  using base_class::base_class;
   ~CellPositionsHCalBarrelTool() = default;
 
-  virtual StatusCode initialize() final;
-
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() override final;
 
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                            edm4hep::CalorimeterHitCollection& outputColl) const final;
-  virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                            edm4hep::CalorimeterHitCollection& outputColl) final
-  { const auto* cthis = this;  cthis->getPositions(aCells, outputColl); }
+                            edm4hep::CalorimeterHitCollection& outputColl) const override final;
 
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
+  virtual dd4hep::Position xyzPosition(const CellID aCellId) const override final;
 
-  virtual int layerId(const uint64_t& aCellId) const final;
-  virtual int layerId(const uint64_t& aCellId) final
-  { const auto* cthis = this;  return cthis->layerId(aCellId); }
+  virtual int layerId(const CellID aCellId) const override final;
 
 private:
-  /// Pointer to the geometry service
-  SmartIF<IGeoSvc> m_geoSvc;
+  /// Handle to the geometry service
+  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "BarHCal_Readout_phieta"};
   /// old segmentation used for FCChh cell dimensions

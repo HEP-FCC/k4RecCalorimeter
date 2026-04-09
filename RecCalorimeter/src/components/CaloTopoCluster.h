@@ -10,11 +10,12 @@
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
-#include "k4Interface/ICaloReadNeighboursMap.h"
-#include "k4Interface/ICalorimeterTool.h"
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseConstTool.h"
-#include "k4Interface/ITopoClusterInputTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ICaloReadNeighboursMap.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
+#include "RecCaloCommon/INoiseConstTool.h"
+#include "RecCaloCommon/ITopoClusterInputTool.h"
 
 class IGeoSvc;
 
@@ -114,27 +115,27 @@ private:
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool
-  mutable ToolHandle<ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
+  mutable ToolHandle<k4::recCalo::ITopoClusterInputTool> m_inputTool{"TopoClusterInput", this};
   /// Handle for the cells noise tool
-  mutable ToolHandle<INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
+  mutable ToolHandle<k4::recCalo::INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
-  mutable ToolHandle<ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
+  mutable ToolHandle<k4::recCalo::ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in HCal Barrel
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in Calo Discs
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHECTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHECTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsEMFwdTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsEMFwdTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs
-  mutable ToolHandle<ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHFwdTool{"CellPositionsCaloDiscsTool", this};
 
   /// no segmentation used in HCal
   Gaudi::Property<bool> m_noSegmentationHCalUsed{this, "noSegmentationHCal", true,

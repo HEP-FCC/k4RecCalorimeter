@@ -47,11 +47,11 @@ void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoiseT(C& aCells) const {
   }
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
+void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const {
+void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::vector<std::pair<CellID, double> >& aCells) const {
   addRandomCellNoiseT (aCells);
 }
 
@@ -68,11 +68,11 @@ void NoiseCaloCellsVsThetaFromFileTool::filterCellNoiseT(C& aCells) const {
   }
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
+void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
   filterCellNoiseT (aCells);
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const {
+void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::vector<std::pair<CellID, double> >& aCells) const {
   filterCellNoiseT (aCells);
 }
 
@@ -132,7 +132,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
         debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
         m_histoPileupNoiseOffset.push_back(
             *dynamic_cast<TH1F*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
-        if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
+        if (m_histoPileupNoiseOffset.at(i).GetNbinsX() < 1) {
           error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
                   << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
           return StatusCode::FAILURE;
@@ -173,7 +173,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
+double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(CellID aCellId) const {
 
   double elecNoiseRMS = 0.;
   double pileupNoiseRMS = 0.;
@@ -217,7 +217,7 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) c
   return totalNoiseRMS;
 }
 
-double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
+double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(CellID aCellId) const {
 
   if (!m_setNoiseOffset)
     return 0.;
@@ -261,4 +261,12 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId
   double totalNoiseOffset = (elecNoiseOffset + pileupNoiseOffset) * m_scaleFactor;
 
   return totalNoiseOffset;
+}
+
+
+std::pair<double, double>
+NoiseCaloCellsVsThetaFromFileTool::getNoisePerCell(CellID aCellId) const
+{
+  return std::make_pair (getNoiseRMSPerCell(aCellId),
+                         getNoiseOffsetPerCell(aCellId));
 }

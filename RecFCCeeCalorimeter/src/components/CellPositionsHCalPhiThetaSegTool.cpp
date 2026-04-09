@@ -1,4 +1,5 @@
 #include "CellPositionsHCalPhiThetaSegTool.h"
+#include "k4FWCore/GaudiChecks.h"
 
 #include "edm4hep/CalorimeterHitCollection.h"
 #include <DDRec/DetectorData.h>
@@ -7,21 +8,9 @@ using dd4hep::DetElement;
 
 DECLARE_COMPONENT(CellPositionsHCalPhiThetaSegTool)
 
-CellPositionsHCalPhiThetaSegTool::CellPositionsHCalPhiThetaSegTool(const std::string& type, const std::string& name,
-                                                                   const IInterface* parent)
-    : AlgTool(type, name, parent) {
-  declareInterface<ICellPositionsTool>(this);
-}
-
 StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
-  StatusCode sc = AlgTool::initialize();
-  if (sc.isFailure())
-    return sc;
-  m_geoSvc = service("GeoSvc");
-  if (!m_geoSvc) {
-    error() << "Unable to locate Geometry service." << endmsg;
-    return StatusCode::FAILURE;
-  }
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
 
   // get the segmentation class type
   m_segmentationType = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation()->type();
@@ -60,60 +49,64 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
     return StatusCode::FAILURE;
   }
 
-  // retrieve radii from the LayeredCalorimeterData extension
-  const dd4hep::Detector* detector = m_geoSvc->getDetector();
-  if (!detector) {
-    error() << "Unable to retrieve the detector." << endmsg;
-    return StatusCode::FAILURE;
-  }
-
-  DetElement caloDetElem = detector->detector(m_detectorName);
-  if (!caloDetElem.isValid()) {
-    error() << "Unable to retrieve the detector element: " << m_detectorName << endmsg;
-    return StatusCode::FAILURE;
-  }
-
-  dd4hep::rec::LayeredCalorimeterData* theExtension = caloDetElem.extension<dd4hep::rec::LayeredCalorimeterData>();
-  if (!theExtension) {
-    error() << "The detector element does not have the required LayeredCalorimeterData extension." << endmsg;
-    return StatusCode::FAILURE;
-  }
-
-  // Debug information to check the number of layers retrieved from the LayeredCalorimeterData extension
-  m_layersRetrieved = &(theExtension->layers);
-  debug() << "Number of layers retrieved: " << m_layersRetrieved->size() << endmsg;
-
-  if (m_detectorName == "HCalBarrel") {
-    m_radii = CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiBarrel();
-  } else if (m_detectorName == "HCalThreePartsEndcap") {
-    m_radii = CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiEndcap();
-  } else {
-    error() << "Provided detector name in m_detectorName " << m_detectorName
-            << " is not matching, expected inputs are HCalBarrel or HCalThreePartsEndcap" << endmsg;
-    return StatusCode::FAILURE;
-  }
-
-  unsigned int numLayersProvided = 0;
-
-  if (m_detectorName == "HCalThreePartsEndcap") {
-    // Check that the vector containing number of layers in each cylinder is provided
-    if (m_numLayersHCalThreeParts.empty()) {
-      error() << "The vector m_numLayersHCalThreeParts is empty." << endmsg;
+  // needed only for FCCSWGridPhiTheta_k4geo segmentation
+  if(m_segmentationType == "FCCSWGridPhiTheta_k4geo")
+  {
+    // retrieve radii from the LayeredCalorimeterData extension
+    const dd4hep::Detector* detector = m_geoSvc->getDetector();
+    if (!detector) {
+      error() << "Unable to retrieve the detector." << endmsg;
       return StatusCode::FAILURE;
     }
-    // Check that the total number of layers provided in the steering file
-    // matches the total number of layers in the geometry xml file
-    for (unsigned int i = 0; i < m_numLayersHCalThreeParts.size(); i++) {
-      numLayersProvided += m_numLayersHCalThreeParts[i];
-    }
 
-    if (m_layersRetrieved->size() != numLayersProvided) {
-      error() << "Total number of radial layers provided in m_numLayersHCalThreeParts " << numLayersProvided
-              << " does not match the numbers retrieved from the xml file " << m_layersRetrieved->size() << endmsg;
+    DetElement caloDetElem = detector->detector(m_detectorName);
+    if (!caloDetElem.isValid()) {
+      error() << "Unable to retrieve the detector element: " << m_detectorName << endmsg;
       return StatusCode::FAILURE;
     }
+
+    dd4hep::rec::LayeredCalorimeterData* theExtension = caloDetElem.extension<dd4hep::rec::LayeredCalorimeterData>();
+    if (!theExtension) {
+      error() << "The detector element does not have the required LayeredCalorimeterData extension." << endmsg;
+      return StatusCode::FAILURE;
+    }
+
+    // Debug information to check the number of layers retrieved from the LayeredCalorimeterData extension
+    m_layersRetrieved = &(theExtension->layers);
+    debug() << "Number of layers retrieved: " << m_layersRetrieved->size() << endmsg;
+
+    if (m_detectorName == "HCalBarrel") {
+      m_radii = CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiBarrel();
+    } else if (m_detectorName == "HCalThreePartsEndcap") {
+      m_radii = CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiEndcap();
+    } else {
+      error() << "Provided detector name in m_detectorName " << m_detectorName
+              << " is not matching, expected inputs are HCalBarrel or HCalThreePartsEndcap" << endmsg;
+      return StatusCode::FAILURE;
+    }
+
+    unsigned int numLayersProvided = 0;
+
+    if (m_detectorName == "HCalThreePartsEndcap") {
+      // Check that the vector containing number of layers in each cylinder is provided
+      if (m_numLayersHCalThreeParts.empty()) {
+        error() << "The vector m_numLayersHCalThreeParts is empty." << endmsg;
+        return StatusCode::FAILURE;
+      }
+      // Check that the total number of layers provided in the steering file
+      // matches the total number of layers in the geometry xml file
+      for (unsigned int i = 0; i < m_numLayersHCalThreeParts.size(); i++) {
+        numLayersProvided += m_numLayersHCalThreeParts[i];
+      }
+
+      if (m_layersRetrieved->size() != numLayersProvided) {
+        error() << "Total number of radial layers provided in m_numLayersHCalThreeParts " << numLayersProvided
+                << " does not match the numbers retrieved from the xml file " << m_layersRetrieved->size() << endmsg;
+        return StatusCode::FAILURE;
+      }
+    }
   }
-  return sc;
+  return StatusCode::SUCCESS;
 }
 
 void CellPositionsHCalPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHitCollection& aCells,
@@ -141,7 +134,7 @@ void CellPositionsHCalPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHi
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const CellID aCellId) const {
   // retrieve position for FCCSWHCalPhiTheta_k4geo and FCCSWHCalPhiRow_k4geo segmentation types
   if (m_segmentationType == "FCCSWHCalPhiTheta_k4geo" || m_segmentationType == "FCCSWHCalPhiRow_k4geo") {
     // get global position
@@ -177,10 +170,8 @@ dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const uint64_t& a
   return outSeg;
 }
 
-int CellPositionsHCalPhiThetaSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  layer = m_decoder->get(aCellId, "layer");
-  return layer;
+int CellPositionsHCalPhiThetaSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }
 
 // calculate layer radii from LayeredCalorimeterData extension
@@ -233,5 +224,3 @@ std::vector<double> CellPositionsHCalPhiThetaSegTool::calculateLayerRadiiEndcap(
 
   return radii;
 }
-
-StatusCode CellPositionsHCalPhiThetaSegTool::finalize() { return AlgTool::finalize(); }

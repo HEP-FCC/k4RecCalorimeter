@@ -216,7 +216,7 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
         for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
           const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
           for (const auto& hit : *coll) {
-            if(hit.id() == protoCell.id()){
+            if(hit.getCellID() == protoCell.getCellID()){
               cluster.addToHits(hit);
             }
           }
@@ -266,20 +266,25 @@ CaloTopoClusterFCCee::findSeeds(const edm4hep::CalorimeterHitCollection* allCell
 
   for (const auto& cell : *allCells) {
 
-    verbose() << "cellID   = " << cell.getCellID() << endmsg;
+    if (this->msgLevel(MSG::VERBOSE)) {
+      verbose() << "cellID   = " << cell.getCellID() << endmsg;
+    }
 
     // retrieve the noise const and offset assigned to cell
-    double offset = m_noiseTool->getNoiseOffsetPerCell(cell.getCellID());
-    double rms = m_noiseTool->getNoiseRMSPerCell(cell.getCellID());
+    auto [rms, offset] = m_noiseTool->getNoisePerCell(cell.getCellID());
     double threshold = offset + rms * m_seedSigma;
 
-    debug() << "======================================" << endmsg;
-    debug() << "noise offset    = " << offset << " GeV " << endmsg;
-    debug() << "noise rms       = " << rms << " GeV " << endmsg;
-    debug() << "seed threshold  = " << threshold << " GeV " << endmsg;
-    debug() << "======================================" << endmsg;
+    if (this->msgLevel(MSG::DEBUG)) {
+      debug() << "======================================" << endmsg;
+      debug() << "noise offset    = " << offset << " GeV " << endmsg;
+      debug() << "noise rms       = " << rms << " GeV " << endmsg;
+      debug() << "seed threshold  = " << threshold << " GeV " << endmsg;
+      debug() << "======================================" << endmsg;
+    }
     if (std::fabs(cell.getEnergy()) > threshold) {
-      debug() << "Found seed" << endmsg;
+      if (this->msgLevel(MSG::DEBUG)) {
+        debug() << "Found seed" << endmsg;
+      }
       seedCellsVec.emplace_back(cell);
     }
   }
@@ -418,8 +423,7 @@ std::vector<std::pair<uint64_t, uint32_t>> CaloTopoClusterFCCee::searchForNeighb
       bool addNeighbour = false;
       int cellType = 2;
       // retrieve the cell noise level [GeV]
-      double offset = m_noiseTool->getNoiseOffsetPerCell(neighbourID);
-      double rms = m_noiseTool->getNoiseRMSPerCell(neighbourID);
+      auto [rms, offset] = m_noiseTool->getNoisePerCell(neighbourID);
       double thr = offset + rms * aNumSigma;
       if (std::fabs(neighbouringCellEnergy) > thr)
         addNeighbour = true;
