@@ -25,14 +25,14 @@ class TH1F;
  *  Access noise constants from TH1F histogram (noise vs. calibration layer)
  *  createRandomCellNoise: Create random CaloHits (gaussian distribution) for the vector of cells
  *  filterCellNoise: remove cells with energy below threshold*sigma from the vector of cells
- * 
+ *
  *
  *  @author Erich Varnes
  *  @date   2026-03
  *
  */
 
-class NoiseCaloCellsTurbineEndcapFromFileTool : public extends<AlgTool, INoiseCaloCellsTool,  INoiseConstTool> {
+class NoiseCaloCellsTurbineEndcapFromFileTool : public extends<AlgTool, INoiseCaloCellsTool, INoiseConstTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsTurbineEndcapFromFileTool() = default;
@@ -46,7 +46,7 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
+  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
@@ -54,7 +54,7 @@ public:
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells)    const final;
+  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
@@ -62,14 +62,16 @@ public:
   virtual double getNoiseRMSPerCell(uint64_t aCellID) const override final;
   virtual double getNoiseOffsetPerCell(uint64_t aCellID) const override final;
   virtual std::pair<double, double> getNoisePerCell(uint64_t aCellID) const override final;
+
 private:
   template <typename C>
-  void addRandomCellNoiseT (C& aCells) const;
+  void addRandomCellNoiseT(C& aCells) const;
   template <typename C>
-  void filterCellNoiseT (C& aCells) const;
+  void filterCellNoiseT(C& aCells) const;
 
   /// Handle for tool to get cell positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool", "Handle for tool to retrieve cell positions"};
+  ToolHandle<ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
+                                                     "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
@@ -81,8 +83,7 @@ private:
   /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
   Gaudi::Property<float> m_scaleFactor{this, "scaleFactor", 1, "Factor to apply to the noise values"};
   /// Name of the detector readout (only needed to retrieve the decoder)
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalEndcapTurbine",
-                                             "Name of the detector readout"};
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalEndcapTurbine", "Name of the detector readout"};
   /// Name of active layers for sampling calorimeter
   Gaudi::Property<std::string> m_activeFieldName{this, "activeFieldName", "layer",
                                                  "Name of active layers for sampling calorimeter"};
@@ -112,14 +113,14 @@ private:
   /// Number of radial layers
   Gaudi::Property<uint> m_numWheels{this, "numWheels", 3, "Number of wheels"};
 
-  /// Histogram with pileup noise RMS (histograms binned in rho and z, array index -- wheel ) 
+  /// Histogram with pileup noise RMS (histograms binned in rho and z, array index -- wheel )
   std::vector<TH2F> m_histoPileupNoiseRMS;
   /// Histograms with electronics noise RMS (histograms binned in rho and z, array index -- wheel )
   std::vector<TH2F> m_histoElecNoiseRMS;
   /// Histograms with pileup offset (histograms binned in rho and z, array index -- wheel )
-  std::vector<TH2F>  m_histoPileupNoiseOffset;
+  std::vector<TH2F> m_histoPileupNoiseOffset;
   /// Histograms with electronics noise offset (histograms binned in rho and z, array index -- wheel )
-  std::vector<TH2F>  m_histoElecNoiseOffset;
+  std::vector<TH2F> m_histoElecNoiseOffset;
 
   /// Random Number Service
   SmartIF<IRndmGenSvc> m_randSvc;
@@ -127,7 +128,7 @@ private:
   Rndm::Numbers m_gauss;
 
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
 
   /// Decoder for ECal layers
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
