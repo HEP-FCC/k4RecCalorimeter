@@ -5,7 +5,7 @@
 #include "k4FWCore/DataHandle.h"
 
 // Interfaces
-#include "k4Interface/ICalorimeterTool.h"
+#include "RecCaloCommon/ICalorimeterTool.h"
 #include "RecCaloCommon/ITowerTool.h"
 class IGeoSvc;
 
@@ -65,7 +65,7 @@ private:
    */
   unsigned int phiNeighbour(int aIPhi) const;
   /// Handle for geometry tool (used to prepare map of all existing cellIDs for the system)
-  ToolHandle<ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
+  ToolHandle<k4::recCalo::ICalorimeterTool> m_geoTool{"TubeLayerPhiEtaCaloTool", this};
   /// Handle for the tower building tool
   mutable ToolHandle<k4::recCalo::ITowerTool> m_towerTool;
   // calorimeter towers
