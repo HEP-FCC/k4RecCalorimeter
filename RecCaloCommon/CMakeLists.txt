@@ -26,8 +26,11 @@ install(TARGETS RecCaloCommon
 )
 
 
-gaudi_add_executable(IDMap_test.exe
-  SOURCES tests/IDMap_test.cpp
-  LINK DD4hep::DDCore Boost::timer
-  TEST)
-target_include_directories(IDMap_test.exe PUBLIC include)
+if(BUILD_TESTING)
+  gaudi_add_executable(IDMap_test.exe
+    SOURCES tests/IDMap_test.cpp
+    LINK DD4hep::DDCore Boost::timer
+    TEST)
+  target_include_directories(IDMap_test.exe PUBLIC include)
+endif()
+

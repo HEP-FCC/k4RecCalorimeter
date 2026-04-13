@@ -41,7 +41,7 @@ StatusCode CalorimeterToolBase::initialize()
  * The result is sorted and unique.
  * Returns an empty vector on error.
  */
-const std::vector<uint64_t>& CalorimeterToolBase::cellIDs() const
+auto CalorimeterToolBase::cellIDs() const -> const std::vector<CellID>&
 {
   {
     std::lock_guard lock (m_mutex);
@@ -66,10 +66,10 @@ const std::vector<uint64_t>& CalorimeterToolBase::cellIDs() const
  *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
  *   return Status code.
  */
-StatusCode CalorimeterToolBase::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const
+StatusCode CalorimeterToolBase::prepareEmptyCells(std::unordered_map<CellID, double>& aCells) const
 {
   aCells.clear();
-  for (uint64_t cellId : cellIDs()) {
+  for (CellID cellId : cellIDs()) {
     aCells.emplace (cellId, 0);
   }
   if (aCells.empty()) return StatusCode::FAILURE;
