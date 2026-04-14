@@ -10,9 +10,9 @@
 // #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 
 // k4FWCore
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseCaloCellsTool.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
+#include "RecCaloCommon/INoiseCaloCellsTool.h"
+#include "RecCaloCommon/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -32,7 +32,7 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsTurbineEndcapFromFileTool : public extends<AlgTool, INoiseCaloCellsTool, INoiseConstTool> {
+class NoiseCaloCellsTurbineEndcapFromFileTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool, k4::recCalo::INoiseConstTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsTurbineEndcapFromFileTool() = default;
@@ -70,7 +70,7 @@ private:
   void filterCellNoiseT(C& aCells) const;
 
   /// Handle for tool to get cell positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
                                                      "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
