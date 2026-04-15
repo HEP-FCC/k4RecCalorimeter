@@ -34,13 +34,10 @@ void CellPositionsDummyTool::getPositions(const edm4hep::CalorimeterHitCollectio
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsDummyTool::xyzPosition(const uint64_t& /*aCellId*/) const {
-  dd4hep::Position outPos;
-  outPos.SetCoordinates(0, 0, 0);
-  return outPos;
+dd4hep::Position CellPositionsDummyTool::xyzPosition(const CellID /*aCellId*/) const {
+  return dd4hep::Position(0, 0, 0);
 }
 
-int CellPositionsDummyTool::layerId(const uint64_t& /*aCellId*/) const {
-  int layer = 0;
-  return layer;
+int CellPositionsDummyTool::layerId(const CellID /*aCellId*/) const {
+  return 0;
 }

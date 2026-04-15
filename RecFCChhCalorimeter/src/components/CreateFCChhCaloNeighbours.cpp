@@ -15,8 +15,6 @@ CreateFCChhCaloNeighbours::CreateFCChhCaloNeighbours(const std::string& aName, I
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCChhCaloNeighbours::~CreateFCChhCaloNeighbours() {}
-
 StatusCode CreateFCChhCaloNeighbours::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -66,7 +64,7 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
     segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
         m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation());
     if (segmentation == nullptr) {
-      error() << "There is no phi-eta segmentation!!!!" << endmsg;
+      error() << "There is no phi-eta segmentation for readout " << m_readoutNamesSegmented[iSys] << "!!!!" << endmsg;
       return StatusCode::FAILURE;
     }
 
@@ -471,5 +469,3 @@ StatusCode CreateFCChhCaloNeighbours::initialize() {
 
   return StatusCode::SUCCESS;
 }
-
-StatusCode CreateFCChhCaloNeighbours::finalize() { return Service::finalize(); }

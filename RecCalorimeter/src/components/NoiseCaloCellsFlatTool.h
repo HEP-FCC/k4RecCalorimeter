@@ -6,8 +6,8 @@
 #include "GaudiKernel/IRndmGenSvc.h"
 #include "GaudiKernel/RndmGenerators.h"
 
-// k4FWCore
-#include "k4Interface/INoiseCaloCellsTool.h"
+// Interfaces
+#include "RecCaloCommon/INoiseCaloCellsTool.h"
 
 /** @class NoiseCaloCellsFlatTool
  *
@@ -22,7 +22,7 @@
  *  @date   2024-07
  */
 
-class NoiseCaloCellsFlatTool : public extends<AlgTool,  INoiseCaloCellsTool> {
+class NoiseCaloCellsFlatTool : public extends<AlgTool,  k4::recCalo::INoiseCaloCellsTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsFlatTool() = default;

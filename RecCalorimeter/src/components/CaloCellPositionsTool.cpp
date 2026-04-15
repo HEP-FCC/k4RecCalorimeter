@@ -38,7 +38,7 @@ StatusCode CaloCellPositionsTool::initialize()
 /** Return the cartesian global coordinates of a cell center
  */
 dd4hep::Position
-CaloCellPositionsTool::xyzPosition(const uint64_t& aCellId) const
+CaloCellPositionsTool::xyzPosition(const CellID aCellId) const
 {
   // Find the volume corresponding to this cell.
   dd4hep::DDSegmentation::CellID volumeId = m_segmentation->volumeID(aCellId);
@@ -74,7 +74,7 @@ void CaloCellPositionsTool::getPositions(const edm4hep::CalorimeterHitCollection
 
 /** Return the layer number of a cell.
  */
-int CaloCellPositionsTool::layerId(const uint64_t& aCellId) const
+int CaloCellPositionsTool::layerId(const CellID aCellId) const
 {
   return m_decoder->get(aCellId, m_layerFieldIdx);
 }

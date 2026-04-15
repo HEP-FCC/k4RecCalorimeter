@@ -28,8 +28,6 @@ CreateFCCeeCaloNeighbours::CreateFCCeeCaloNeighbours(const std::string& aName, I
   declareProperty("outputFileName", m_outputFileName, "Name of the output file");
 }
 
-CreateFCCeeCaloNeighbours::~CreateFCCeeCaloNeighbours() {}
-
 StatusCode CreateFCCeeCaloNeighbours::initialize() {
   // Initialize necessary Gaudi components
   if (Service::initialize().isFailure()) {
@@ -1983,58 +1981,4 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
   debug() << "Lookup test " << m_EMEC_theta_lookup[9] << endmsg;
   return StatusCode::SUCCESS;
-}
-
-// StatusCode CreateFCCeeCaloNeighbours::finalize() { return Service::finalize(); }
-
-StatusCode CreateFCCeeCaloNeighbours::finalize() {
-    // for debug, to be removed
-    /*
-    TFile* f=new TFile("lookup.root", "RECREATE");
-    for (unsigned int i=0; i<m_EMB_h_module_vs_phi.size(); i++) {
-        m_EMB_h_module_vs_phi[i]->Write();
-    }
-    for (unsigned int i=0; i<m_EMEC_h_module_vs_phi_pos.size(); i++) {
-        m_EMEC_h_module_vs_phi_pos[i]->Write();
-    }
-    for (unsigned int i=0; i<m_EMEC_h_module_vs_phi_neg.size(); i++) {
-        m_EMEC_h_module_vs_phi_neg[i]->Write();
-    }
-    std::cout << "m_EMB_phi_lookup" << std::endl;
-    for (unsigned int i=0; i<m_EMB_phi_lookup.size(); i++) {
-        for (unsigned int j=0; j<m_EMB_phi_lookup[i].size(); j++) {
-            std::cout << m_EMB_phi_lookup[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << "m_EMB_theta_lookup" << std::endl;
-    for (unsigned int i=0; i<m_EMB_theta_lookup.size(); i++) {
-        std::cout << m_EMB_theta_lookup[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "m_EMEC_theta_lookup" << std::endl;
-    for (unsigned int i=0; i<m_EMEC_theta_lookup.size(); i++) {
-        std::cout << m_EMEC_theta_lookup[i] << " ";
-    }
-    std::cout << std::endl;
-    */
-    
-    /*
-    std::cout << "m_EMEC_pos_phi_lookup" << std::endl;
-    for (unsigned int i=0; i<m_EMEC_pos_phi_lookup.size(); i++) {
-        for (unsigned int j=0; j<m_EMEC_pos_phi_lookup[i].size(); j++) {
-            std::cout << m_EMEC_pos_phi_lookup[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << "m_EMEC_neg_phi_lookup" << std::endl;
-    for (unsigned int i=0; i<m_EMEC_neg_phi_lookup.size(); i++) {
-        for (unsigned int j=0; j<m_EMEC_neg_phi_lookup[i].size(); j++) {
-            std::cout << m_EMEC_neg_phi_lookup[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    f->Close();
-    */
-    return Service::finalize();
 }

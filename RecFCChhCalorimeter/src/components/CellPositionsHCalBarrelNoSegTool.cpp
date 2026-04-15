@@ -13,7 +13,7 @@ StatusCode CellPositionsHCalBarrelNoSegTool::initialize() {
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
       m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
   if (m_segmentation == nullptr) {
-    error() << "There is no phi-eta segmentation!!!!" << endmsg;
+    error() << "There is no phi-eta segmentation for readout " << m_readoutName << "!!!!" << endmsg;
     // return StatusCode::FAILURE;
   }
   // Take readout bitfield decoder from GeoSvc
@@ -56,7 +56,7 @@ void CellPositionsHCalBarrelNoSegTool::getPositions(const edm4hep::CalorimeterHi
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsHCalBarrelNoSegTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsHCalBarrelNoSegTool::xyzPosition(const CellID aCellId) const {
   // global cartesian coordinates calculated from r,phi,eta, for r=1
   auto detelement = m_volman.lookupDetElement(aCellId);
   double local[] = {0, 0, 0};
@@ -74,14 +74,9 @@ dd4hep::Position CellPositionsHCalBarrelNoSegTool::xyzPosition(const uint64_t& a
   double xPos = cos(phi) * radius;
   double yPos = sin(phi) * radius;
 
-  dd4hep::Position outSeg(xPos, yPos, zPos);
-
-  return outSeg;
+  return dd4hep::Position(xPos, yPos, zPos);
 }
 
-int CellPositionsHCalBarrelNoSegTool::layerId(const uint64_t& aCellId) const {
-  int layer;
-  dd4hep::DDSegmentation::CellID cID = aCellId;
-  layer = m_decoder->get(cID, "layer");
-  return layer;
+int CellPositionsHCalBarrelNoSegTool::layerId(const CellID aCellId) const {
+  return m_decoder->get(aCellId, "layer");
 }

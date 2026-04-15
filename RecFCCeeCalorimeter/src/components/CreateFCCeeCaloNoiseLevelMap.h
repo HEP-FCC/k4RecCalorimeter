@@ -3,9 +3,8 @@
 
 // Gaudi
 #include "GaudiKernel/Service.h"
-#include "k4Interface/ICaloCreateMap.h"
-#include "k4Interface/ICellPositionsTool.h"
-#include "k4Interface/INoiseConstTool.h"
+#include "RecCaloCommon/ICaloCreateMap.h"
+#include "RecCaloCommon/INoiseConstTool.h"
 
 class IGeoSvc;
 
@@ -19,20 +18,14 @@ class IGeoSvc;
  *  @author Giovanni Marchiori
  */
 
-class CreateFCCeeCaloNoiseLevelMap : public extends1<Service, ICaloCreateMap> {
+class CreateFCCeeCaloNoiseLevelMap : public extends<Service, k4::recCalo::ICaloCreateMap> {
 public:
   /// Standard constructor
   explicit CreateFCCeeCaloNoiseLevelMap(const std::string& aName, ISvcLocator* aSL);
-  /// Standard destructor
-  virtual ~CreateFCCeeCaloNoiseLevelMap();
   /**  Initialize the map creator service.
    *   @return status code
    */
-  virtual StatusCode initialize() final;
-  /**  Finalize the map creator service.
-   *   @return status code
-   */
-  virtual StatusCode finalize() final;
+  virtual StatusCode initialize() final override;
 
 private:
   /// Pointer to the geometry service
@@ -40,13 +33,13 @@ private:
 
   /// ideally could replace with vector of handles (so that we can also have ecal endcap and so on)
   /// Handle for the cells noise tool in ECal barrel
-  ToolHandle<INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+  ToolHandle<k4::recCalo::INoiseConstTool> m_ecalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
   /// Handle for the cells noise tool in ECal endcap
-  ToolHandle<INoiseConstTool> m_ecalEndcapNoiseTool{"ReadNoiseFromFileTool", this};
+  ToolHandle<k4::recCalo::INoiseConstTool> m_ecalEndcapNoiseTool{"ReadNoiseFromFileTool", this};
   /// Handle for the cells noise tool in HCal barrel
-  ToolHandle<INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
+  ToolHandle<k4::recCalo::INoiseConstTool> m_hcalBarrelNoiseTool{"ReadNoiseFromFileTool", this};
   /// Handle for the cells noise tool in HCal endcap
-  ToolHandle<INoiseConstTool> m_hcalEndcapNoiseTool{"ReadNoiseFromFileTool", this};
+  ToolHandle<k4::recCalo::INoiseConstTool> m_hcalEndcapNoiseTool{"ReadNoiseFromFileTool", this};
 
   // System ID of ECAL and HCAL detectors
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};

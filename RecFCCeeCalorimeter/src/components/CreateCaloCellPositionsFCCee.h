@@ -3,7 +3,8 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "k4FWCore/MetaDataHandle.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
@@ -46,7 +47,7 @@ public:
 
 private:
   /// Handle for tool to get positions
-  ToolHandle<ICellPositionsTool> m_cellPositionsTool{};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{};
   /// Input collection
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_hits{"hits/hits", Gaudi::DataHandle::Reader, this};
   /// Output collection

@@ -13,11 +13,11 @@
 
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
-#include "k4Interface/ICalorimeterTool.h"
+#include "RecCaloCommon/ICalorimeterTool.h"
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DD4hep/Readout.h"
 #include <vector>
-#include <mutex>
 
 
 /** @class CalorimeterToolBase RecCaloCommon/include/CalorimeterToolBase.h
@@ -25,41 +25,39 @@
  * This factors out the implementations of prepareEmptyCells/cellIDs
  * in terms of a common method collectCells().
  */
-class CalorimeterToolBase : public extends<AlgTool, ICalorimeterTool>
+class CalorimeterToolBase : public extends<AlgTool, k4::recCalo::ICalorimeterTool>
 {
 public:
   using base_class::base_class;
 
   /** Standard Gaudi initialize method.
    */
-  virtual StatusCode initialize();
+  virtual StatusCode initialize() override;
 
   /** Return a vector of all existing cells in the current geometry.
    *
    * The result is sorted and unique.
    * Returns an empty vector on error.
    */
-  virtual const std::vector<uint64_t>& cellIDs() const final;
+  virtual const std::vector<CellID>& cellIDs() const final override;
 
   /** Prepare a map of all existing cells in current geometry.
    *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
    *   return Status code.
    */
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const final;
-  virtual StatusCode prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) final
-  { const auto* cthis = this;  return cthis->prepareEmptyCells(aCells); }
+  virtual StatusCode prepareEmptyCells(std::unordered_map<CellID, double>& aCells) const final override;
 
   /** Return the segmentation associated with this geometry.
    */
-  virtual const dd4hep::DDSegmentation::Segmentation* segmentation() const final;
+  virtual const dd4hep::DDSegmentation::Segmentation* segmentation() const final override;
 
   /** Return the name specified for the readout.
    */
-  virtual const std::string& readoutName() const final;
+  virtual const std::string& readoutName() const final override;
 
   /** Return the subdetector ID.
    */
-  virtual int id() const final;
+  virtual int id() const final override;
 
 
 protected:
@@ -69,7 +67,11 @@ protected:
 
   /** Fill vector with all existing cells for this geometry.
    */
-  virtual StatusCode collectCells(std::vector<uint64_t>& cells) const = 0;
+  virtual StatusCode collectCells(std::vector<CellID>& cells) const = 0;
+
+
+  /// Create the list of cells and store with the constants service.
+  StatusCode makeCells();
 
 
 private:
@@ -79,13 +81,17 @@ private:
   /// Handle to the geometry service.
   ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
 
+  /// Handle to the cell constants service.
+  /// Used to hold the set of cell IDs.
+  ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc
+  { this, "CaloCellConstantsSvc", "k4::recCalo::CaloCellConstantsSvc", "" };
+
   /// Resolved detector readout.
   dd4hep::Readout m_readout;
 
-  // The vector of cells is filled once, the first time we need it.
-  mutable std::mutex m_mutex;
-  mutable bool m_filledCells = false;
-  mutable std::vector<uint64_t> m_cells;
+  // Pointer to the vector of cells.  The vector itself is stored in the
+  // constants service; we create it if it's not already there.
+  const std::vector<CellID>* m_cells;
 };
 
 

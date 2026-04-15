@@ -7,7 +7,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ITowerTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ITowerTool.h"
 
 // edm4hep
 namespace edm4hep {
@@ -94,7 +96,7 @@ private:
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCells{"calo/clusterCells",
                                                                                  Gaudi::DataHandle::Writer, this};
   /// Handle for the tower building tool
-  mutable ToolHandle<ITowerTool> m_towerTool;
+  mutable ToolHandle<k4::recCalo::ITowerTool> m_towerTool;
   // calorimeter towers
   mutable std::vector<std::vector<float>> m_towers;
   /// Vector of pre-clusters

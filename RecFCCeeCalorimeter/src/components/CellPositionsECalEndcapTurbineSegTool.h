@@ -5,9 +5,9 @@
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 
-// k4FWCore
+// Interfaces
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo
@@ -38,7 +38,7 @@ namespace DDSegmentation {
  *  @author Erich Varnes
  */
 
-class CellPositionsECalEndcapTurbineSegTool : public extends<AlgTool, ICellPositionsTool> {
+class CellPositionsECalEndcapTurbineSegTool : public extends<AlgTool, k4::recCalo::ICellPositionsTool> {
 public:
   using base_class::base_class;
   ~CellPositionsECalEndcapTurbineSegTool() = default;
@@ -48,9 +48,9 @@ public:
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
                             edm4hep::CalorimeterHitCollection& outputColl) const override final;
 
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const final;
+  virtual dd4hep::Position xyzPosition(const CellID aCellId) const override final;
 
-  virtual int layerId(const uint64_t& aCellId) const override final;
+  virtual int layerId(const CellID aCellId) const override final;
 
 private:
   /// Handle to the geometry service

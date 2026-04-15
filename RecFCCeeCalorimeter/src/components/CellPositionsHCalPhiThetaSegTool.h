@@ -13,7 +13,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4Interface/ICellPositionsTool.h"
+
+// Interfaces
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
@@ -46,7 +48,7 @@ namespace DDSegmentation {
  *  @author Michaela Mlynarikova
  */
 
-class CellPositionsHCalPhiThetaSegTool : public extends<AlgTool, ICellPositionsTool> {
+class CellPositionsHCalPhiThetaSegTool : public extends<AlgTool, k4::recCalo::ICellPositionsTool> {
 public:
   using base_class::base_class;
   ~CellPositionsHCalPhiThetaSegTool() = default;
@@ -56,9 +58,9 @@ public:
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
                             edm4hep::CalorimeterHitCollection& outputColl) const override final;
 
-  virtual dd4hep::Position xyzPosition(const uint64_t& aCellId) const override final;
+  virtual dd4hep::Position xyzPosition(const CellID aCellId) const override final;
 
-  virtual int layerId(const uint64_t& aCellId) const override final;
+  virtual int layerId(const CellID aCellId) const override final;
 
   virtual std::vector<double> calculateLayerRadii(unsigned int startIndex, unsigned int endIndex);
 

@@ -7,8 +7,8 @@
 
 #include "DDSegmentation/BitFieldCoder.h"
 
-// k4FWCore
-#include "k4Interface/ICalibrateCaloHitsTool.h"
+// Interfaces
+#include "RecCaloCommon/ICalibrateCaloHitsTool.h"
 class IGeoSvc;
 
 #include <vector>
@@ -28,7 +28,7 @@ class IGeoSvc;
  *  @author Anna Zaborowska
  */
 
-class CalibrateInLayersTool : public extends<AlgTool, ICalibrateCaloHitsTool> {
+class CalibrateInLayersTool : public extends<AlgTool, k4::recCalo::ICalibrateCaloHitsTool> {
 public:
   using base_class::base_class;
   ~CalibrateInLayersTool() = default;
@@ -39,12 +39,12 @@ public:
 
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
-  virtual void calibrate(std::unordered_map<uint64_t, double>& aHits) const override final;
-  virtual void calibrate(std::vector<std::pair<uint64_t, double> >& aHits) const override final;
+  virtual void calibrate(std::unordered_map<CellID, double>& aHits) const override final;
+  virtual void calibrate(std::vector<std::pair<CellID, double> >& aHits) const override final;
 
 private:
   /// Do calibration for a single cell.
-  void calibrateCell (uint64_t cID, double& energy) const;
+  void calibrateCell (CellID cID, double& energy) const;
 
   /// Decoder associated with this readout.
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = nullptr;

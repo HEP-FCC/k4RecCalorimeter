@@ -64,7 +64,7 @@ void CellPositionsECalBarrelModuleThetaSegTool::getPositions(const edm4hep::Calo
   debug() << "Output positions collection size: " << outputColl.size() << endmsg;
 }
 
-dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const uint64_t& aCellId) const {
+dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const CellID aCellId) const {
 
   // find position of volume corresponding to first of group of merged cells
   dd4hep::DDSegmentation::CellID volumeId = m_segmentation->volumeID(aCellId);
@@ -83,6 +83,6 @@ dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const ui
   return outSeg;
 }
 
-int CellPositionsECalBarrelModuleThetaSegTool::layerId(const uint64_t& aCellId) const {
+int CellPositionsECalBarrelModuleThetaSegTool::layerId(const CellID aCellId) const {
   return m_segmentation->layer(aCellId);
 }

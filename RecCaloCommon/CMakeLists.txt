@@ -2,6 +2,7 @@
 # Package: RecCaloCommon
 ################################################################################
 
+find_package(boost_timer REQUIRED)
 file(GLOB _sources src/*.cpp )
 
 gaudi_add_library(RecCaloCommon
@@ -23,3 +24,19 @@ install(TARGETS RecCaloCommon
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
                                                       COMPONENT dev
 )
+
+
+if(BUILD_TESTING)
+  gaudi_add_executable(IDMap_test.exe
+    SOURCES tests/IDMap_test.cpp
+    LINK DD4hep::DDCore Boost::timer
+    TEST)
+  target_include_directories(IDMap_test.exe PUBLIC include)
+
+
+  gaudi_add_executable(IDMapIndexer_test.exe
+    SOURCES tests/IDMapIndexer_test.cpp
+    LINK DD4hep::DDCore k4FWCore::k4Interface k4FWCore::k4FWCore
+    TEST)
+  target_include_directories(IDMapIndexer_test.exe AFTER PUBLIC include)
+endif()

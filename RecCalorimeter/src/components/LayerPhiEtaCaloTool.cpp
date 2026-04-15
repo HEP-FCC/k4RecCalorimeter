@@ -7,7 +7,7 @@
 DECLARE_COMPONENT(LayerPhiEtaCaloTool)
 
 
-StatusCode LayerPhiEtaCaloTool::collectCells(std::vector<uint64_t>& cells) const
+StatusCode LayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const
 {
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();

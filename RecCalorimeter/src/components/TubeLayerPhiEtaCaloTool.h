@@ -21,7 +21,7 @@ public:
 protected:
   /** Fill vector with all existing cells for this geometry.
    */
-  virtual StatusCode collectCells(std::vector<uint64_t>& cells) const final;
+  virtual StatusCode collectCells(std::vector<CellID>& cells) const override final;
 
 
 private:

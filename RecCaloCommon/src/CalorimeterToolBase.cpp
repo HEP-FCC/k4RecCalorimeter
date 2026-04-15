@@ -7,17 +7,18 @@
 
 #include "RecCaloCommon/CalorimeterToolBase.h"
 #include "k4Interface/IGeoSvc.h"
-#include "RecCaloCommon/k4RecCalorimeter_check.h"
+#include "k4FWCore/GaudiChecks.h"
 #include "DD4hep/Detector.h"
 #include <algorithm>
+#include <string>
 
 
 /** Standard Gaudi initialize method.
  */
 StatusCode CalorimeterToolBase::initialize()
 {
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
-  K4RECCALORIMETER_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK( AlgTool::initialize() );
+  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
 
   // Look up the readout.
   if (!m_readoutName.empty()) {
@@ -32,6 +33,12 @@ StatusCode CalorimeterToolBase::initialize()
     m_readout = it->second;
   }
 
+  // Need to do this after m_readout is defined, since it may ask us
+  // for our id.
+  K4_GAUDI_CHECK( m_constantsSvc.retrieve() );
+
+  K4_GAUDI_CHECK( makeCells() );
+
   return StatusCode::SUCCESS;
 }
 
@@ -41,24 +48,9 @@ StatusCode CalorimeterToolBase::initialize()
  * The result is sorted and unique.
  * Returns an empty vector on error.
  */
-const std::vector<uint64_t>& CalorimeterToolBase::cellIDs() const
+auto CalorimeterToolBase::cellIDs() const -> const std::vector<CellID>&
 {
-  {
-    std::lock_guard lock (m_mutex);
-    if (!m_filledCells) {
-      if (collectCells(m_cells).isSuccess()) {
-        // Sort and make unique.
-        std::ranges::sort(m_cells);
-        const auto ret = std::ranges::unique(m_cells);
-        m_cells.erase(ret.begin(), ret.end());
-      }
-      else {
-        m_cells.clear();
-      }
-      m_filledCells = true;
-    }
-  }
-  return m_cells;
+  return *m_cells;
 }
 
 
@@ -66,10 +58,10 @@ const std::vector<uint64_t>& CalorimeterToolBase::cellIDs() const
  *   @param[out] aCells map of existing cells (and deposited energy, set to 0)
  *   return Status code.
  */
-StatusCode CalorimeterToolBase::prepareEmptyCells(std::unordered_map<uint64_t, double>& aCells) const
+StatusCode CalorimeterToolBase::prepareEmptyCells(std::unordered_map<CellID, double>& aCells) const
 {
   aCells.clear();
-  for (uint64_t cellId : cellIDs()) {
+  for (CellID cellId : cellIDs()) {
     aCells.emplace (cellId, 0);
   }
   if (aCells.empty()) return StatusCode::FAILURE;
@@ -105,4 +97,37 @@ int CalorimeterToolBase::id() const
     error() << name() << ": " << "Readout not found; can't find detector ID" << endmsg;
   }
   return m_readout.segmentation().detector()->id;
+}
+
+
+/** Create the list of cells and store with the constants service.
+ */
+StatusCode CalorimeterToolBase::makeCells()
+{
+  int detid = id();
+  std::string keyName = "cellIDs-";
+  if (detid >= 0)
+    keyName += std::to_string (detid);
+  else
+    keyName += "dummy";
+
+  m_cells = m_constantsSvc->getObj<std::vector<uint64_t> > (keyName);
+  if (m_cells) {
+    return StatusCode::SUCCESS;
+  }
+
+  std::vector<uint64_t> cells;
+  if (detid >= 0) {
+    K4_GAUDI_CHECK( collectCells(cells) );
+    // Sort and make unique.
+    std::ranges::sort(cells);
+    const auto ret = std::ranges::unique(cells);
+    cells.erase(ret.begin(), ret.end());
+  }
+
+  K4_GAUDI_CHECK( m_constantsSvc->putObj (keyName, std::move(cells)) );
+  m_cells = m_constantsSvc->getObj<std::vector<uint64_t> > (keyName);
+  K4_GAUDI_CHECK( m_cells != nullptr );
+
+  return StatusCode::SUCCESS;
 }
