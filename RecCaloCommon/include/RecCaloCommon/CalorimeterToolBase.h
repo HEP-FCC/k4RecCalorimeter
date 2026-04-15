@@ -14,10 +14,10 @@
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 #include "RecCaloCommon/ICalorimeterTool.h"
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 #include "k4Interface/IGeoSvc.h"
 #include "DD4hep/Readout.h"
 #include <vector>
-#include <mutex>
 
 
 /** @class CalorimeterToolBase RecCaloCommon/include/CalorimeterToolBase.h
@@ -70,6 +70,10 @@ protected:
   virtual StatusCode collectCells(std::vector<CellID>& cells) const = 0;
 
 
+  /// Create the list of cells and store with the constants service.
+  StatusCode makeCells();
+
+
 private:
   /// Name of the detector readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", ""};
@@ -77,13 +81,17 @@ private:
   /// Handle to the geometry service.
   ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
 
+  /// Handle to the cell constants service.
+  /// Used to hold the set of cell IDs.
+  ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc
+  { this, "CaloCellConstantsSvc", "k4::recCalo::CaloCellConstantsSvc", "" };
+
   /// Resolved detector readout.
   dd4hep::Readout m_readout;
 
-  // The vector of cells is filled once, the first time we need it.
-  mutable std::mutex m_mutex;
-  mutable bool m_filledCells = false;
-  mutable std::vector<CellID> m_cells;
+  // Pointer to the vector of cells.  The vector itself is stored in the
+  // constants service; we create it if it's not already there.
+  const std::vector<CellID>* m_cells;
 };
 
 
