@@ -2,6 +2,7 @@
 #include "NoiseCaloCellsFromFileTool.h"
 
 // k4FWCore
+#include "k4FWCore/MetadataUtils.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo
@@ -18,6 +19,7 @@
 #include "DD4hep/Readout.h"
 
 #include <GaudiKernel/StatusCode.h>
+
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -83,7 +85,8 @@ StatusCode CaloTopoCluster::initialize() {
 
   // initialise the list of metadata for the clusters
   std::vector<std::string> shapeParameterNames = {"dR_over_E"};
-  m_shapeParametersHandle.put(shapeParameterNames);
+  k4FWCore::putCollectionParameter(m_clusterCellsCollection.objKey(), edm4hep::labels::ShapeParameterNames,
+                                   shapeParameterNames, this);
 
   return StatusCode::SUCCESS;
 }

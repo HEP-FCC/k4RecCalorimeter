@@ -11,8 +11,6 @@
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/ToolHandle.h"
 
-#include "edm4hep/Constants.h"
-
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
 #include "k4FWCore/MetaDataHandle.h"
@@ -115,17 +113,9 @@ private:
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
       "clusterCells", Gaudi::DataHandle::Writer, this};
 
-  /// Output collection metadata handles (saving a map of ID:collection does not work)
-  k4FWCore::MetaDataHandle<std::vector<int>> m_caloIDsMetaData{m_clusterCollection, "inputSystemIDs",
-    Gaudi::DataHandle::Writer};
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_cellsMetaData{m_clusterCollection, "inputCellCollections",
-      Gaudi::DataHandle::Writer};
   Gaudi::Property<std::vector<int>> m_caloIDs{
     this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
-  /// Handle for the cluster shape metadata to write
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
-      m_clusterCollection, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
   /// Handle for the cells noise tool
   mutable ToolHandle<k4::recCalo::INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
