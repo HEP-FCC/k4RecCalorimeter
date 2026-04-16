@@ -1,6 +1,7 @@
 #include "CalibrateCaloClusters.h"
 
 // Key4HEP
+#include "k4FWCore/MetadataUtils.h"
 #include "k4Interface/IGeoSvc.h"
 
 // FCC Detectors
@@ -13,6 +14,8 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
+#include "edm4hep/Constants.h"
+
 #include <onnxruntime_cxx_api.h>
 
 #include "OnnxruntimeUtilities.h"
@@ -77,9 +80,12 @@ StatusCode CalibrateCaloClusters::initialize() {
 
   // read from the metadata the names of the shape parameters in the input clusters and append the total raw energy to
   // the output
-  std::vector<std::string> shapeParameters = m_inShapeParameterHandle.get({});
+  auto shapeParameters = k4FWCore::getCollectionParameter<std::vector<std::string>>(
+                             m_inClusters.objKey(), edm4hep::labels::ShapeParameterNames, this)
+                             .value_or(std::vector<std::string>{});
   shapeParameters.push_back("rawE");
-  m_outShapeParameterHandle.put(shapeParameters);
+
+  k4FWCore::putCollectionParameter(m_outClusters.objKey(), edm4hep::labels::ShapeParameterNames, shapeParameters, this);
 
   // check if the shape parameters contain the inputs needed for the calibration
   m_inputPositionsInShapeParameters.clear();
