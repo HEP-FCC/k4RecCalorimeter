@@ -1,0 +1,59 @@
+/**
+ * @file RecCaloCommon/tests/make_hcalb_ids.cpp
+ * @author scott snyder <snyder@bnl.gov>
+ * @date Feb, 2026
+ * @brief Helper to make a list of IDs for testing.
+ *        Hardcoded to match the set of Allegro HCal barrel IDs as of this writing.
+ */
+
+
+const unsigned int hcalb_numLayers = 13;
+const char* const hcalb_descstr = "system:4,layer:5,row:9,theta:9,phi:10";
+
+
+std::vector<mapkey_t> make_hcalb_ids()
+{
+  std::vector<mapkey_t> ids;
+  ids.reserve (210944);
+  dd4hep::IDDescriptor desc ("desc", hcalb_descstr);
+  auto decoder = desc.decoder();
+
+  static const unsigned nphi = 256;
+  static const std::pair<unsigned, unsigned> thetas[hcalb_numLayers] = {
+    { 1, 70 }, // 0
+    { 1, 70 }, // 1
+    { 2, 69 }, // 2
+    { 2, 69 }, // 3
+    { 3, 68 }, // 4
+    { 3, 68 }, // 5
+    { 4, 67 }, // 6
+    { 5, 66 }, // 7
+    { 5, 66 }, // 8
+    { 6, 65 }, // 9
+    { 7, 64 }, // 10
+    { 8, 63 }, // 11
+    { 9, 62 }, // 11
+  };
+
+  size_t phi_index = decoder->index ("phi");
+  size_t theta_index  = decoder->index ("theta");
+
+  for (unsigned int ilayer = 0; ilayer < hcalb_numLayers; ilayer++) {
+    mapkey_t id = 0;
+    decoder->set (id, "system", 8);
+    decoder->set (id, "layer", ilayer);
+    decoder->set (id, "row", 0);
+    decoder->set (id, theta_index, 0);
+    decoder->set (id, phi_index, 0);
+
+    for (unsigned int theta = thetas[ilayer].first; theta <= thetas[ilayer].second; ++theta) {
+      decoder->set (id, theta_index, theta);
+      for (unsigned int iphi = 0; iphi < nphi; ++iphi) {
+        decoder->set (id, phi_index, iphi);
+        ids.push_back (id);
+      }
+    }
+  }
+  std::ranges::sort (ids);
+  return ids;
+}

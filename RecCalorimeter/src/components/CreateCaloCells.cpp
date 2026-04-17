@@ -5,6 +5,7 @@
 
 // k4FWCore
 #include "k4Interface/IGeoSvc.h"
+#include <k4FWCore/MetadataUtils.h>
 
 // DD4hep
 #include "DD4hep/DetType.h"
@@ -39,7 +40,6 @@ StatusCode CreateCaloCells::initialize() {
   info() << "remove cells below threshold : " << m_filterCellNoise << endmsg;
   info() << "add position information to the cell : " << m_addPosition << endmsg;
   info() << "emulate crosstalk : " << m_addCrosstalk << endmsg;
-
 
   // Initialization of tools
   // Cell crosstalk tool
@@ -85,12 +85,12 @@ StatusCode CreateCaloCells::initialize() {
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
-  auto hitsEncoding = m_hitsCellIDEncoding.get_optional();
+  auto hitsEncoding = k4FWCore::getCellIDEncoding(m_hits.objKey(), this);
   if (!hitsEncoding.has_value()) {
     error() << "Missing cellID encoding for input collection" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_cellsCellIDEncoding.put(hitsEncoding.value());
+  k4FWCore::putCellIDEncoding(m_cells.objKey(), hitsEncoding.value(), this);
 
   m_decoder = dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
   m_systemIndex = m_decoder.index ("system");
@@ -241,8 +241,10 @@ void CreateCaloCells::findCaloTypes()
         layout = 1;
       } else if (detType.is(dd4hep::DetType::ENDCAP)) {
         layout = 2;
+      } else if (detType.is(dd4hep::DetType::FORWARD)) {
+        layout = 3;
       } else {
-        warning() << "Detector type for calorimeter " << id << " is neither BARREL nor ENDCAP" << endmsg;
+        warning() << "Detector type for calorimeter " << id << " is neither BARREL nor ENDCAP nor FORWARD" << endmsg;
       }
 
       if (static_cast<int>(m_caloTypes.size()) <= id) {

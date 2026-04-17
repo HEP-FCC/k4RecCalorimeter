@@ -9,6 +9,7 @@
 
 // edm4hep
 #include "edm4hep/CalorimeterHit.h"
+#include <k4FWCore/MetadataUtils.h>
 
 DECLARE_COMPONENT(CreatePositionedCaloCells)
 
@@ -89,12 +90,12 @@ StatusCode CreatePositionedCaloCells::initialize() {
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
-  auto hitsEncoding = m_hitsCellIDEncoding.get_optional();
+  auto hitsEncoding = k4FWCore::getCellIDEncoding(m_hits.objKey(), this);
   if (!hitsEncoding.has_value()) {
     error() << "Missing cellID encoding for input collection" << endmsg;
     return StatusCode::FAILURE;
   }
-  m_cellsCellIDEncoding.put(hitsEncoding.value());
+  k4FWCore::putCellIDEncoding(m_cells.objKey(), hitsEncoding.value(), this);
   m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
 
   // these variables will be initilized in the execute() method
@@ -212,6 +213,8 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
             m_layout = 1;
           } else if (detType.is(dd4hep::DetType::ENDCAP)) {
             m_layout = 2;
+          } else if (detType.is(dd4hep::DetType::FORWARD)) {
+            m_layout = 3;
           } else {
             warning() << "Detector type is neither BARREL nor ENDCAP" << endmsg;
           }

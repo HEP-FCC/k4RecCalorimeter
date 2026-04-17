@@ -1,10 +1,12 @@
 #include "AugmentClustersFCCee.h"
 
 // k4FWCore
+#include "k4FWCore/MetadataUtils.h"
 #include "k4Interface/IGeoSvc.h"
 
 // edm4hep
 #include "edm4hep/ClusterCollection.h"
+#include "edm4hep/Constants.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
@@ -18,6 +20,7 @@
 #include "TMath.h"
 #include "TString.h"
 #include "TVector3.h"
+#include <edm4hep/Constants.h>
 
 DECLARE_COMPONENT(AugmentClustersFCCee)
 
@@ -115,7 +118,9 @@ StatusCode AugmentClustersFCCee::initialize() {
 
   // initialise the list of metadata for the clusters
   // append to the metadata of the input clusters (if any)
-  std::vector<std::string> showerShapeDecorations = m_inShapeParameterHandle.get({});
+  auto showerShapeDecorations = k4FWCore::getCollectionParameter<std::vector<std::string>>(
+                                    m_inClusters.objKey(), edm4hep::labels::ShapeParameterNames, this)
+                                    .value_or(std::vector<std::string>{});
   for (size_t k = 0; k < m_detectorNames.size(); k++) {
     const char* detector = m_detectorNames[k].c_str();
     for (unsigned layer = 0; layer < m_numLayers[k]; layer++) {
@@ -144,7 +149,8 @@ StatusCode AugmentClustersFCCee::initialize() {
   showerShapeDecorations.push_back("mass");   // cluster invariant mass assuming massless constituents
   showerShapeDecorations.push_back("ncells"); // number of cells in cluster with E>0
 
-  m_showerShapeHandle.put(showerShapeDecorations);
+  k4FWCore::putCollectionParameter(m_outClusters.objKey(), edm4hep::labels::ShapeParameterNames, showerShapeDecorations,
+                                   this);
 
   return StatusCode::SUCCESS;
 }
