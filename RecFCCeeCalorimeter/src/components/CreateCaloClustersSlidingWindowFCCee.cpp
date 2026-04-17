@@ -1,6 +1,8 @@
 #include "CreateCaloClustersSlidingWindowFCCee.h"
 #include "CaloTowerToolFCCee.h"
 
+#include <k4FWCore/MetadataUtils.h>
+
 // Gaudi
 #include "GaudiKernel/PhysicalConstants.h"
 
@@ -47,8 +49,8 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::initialize() {
       std::vector<int> IDs = tool->getInputSystemIDs();
       std::vector<std::string> colls = tool->getInputCollections();
       if (IDs.size() == colls.size()) {
-        m_caloIDsMetaData.put(IDs);
-        m_cellsMetaData.put(colls);
+        k4FWCore::putCollectionParameter(m_clusters.objKey(), "inputSystemIDs", IDs, this);
+        k4FWCore::putCollectionParameter(m_clusters.objKey(), "inputCellCollections", colls, this);
       } else {
         warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written"
                   << endmsg;

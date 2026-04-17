@@ -1,11 +1,8 @@
 #ifndef RECFCCEECALORIMETER_PHOTONIDTOOL_H
 #define RECFCCEECALORIMETER_PHOTONIDTOOL_H
 
-#include "edm4hep/Constants.h"
-
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 
 // Gaudi
 #include "GaudiKernel/Algorithm.h"
@@ -79,12 +76,6 @@ private:
   /// Handle for output calorimeter clusters collection
   mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_outClusters{"outClusters", Gaudi::DataHandle::Writer,
                                                                          this};
-
-  /// Handles for the cluster shower shape metadata to read and to write
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_inShapeParameterHandle{
-      m_inClusters, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Reader};
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_outShapeParameterHandle{
-      m_outClusters, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
 
   /// Files with the MVA model and list of inputs
   Gaudi::Property<std::string> m_mvaModelFile{this, "mvaModelFile", {}, "ONNX file with the mva model"};

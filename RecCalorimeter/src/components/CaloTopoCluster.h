@@ -109,9 +109,6 @@ private:
   // Cluster cells in collection
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
       "calo/clusterCells", Gaudi::DataHandle::Writer, this};
-  /// Handle for the cluster shape metadata to write
-  k4FWCore::MetaDataHandle<std::vector<std::string>> m_shapeParametersHandle{
-      m_clusterCollection, edm4hep::labels::ShapeParameterNames, Gaudi::DataHandle::Writer};
   /// Pointer to the geometry service
   SmartIF<IGeoSvc> m_geoSvc;
   /// Handle for the input tool
