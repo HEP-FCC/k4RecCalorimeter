@@ -241,8 +241,10 @@ void CreateCaloCells::findCaloTypes()
         layout = 1;
       } else if (detType.is(dd4hep::DetType::ENDCAP)) {
         layout = 2;
+      } else if (detType.is(dd4hep::DetType::FORWARD)) {
+        layout = 3;
       } else {
-        warning() << "Detector type for calorimeter " << id << " is neither BARREL nor ENDCAP" << endmsg;
+        warning() << "Detector type for calorimeter " << id << " is neither BARREL nor ENDCAP nor FORWARD" << endmsg;
       }
 
       if (static_cast<int>(m_caloTypes.size()) <= id) {
