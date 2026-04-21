@@ -1,6 +1,7 @@
 #include "SimulateSiPMwithContrib.h"
 #include "DD4hep/DD4hepUnits.h"
 #include <cmath>
+#include <iostream>
 
 DECLARE_COMPONENT(SimulateSiPMwithContrib)
 
@@ -45,8 +46,9 @@ StatusCode SimulateSiPMwithContrib::initialize() {
   properties.setFallTimeFast(m_falltimeFast);
   properties.setRiseTime(m_risetime);
   properties.setSnr(m_snr);
-  properties.setPdeType(sipm::SiPMProperties::PdeType::kNoPde); // this forces efficiency to 1
-  properties.setPdeSpectrum(m_wavelen, m_sipmEff);
+  properties.setPdeType(sipm::SiPMProperties::PdeType::kSimplePde); // this sets PDE to a single number
+  properties.setPde(1.0);
+  //properties.setPdeSpectrum(m_wavelen, m_sipmEff); // if you want wavelen dependency
 
   // set other parameters if provided
   for (const auto& [key, value] : m_params.value())
@@ -110,8 +112,6 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
     m_sensor->addPhotons(vecTimes, vecWavelens); // Sets photon times & wavelengths
     m_sensor->runEvent();                        // Runs the simulation
 
-    auto digiHit = digiHits->create();
-
     // Using only analog signal (ADC conversion is still experimental)
     const sipm::SiPMAnalogSignal anaSignal = m_sensor->signal();
 
@@ -119,7 +119,15 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
     const double integral =
         std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
     const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
+    
+    // Do not save digi hit if the integral is 0, i.e. no signal from electronics
+    if(integral < 0.01) continue;
 
+    // NOTE: I noticed very few digi hits have TOA > ms, clearly a bug to be investigated
+    if(toa > 1e6) continue;
+    std::cout<<"integral "<<integral<<" toa "<<toa<<std::endl;
+
+    auto digiHit = digiHits->create();
     digiHit.setEnergy(integral /* * m_scaleADC.value()*/); // convertition from ADC to GeV can be added here
     digiHit.setEnergyError(/*m_scaleADC.value() **/ std::sqrt(integral));
     digiHit.setPosition(scintHit.getPosition());
