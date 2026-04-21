@@ -1,7 +1,6 @@
 #include "SimulateSiPMwithContrib.h"
 #include "DD4hep/DD4hepUnits.h"
 #include <cmath>
-#include <iostream>
 
 DECLARE_COMPONENT(SimulateSiPMwithContrib)
 
@@ -125,7 +124,6 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
 
     // NOTE: I noticed very few digi hits have TOA > ms, clearly a bug to be investigated
     if(toa > 1e6) continue;
-    std::cout<<"integral "<<integral<<" toa "<<toa<<std::endl;
 
     auto digiHit = digiHits->create();
     digiHit.setEnergy(integral /* * m_scaleADC.value()*/); // convertition from ADC to GeV can be added here
