@@ -13,7 +13,6 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 #include "RecCaloCommon/ICaloReadNeighboursMap.h"
 #include "k4Interface/IGeoSvc.h"
 #include "RecCaloCommon/INoiseConstTool.h"
