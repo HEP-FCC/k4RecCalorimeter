@@ -9,7 +9,6 @@
 
 // Key4HEP
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 
 // Interfaces
 #include "RecCaloCommon/ICaloReadNeighboursMap.h"
