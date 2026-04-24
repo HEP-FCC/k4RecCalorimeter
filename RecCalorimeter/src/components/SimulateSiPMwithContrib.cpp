@@ -119,8 +119,10 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
         std::max(0., anaSignal.integral(m_gateStart, m_gateL, m_thres));           // (intStart, intGate, threshold)
     const double toa = std::max(0., anaSignal.toa(m_gateStart, m_gateL, m_thres)); // (intStart, intGate, threshold)
     
-    // Do not save digi hit if the integral is 0, i.e. no signal from electronics
-    if(integral < 0.01) continue;
+    // Apply threshold to save digi hit.
+    // By default this is a zero suppression cut, can the changed to apply 1-suppression, 2-suppression, ...
+    // Note: check the sipm gain applied in SimSipm, by default it is 1.
+    if(integral < m_suppressionThreshold) continue;
 
     // NOTE: I noticed very few digi hits have TOA > ms, clearly a bug to be investigated
     if(toa > 1e6) continue;

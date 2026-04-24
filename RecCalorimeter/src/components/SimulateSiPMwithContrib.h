@@ -108,6 +108,9 @@ private:
   // option to store full waveform (for debugging)
   // Not used for the moment, might be used in future for debugging
   // Gaudi::Property<bool> m_storeFullWaveform{this, "storeFullWaveform", false, "Store full waveform for debugging"};
+
+  // Suppression threshold parameters
+  Gaudi::Property<double> m_suppressionThreshold{this, "suppressionTreshold", 0.001, "Threshold on ADC integral to reject digi hit"};
 };
 
 #endif
