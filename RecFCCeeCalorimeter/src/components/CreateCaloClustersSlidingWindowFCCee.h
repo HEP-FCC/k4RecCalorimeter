@@ -7,7 +7,6 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
 
 // Interface
 #include "RecCaloCommon/ITowerToolThetaModule.h"
