@@ -38,7 +38,8 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsVsThetaFromFileTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool,  k4::recCalo::INoiseConstTool> {
+class NoiseCaloCellsVsThetaFromFileTool
+    : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool, k4::recCalo::INoiseConstTool> {
 public:
   using CellID = k4::recCalo::INoiseCaloCellsTool::CellID;
 
@@ -54,7 +55,7 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<CellID, double> >& aCells) const override final;
+  virtual void addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
@@ -62,24 +63,24 @@ public:
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<CellID, double> >& aCells)    const override final;
+  virtual void filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const override final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
   /// Find the appropriate noise RMS from the histogram
   virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
   virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
-  virtual std::pair<double, double>
-  getNoisePerCell(CellID aCellID) const override final;
+  virtual std::pair<double, double> getNoisePerCell(CellID aCellID) const override final;
 
 private:
   template <typename C>
-  void addRandomCellNoiseT (C& aCells) const;
+  void addRandomCellNoiseT(C& aCells) const;
   template <typename C>
-  void filterCellNoiseT (C& aCells) const;
+  void filterCellNoiseT(C& aCells) const;
 
   /// Handle for tool to get cell positions
-  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool", "Handle for tool to retrieve cell positions"};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
+                                                                  "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
@@ -137,7 +138,7 @@ private:
   Rndm::Numbers m_gauss;
 
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
 
   /// Decoder for ECal layers
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;

@@ -6,9 +6,7 @@
 
 DECLARE_COMPONENT(LayerPhiEtaCaloTool)
 
-
-StatusCode LayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const
-{
+StatusCode LayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const {
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();
   unsigned int numLayers;
@@ -22,8 +20,8 @@ StatusCode LayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const
 
   // get PhiEta segmentation
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation;
-  segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-      readout().segmentation().segmentation());
+  segmentation =
+      dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(readout().segmentation().segmentation());
   if (segmentation == nullptr) {
     error() << "There is no phi-eta segmentation!!!!" << endmsg;
     return StatusCode::FAILURE;

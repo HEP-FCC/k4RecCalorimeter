@@ -47,7 +47,7 @@ StatusCode SimulateSiPMwithContrib::initialize() {
   properties.setSnr(m_snr);
   properties.setPdeType(sipm::SiPMProperties::PdeType::kSimplePde); // this sets PDE to a single number
   properties.setPde(1.0);
-  //properties.setPdeSpectrum(m_wavelen, m_sipmEff); // if you want wavelen dependency
+  // properties.setPdeSpectrum(m_wavelen, m_sipmEff); // if you want wavelen dependency
 
   // set other parameters if provided
   for (const auto& [key, value] : m_params.value())
@@ -122,10 +122,12 @@ StatusCode SimulateSiPMwithContrib::execute(const EventContext&) const {
     // Apply threshold to save digi hit.
     // By default this is a zero suppression cut, can the changed to apply 1-suppression, 2-suppression, ...
     // Note: check the sipm gain applied in SimSipm, by default it is 1.
-    if(integral < m_suppressionThreshold) continue;
+    if (integral < m_suppressionThreshold)
+      continue;
 
     // NOTE: I noticed very few digi hits have TOA > ms, clearly a bug to be investigated
-    if(toa > 1e6) continue;
+    if (toa > 1e6)
+      continue;
 
     auto digiHit = digiHits->create();
     digiHit.setEnergy(integral /* * m_scaleADC.value()*/); // convertition from ADC to GeV can be added here

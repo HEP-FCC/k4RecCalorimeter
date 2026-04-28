@@ -51,12 +51,12 @@
  * Note that macro has to be used in a context such as a Gaudi component
  * where the @c error() function is defined to return a Gaudi @c MsgStream.
  */
-#define K4RECCALORIMETER_CHECK(EXP)                                     \
-  do {                                                                  \
-    if (!(EXP)) {                                                       \
-      error() << __FILE__ << ":" << __LINE__ << " error returned from: " << #EXP << endmsg; \
-      return StatusCode::FAILURE;                                       \
-    }                                                                   \
+#define K4RECCALORIMETER_CHECK(EXP)                                                                                    \
+  do {                                                                                                                 \
+    if (!(EXP)) {                                                                                                      \
+      error() << __FILE__ << ":" << __LINE__ << " error returned from: " << #EXP << endmsg;                            \
+      return StatusCode::FAILURE;                                                                                      \
+    }                                                                                                                  \
   } while (0)
 
 #endif // not K4RECCALORIMETER_K4RECCALORIMETER_CHECK_H

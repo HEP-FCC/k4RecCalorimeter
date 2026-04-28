@@ -39,9 +39,7 @@ class CalorimeterHitCollection;
  *  @date   2018-01
  */
 
-
 namespace k4::recCalo {
-
 
 class ICellPositionsTool : virtual public IAlgTool {
 public:
@@ -56,8 +54,6 @@ public:
   virtual int layerId(const CellID aCellId) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ICELLPOSITIONSTOOL_H */

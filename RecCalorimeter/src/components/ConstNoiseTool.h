@@ -37,12 +37,11 @@ public:
   /// Find the appropriate noise constant from the histogram
   virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
   virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
-  virtual std::pair<double, double>
-  getNoisePerCell(CellID aCellID) const override final;
+  virtual std::pair<double, double> getNoisePerCell(CellID aCellID) const override final;
 
 private:
   // rms, offset
-  std::vector<std::pair<double, double> > m_noise;
+  std::vector<std::pair<double, double>> m_noise;
 
   /// List of subdetector names (they must match what is defined in DectDimension)
   Gaudi::Property<std::vector<std::string>> m_detectors{
@@ -71,7 +70,7 @@ private:
   Gaudi::Property<std::string> m_systemEncoding{this, "systemEncoding", "system:4", "System encoding string"};
 
   /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
 
   /// Decoder
   std::unique_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;

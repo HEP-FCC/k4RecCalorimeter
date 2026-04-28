@@ -15,7 +15,7 @@ DECLARE_COMPONENT(ConstNoiseTool)
 StatusCode ConstNoiseTool::initialize() {
   // initialize decoder for retrieving system ID
   m_decoder = std::make_unique<dd4hep::DDSegmentation::BitFieldCoder>(m_systemEncoding);
-  m_systemIndex = m_decoder->index ("system");
+  m_systemIndex = m_decoder->index("system");
 
   // check that sizes of m_detectors and m_detectorNoiseRMS and m_detectorNoiseOffset are the same
   if (m_detectorsNoiseRMS.size() != m_detectors.size()) {
@@ -29,7 +29,7 @@ StatusCode ConstNoiseTool::initialize() {
     }
   }
 
-  K4RECCALORIMETER_CHECK( m_geoSvc.retrieve() );
+  K4RECCALORIMETER_CHECK(m_geoSvc.retrieve());
 
   // loop over the detectors
   for (size_t iDet = 0; iDet < m_detectors.size(); iDet++) {
@@ -40,7 +40,8 @@ StatusCode ConstNoiseTool::initialize() {
         error() << "Bad detector ID " << detID << endmsg;
         return StatusCode::FAILURE;
       }
-      if (static_cast<int>(m_noise.size()) <= detID) m_noise.resize (detID+1);
+      if (static_cast<int>(m_noise.size()) <= detID)
+        m_noise.resize(detID + 1);
       m_noise[detID].first = m_detectorsNoiseRMS[iDet];
       debug() << "Set noise RMS for detector " << detName << " (ID=" << detID << ") to: " << m_detectorsNoiseRMS[iDet]
               << endmsg;
@@ -55,7 +56,7 @@ StatusCode ConstNoiseTool::initialize() {
     }
   }
 
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
 
   return StatusCode::SUCCESS;
 }
@@ -65,7 +66,8 @@ double ConstNoiseTool::getNoiseRMSPerCell(CellID aCellId) const {
   // Determine sub detector containing the cell and retrieve corresponding noise
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, m_systemIndex);
-  if (cellSystem >= m_noise.size()) return 0;
+  if (cellSystem >= m_noise.size())
+    return 0;
   return m_noise[cellSystem].first;
 }
 
@@ -78,16 +80,16 @@ double ConstNoiseTool::getNoiseOffsetPerCell(CellID aCellId) const {
   // Get cells global coordinate "system"
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, m_systemIndex);
-  if (cellSystem >= m_noise.size()) return 0;
+  if (cellSystem >= m_noise.size())
+    return 0;
   return m_noise[cellSystem].second;
 }
 
-std::pair<double, double>
-ConstNoiseTool::getNoisePerCell(CellID aCellId) const
-{
+std::pair<double, double> ConstNoiseTool::getNoisePerCell(CellID aCellId) const {
   // Get cells global coordinate "system"
   dd4hep::DDSegmentation::CellID cID = aCellId;
   unsigned cellSystem = m_decoder->get(cID, m_systemIndex);
-  if (cellSystem >= m_noise.size()) return std::make_pair(0., 0.);
+  if (cellSystem >= m_noise.size())
+    return std::make_pair(0., 0.);
   return m_noise[cellSystem];
 }

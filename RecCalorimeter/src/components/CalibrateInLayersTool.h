@@ -40,11 +40,11 @@ public:
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
   virtual void calibrate(std::unordered_map<CellID, double>& aHits) const override final;
-  virtual void calibrate(std::vector<std::pair<CellID, double> >& aHits) const override final;
+  virtual void calibrate(std::vector<std::pair<CellID, double>>& aHits) const override final;
 
 private:
   /// Do calibration for a single cell.
-  void calibrateCell (CellID cID, double& energy) const;
+  void calibrateCell(CellID cID, double& energy) const;
 
   /// Decoder associated with this readout.
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder = nullptr;

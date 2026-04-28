@@ -6,8 +6,8 @@
 DECLARE_COMPONENT(CellPositionsCaloDiscsTool)
 
 StatusCode CellPositionsCaloDiscsTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
@@ -70,9 +70,7 @@ dd4hep::Position CellPositionsCaloDiscsTool::xyzPosition(const CellID aCellId) c
   radius = outGlobal.Z() / std::sinh(eta);
   debug() << "Radius : " << radius << endmsg;
 
-  return dd4hep::Position (inSeg.x() * radius, inSeg.y() * radius, outGlobal.Z());
+  return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, outGlobal.Z());
 }
 
-int CellPositionsCaloDiscsTool::layerId(const CellID aCellId) const {
-  return m_decoder->get(aCellId, "layer");
-}
+int CellPositionsCaloDiscsTool::layerId(const CellID aCellId) const { return m_decoder->get(aCellId, "layer"); }

@@ -19,8 +19,7 @@ class IGeoSvc;
  *  @author Coralie Neubueser
  */
 
-class TopoCaloNeighbours : public extends<AlgTool, k4::recCalo::ICaloReadNeighboursMap>
-{
+class TopoCaloNeighbours : public extends<AlgTool, k4::recCalo::ICaloReadNeighboursMap> {
 public:
   using base_class::base_class;
 

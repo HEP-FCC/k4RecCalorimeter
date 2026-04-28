@@ -7,8 +7,8 @@
 DECLARE_COMPONENT(CellPositionsECalBarrelTool)
 
 StatusCode CellPositionsECalBarrelTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
@@ -65,7 +65,8 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const dd4hep::CellID a
   auto detelement = m_volman.lookupDetElement(volumeId);
   double inLocal[] = {0, 0, 0};
   const auto outGlobal = detelement.nominal().localToWorld(inLocal);
-  // debug() << "Position of volume (mm) : \t" << outGlobal.X() / dd4hep::mm << "\t" << outGlobal.Y() / dd4hep::mm << "\t"
+  // debug() << "Position of volume (mm) : \t" << outGlobal.X() / dd4hep::mm << "\t" << outGlobal.Y() / dd4hep::mm <<
+  // "\t"
   //         << outGlobal[2] / dd4hep::mm << endmsg;
   //  radius calculated from segmenation + z postion of volumes
   auto inSeg = m_segmentation->position(aCellId);
@@ -74,6 +75,4 @@ dd4hep::Position CellPositionsECalBarrelTool::xyzPosition(const dd4hep::CellID a
   return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, inSeg.z() * radius);
 }
 
-int CellPositionsECalBarrelTool::layerId(const CellID aCellId) const {
-  return m_decoder->get(aCellId, "layer");
-}
+int CellPositionsECalBarrelTool::layerId(const CellID aCellId) const { return m_decoder->get(aCellId, "layer"); }

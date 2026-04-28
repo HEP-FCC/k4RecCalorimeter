@@ -30,9 +30,7 @@
 #include <cstdint>
 #include <span>
 
-
 namespace k4::recCalo {
-
 
 /**
  * @brief Interface for cell indexing.
@@ -75,8 +73,6 @@ public:
   virtual size_t detIDBits() const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif // not RECCALOCOMMON_ICALOINDEXER_H

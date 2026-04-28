@@ -5,8 +5,8 @@
 #include "GaudiKernel/Service.h"
 
 // Interfaces
-#include "k4FWCore/DataHandle.h"
 #include "RecCaloCommon/ICaloCreateMap.h"
+#include "k4FWCore/DataHandle.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo
@@ -46,17 +46,20 @@ private:
 
   /// Names of the detector readout for the volumes
   Gaudi::Property<std::vector<std::string>> m_readoutNamesSegmented{
-    this, "readoutNames", {"ECalBarrelModuleThetaMerged", "ECalEndcapTurbine", "HCalBarrelReadout", "HCalEndcapReadout"}};
+      this,
+      "readoutNames",
+      {"ECalBarrelModuleThetaMerged", "ECalEndcapTurbine", "HCalBarrelReadout", "HCalEndcapReadout"}};
   /// Name of the fields describing the segmented volume
-  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{this, "systemNames", {"system", "system", "system", "system"}};
+  Gaudi::Property<std::vector<std::string>> m_fieldNamesSegmented{
+      this, "systemNames", {"system", "system", "system", "system"}};
   /// Values of the fields describing the segmented volume
   Gaudi::Property<std::vector<int>> m_fieldValuesSegmented{this, "systemValues", {4, 5, 8, 9}};
   /// Names of the active volume in geometry along radial axis (e.g. layer), the others are "module" or "phi", "theta"
   Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{
-    this, "activeFieldNames", {"layer", "layer", "layer", "layer"}};
+      this, "activeFieldNames", {"layer", "layer", "layer", "layer"}};
   /// Number of layers in the segmented volumes
   Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{
-    this, "activeVolumesNumbers", {11, 98, 13, 37}};
+      this, "activeVolumesNumbers", {11, 98, 13, 37}};
   // Theta ranges of layers in the segmented volumes
   Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
   /// Whether to consider diagonal cells as neighbours or not
@@ -104,19 +107,18 @@ private:
   // re-calculating positions inside the double loop over cells that occurs when
   // looking for neighbors.
 
-  std::vector< TH1F* > m_EMB_h_module_vs_phi;
-  std::vector< std::vector<Float_t>> m_EMB_phi_lookup;
+  std::vector<TH1F*> m_EMB_h_module_vs_phi;
+  std::vector<std::vector<Float_t>> m_EMB_phi_lookup;
   std::vector<Float_t> m_EMB_theta_lookup;
 
-  std::vector< TH1F* > m_EMEC_h_module_vs_phi_pos;
-  std::vector< TH1F* > m_EMEC_h_module_vs_phi_neg;
+  std::vector<TH1F*> m_EMEC_h_module_vs_phi_pos;
+  std::vector<TH1F*> m_EMEC_h_module_vs_phi_neg;
   // vectors to be removed
   // std::vector< std::vector<Float_t>> m_EMEC_pos_phi_lookup;
   // std::vector< std::vector<Float_t>> m_EMEC_neg_phi_lookup;
   std::vector<Float_t> m_EMEC_theta_lookup;
 
   StatusCode initialize_lookups();
-
 };
 
 #endif /* RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H */

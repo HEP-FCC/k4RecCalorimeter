@@ -6,8 +6,8 @@
 DECLARE_COMPONENT(CellPositionsTailCatcherTool)
 
 StatusCode CellPositionsTailCatcherTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
@@ -80,7 +80,4 @@ dd4hep::Position CellPositionsTailCatcherTool::xyzPosition(const CellID aCellId)
   return outSeg;
 }
 
-int CellPositionsTailCatcherTool::layerId(const CellID /*aCellId*/) const
-{
-  return 0;
-}
+int CellPositionsTailCatcherTool::layerId(const CellID /*aCellId*/) const { return 0; }

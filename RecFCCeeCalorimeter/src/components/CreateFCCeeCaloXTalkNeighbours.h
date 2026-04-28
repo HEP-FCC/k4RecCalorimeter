@@ -69,7 +69,8 @@ private:
   // diagonal crosstalk coefficient, p11, "in C14 out C13" and "in C14 out C15", 50 ns shaping
   Gaudi::Property<double> m_xtalk_coef_diagonal{this, "xtalkCoefDiagonal", 0.04e-2};
   // tower crosstalk coefficient: crosstalk due to the signal traces traversing the theta tower.
-  // This quantity was not measured at CERN at the time. A reasonable guess is used here, which is confirmed orally by IJCLab.
+  // This quantity was not measured at CERN at the time. A reasonable guess is used here, which is confirmed orally by
+  // IJCLab.
   Gaudi::Property<double> m_xtalk_coef_tower{this, "xtalkCoefTower", 0.1e-2};
 
   // Save debug information of cell position in (layer, theta, module) indices
@@ -91,7 +92,6 @@ private:
   Gaudi::Property<double> m_hCalRinner{this, "hCalRinner", 2850};
   // For combination of barrels: offset of HCal modules in phi (lower edge)
   Gaudi::Property<double> m_hCalPhiOffset{this, "hCalPhiOffset"};
-
 
   /// Name of output file
   std::string m_outputFileName;

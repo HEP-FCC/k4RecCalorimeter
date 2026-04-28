@@ -70,7 +70,7 @@ public:
 
 private:
   /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// Name of the hadronic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "HCalBarrelReadout"};
   /// Name of the hadronic calorimeter

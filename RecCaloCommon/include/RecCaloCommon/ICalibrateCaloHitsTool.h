@@ -24,9 +24,7 @@
 // Gaudi
 #include "GaudiKernel/IAlgTool.h"
 
-
 namespace k4::recCalo {
-
 
 /** @class ICalibrateCaloHitsTool
  *
@@ -46,8 +44,6 @@ public:
   virtual void calibrate(std::vector<std::pair<CellID, double>>& aHits) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ICALIBRATECALOHITSTOOL_H */

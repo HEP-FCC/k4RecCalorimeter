@@ -9,8 +9,8 @@ using dd4hep::DetElement;
 DECLARE_COMPONENT(CellPositionsHCalPhiThetaSegTool)
 
 StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   const dd4hep::Detector* detector = m_geoSvc->getDetector();
   if (!detector) {
@@ -24,22 +24,19 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
   m_segmentationType = segmentation.segmentation()->type();
 
   dd4hep::VolumeManager vman_glob = detector->volumeManager();
-  m_volman = vman_glob.subdetector (segmentation.detector()->id);
+  m_volman = vman_glob.subdetector(segmentation.detector()->id);
 
   if (m_segmentationType == "FCCSWGridPhiTheta_k4geo") {
     // get GridPhiTheta segmentation
-    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(
-        segmentation.segmentation());
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(segmentation.segmentation());
   }
   if (m_segmentationType == "FCCSWHCalPhiTheta_k4geo") {
     // get PhiTheta segmentation
-    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(
-        segmentation.segmentation());
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiTheta_k4geo*>(segmentation.segmentation());
   }
   if (m_segmentationType == "FCCSWHCalPhiRow_k4geo") {
     // get PhiRow segmentation
-    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(
-        segmentation.segmentation());
+    m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWHCalPhiRow_k4geo*>(segmentation.segmentation());
   }
 
   if (m_segmentation == nullptr) {
@@ -63,8 +60,7 @@ StatusCode CellPositionsHCalPhiThetaSegTool::initialize() {
   m_layerIndex = m_decoder->index("layer");
 
   // needed only for FCCSWGridPhiTheta_k4geo segmentation
-  if(m_segmentationType == "FCCSWGridPhiTheta_k4geo")
-  {
+  if (m_segmentationType == "FCCSWGridPhiTheta_k4geo") {
     m_phiIndex = m_decoder->index("phi");
     m_thetaIndex = m_decoder->index("theta");
 
@@ -146,9 +142,7 @@ void CellPositionsHCalPhiThetaSegTool::getPositions(const edm4hep::CalorimeterHi
 
 dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const CellID aCellId) const {
 
-  if (m_segmentationType == "FCCSWHCalPhiTheta_k4geo" ||
-      m_segmentationType == "FCCSWHCalPhiRow_k4geo")
-  {
+  if (m_segmentationType == "FCCSWHCalPhiTheta_k4geo" || m_segmentationType == "FCCSWHCalPhiRow_k4geo") {
     if (m_segmentation->cellsSpanVolumes()) {
       dd4hep::DDSegmentation::CellID volumeId = m_segmentation->volumeID(aCellId);
       dd4hep::VolumeManagerContext* vc = m_volman.lookupContext(volumeId);
@@ -157,8 +151,7 @@ dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const CellID aCel
 
       if (msgLevel(MSG::DEBUG)) {
         debug() << "Layer : " << m_decoder->get(aCellId, m_layerIndex) << endmsg;
-        debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y()
-                << " z = " << outSeg.z() << endmsg;
+        debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y() << " z = " << outSeg.z() << endmsg;
       }
 
       return outSeg;
@@ -170,8 +163,7 @@ dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const CellID aCel
 
     if (msgLevel(MSG::DEBUG)) {
       debug() << "Layer : " << m_decoder->get(aCellId, m_layerIndex) << endmsg;
-      debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y()
-              << " z = " << outSeg.z() << endmsg;
+      debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y() << " z = " << outSeg.z() << endmsg;
     }
 
     return outSeg;
