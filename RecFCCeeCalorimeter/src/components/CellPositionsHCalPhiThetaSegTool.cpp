@@ -157,7 +157,7 @@ dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const CellID aCel
 
       if (msgLevel(MSG::DEBUG)) {
         debug() << "Layer : " << m_decoder->get(aCellId, m_layerIndex) << endmsg;
-        debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y() 
+        debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y()
                 << " z = " << outSeg.z() << endmsg;
       }
 
@@ -170,7 +170,7 @@ dd4hep::Position CellPositionsHCalPhiThetaSegTool::xyzPosition(const CellID aCel
 
     if (msgLevel(MSG::DEBUG)) {
       debug() << "Layer : " << m_decoder->get(aCellId, m_layerIndex) << endmsg;
-      debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y() 
+      debug() << "Global position : x = " << outSeg.x() << " y = " << outSeg.y()
               << " z = " << outSeg.z() << endmsg;
     }
 

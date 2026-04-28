@@ -64,10 +64,10 @@
  struct CaloAddNoise2Digits final
      : k4FWCore::Transformer<edm4hep::TimeSeriesCollection(const edm4hep::TimeSeriesCollection&)> {
         CaloAddNoise2Digits(const std::string& name, ISvcLocator* svcLoc)
-       : Transformer(name, svcLoc, 
+       : Transformer(name, svcLoc,
         {KeyValues("InputCollection", {"DigitsFloat"})},
         {KeyValues("OutputCollection", {"DigitsWithNoiseFloat"})}) {}
-    
+
     /**
     * \brief Simulates, and saves the noise sample matrix, mean noise per sample, covariance matrix, correlation matrix, and inverse correlation matrix to a ROOT file.
     *
@@ -82,7 +82,7 @@
         TMatrixD NoiseSampleMat(m_noiseSimSamples.value(), m_lenSample.value());
         std::vector<double> means(m_lenSample.value(), 0.0); // Pulse size to calculate means
         createNoiseSampleMatrix(&NoiseSampleMat, &means);
-        
+
         TMatrixDSym covMat = ComputeCovarianceMatrix(NoiseSampleMat, means);
         TMatrixDSym corMat = ComputeCorrelationMatrix(covMat);
         TMatrixDSym invCorrMat(corMat);
@@ -114,7 +114,7 @@
         info() << "Noise sample matrix created with size: " << NoiseSampleMat.GetNrows() << "x" << NoiseSampleMat.GetNcols() << endmsg;
         return StatusCode::SUCCESS;
     }
-   
+
     /**
     * \brief Adds noise to digitized pulses in a TimeSeriesCollection.
     *
@@ -152,14 +152,14 @@
     * \brief Adds random Gaussian noise to a digitized pulse.
     *
     * This function takes as input a digitized pulse represented as a vector of floats and adds Gaussian noise to each sample in the pulse. The Gaussian noise is calculated using TRandom3's Gaus method.
-    * 
+    *
     * \param Digits: The digitized pulse samples.
     * \param NoiseEnergy: The mean of the Gaussian noise.
     * \param NoiseWidth: The standard deviation of the Gaussian noise.
     * \return Vector<float> of the digitized pulse samples with added Gaussian noise.
    */
    std::vector<float> applyGaussianNoise(const podio::RelationRange<float> Digits, float NoiseEnergy, float NoiseWidth) const
-   {     
+   {
         std::vector<float> OutVector(Digits.size(), 0.0f);
 
         // Loop over the DigitVector
@@ -174,7 +174,7 @@
     * \brief Computes an \f$n \times n \f$ covariance matrix.
     *
     * This function takes as input a matrix of noise samples and a vector of means per sample, and computes the covariance matrix.
-    * 
+    *
     * \param data: The matrix of noise samples.
     * \param means: The vector of means per sample.
     * \return The covariance matrix.
@@ -219,7 +219,7 @@
         }
         return corr;
     }
-    
+
     /**
     * \brief Creates a matrix of noise samples.
     *
@@ -259,5 +259,5 @@
   TRandom *r3 = new TRandom3();
 
  };
- 
+
  DECLARE_COMPONENT(CaloAddNoise2Digits)

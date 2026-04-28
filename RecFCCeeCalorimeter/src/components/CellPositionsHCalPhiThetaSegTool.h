@@ -92,6 +92,6 @@ private:
 
   int m_layerIndex = -1;
   int m_phiIndex = -1;
-  int m_thetaIndex = -1; 
+  int m_thetaIndex = -1;
 };
 #endif /* RECCALORIMETER_CellPositionsHCalPhiThetaSegTool_H */

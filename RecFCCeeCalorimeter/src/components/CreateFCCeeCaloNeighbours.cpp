@@ -551,7 +551,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   error() << "Segmentation does not exist." << endmsg;
                   return StatusCode::FAILURE;
                 }
-	      
+
                 std::string segmentationType2 = aSegmentation2->type();
                 if (segmentationType2 == "FCCSWEndcapTurbine_k4geo") {
                   auto endcapDecoder =
@@ -559,7 +559,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   if (ecalEndcapTurbineSegmentation == nullptr) {
                     ecalEndcapTurbineSegmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(aSegmentation2);
                   }
- 
+
                   int iWheel = 2;
                   int iSide;
                   if (itheta == extrema[2].first) {
@@ -571,7 +571,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   unsigned numECCellsRho = ecalEndcapTurbineSegmentation->numCellsRho(iWheel);
                   // Loop over segmentation cells
                   dd4hep::DDSegmentation::CellID endcapCellId = 0;
-		
+
                   (*endcapDecoder)[m_fieldNamesSegmented[iSys2]].set(endcapCellId, m_ecalEndcapSysId);
                   (*endcapDecoder)["z"].set(endcapCellId, 0);
                   (*endcapDecoder)["wheel"].set(endcapCellId, iWheel);

@@ -70,7 +70,7 @@ private:
 
   // System ID of ECAL and HCAL barrels
   Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
-  Gaudi::Property<uint> m_ecalEndcapSysId{this, "ecalEndcapSysId", 5};  
+  Gaudi::Property<uint> m_ecalEndcapSysId{this, "ecalEndcapSysId", 5};
   Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
   Gaudi::Property<uint> m_hcalEndcapSysId{this, "hcalEndcapSysId", 9};
 
@@ -103,7 +103,7 @@ private:
   // the spatial matching between the barrel and endcap cells without
   // re-calculating positions inside the double loop over cells that occurs when
   // looking for neighbors.
-  
+
   std::vector< TH1F* > m_EMB_h_module_vs_phi;
   std::vector< std::vector<Float_t>> m_EMB_phi_lookup;
   std::vector<Float_t> m_EMB_theta_lookup;
@@ -116,7 +116,7 @@ private:
   std::vector<Float_t> m_EMEC_theta_lookup;
 
   StatusCode initialize_lookups();
-  
+
 };
 
 #endif /* RECFCCEECALORIMETER_CREATEFCCEECALONEIGHBOURS_H */

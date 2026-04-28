@@ -8,7 +8,7 @@
  *
  * The whitening filter is used to decorrelate noise between samples in the digitized pulses. The whitening matrix is computed from the inverse of the noise correlation matrix, which is provided via a ROOT file during initialization. The mean vector of the noise is also provided via the same ROOT file and is subtracted from each digitized pulse before applying the whitening filter. The whitening operation is performed using the ZCA (Zero-phase Component Analysis) method but there are other methods that can be implemented in the future.
  *
- * In mathematical terms, the ZCA method is: 
+ * In mathematical terms, the ZCA method is:
  * \f$ \vec{W} = \Sigma^{-1/2} (\vec{D} - \vec{\mu})\f$
  * \f$ \vec{W} \f$ is a vector of the whitened pulse.
  * \f$ \Sigma^{-1/2} \f$ is the whitening matrix, defined as the inverse square root of the noise correlation matrix. This should be precomputed and provided via the ROOT file.
@@ -25,7 +25,7 @@
  *     - @param m_noiseInfoFileName: The name of the ROOT file to load the noise correlation matrix from.
  *     - @param m_invCorrMatName: The name of the ROOT TMatrixD that represents the inverse of the correlation matrix of the noise.
  *     - @param m_muVecName: The name of the ROOT TVectorD that represents the mean vector of the noise.
- *    - @param m_filterName: The name of the whitening filter to apply. Currently only "ZCA" is implemented. 
+ *    - @param m_filterName: The name of the whitening filter to apply. Currently only "ZCA" is implemented.
  *
  * Outputs:
  *     - TimeSeriesCollection: Collection of digitized pulses after applying the whitening filter.
@@ -60,10 +60,10 @@
  struct CaloWhitening final
      : k4FWCore::Transformer<edm4hep::TimeSeriesCollection(const edm4hep::TimeSeriesCollection&)> {
         CaloWhitening(const std::string& name, ISvcLocator* svcLoc)
-       : Transformer(name, svcLoc, 
+       : Transformer(name, svcLoc,
         {KeyValues("InputCollection", {"DigitsFloat"})},
         {KeyValues("OutputCollection", {"WhitenedDigitsCollection"})}) {}
- 
+
     /**
     * \brief Computes the quantities necessary for the filter.
     *
@@ -156,7 +156,7 @@
 
         return StatusCode::SUCCESS;
     }
-   
+
 
 
    /**
@@ -218,7 +218,7 @@
    }
 
 
-    /**    
+    /**
     * \brief Finalizes the transformer but does nothing in this case.
     * \return StatusCode indicating success or failure.
     */
@@ -236,5 +236,5 @@
   TVectorD* MuVec = nullptr;
 
 };
- 
+
  DECLARE_COMPONENT(CaloWhitening)

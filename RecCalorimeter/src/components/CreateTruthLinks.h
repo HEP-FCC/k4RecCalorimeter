@@ -66,7 +66,7 @@ private:
   /// Handle for particle<->cluster link (output collection) [NOT POSSIBLE]
   //  mutable k4FWCore::DataHandle<edm4hep::MCParticleClusterLinkCollection> m_mcparticle_cluster_links{"mcparticle_cluster_links", Gaudi::DataHandle::Writer,
   //    this};
-    
+
 };
 
 #endif /* RECCALORIMETER_CreateTruthLinks_H */

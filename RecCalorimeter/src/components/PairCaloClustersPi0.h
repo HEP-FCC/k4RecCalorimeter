@@ -40,7 +40,7 @@ class Vector3d;
  *  Output1: A list of reconstructed particles, with energy, momentum, and pointers to a pair of clusters
  *  Output2: The rest of clusters not involved in the reconstruction of pi0 candidate through the pairing.
  *  Output3: Clusters used in the reconstruction of pi0 candidate.
- *  
+ *
  *  @author Zhibo Wu
  */
 
@@ -100,7 +100,7 @@ private:
   /// Handle for paired (output3) calorimeter clusters collection
   mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_pairedClusters{"pairedClusters", Gaudi::DataHandle::Writer, this};
 
-  
+
   // pi0 mass window
   Gaudi::Property<double> m_massPeak{this, "massPeak", 0.135, "pi0 mass peak [GeV]"};
   Gaudi::Property<double> m_massLow{this, "massLow", 0.0, "lower boundary of pi0 mass window [GeV]"};
