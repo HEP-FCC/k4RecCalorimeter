@@ -8,7 +8,7 @@
  *
  * This is a MultiTransformer that in v01 applies a matched filter to the digitized pulses. The matched filter is defined using the time-reversed and conjugate of a known pulse shape (currently a Gaussian) of length \f$N\f$. This is then convolved with the digitized pulse in order to extract the best estimate of the energy and timing information for each cell. The matched filter provides the best signal to noise ratio in the presence of additive stochastic noise. More information on the matched filter can be found at: https://en.wikipedia.org/wiki/Matched_filter and for this specific application, see: https://indico.cern.ch/event/1580025/contributions/6686602/attachments/3133485/5559196/FCCDigitization4BNLWorkshopEndOfWeekUpdate.pdf.
  *
- * In mathematical terms, a correctly normalized matched filter is defined as: 
+ * In mathematical terms, a correctly normalized matched filter is defined as:
  * \f$ \vec{M} = \frac{\Sigma^{-1} \vec{s}}{s^T \Sigma^{-1} s} \f$
  * \f$ \vec{M} \f$ is the vector defining the matched filter.
  * \f$ \Sigma^{-1} \f$ is the inverse of the noise correlation matrix. Must be provided via a ROOT file during initialization.
@@ -103,7 +103,7 @@ struct CaloFilterFunc final
     StatusCode initialize() override{
         // Get matched filter template
         if (m_filterName.value() == "Matched_Gaussian"){
-            info() << "Using the matched filter: Matched Gaussian" << endmsg;          
+            info() << "Using the matched filter: Matched Gaussian" << endmsg;
 
             // Number of samples you want the known pulse (i.e. filter) to consider
             // Note that an odd number of samples > 1 is the best for a Gaussian. Otherwise, migration effects will happen
@@ -132,7 +132,7 @@ struct CaloFilterFunc final
                         << ", PulseShape.size()=" << PulseShape.size() << endmsg;
                 return StatusCode::FAILURE;
             }
-            
+
             info() << "MaxIdx: " << MaxIdx << ", DownIdx: " << DownIdx << ", UpIdx: " << UpIdx << endmsg;
 
             // Create padded FilterTemplate with small part that is signal
@@ -171,10 +171,10 @@ struct CaloFilterFunc final
             error() << "Unknown filter name: " << m_filterName.value() << endmsg;
             return StatusCode::FAILURE;
         }
-        
+
         return StatusCode::SUCCESS;
     }
-   
+
     /**
     * \brief Applies the matched filter to the digitized pulses.
     *
@@ -189,7 +189,7 @@ struct CaloFilterFunc final
         DigitsColl FilteredDigitsCollection;
         MatchedSampleIdxColl MaxIdxCollection;
         MatchedSampleEnergyColl EnergyCollection;
-    
+
         // Loop over DigitsPulse to extract the pulse amplitudes
         for (const auto& Digit : DigitsPulse) {
             const auto InputPulse = Digit.getAmplitude();
@@ -224,7 +224,7 @@ struct CaloFilterFunc final
     }
 
 
-    /**    
+    /**
     * \brief Finalizes the transformer but does nothing in this case.
     * \return StatusCode indicating success or failure.
     */
@@ -273,7 +273,7 @@ struct CaloFilterFunc final
     /**
     * \brief Apply the matched filter to a digitized pulse.
     *
-    * This function takes as input a digitized pulse and the matched filter template. It convolves the digitized pulse with the time reversed version of the matched filter template and returns the filtered pulse. 
+    * This function takes as input a digitized pulse and the matched filter template. It convolves the digitized pulse with the time reversed version of the matched filter template and returns the filtered pulse.
     *
     * \param pulse: The input digitized pulse.
     * \param Cfilter: The matched filter template. This should NOT be time reversedyet.
@@ -303,7 +303,7 @@ struct CaloFilterFunc final
 
     /**
     * \brief Computes the derivative of a Gaussian function analytically.
-    * 
+    *
     * This function computes the derivative of the Gaussian \f$ G'(x) = -\left(\frac{x - \mu}{\sigma^2}\right) \cdot G(x) \f$
     *
     * \param x: The input variable.
@@ -341,13 +341,13 @@ struct CaloFilterFunc final
     }
 
 
- private:  
+ private:
   /// Map to be used for the lookup of the pulse shapes
   Gaudi::Property<std::string> m_filterName{this, "filterName", "Matched_Gaussian", "Name of the filter to apply" };
-    
+
   Gaudi::Property<float> m_mu{this, "mu", 50, "Mean of Gaussian pulse" };
   Gaudi::Property<float> m_sigma{this, "sigma", 20, "Sigma of Gaussian pulse" };
-  
+
   // Number of samples in the filter template
   Gaudi::Property<int> m_filterTemplateSize{this, "filterTemplateSize", 5, "Size of the filter template" };
 
@@ -364,5 +364,5 @@ struct CaloFilterFunc final
   std::vector<float>* FilterTemplate = nullptr;
 
  };
- 
+
  DECLARE_COMPONENT(CaloFilterFunc)

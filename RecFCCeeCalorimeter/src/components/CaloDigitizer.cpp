@@ -52,14 +52,14 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TSystem.h"
- 
+
  struct CaloDigitizerFunc final
      : k4FWCore::Transformer<edm4hep::TimeSeriesCollection(const edm4hep::SimCalorimeterHitCollection&)> {
         CaloDigitizerFunc(const std::string& name, ISvcLocator* svcLoc)
-       : Transformer(name, svcLoc, 
+       : Transformer(name, svcLoc,
         {KeyValues("InputCollection", {"SimCaloHitsCollection"})},
         {KeyValues("OutputCollection", {"DigitsFloat"})}) {}
-        
+
     /**
     * \brief Computes the pulse shape and its derivative.
     *
@@ -71,7 +71,7 @@
     StatusCode initialize() override{
         // Decide which pulse shape to use and create the pulse shape and derivative vectors on the fly
         m_samplingInterval = (m_pulseEndTime.value() - m_pulseInitTime.value()) / m_lenSample.value();
-        
+
         if (std::strcmp(m_pulseType.value().c_str(), "Gaussian") == 0) {
             debug() << "Using Gaussian pulse shape!" << endmsg;
 
@@ -85,7 +85,7 @@
         }
         return StatusCode::SUCCESS;
     }
-   
+
    /**
     * \brief Digitizes the simulated calorimeter hits from Geant4.
     *
@@ -104,14 +104,14 @@
         uint64_t cellID = hit.getCellID();
         float energy = hit.getEnergy();
         debug() << "Hit energy: " << energy << endmsg;
-        auto Contributions = hit.getContributions();   
+        auto Contributions = hit.getContributions();
 
         std::vector<float> DigitVectorSum(PulseShape.size(), 0.0f);
 
         // Loop over contributions to get the energy and time
         for (const auto& contribution : Contributions) {
             auto DigitVector = Hit2DigitFloat(contribution.getEnergy(), contribution.getTime(), PulseShape, PulseShapeDeriv);
-            
+
             // Sum the contributions
             std::transform(DigitVectorSum.begin(), DigitVectorSum.end(), DigitVector.begin(), DigitVectorSum.begin(), std::plus<float>());
 
@@ -143,7 +143,7 @@
     * \return Vector<float> representing the digitized pulse samples.
     */
    std::vector<float> Hit2DigitFloat(float Energy, float time, const std::vector<float>& pulseShape, const std::vector<float>& pulseShapeDeriv) const
-   {     
+   {
         // Basing this off of LArDigitization pub note: https://inspirehep.net/files/8b92316ea8786d3954cccbfaa0d10ada
         std::vector<float> DigitVector(pulseShape.size(), 0.0f);
 
@@ -153,7 +153,7 @@
             // if j < 0, it means the pulse is not in the time window so set it to 0
             if (j >= 0) {
                 float DeltaT = time - m_samplingInterval * std::rint(time / m_samplingInterval);
-                                
+
                 DigitVector[i] = Energy * (pulseShape[j] - DeltaT * pulseShapeDeriv[j]);
             }
         }
@@ -183,7 +183,7 @@
 
     /**
     * \brief Computes the derivative of a Gaussian function analytically.
-    * 
+    *
     * This function computes the derivative of the Gaussian \f$ G'(x) = -\left(\frac{x - \mu}{\sigma^2}\right) \cdot G(x) \f$
     *
     * \param x: The input variable.
@@ -196,7 +196,7 @@
     }
 
 
- 
+
  private:
   // Type of pulse to create
   Gaudi::Property<std::string> m_pulseType {this, "pulseType", "Gaussian", "Type of pulse to create" };
@@ -209,12 +209,12 @@
   // Gaussian pulse properties
   Gaudi::Property<float> m_mu {this, "mu", 100.0, "Mean of Gaussian pulse" };
   Gaudi::Property<float> m_sigma {this, "sigma", 20.0, "Sigma of Gaussian pulse" };
-  
+
   std::vector<float> PulseShape;
   std::vector<float> PulseShapeDeriv;
 
   float m_samplingInterval;
 
  };
- 
+
  DECLARE_COMPONENT(CaloDigitizerFunc)
