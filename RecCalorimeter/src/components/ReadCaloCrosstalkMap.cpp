@@ -21,7 +21,7 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
 
   info() << "Loading crosstalk map..." << endmsg;
 
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
 
   // Check if crosstalk file exists
   if (gSystem->AccessPathName(m_fileName.value().c_str())) {
@@ -65,9 +65,7 @@ StatusCode ReadCaloCrosstalkMap::initialize() {
   return StatusCode::SUCCESS;
 }
 
-auto
-ReadCaloCrosstalkMap::getNeighbours(CellID aCellId) const -> std::span<const CellID>
-{
+auto ReadCaloCrosstalkMap::getNeighbours(CellID aCellId) const -> std::span<const CellID> {
   auto it = m_mapNeighbours.find(aCellId);
   if (it != m_mapNeighbours.end()) {
     return it->second;
@@ -75,8 +73,7 @@ ReadCaloCrosstalkMap::getNeighbours(CellID aCellId) const -> std::span<const Cel
   return std::span<const CellID>();
 }
 
-std::span<const double>
-ReadCaloCrosstalkMap::getCrosstalks(CellID aCellId) const {
+std::span<const double> ReadCaloCrosstalkMap::getCrosstalks(CellID aCellId) const {
   auto it = m_mapCrosstalks.find(aCellId);
   if (it != m_mapCrosstalks.end()) {
     return it->second;

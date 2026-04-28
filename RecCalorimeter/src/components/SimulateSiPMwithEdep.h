@@ -1,10 +1,10 @@
 #ifndef SimulateSiPMwithEdep_h
 #define SimulateSiPMwithEdep_h 1
 
+#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/EventHeaderCollection.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
-#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
 #include "edm4hep/TimeSeriesCollection.h"
 
 #include "k4FWCore/DataHandle.h"
@@ -15,8 +15,8 @@
 #include "GaudiKernel/ToolHandle.h"
 
 // geometry (needed for timing, based on the distance btn the step and the rear end of the fiber)
-#include "k4Interface/IGeoSvc.h"
 #include "detectorSegmentations/GridDRcalo_k4geo.h"
+#include "k4Interface/IGeoSvc.h"
 
 // Check for SiPMSensor header location (similar to how DigiSiPM handles this)
 #if __has_include("SiPMSensor.h")
@@ -82,8 +82,8 @@ private:
                                                                              this};
   mutable k4FWCore::DataHandle<edm4hep::TimeSeriesCollection> m_waveforms{m_outTimeColl, Gaudi::DataHandle::Writer,
                                                                           this};
-  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_hitLinks{m_outLinkColl, Gaudi::DataHandle::Writer,
-                                                                                    this};
+  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_hitLinks{m_outLinkColl,
+                                                                                    Gaudi::DataHandle::Writer, this};
 
   std::unique_ptr<sipm::SiPMSensor> m_sensor;
 
@@ -114,7 +114,7 @@ private:
                                   "Integration threshold"}; // Threshold in p.e. (1.5 to suppress DCR)
 
   // other parameters (attention, will override above parameters if set)
-  Gaudi::Property<std::map<std::string,double>> m_params{this, "params", {}, "optional parameters"};
+  Gaudi::Property<std::map<std::string, double>> m_params{this, "params", {}, "optional parameters"};
 
   // SiPM efficiency, filter efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{

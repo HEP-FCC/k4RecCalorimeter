@@ -132,11 +132,11 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
 
   // Keep track of hits by ID, to avoid N^2 behavior in making links.
   std::unordered_multimap<size_t, size_t> hitIndices;
-  for (size_t ihit=0; const auto& hit : *hits) {
+  for (size_t ihit = 0; const auto& hit : *hits) {
     auto id = hit.getCellID();
     verbose() << "CellID : " << id << endmsg;
     m_cellsMap[id] += hit.getEnergy();
-    hitIndices.emplace (id, ihit++);
+    hitIndices.emplace(id, ihit++);
   }
   debug() << "Number of calorimeter cells after merging of hits: " << m_cellsMap.size() << endmsg;
 

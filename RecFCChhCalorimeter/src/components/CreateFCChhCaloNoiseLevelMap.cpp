@@ -92,7 +92,7 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
           decoder->set(cellId, "phi", iphi);
           decoder->set(cellId, "eta", ieta + numCells[2]); // start from the minimum existing eta cell in this layer
           uint64_t id = cellId;
-          std::pair<double, double> noise { 0, 0 };
+          std::pair<double, double> noise{0, 0};
           if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId) {
             noise = m_hcalBarrelNoiseTool->getNoisePerCell(id);
           } else if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
@@ -225,4 +225,3 @@ StatusCode CreateFCChhCaloNoiseLevelMap::initialize() {
 
   return StatusCode::SUCCESS;
 }
-

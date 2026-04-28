@@ -18,12 +18,10 @@ public:
   using CalorimeterToolBase::CalorimeterToolBase;
   virtual ~LayerPhiEtaCaloTool() = default;
 
-
 protected:
   /** Fill vector with all existing cells for this geometry.
    */
   virtual StatusCode collectCells(std::vector<CellID>& cells) const override final;
-
 
 private:
   /// Name of active volumes

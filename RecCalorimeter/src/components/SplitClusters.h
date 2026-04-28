@@ -104,7 +104,8 @@ private:
   /// Handle for tool to get positions in ECal Barrel
   ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
   /// Handle for tool to get positions in HCal Barrel
-  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool",
+                                                                                 this};
   /// Handle for tool to get positions in HCal Barrel
   ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
 

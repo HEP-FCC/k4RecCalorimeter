@@ -27,9 +27,7 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/Cluster.h"
 
-
 namespace k4::recCalo {
-
 
 /** @class ITowerTool RecInterface/RecInterface/ITowerTool.h ITowerTool.h
  *
@@ -90,8 +88,6 @@ public:
                            bool aEllipse) = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ITOWERTOOL_H */

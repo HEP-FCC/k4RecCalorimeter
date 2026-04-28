@@ -36,8 +36,8 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
             << "Make sure you have GeoSvc and SimSvc in the right order in the configuration." << endmsg;
     return StatusCode::FAILURE;
   }
-  if(m_connectBarrels){
-    warning() << "connectBarrels feature is not yet implemented!" <<endmsg;
+  if (m_connectBarrels) {
+    warning() << "connectBarrels feature is not yet implemented!" << endmsg;
   }
   std::unordered_map<uint64_t, std::vector<std::pair<uint64_t, double>>> map;
 
@@ -136,7 +136,7 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
                 id, det::crosstalk::getNeighboursModuleThetaMerged(
                         *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"},
                         extrema_layer, id, m_xtalk_coef_radial, m_xtalk_coef_theta, m_xtalk_coef_diagonal,
-			m_xtalk_coef_tower)));
+                        m_xtalk_coef_tower)));
           }
         }
       }
@@ -190,7 +190,7 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
 
   // Debug: save cell position
   std::vector<int> saveCellInfo;
-  if (m_debugCellInfo){
+  if (m_debugCellInfo) {
     tree.Branch("CellInfo", &saveCellInfo);
   }
 
@@ -207,7 +207,7 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
     saveNeighbours = temp_neighbours;
     saveCrosstalks = temp_crosstalks;
     // Debug: save cell position
-    if (m_debugCellInfo){
+    if (m_debugCellInfo) {
       for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
         dd4hep::DDSegmentation::Segmentation* aSegmentation =
             m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation();
@@ -218,8 +218,8 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
           moduleThetaSegmentation =
               dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
         }
-        saveCellInfo = det::crosstalk::getCellIndices(*moduleThetaSegmentation, *decoder,
-                                                      {m_activeFieldNamesSegmented[iSys], "module", "theta"}, saveCellId);
+        saveCellInfo = det::crosstalk::getCellIndices(
+            *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"}, saveCellId);
       }
     }
     tree.Fill();

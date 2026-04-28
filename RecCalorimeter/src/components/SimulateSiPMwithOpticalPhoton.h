@@ -112,7 +112,7 @@ private:
   Gaudi::Property<double> m_thres{this, "threshold", 1.5, "Integration threshold in photoelectrons"};
 
   // other parameters (attention, will override above parameters if set)
-  Gaudi::Property<std::map<std::string,double>> m_params{this, "params", {}, "optional parameters"};
+  Gaudi::Property<std::map<std::string, double>> m_params{this, "params", {}, "optional parameters"};
 
   // SiPM efficiency
   Gaudi::Property<std::vector<double>> m_wavelen{

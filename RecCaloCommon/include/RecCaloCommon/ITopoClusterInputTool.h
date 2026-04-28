@@ -26,9 +26,7 @@
 
 #include <unordered_map>
 
-
 namespace k4::recCalo {
-
 
 /** @class ITopoClusterInputTool RecInterface/RecInterface/ITopoClusterInput.h ITopoClusterInputTool.h
  *
@@ -45,8 +43,6 @@ public:
   virtual StatusCode cellIDMap(std::unordered_map<CellID, double>& aCells) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ITOPOCLUSTERINPUTTOOL_H */

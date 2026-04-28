@@ -66,15 +66,15 @@ StatusCode SimulateSiPMwithEdep::initialize() {
     return StatusCode::FAILURE;
   }
 
-  if (m_geoSvc->getDetector()->readouts().find(m_readoutName) ==
-      m_geoSvc->getDetector()->readouts().end()) {
+  if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
     error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
 
     return StatusCode::FAILURE;
   }
 
   // get segmentation (cast to type GridDRcalo_k4geo)
-  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::GridDRcalo_k4geo*>(m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
+  m_segmentation = dynamic_cast<dd4hep::DDSegmentation::GridDRcalo_k4geo*>(
+      m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation());
 
   // initialize SiPM properties
   sipm::SiPMProperties properties;
@@ -173,7 +173,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
 
       // calculate photon arrival time at SiPM
       // using the distance from the step to the SiPM
-      const double initialTime = contrib->getTime(); // in ns
+      const double initialTime = contrib->getTime();   // in ns
       const auto stepPos = contrib->getStepPosition(); // in edm4hep unit
 
       const float relX = sipmPos.x() - stepPos.x * dd4hep::mm;
@@ -251,7 +251,7 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
 
     m_sensor->resetState();
     m_sensor->addPhotons(vecTimesShifted, vecWavelens); // Sets photon times & wavelengths
-    m_sensor->runEvent();                        // Runs the simulation
+    m_sensor->runEvent();                               // Runs the simulation
 
     auto digiHit = digiHits->create();
     auto waveform = waveforms->create();
@@ -264,8 +264,9 @@ StatusCode SimulateSiPMwithEdep::execute(const EventContext&) const {
 
     // if the signal never exceeds the threshold, it will return -1.
     const double integral =
-        std::max(0., anaSignal.integral(m_gateStart - minTime, m_gateL, m_thres));           // (intStart, intGate, threshold)
-    const double toa = std::max(0., anaSignal.toa(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
+        std::max(0., anaSignal.integral(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
+    const double toa =
+        std::max(0., anaSignal.toa(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
 
     digiHit.setEnergy(integral * m_scaleADC.value());
     digiHit.setEnergyError(m_scaleADC.value() * std::sqrt(integral));

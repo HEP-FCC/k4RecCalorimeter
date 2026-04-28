@@ -24,9 +24,7 @@
 // Gaudi
 #include "GaudiKernel/IAlgTool.h"
 
-
 namespace k4::recCalo {
-
 
 /** @class ICaloReadNeighboursMap RecInterface/RecInterface/ICaloReadNeighboursMap.h ICaloReadNeighboursMap.h
  *
@@ -43,8 +41,6 @@ public:
   virtual const std::vector<CellID>& neighbours(CellID aCellId) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ICALOREADNEIGHBOURSMAP_H */

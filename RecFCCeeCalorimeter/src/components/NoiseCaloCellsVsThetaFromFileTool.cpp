@@ -19,13 +19,13 @@
 DECLARE_COMPONENT(NoiseCaloCellsVsThetaFromFileTool)
 
 StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
-  K4RECCALORIMETER_CHECK( m_geoSvc.retrieve() );
-  K4RECCALORIMETER_CHECK( m_cellPositionsTool.retrieve() );
-  K4RECCALORIMETER_CHECK( m_randSvc = service<IRndmGenSvc> ("RndmGenSvc", false) );
-  K4RECCALORIMETER_CHECK( m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)) );
+  K4RECCALORIMETER_CHECK(m_geoSvc.retrieve());
+  K4RECCALORIMETER_CHECK(m_cellPositionsTool.retrieve());
+  K4RECCALORIMETER_CHECK(m_randSvc = service<IRndmGenSvc>("RndmGenSvc", false));
+  K4RECCALORIMETER_CHECK(m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)));
 
   // open and check file, read the histograms with noise constants
-  K4RECCALORIMETER_CHECK( initNoiseFromFile() );
+  K4RECCALORIMETER_CHECK(initNoiseFromFile());
 
   // Get decoder and index of layer field
   // put in try... block
@@ -34,7 +34,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
 
   return StatusCode::SUCCESS;
 }
@@ -51,29 +51,30 @@ void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::unordered_map<Ce
   addRandomCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::vector<std::pair<CellID, double> >& aCells) const {
-  addRandomCellNoiseT (aCells);
+void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
+  addRandomCellNoiseT(aCells);
 }
 
 template <typename C>
 void NoiseCaloCellsVsThetaFromFileTool::filterCellNoiseT(C& aCells) const {
   // Erase a cell if it has energy below a threshold from the vector
   if (m_useAbsInFilter) {
-    std::erase_if(aCells,
-                  [&](auto& p) { return std::abs(p.second-getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first); });
-  }
-  else {
-    std::erase_if(aCells,
-                  [&](auto& p) { return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first); });
+    std::erase_if(aCells, [&](auto& p) {
+      return std::abs(p.second - getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first);
+    });
+  } else {
+    std::erase_if(aCells, [&](auto& p) {
+      return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first);
+    });
   }
 }
 
 void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
-  filterCellNoiseT (aCells);
+  filterCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::vector<std::pair<CellID, double> >& aCells) const {
-  filterCellNoiseT (aCells);
+void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
+  filterCellNoiseT(aCells);
 }
 
 StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
@@ -263,10 +264,6 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(CellID aCellId) 
   return totalNoiseOffset;
 }
 
-
-std::pair<double, double>
-NoiseCaloCellsVsThetaFromFileTool::getNoisePerCell(CellID aCellId) const
-{
-  return std::make_pair (getNoiseRMSPerCell(aCellId),
-                         getNoiseOffsetPerCell(aCellId));
+std::pair<double, double> NoiseCaloCellsVsThetaFromFileTool::getNoisePerCell(CellID aCellId) const {
+  return std::make_pair(getNoiseRMSPerCell(aCellId), getNoiseOffsetPerCell(aCellId));
 }

@@ -9,7 +9,7 @@
 DECLARE_COMPONENT(TopoCaloNoisyCells)
 
 StatusCode TopoCaloNoisyCells::initialize() {
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
 
   // Check if file exists
   if (m_fileName.empty()) {
@@ -50,8 +50,7 @@ StatusCode TopoCaloNoisyCells::initialize() {
   return StatusCode::SUCCESS;
 }
 
-double TopoCaloNoisyCells::getNoiseRMSPerCell(CellID aCellId) const
-{
+double TopoCaloNoisyCells::getNoiseRMSPerCell(CellID aCellId) const {
   auto it = m_map.find(aCellId);
   if (it != m_map.end()) {
     return it->second.first;
@@ -59,9 +58,7 @@ double TopoCaloNoisyCells::getNoiseRMSPerCell(CellID aCellId) const
   return 0;
 }
 
-
-double TopoCaloNoisyCells::getNoiseOffsetPerCell(CellID aCellId) const
-{
+double TopoCaloNoisyCells::getNoiseOffsetPerCell(CellID aCellId) const {
   auto it = m_map.find(aCellId);
   if (it != m_map.end()) {
     return it->second.second;
@@ -69,9 +66,7 @@ double TopoCaloNoisyCells::getNoiseOffsetPerCell(CellID aCellId) const
   return 0;
 }
 
-std::pair<double,double>
-TopoCaloNoisyCells::getNoisePerCell(CellID aCellId) const
-{
+std::pair<double, double> TopoCaloNoisyCells::getNoisePerCell(CellID aCellId) const {
   auto it = m_map.find(aCellId);
   if (it != m_map.end()) {
     return it->second;

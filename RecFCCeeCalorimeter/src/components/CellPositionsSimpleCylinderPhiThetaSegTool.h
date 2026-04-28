@@ -6,9 +6,9 @@
 // #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 #include "k4Interface/IGeoSvc.h"
-#include "RecCaloCommon/ICellPositionsTool.h"
 
 // DD4hep
 #include "DDSegmentation/Segmentation.h"
@@ -47,7 +47,7 @@ public:
 
 private:
   /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// Name of the detector
   Gaudi::Property<std::string> m_detectorName{this, "detectorName", "SimpleCylinderDetector"};
   /// Name of the readout

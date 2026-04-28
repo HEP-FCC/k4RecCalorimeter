@@ -7,9 +7,7 @@
 
 DECLARE_COMPONENT(TubeLayerPhiEtaCaloTool)
 
-
-StatusCode TubeLayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const
-{
+StatusCode TubeLayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) const {
   // Get the total number of active volumes in the geometry
   auto highestVol = gGeoManager->GetTopVolume();
   unsigned int numLayers;
@@ -24,11 +22,11 @@ StatusCode TubeLayerPhiEtaCaloTool::collectCells(std::vector<CellID>& cells) con
   // get PhiEta segmentation
   const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* segmentation = nullptr;
   const dd4hep::DDSegmentation::MultiSegmentation* segmentationMulti = nullptr;
-  segmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
-      readout().segmentation().segmentation());
+  segmentation =
+      dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(readout().segmentation().segmentation());
   if (segmentation == nullptr) {
-    segmentationMulti = dynamic_cast<const dd4hep::DDSegmentation::MultiSegmentation*>(
-        readout().segmentation().segmentation());
+    segmentationMulti =
+        dynamic_cast<const dd4hep::DDSegmentation::MultiSegmentation*>(readout().segmentation().segmentation());
     if (segmentationMulti == nullptr) {
       error() << "There is no phi-eta or multi- segmentation for the readout " << readoutName() << " defined."
               << endmsg;

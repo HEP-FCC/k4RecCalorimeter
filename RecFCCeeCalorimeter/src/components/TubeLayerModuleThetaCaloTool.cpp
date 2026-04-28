@@ -10,26 +10,23 @@
 
 #include <stdexcept>
 
-
 DECLARE_COMPONENT(TubeLayerModuleThetaCaloTool)
 
-
-StatusCode TubeLayerModuleThetaCaloTool::collectCells(std::vector<CellID>& cells) const
-{
-  cells.reserve (2041344);
+StatusCode TubeLayerModuleThetaCaloTool::collectCells(std::vector<CellID>& cells) const {
+  cells.reserve(2041344);
 
   // Get the total number of active volumes in the geometry
   unsigned int numLayers = m_activeVolumesNumber;
   info() << "Number of active layers " << numLayers << endmsg;
 
   // get segmentation
-  const dd4hep::DDSegmentation::Segmentation* aSegmentation =
-      readout().segmentation().segmentation();
+  const dd4hep::DDSegmentation::Segmentation* aSegmentation = readout().segmentation().segmentation();
   std::string segmentationType = aSegmentation->type();
   info() << "Segmentation type : " << segmentationType << endmsg;
   const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* moduleThetaSegmentation = nullptr;
   if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
-    moduleThetaSegmentation = dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
+    moduleThetaSegmentation =
+        dynamic_cast<const dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
     info() << "Segmentation: bins in Module " << moduleThetaSegmentation->nModules() << endmsg;
   } else {
     error() << "Unable to cast segmentation pointer!!!! Tool only applicable to FCCSWGridModuleThetaMerged_k4geo "
@@ -78,26 +75,20 @@ StatusCode TubeLayerModuleThetaCaloTool::collectCells(std::vector<CellID>& cells
   return StatusCode::SUCCESS;
 }
 
-
 /** Return a new indexer object for this subdetector.
  */
-std::unique_ptr<k4::recCalo::ICaloIndexer>
-TubeLayerModuleThetaCaloTool::indexer() const
-{
+std::unique_ptr<k4::recCalo::ICaloIndexer> TubeLayerModuleThetaCaloTool::indexer() const {
   using Indexer_t = k4::recCalo::IDMapIndexer<3>;
   dd4hep::IDDescriptor idSpec = readout().idSpec();
-  std::vector<Indexer_t::FieldDesc_t> fields
-    { Indexer_t::IDMap_t::makeDesc (*idSpec.field("layer")),
-      Indexer_t::IDMap_t::makeDesc (*idSpec.field("theta")),
-      Indexer_t::IDMap_t::makeDesc (*idSpec.field("module")) };
+  std::vector<Indexer_t::FieldDesc_t> fields{Indexer_t::IDMap_t::makeDesc(*idSpec.field("layer")),
+                                             Indexer_t::IDMap_t::makeDesc(*idSpec.field("theta")),
+                                             Indexer_t::IDMap_t::makeDesc(*idSpec.field("module"))};
 
   const dd4hep::BitFieldElement& sysField = *idSpec.field("system");
   if (sysField.offset() != 0) {
-    throw std::runtime_error ("Bad system field offset; must be zero");
+    throw std::runtime_error("Bad system field offset; must be zero");
   }
 
   // Allegro Ecal requires ~ 15M for indexing.  Hint 16.
-  return std::make_unique<Indexer_t> (this->id(),
-                                      sysField.width(),
-                                      fields, cellIDs(), 16*1024*1024);
+  return std::make_unique<Indexer_t>(this->id(), sysField.width(), fields, cellIDs(), 16 * 1024 * 1024);
 }

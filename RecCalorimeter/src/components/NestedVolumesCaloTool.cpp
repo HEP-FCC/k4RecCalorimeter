@@ -6,9 +6,7 @@
 
 DECLARE_COMPONENT(NestedVolumesCaloTool)
 
-
-StatusCode NestedVolumesCaloTool::collectCells(std::vector<CellID>& cells) const
-{
+StatusCode NestedVolumesCaloTool::collectCells(std::vector<CellID>& cells) const {
   // Take readout bitfield decoder from GeoSvc
   auto decoder = readout().idSpec().decoder();
   if (m_fieldNames.size() != m_fieldValues.size()) {

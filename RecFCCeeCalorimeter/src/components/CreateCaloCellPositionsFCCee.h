@@ -2,8 +2,8 @@
 #define DETCOMPONENTS_CREATECELLPOSITIONSFCCEE_H
 
 // k4FWCore
-#include "k4FWCore/DataHandle.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
+#include "k4FWCore/DataHandle.h"
 
 // Gaudi
 #include "Gaudi/Algorithm.h"

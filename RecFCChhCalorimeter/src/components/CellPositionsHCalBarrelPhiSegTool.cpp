@@ -6,8 +6,8 @@
 DECLARE_COMPONENT(CellPositionsHCalBarrelPhiSegTool)
 
 StatusCode CellPositionsHCalBarrelPhiSegTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   // get PhiEta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo*>(
@@ -73,6 +73,4 @@ dd4hep::Position CellPositionsHCalBarrelPhiSegTool::xyzPosition(const CellID aCe
   return dd4hep::Position(inSeg.x() * radius, inSeg.y() * radius, global.Z());
 }
 
-int CellPositionsHCalBarrelPhiSegTool::layerId(const CellID aCellId) const {
-  return m_decoder->get(aCellId, "layer");
-}
+int CellPositionsHCalBarrelPhiSegTool::layerId(const CellID aCellId) const { return m_decoder->get(aCellId, "layer"); }
