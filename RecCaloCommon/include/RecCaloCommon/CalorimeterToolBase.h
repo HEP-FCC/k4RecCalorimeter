@@ -53,7 +53,16 @@ public:
 
   /** Return the subdetector ID.
    */
-  virtual int id() const final override;
+  virtual int id() const override;
+
+  /** Return the name of this subdetector, to be used to find the
+      subdetector ID.
+      If blank, the detector ID will be found from the detector
+      associated with the segmentation (but this may not always work
+      if there are multiple segmentations associated with a detector).
+      Returns blank by default but may be overridden.
+   */
+  virtual std::string detectorName() const;
 
 protected:
   /// Return the resolved readout.
@@ -81,9 +90,12 @@ private:
   /// Resolved detector readout.
   dd4hep::Readout m_readout;
 
-  // Pointer to the vector of cells.  The vector itself is stored in the
-  // constants service; we create it if it's not already there.
+  /// Pointer to the vector of cells.  The vector itself is stored in the
+  /// constants service; we create it if it's not already there.
   const std::vector<CellID>* m_cells;
+
+  /// The detector ID.
+  int m_id = -1;
 };
 
 #endif // not RECCALOCOMMON_CALORIMETERTOOLBASE_H
