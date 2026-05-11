@@ -13,33 +13,18 @@
 
 DECLARE_COMPONENT(CreatePositionedCaloCells)
 
-CreatePositionedCaloCells::CreatePositionedCaloCells(const std::string& name, ISvcLocator* svcLoc)
-    : Gaudi::Algorithm(name, svcLoc) {
-  declareProperty("hits", m_hits, "Hits from which to create cells (input)");
-  declareProperty("cells", m_cells, "The created calorimeter cells (output)");
-  declareProperty("links", m_links, "The links between hits and cells (output)");
-
-  declareProperty("positionsTool", m_cellPositionsTool, "Handle for cell positions tool");
-  declareProperty("crosstalkTool", m_crosstalkTool, "Handle for the cell crosstalk tool");
-  declareProperty("calibTool", m_calibTool, "Handle for tool to calibrate Geant4 energy to EM scale tool");
-  declareProperty("noiseTool", m_noiseTool, "Handle for the calorimeter cells noise tool");
-  declareProperty("geometryTool", m_geoTool, "Handle for the geometry tool");
-
-  m_decoder = nullptr;
-}
-
 CreatePositionedCaloCells::~CreatePositionedCaloCells() { delete m_decoder; }
 
 StatusCode CreatePositionedCaloCells::initialize() {
-  StatusCode sc = Gaudi::Algorithm::initialize();
-  if (sc.isFailure())
-    return sc;
-
   info() << "CreatePositionedCaloCells initialized" << endmsg;
   info() << "do calibration : " << m_doCellCalibration << endmsg;
   info() << "add cell noise : " << m_addCellNoise << endmsg;
   info() << "remove cells below threshold : " << m_filterCellNoise << endmsg;
   info() << "emulate crosstalk : " << m_addCrosstalk << endmsg;
+
+  // Get input and output collections names
+  m_hits = inputLocations("hits")[0];
+  m_cells = outputLocations("cells")[0];
 
   // Initialization of tools
 
@@ -90,12 +75,12 @@ StatusCode CreatePositionedCaloCells::initialize() {
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
-  auto hitsEncoding = k4FWCore::getCellIDEncoding(m_hits.objKey(), this);
+  auto hitsEncoding = k4FWCore::getCellIDEncoding(m_hits, this);
   if (!hitsEncoding.has_value()) {
     error() << "Missing cellID encoding for input collection" << endmsg;
     return StatusCode::FAILURE;
   }
-  k4FWCore::putCellIDEncoding(m_cells.objKey(), hitsEncoding.value(), this);
+  k4FWCore::putCellIDEncoding(m_cells, hitsEncoding.value(), this);
   m_decoder = new dd4hep::DDSegmentation::BitFieldCoder(hitsEncoding.value());
 
   // these variables will be initilized in the execute() method
@@ -107,10 +92,9 @@ StatusCode CreatePositionedCaloCells::initialize() {
   return StatusCode::SUCCESS;
 }
 
-StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
-  // Get the input collection with Geant4 hits
-  const edm4hep::SimCalorimeterHitCollection* hits = m_hits.get();
-  debug() << "Input Hit collection size: " << hits->size() << endmsg;
+std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>
+CreatePositionedCaloCells::operator()(const edm4hep::SimCalorimeterHitCollection& hits) const {
+  debug() << "Input Hit collection size: " << hits.size() << endmsg;
 
   // 0. Clear all cells
   if (m_addCellNoise) {
@@ -132,7 +116,7 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
 
   // Keep track of hits by ID, to avoid N^2 behavior in making links.
   std::unordered_multimap<size_t, size_t> hitIndices;
-  for (size_t ihit = 0; const auto& hit : *hits) {
+  for (size_t ihit = 0; const auto& hit : hits) {
     auto id = hit.getCellID();
     verbose() << "CellID : " << id << endmsg;
     m_cellsMap[id] += hit.getEnergy();
@@ -185,7 +169,7 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
 
   // determine detector type (only once)
   if (m_calotype == -99 && m_cellsMap.size() > 0) {
-    info() << "Determining calorimeter type for input collection " << m_hits.objKey() << endmsg;
+    info() << "Determining calorimeter type for input collection " << m_hits << endmsg;
     uint cellid = m_cellsMap.begin()->first;
     int system = m_decoder->get(cellid, "system");
     debug() << "System: " << system << endmsg;
@@ -232,10 +216,10 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   }
 
   // 6. Copy information to CaloHitCollection
-  edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
+  edm4hep::CalorimeterHitCollection edmCellsCollection;
   for (const auto& cell : m_cellsMap) {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0.)) {
-      auto newCell = edmCellsCollection->create();
+      auto newCell = edmCellsCollection.create();
       newCell.setEnergy(cell.second);
       uint64_t cellid = cell.first;
       newCell.setCellID(cellid);
@@ -267,26 +251,21 @@ StatusCode CreatePositionedCaloCells::execute(const EventContext&) const {
   }
 
   // create hits<->cell links
-  edm4hep::CaloHitSimCaloHitLinkCollection* edmCellHitLinksCollection = new edm4hep::CaloHitSimCaloHitLinkCollection();
-  for (const auto& cell : *edmCellsCollection) {
+  edm4hep::CaloHitSimCaloHitLinkCollection edmCellHitLinksCollection;
+  for (const auto& cell : edmCellsCollection) {
     auto cellID = cell.getCellID();
     auto range = hitIndices.equal_range(cellID);
     for (auto it = range.first; it != range.second; ++it) {
-      auto hit = (*hits)[it->second];
+      auto hit = hits[it->second];
       // create Sim<->Reco hit associations
-      auto link = edmCellHitLinksCollection->create();
+      auto link = edmCellHitLinksCollection.create();
       link.setFrom(cell);
       link.setTo(hit);
     }
   }
 
-  // push the CaloHitCollection to event store
-  m_cells.put(edmCellsCollection);
-  m_links.put(edmCellHitLinksCollection);
+  debug() << "Output Cell collection size: " << edmCellsCollection.size() << endmsg;
 
-  debug() << "Output Cell collection size: " << edmCellsCollection->size() << endmsg;
-
-  return StatusCode::SUCCESS;
+  // push the output collections to event store
+  return std::make_tuple(std::move(edmCellsCollection), std::move(edmCellHitLinksCollection));
 }
-
-StatusCode CreatePositionedCaloCells::finalize() { return Gaudi::Algorithm::finalize(); }
