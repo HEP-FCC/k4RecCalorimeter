@@ -1,6 +1,6 @@
 from Configurables import GeoSvc
-from Configurables import ApplicationMgr
 from Configurables import CreateFCCeeCaloXTalkNeighbours
+from k4FWCore import ApplicationMgr
 import os
 from Gaudi.Configuration import INFO, DEBUG
 

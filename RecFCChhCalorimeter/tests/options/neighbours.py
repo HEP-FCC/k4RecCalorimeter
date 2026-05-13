@@ -43,7 +43,7 @@ neighbours = CreateFCChhCaloNeighbours(
 )
 
 # ApplicationMgr
-from Configurables import ApplicationMgr
+from k4FWCore import ApplicationMgr
 
 ApplicationMgr(
     TopAlg=[],

@@ -1,30 +1,25 @@
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-from Configurables import k4DataSvc
+iosvc = IOSvc()
+iosvc.Input = "IDEA_o2_v01.root"
+iosvc.CollectionNames = [
+    "DRBTScin",  # collections from IDEA_o2 hadronic calo
+    "DRBTScinContributions",
+    "DRBTCher",
+    "DRBTCherContributions",
+    "DRETScinLeft",
+    "DRETScinLeftContributions",
+    "DRETScinRight",
+    "DRETScinRightContributions",
+    "DRETCherLeft",
+    "DRETCherLeftContributions",
+    "DRETCherRight",
+    "DRETCherRightContributions",
+]
 
-dataservice = k4DataSvc("EventDataSvc", input="IDEA_o2_v01.root")
-
-from Configurables import PodioInput
-
-podioinput = PodioInput(
-    "PodioInput",
-    collections=[
-        "DRBTScin",  # collections from IDEA_o2 hadronic calo
-        "DRBTScinContributions",
-        "DRBTCher",
-        "DRBTCherContributions",
-        "DRETScinLeft",
-        "DRETScinLeftContributions",
-        "DRETScinRight",
-        "DRETScinRightContributions",
-        "DRETCherLeft",
-        "DRETCherLeftContributions",
-        "DRETCherRight",
-        "DRETCherRightContributions",
-    ],
-    OutputLevel=DEBUG,
-)
+dataservice = EventDataSvc("EventDataSvc")
 
 # SimulateSiPMwithContrib applied sipm digitization
 # over the output format of the IDEA_o2 hadronic calorimeter.
@@ -111,12 +106,8 @@ sipmContribETCherRight = SimulateSiPMwithContrib(
     sipmEfficiency=[1.0, 1.0],
 )
 
-from Configurables import PodioOutput
-
-podiooutput = PodioOutput(
-    "PodioOutput", filename="IDEA_o2_v01_digi.root", OutputLevel=DEBUG
-)
-podiooutput.outputCommands = ["keep *"]
+iosvc.Output = "IDEA_o2_v01_digi.root"
+iosvc.outputCommands = ["keep *"]
 
 from Configurables import HepRndm__Engine_CLHEP__RanluxEngine_ as RndmEngine
 
@@ -132,14 +123,12 @@ rndmGenSvc = RndmGenSvc("RndmGenSvc", Engine=rndmEngine.name())
 
 ApplicationMgr(
     TopAlg=[
-        podioinput,
         sipmContribBTScin,
         sipmContribETScinLeft,
         sipmContribETScinRight,
         sipmContribBTCher,
         sipmContribETCherLeft,
         sipmContribETCherRight,
-        podiooutput,
     ],
     EvtSel="NONE",
     EvtMax=-1,

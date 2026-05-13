@@ -27,27 +27,20 @@ hcalFieldNames = ["system"]
 hcalFieldValues = [8]
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc(
-    "EventDataSvc",
-    input="output_fullCalo_SimAndDigi_e50GeV_" + str(num_events) + "events.root",
-)
+iosvc = IOSvc()
+iosvc.Input = "output_fullCalo_SimAndDigi_e50GeV_" + str(num_events) + "events.root"
+iosvc.CollectionNames = [
+    "ECalBarrelCells",
+    "HCalBarrelCells",
+    "HCalExtBarrelCells",
+    "GenParticles",
+    "GenVertices",
+]
 
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
-
-podioinput = PodioInput(
-    "PodioReader",
-    collections=[
-        "ECalBarrelCells",
-        "HCalBarrelCells",
-        "HCalExtBarrelCells",
-        "GenParticles",
-        "GenVertices",
-    ],
-    OutputLevel=DEBUG,
-)
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -348,10 +341,8 @@ positionsClusterBarrel = CreateCaloCellPositions(
 )
 
 
-out = PodioOutput(
-    "out", filename="output_BarrelTopo_electrNoise_100GeVpi_3ev.root", OutputLevel=DEBUG
-)
-out.outputCommands = [
+iosvc.Output = "output_BarrelTopo_electrNoise_100GeVpi_3ev.root"
+iosvc.outputCommands = [
     "drop *",
     "keep GenParticles",
     "keep GenVertices",
@@ -368,7 +359,6 @@ from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-podioinput.AuditExecute = True
 createemptycells.AuditExecute = True
 createEcalBarrelCells.AuditExecute = True
 createHcalBarrelCells.AuditExecute = True
@@ -377,7 +367,6 @@ positionsClusterBarrel.AuditExecute = True
 
 ApplicationMgr(
     TopAlg=[
-        podioinput,
         smear,
         rewriteHCal,
         createHcalCells,
@@ -389,7 +378,6 @@ ApplicationMgr(
         createTopoClusters,
         splitClusters,
         #                positionsClusterBarrel,
-        out,
     ],
     EvtSel="NONE",
     EvtMax=num_events,
