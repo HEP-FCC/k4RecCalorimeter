@@ -6,9 +6,10 @@ num_events = 10
 from Gaudi.Configuration import *
 
 # Data service
-from Configurables import k4DataSvc
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc("EventDataSvc")
+podioevent = EventDataSvc("EventDataSvc")
 
 # DD4hep geometry service
 from Configurables import GeoSvc
@@ -89,18 +90,15 @@ geantsim = SimG4Alg(
     OutputLevel=DEBUG,
 )
 
-# PODIO algorithm
-from Configurables import PodioOutput
-
-out = PodioOutput("out", OutputLevel=DEBUG)
-out.outputCommands = ["keep *"]
-out.filename = (
+iosvc = IOSvc()
+iosvc.Output = (
     "output_hcalSim_e"
     + str(int(energy / 1000))
     + "GeV_eta036_"
     + str(num_events)
     + "events.root"
 )
+iosvc.outputCommands = ["keep *"]
 
 # CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -110,11 +108,8 @@ audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
 geantsim.AuditExecute = True
 
-# ApplicationMgr
-from Configurables import ApplicationMgr
-
 ApplicationMgr(
-    TopAlg=[geantsim, out],
+    TopAlg=[geantsim],
     EvtSel="NONE",
     EvtMax=num_events,
     # order is important, as GeoSvc is needed by G4SimSvc

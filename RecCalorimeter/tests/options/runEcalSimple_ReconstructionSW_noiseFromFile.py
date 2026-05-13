@@ -1,15 +1,13 @@
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc("EventDataSvc", input="output_ecalSim_e50GeV_1events.root")
+iosvc = IOSvc()
+iosvc.Input = "output_ecalSim_e50GeV_1events.root"
+iosvc.CollectionNames = ["ECalHits", "ECalPositionedHits"]
 
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
-
-podioinput = PodioInput(
-    "PodioReader", collections=["ECalHits", "ECalPositionedHits"], OutputLevel=DEBUG
-)
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -142,10 +140,8 @@ createclusters = CreateCaloClustersSlidingWindow(
 )
 createclusters.clusters.Path = "caloClusters"
 
-out = PodioOutput(
-    "output", filename="output_ecalReco_noiseFromFile_test.root", OutputLevel=DEBUG
-)
-out.outputCommands = ["keep *"]
+iosvc.Output = "output_ecalReco_noiseFromFile_test.root"
+iosvc.outputCommands = ["keep *"]
 
 # CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -153,20 +149,16 @@ from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-podioinput.AuditExecute = True
 createclusters.AuditExecute = True
 createcells.AuditExecute = True
 mergelayers.AuditExecute = True
-out.AuditExecute = True
 
 ApplicationMgr(
     TopAlg=[
-        podioinput,
         mergelayers,
         createcells,
         createemptycells,
         createclusters,
-        out,
     ],
     EvtSel="NONE",
     EvtMax=1,

@@ -1,9 +1,11 @@
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-from Configurables import k4DataSvc
+iosvc = IOSvc()
+iosvc.Input = "testIDEA_o1_v03_digi.root"
 
-dataservice = k4DataSvc("EventDataSvc", input="testIDEA_o1_v03_digi.root")
+dataservice = EventDataSvc("EventDataSvc")
 
 # detector geometry
 # if K4GEO is empty, this should use relative path to working directory
@@ -35,19 +37,13 @@ print(IDs)
 
 geoservice.OutputLevel = INFO
 
-from Configurables import PodioInput
-
-podioinput = PodioInput(
-    "PodioInput",
-    collections=[
-        "DRcaloSiPMreadout_scint",
-        "DRcaloSiPMreadout_scintContributions",
-        "DRcaloSiPMreadoutSimHit",
-        "DRcaloSiPMreadoutDigiHit_scint",
-        "DRcaloSiPMreadoutDigiHit",
-    ],
-    OutputLevel=DEBUG,
-)
+iosvc.CollectionNames = [
+    "DRcaloSiPMreadout_scint",
+    "DRcaloSiPMreadout_scintContributions",
+    "DRcaloSiPMreadoutSimHit",
+    "DRcaloSiPMreadoutDigiHit_scint",
+    "DRcaloSiPMreadoutDigiHit",
+]
 
 # use const noise tool for the moment
 from Configurables import ConstNoiseTool
@@ -83,15 +79,11 @@ topoClusterAll = CaloTopoClusterFCCee(
     OutputLevel=INFO,
 )
 
-from Configurables import PodioOutput
-
-podiooutput = PodioOutput(
-    "PodioOutput", filename="testIDEA_o1_v03_reco.root", OutputLevel=DEBUG
-)
-podiooutput.outputCommands = ["keep *"]
+iosvc.Output = "testIDEA_o1_v03_reco.root"
+iosvc.outputCommands = ["keep *"]
 
 ApplicationMgr(
-    TopAlg=[podioinput, topoClusterAll, podiooutput],
+    TopAlg=[topoClusterAll],
     EvtSel="NONE",
     EvtMax=-1,
     ExtSvc=[dataservice, geoservice],

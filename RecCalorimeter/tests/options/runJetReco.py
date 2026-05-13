@@ -4,7 +4,8 @@ from GaudiKernel import SystemOfUnits as units
 from GaudiKernel import PhysicalConstants as constants
 from GaudiKernel.SystemOfUnits import MeV, GeV, tesla
 
-from Configurables import ApplicationMgr
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
 ApplicationMgr().EvtSel = "NONE"
 ApplicationMgr().EvtMax = 2
@@ -12,10 +13,8 @@ ApplicationMgr().OutputLevel = INFO
 ApplicationMgr().StopOnSignal = True
 ApplicationMgr().ExtSvc += ["RndmGenSvc"]
 
-from Configurables import k4DataSvc
-
 ## Data service
-podioevent = k4DataSvc("EventDataSvc")
+podioevent = EventDataSvc("EventDataSvc")
 ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import MomentumRangeParticleGun
@@ -299,10 +298,9 @@ ApplicationMgr().TopAlg += [createClusters]
 
 
 ################ Output
-from Configurables import PodioOutput
-
-out = PodioOutput("out")
-out.outputCommands = [
+iosvc = IOSvc()
+iosvc.Output = "output_fullCalo_SimAndDigi.root"
+iosvc.outputCommands = [
     "keep *",
     "drop ECalBarrelHits",
     "drop HCal*",
@@ -312,10 +310,6 @@ out.outputCommands = [
     "drop emptyCaloCells",
     "drop CaloClusterCells",
 ]
-import uuid
-
-out.filename = "output_fullCalo_SimAndDigi.root"
-ApplicationMgr().TopAlg += [out]
 
 
 from Configurables import CreateCaloJet
@@ -346,5 +340,4 @@ createEcalBarrelCellsStep1.AuditExecute = True
 resegmentEcalBarrel.AuditExecute = True
 createEcalBarrelCells.AuditExecute = True
 # createHcalBarrelCells.AuditExecute = True
-out.AuditExecute = True
 # ApplicationMgr().ExtSvc += [audsvc]

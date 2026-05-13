@@ -1,23 +1,18 @@
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-from Configurables import k4DataSvc
+iosvc = IOSvc()
+iosvc.Input = "testIDEA_o1_v03.root"
+iosvc.CollectionNames = [
+    "DRcaloSiPMreadout_scint",
+    "DRcaloSiPMreadout_scintContributions",
+    "DRcaloSiPMreadoutSimHit",
+    "DRcaloSiPMreadoutTimeStruct",
+    "DRcaloSiPMreadoutWaveLen",
+]
 
-dataservice = k4DataSvc("EventDataSvc", input="testIDEA_o1_v03.root")
-
-from Configurables import PodioInput
-
-podioinput = PodioInput(
-    "PodioInput",
-    collections=[
-        "DRcaloSiPMreadout_scint",
-        "DRcaloSiPMreadout_scintContributions",
-        "DRcaloSiPMreadoutSimHit",
-        "DRcaloSiPMreadoutTimeStruct",
-        "DRcaloSiPMreadoutWaveLen",
-    ],
-    OutputLevel=DEBUG,
-)
+dataservice = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 import os
@@ -298,12 +293,8 @@ sipmOptical = SimulateSiPMwithOpticalPhoton(
     scaleADC=0.00178,
 )
 
-from Configurables import PodioOutput
-
-podiooutput = PodioOutput(
-    "PodioOutput", filename="testIDEA_o1_v03_digi.root", OutputLevel=DEBUG
-)
-podiooutput.outputCommands = ["keep *"]
+iosvc.Output = "testIDEA_o1_v03_digi.root"
+iosvc.outputCommands = ["keep *"]
 
 from Configurables import HepRndm__Engine_CLHEP__RanluxEngine_ as RndmEngine
 
@@ -318,7 +309,7 @@ from Configurables import RndmGenSvc
 rndmGenSvc = RndmGenSvc("RndmGenSvc", Engine=rndmEngine.name())
 
 ApplicationMgr(
-    TopAlg=[podioinput, sipmEdep, sipmOptical, podiooutput],
+    TopAlg=[sipmEdep, sipmOptical],
     EvtSel="NONE",
     EvtMax=-1,
     ExtSvc=[rndmEngine, rndmGenSvc, dataservice, geoservice],
