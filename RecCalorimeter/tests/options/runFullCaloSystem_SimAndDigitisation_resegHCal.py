@@ -10,9 +10,10 @@ particleType = "pi-"
 
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc("EventDataSvc")
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -388,8 +389,9 @@ createHcalFwdCells = CreateCaloCells(
 createHcalFwdCells.hits.Path = "mergedHCalFwdHits"
 createHcalFwdCells.cells.Path = "HCalFwdCells"
 
-out = PodioOutput("out", OutputLevel=INFO)
-out.outputCommands = [
+iosvc = IOSvc()
+iosvc.Output = "output_fullCalo_SimAndDigi_pi50GeV_" + str(num_events) + "events.root"
+iosvc.outputCommands = [
     "drop *",
     "keep ECalBarrelCells",
     "keep ECalEndcapCells",
@@ -402,7 +404,6 @@ out.outputCommands = [
     "keep GenParticles",
     "keep GenVertices",
 ]
-out.filename = "output_fullCalo_SimAndDigi_pi50GeV_" + str(num_events) + "events.root"
 
 # CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -421,7 +422,6 @@ createHcalCells.AuditExecute = True
 createExtHcalCells.AuditExecute = True
 createHcalEndcapCells.AuditExecute = True
 createHcalFwdCells.AuditExecute = True
-out.AuditExecute = True
 
 ApplicationMgr(
     TopAlg=[
@@ -443,7 +443,6 @@ ApplicationMgr(
         createHcalEndcapCells,
         mergelayersHcalFwd,
         createHcalFwdCells,
-        out,
     ],
     EvtSel="NONE",
     EvtMax=int(num_events),

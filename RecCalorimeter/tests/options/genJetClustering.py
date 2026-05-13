@@ -1,6 +1,7 @@
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, HepMCDumper, HepMCJetClustering
+from Configurables import HepMCDumper, HepMCJetClustering
 from Configurables import HepMCHistograms, JetHistograms
+from k4FWCore import ApplicationMgr
 
 
 # TODO: best to run pythia here?

@@ -4,7 +4,8 @@ from GaudiKernel import SystemOfUnits as units
 from GaudiKernel import PhysicalConstants as constants
 from GaudiKernel.SystemOfUnits import MeV, GeV, tesla
 
-from Configurables import ApplicationMgr
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr
 
 ApplicationMgr().EvtSel = "NONE"
 ApplicationMgr().EvtMax = 2
@@ -12,10 +13,8 @@ ApplicationMgr().OutputLevel = INFO
 ApplicationMgr().StopOnSignal = True
 ApplicationMgr().ExtSvc += ["RndmGenSvc"]
 
-from Configurables import k4DataSvc
-
 ## Data service
-podioevent = k4DataSvc("EventDataSvc")
+podioevent = EventDataSvc("EventDataSvc")
 ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import MomentumRangeParticleGun

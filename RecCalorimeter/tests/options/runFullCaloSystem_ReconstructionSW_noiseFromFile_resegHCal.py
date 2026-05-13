@@ -21,27 +21,22 @@ hcalFwdReadoutName = "HFwdPhiEta"
 num_events = 3
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc(
-    "EventDataSvc",
-    input="output_fullCalo_SimAndDigi_pi50GeV_" + str(num_events) + "events.root",
-)
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
+iosvc = IOSvc()
+iosvc.Input = "output_fullCalo_SimAndDigi_pi50GeV_" + str(num_events) + "events.root"
+iosvc.CollectionNames = [
+    ecalBarrelCellsName,
+    ecalEndcapCellsName,
+    ecalFwdCellsName,
+    hcalBarrelCellsName,
+    hcalExtBarrelCellsName,
+    hcalEndcapCellsName,
+    hcalFwdCellsName,
+]
 
-podioinput = PodioInput(
-    "PodioReader",
-    collections=[
-        ecalBarrelCellsName,
-        ecalEndcapCellsName,
-        ecalFwdCellsName,
-        hcalBarrelCellsName,
-        hcalExtBarrelCellsName,
-        hcalEndcapCellsName,
-        hcalFwdCellsName,
-    ],
-)
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -270,8 +265,8 @@ createClusters = CreateCaloClustersSlidingWindow(
 createClusters.clusters.Path = "CaloClusters"
 createClusters.clusterCells.Path = "CaloClusterCells"
 
-out = PodioOutput("out", filename="output_allCalo_reco_noise.root")
-out.outputCommands = ["keep *"]
+iosvc.Output = "output_allCalo_reco_noise.root"
+iosvc.outputCommands = ["keep *"]
 
 # CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -279,13 +274,10 @@ from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-podioinput.AuditExecute = True
 createClusters.AuditExecute = True
-out.AuditExecute = True
 
 ApplicationMgr(
     TopAlg=[
-        podioinput,
         rewriteECalEC,
         rewriteHCalEC,
         positionsExtHcal,
@@ -294,7 +286,6 @@ ApplicationMgr(
         createHcalBarrelCells,
         createEcalEndcapCells,
         createClusters,
-        out,
     ],
     EvtSel="NONE",
     EvtMax=num_events,

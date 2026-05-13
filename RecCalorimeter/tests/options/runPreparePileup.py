@@ -1,17 +1,13 @@
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-# v01 production - min. bias events
-podioevent = k4DataSvc(
-    "EventDataSvc",
-    input="http://fccsw.web.cern.ch/fccsw/testsamples/caloCells_minBiasEvent.root",
-)
+iosvc = IOSvc()
+iosvc.Input = "http://fccsw.web.cern.ch/fccsw/testsamples/caloCells_minBiasEvent.root"
+iosvc.CollectionNames = ["ECalBarrelCells"]
 
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
-
-podioinput = PodioInput("in", collections=["ECalBarrelCells"])
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -94,7 +90,6 @@ THistSvc().OutputLevel = INFO
 
 ApplicationMgr(
     TopAlg=[
-        podioinput,
         createemptycells,
         pileupEcalBarrel,
     ],
