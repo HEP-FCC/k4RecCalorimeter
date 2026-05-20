@@ -30,14 +30,11 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace dd4hep::DDSegmentation {
-  class Segmentation;
+class Segmentation;
 } // namespace dd4hep::DDSegmentation
 
-
 namespace k4::recCalo {
-
 
 /** @class ICalorimeterTool RecInterface/RecInterface/ICalorimeterTool.h ICalorimeterTool.h
  *
@@ -80,8 +77,6 @@ public:
   virtual std::unique_ptr<k4::recCalo::ICaloIndexer> indexer() const { return nullptr; }
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ICALORIMETERTOOL_H_H */

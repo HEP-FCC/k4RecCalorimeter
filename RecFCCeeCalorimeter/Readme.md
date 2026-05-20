@@ -7,5 +7,5 @@ Steps of a the full simulation and reconstruction workflow
 
 * Calculation of the Sampling Fraction
 ```
-./run fccrun 
+./run fccrun
 ```

@@ -7,8 +7,8 @@
 DECLARE_COMPONENT(CellPositionsECalBarrelPhiThetaSegTool)
 
 StatusCode CellPositionsECalBarrelPhiThetaSegTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   // get phi-theta segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridPhiTheta_k4geo*>(

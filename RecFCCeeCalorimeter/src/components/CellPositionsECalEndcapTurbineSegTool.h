@@ -6,8 +6,8 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // Interfaces
-#include "k4FWCore/DataHandle.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
+#include "k4FWCore/DataHandle.h"
 #include "k4Interface/IGeoSvc.h"
 
 // k4geo
@@ -54,7 +54,7 @@ public:
 
 private:
   /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalEndcapTurbine"};
   /// Merged module-theta segmentation

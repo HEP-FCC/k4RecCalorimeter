@@ -6,10 +6,10 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
 #include "k4FWCore/DataHandle.h"
-#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 // DD4hep
@@ -53,7 +53,7 @@ public:
 
 private:
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// Name of the electromagnetic calorimeter readout
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "EMECPhiEtaReco", "name of the readout"};
   /// Eta-phi segmentation

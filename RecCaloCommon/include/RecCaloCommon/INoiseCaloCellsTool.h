@@ -24,9 +24,7 @@
 // from Gaudi
 #include "GaudiKernel/IAlgTool.h"
 
-
 namespace k4::recCalo {
-
 
 /** @class INoiseCaloCellsTool
  *
@@ -49,8 +47,6 @@ public:
   virtual void filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_INOISECALOCELLSTOOL_H */

@@ -145,7 +145,7 @@ private:
   Gaudi::Property<std::vector<int>> m_caloIDs{this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
   /// The vector of input k4FWCore::DataHandles for the input cell collections
-  std::vector<std::unique_ptr<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> > > m_cellCollectionHandles;
+  std::vector<std::unique_ptr<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>>> m_cellCollectionHandles;
 
   /// Maximum theta of towers
   /// Can be left to pi, it won't hurt

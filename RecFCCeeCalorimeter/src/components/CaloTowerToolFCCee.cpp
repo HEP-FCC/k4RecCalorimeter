@@ -19,8 +19,8 @@ StatusCode CaloTowerToolFCCee::initialize() {
   for (const auto& col : m_cellCollections) {
     debug() << "Creating handle for input cell (CalorimeterHit) collection : " << col << endmsg;
     try {
-      m_cellCollectionHandles.emplace_back(
-          std::make_unique<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> >(col, Gaudi::DataHandle::Reader, this));
+      m_cellCollectionHandles.emplace_back(std::make_unique<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>>(
+          col, Gaudi::DataHandle::Reader, this));
     } catch (...) {
       error() << "Error creating handle for input collection: " << col << endmsg;
       return StatusCode::FAILURE;

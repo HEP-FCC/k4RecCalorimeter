@@ -6,9 +6,9 @@
 #include "GaudiKernel/ServiceHandle.h"
 
 // FCCSW
+#include "RecCaloCommon/ICellPositionsTool.h"
 #include "detectorCommon/DetUtils_k4geo.h"
 #include "k4FWCore/DataHandle.h"
-#include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
 
 class IGeoSvc;
@@ -38,6 +38,6 @@ public:
 
 private:
   /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
 };
 #endif /* RECCALORIMETER_CELLPOSITIONSDUMMYTOOL_H */

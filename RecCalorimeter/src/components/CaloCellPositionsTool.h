@@ -6,24 +6,19 @@
  * @brief Generic tool to find positions of calorimeter cells.
  */
 
-
 #ifndef RECCALORIMETER_CALOCELLPOSITIONSTOOL_H
 #define RECCALORIMETER_CALOCELLPOSITIONSTOOL_H
 
-
+#include "DD4hep/Segmentations.h"
+#include "DD4hep/Volumes.h"
 #include "GaudiKernel/AlgTool.h"
 #include "GaudiKernel/ServiceHandle.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
 #include "k4Interface/IGeoSvc.h"
-#include "DD4hep/Segmentations.h"
-#include "DD4hep/Volumes.h"
-
 
 /** Generic tool to find positions of calorimeter cells.
  */
-class CaloCellPositionsTool
-  : public extends<AlgTool, k4::recCalo::ICellPositionsTool>
-{
+class CaloCellPositionsTool : public extends<AlgTool, k4::recCalo::ICellPositionsTool> {
 public:
   using base_class::base_class;
 
@@ -38,21 +33,17 @@ public:
   /** Copy cells from aCells to outputColl filling in cell positions.
    */
   virtual void getPositions(const edm4hep::CalorimeterHitCollection& aCells,
-                            edm4hep::CalorimeterHitCollection&       outputColl) const final override;
+                            edm4hep::CalorimeterHitCollection& outputColl) const final override;
 
   /** Return the layer number of a cell.
    */
-  virtual int              layerId(const CellID aCellId)     const final override;
-
+  virtual int layerId(const CellID aCellId) const final override;
 
 private:
-  Gaudi::Property<std::string> m_readoutName
-  { this, "readoutName", "", "Name of the readout for this detector" };
-  Gaudi::Property<std::string> m_layerFieldName
-  { this, "layerFieldName", "layer", "Name of the decoder field for layer" };
+  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "", "Name of the readout for this detector"};
+  Gaudi::Property<std::string> m_layerFieldName{this, "layerFieldName", "layer", "Name of the decoder field for layer"};
 
-  ServiceHandle<IGeoSvc> m_geoSvc
-  { this, "GeoSvc", "GeoSvc", "Geometry service" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc", "Geometry service"};
 
   // DD4hep volume manager.
   dd4hep::VolumeManager m_volman;
@@ -66,6 +57,5 @@ private:
   // Index of the layer field.
   size_t m_layerFieldIdx = 0;
 };
-
 
 #endif // not RECCALORIMETER_CALOCELLPOSITIONSTOOL_H

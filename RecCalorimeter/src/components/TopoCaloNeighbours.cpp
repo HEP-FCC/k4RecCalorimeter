@@ -9,7 +9,7 @@
 DECLARE_COMPONENT(TopoCaloNeighbours)
 
 StatusCode TopoCaloNeighbours::initialize() {
-  K4_GAUDI_CHECK( base_class::initialize() );
+  K4_GAUDI_CHECK(base_class::initialize());
 
   // Check if neighbours map file exists
   if (m_fileName.empty()) {
@@ -57,8 +57,7 @@ StatusCode TopoCaloNeighbours::initialize() {
   return StatusCode::SUCCESS;
 }
 
-auto TopoCaloNeighbours::neighbours(CellID aCellId) const -> const std::vector<CellID>&
-{
+auto TopoCaloNeighbours::neighbours(CellID aCellId) const -> const std::vector<CellID>& {
   auto it = m_map.find(aCellId);
   if (it != m_map.end())
     return it->second;

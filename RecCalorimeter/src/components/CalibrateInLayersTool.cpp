@@ -1,8 +1,8 @@
 #include "CalibrateInLayersTool.h"
 
 // k4FWCore
-#include "k4Interface/IGeoSvc.h"
 #include "RecCaloCommon/k4RecCalorimeter_check.h"
+#include "k4Interface/IGeoSvc.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"
@@ -11,7 +11,7 @@
 DECLARE_COMPONENT(CalibrateInLayersTool)
 
 StatusCode CalibrateInLayersTool::initialize() {
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
   // check if readout exists
   if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
     error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
@@ -25,18 +25,17 @@ StatusCode CalibrateInLayersTool::initialize() {
 void CalibrateInLayersTool::calibrate(std::unordered_map<CellID, double>& aHits) const {
   // Loop through energy deposits, multiply energy to get cell energy at electromagnetic scale
   for (auto& p : aHits) {
-    calibrateCell (p.first, p.second);
+    calibrateCell(p.first, p.second);
   }
 }
 
-void CalibrateInLayersTool::calibrate(std::vector<std::pair<CellID, double> >& aHits) const {
+void CalibrateInLayersTool::calibrate(std::vector<std::pair<CellID, double>>& aHits) const {
   for (auto& p : aHits) {
-    calibrateCell (p.first, p.second);
+    calibrateCell(p.first, p.second);
   }
 }
 
-void CalibrateInLayersTool::calibrateCell(CellID cID, double& energy) const
-{
+void CalibrateInLayersTool::calibrateCell(CellID cID, double& energy) const {
   // shift layer id if the numbering does not start at 0
   uint layer = m_decoder->get(cID, m_layerIndex) - m_firstLayerId;
   if (layer < m_samplingFraction.size()) {
@@ -48,4 +47,3 @@ void CalibrateInLayersTool::calibrateCell(CellID cID, double& energy) const
               << " Layer ID: " << layer << endmsg;
   }
 }
-

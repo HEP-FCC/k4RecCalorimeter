@@ -46,7 +46,7 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
+  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const override final;
 
   /** @brief Remove cells with energy bellow threshold*sigma from the vector of cells
    */
@@ -54,7 +54,7 @@ public:
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells)    const override final;
+  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const override final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
@@ -63,13 +63,13 @@ public:
 
 private:
   template <typename C>
-  void addRandomCellNoiseT (C& aCells) const;
+  void addRandomCellNoiseT(C& aCells) const;
   template <typename C>
-  void filterCellNoiseT (C& aCells) const;
+  void filterCellNoiseT(C& aCells) const;
 
   /// Handle for tool to get cell positions
-  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool
-  { this, "cellPositionsTool", "CellPositionsDummyTool", "Handle for tool to retrieve cell positions" };
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
+                                                                  "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
@@ -113,7 +113,7 @@ private:
   Rndm::Numbers m_gauss;
 
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// PhiEta segmentation
   dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentationPhiEta;
   /// Multi segmentation

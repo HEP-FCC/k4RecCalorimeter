@@ -43,8 +43,7 @@ public:
    *   @param[in] aCellId of the cell of interest.
    *   return [rms, offset]
    */
-  virtual std::pair<double, double>
-  getNoisePerCell(CellID aCellId) const override final;
+  virtual std::pair<double, double> getNoisePerCell(CellID aCellId) const override final;
 
 private:
   /// Name

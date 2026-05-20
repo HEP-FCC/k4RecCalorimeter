@@ -169,42 +169,34 @@
  * Overall, for most cases, IDMapN seems like a good option.
  */
 
-
 #ifndef RECCALOCOMMON_IDMAP_H
 #define RECCALOCOMMON_IDMAP_H
 
-
-#include <type_traits>
 #include <concepts>
-#include <vector>
-#include <span>
-#include <utility>
-#include <ostream>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
-
+#include <ostream>
+#include <span>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace k4::recCalo {
-
 
 // Check if a type is usable as a payload.
 // Basically, is it a POD type.  But both std::is_pod and is_trivial
 // are deprecated, so do it this way.
 template <class PAYLOAD>
-concept IDMapPayload =
-  std::is_trivially_default_constructible_v<PAYLOAD> &&
-  std::is_trivially_copyable_v<PAYLOAD> &&
-  std::is_trivially_assignable_v<PAYLOAD&, PAYLOAD>;
-
+concept IDMapPayload = std::is_trivially_default_constructible_v<PAYLOAD> && std::is_trivially_copyable_v<PAYLOAD> &&
+                       std::is_trivially_assignable_v<PAYLOAD&, PAYLOAD>;
 
 /**
  * @brief Fast lookup of identifiers.
  *        PAYLOAD is the mapped (value) type.
  */
 template <IDMapPayload PAYLOAD>
-class IDMap
-{
+class IDMap {
 public:
   /// Maximum supported number of fields.
   constexpr static size_t MAXFIELDS = 6;
@@ -218,7 +210,6 @@ public:
   /// Describe a single field as bit offset and bit width.
   using FieldDesc_t = std::pair<size_t, size_t>;
 
-
   /**
    * @brief Helper for making a @c FieldDesc_t from a @c BitFieldElement.
    *
@@ -226,8 +217,7 @@ public:
    * methods.
    */
   template <class T>
-  static FieldDesc_t makeDesc (const T& f);
-
+  static FieldDesc_t makeDesc(const T& f);
 
   /**
    * @brief Constructor.
@@ -251,40 +241,31 @@ public:
    *                by the IDMapN derived classes.
    */
   template <std::invocable<size_t> VALFUNC>
-  requires std::convertible_to<std::result_of_t<VALFUNC(size_t)>, PAYLOAD>
-  IDMap (std::span<const FieldDesc_t> fields,
-         payload_t invalid,
-         std::span<const key_t> ids,
-         VALFUNC valfunc,
-         size_t sizeHint = 0,
-         size_t nfields = 0);
-
+    requires std::convertible_to<std::result_of_t<VALFUNC(size_t)>, PAYLOAD>
+  IDMap(std::span<const FieldDesc_t> fields, payload_t invalid, std::span<const key_t> ids, VALFUNC valfunc,
+        size_t sizeHint = 0, size_t nfields = 0);
 
   /**
    * @brief Look up a value in the mapping.
    * @param k The value to look up.
    * @returns The mapped value, or the invalid value if not found.
    */
-  payload_t lookup (key_t k) const;
-
+  payload_t lookup(key_t k) const;
 
   /**
    * @brief Return the number of keys in the mapping.
    */
   size_t size() const;
 
-
   /**
    * @brief Return the allocated size of the mapping data, in bytes.
    */
   size_t byteSize() const;
 
-
   /**
    * @brief Format some statistics on the mapping.
    */
   void printStats(std::ostream& s) const;
-
 
 protected:
   /**
@@ -296,43 +277,34 @@ protected:
    * This is to allow code to be generated with the number of fields
    * fixed at compile-time.
    */
-  payload_t lookup (key_t k, size_t nfields) const;
-
+  payload_t lookup(key_t k, size_t nfields) const;
 
 private:
   /// Type used for a node index.
   using index_t = uint32_t;
-
 
   /**
    * @brief Insert a new value in the map.
    * @param k The key (identifier) of the new mapping.
    * @param v The value of the new mapping.
    */
-  void insert (key_t k, payload_t v);
-
+  void insert(key_t k, payload_t v);
 
   /**
    * @brief Describe one field.
    *        For each field, we store a bit mask, a shift count,
    *        and the size of the corresponding trie node.
    */
-  struct Field
-  {
-    Field (unsigned pos=0, unsigned nbits=0)
-      : m_mask ( ((1ull<<nbits)-1) << pos),
-        m_shift (pos)
-    {
-    }
+  struct Field {
+    Field(unsigned pos = 0, unsigned nbits = 0) : m_mask(((1ull << nbits) - 1) << pos), m_shift(pos) {}
     unsigned size() const { return m_size; }
     unsigned extract(key_t x) const { return ((x & m_mask) >> m_shift); }
-    void updateSize(key_t x) { m_size = std::max (m_size, extract(x)+1); }
+    void updateSize(key_t x) { m_size = std::max(m_size, extract(x) + 1); }
 
     key_t m_mask;
     unsigned m_shift;
     unsigned m_size = 0;
   };
-
 
   /// Number of fields.
   size_t m_nfields;
@@ -348,14 +320,12 @@ private:
 
   /// Some basic statistics, giving how many blocks and filled entries
   /// are present at each level of the trie.
-  struct Stat
-  {
+  struct Stat {
     unsigned nblock = 0;
     unsigned filled = 0;
   };
   Stat m_stats[MAXFIELDS];
 };
-
 
 /**
  * @brief Version of IDMap specialized for a fixed number of fields.
@@ -366,16 +336,13 @@ private:
  *        in faster code.
  */
 template <IDMapPayload PAYLOAD, size_t NFIELDS>
-class IDMapN
-  : public IDMap<PAYLOAD>
-{
+class IDMapN : public IDMap<PAYLOAD> {
 public:
   /// Bring in types from the base IDMap.
   using base_class = IDMap<PAYLOAD>;
+  using typename base_class::FieldDesc_t;
   using typename base_class::key_t;
   using typename base_class::payload_t;
-  using typename base_class::FieldDesc_t;
-
 
   /**
    * @brief Constructor.
@@ -396,57 +363,42 @@ public:
    *                used to reserve an appropriate size for the data vector.
    */
   template <std::invocable<size_t> VALFUNC>
-  requires std::convertible_to<std::result_of_t<VALFUNC(size_t)>, PAYLOAD>
-  IDMapN (std::span<const FieldDesc_t> fields,
-          payload_t invalid,
-          std::span<const key_t> ids,
-          VALFUNC valfunc,
-          size_t sizeHint = 0)
-    : base_class (fields, invalid, ids, valfunc, sizeHint, NFIELDS)
-  {
-    if (fields.size() != NFIELDS) std::abort();
+    requires std::convertible_to<std::result_of_t<VALFUNC(size_t)>, PAYLOAD>
+  IDMapN(std::span<const FieldDesc_t> fields, payload_t invalid, std::span<const key_t> ids, VALFUNC valfunc,
+         size_t sizeHint = 0)
+      : base_class(fields, invalid, ids, valfunc, sizeHint, NFIELDS) {
+    if (fields.size() != NFIELDS)
+      std::abort();
   }
-
 
   /**
    * @brief Look up a value in the mapping.
    * @param k The value to look up.
    * @returns The mapped value, or the invalid value if not found.
    */
-  payload_t lookup (key_t k) const { return base_class::lookup (k, NFIELDS); }
+  payload_t lookup(key_t k) const { return base_class::lookup(k, NFIELDS); }
 };
-
 
 /**
  * @brief Helper for making a @c FieldDesc_t from a @c BitFieldElement.
  */
 template <IDMapPayload PAYLOAD>
 template <class T>
-inline
-auto IDMap<PAYLOAD>::makeDesc (const T& f) -> FieldDesc_t
-{
-  return std::make_pair (f.offset(), f.width());
+inline auto IDMap<PAYLOAD>::makeDesc(const T& f) -> FieldDesc_t {
+  return std::make_pair(f.offset(), f.width());
 }
-
 
 /**
  * @brief Constructor.
  */
 template <IDMapPayload PAYLOAD>
 template <std::invocable<size_t> VALFUNC>
-requires std::convertible_to<std::result_of_t<VALFUNC(size_t)>, PAYLOAD>
-IDMap<PAYLOAD>::IDMap (std::span<const FieldDesc_t> fields,
-                       payload_t invalid,
-                       std::span<const key_t> ids,
-                       VALFUNC valfunc,
-                       size_t sizeHint /*= 0*/,
-                       size_t nfields /*= 0*/)
-  : m_invalid (invalid)
-{
-  if (fields.size() > MAXFIELDS || fields.size() == 0 ||
-      (nfields != 0 && fields.size() != nfields)) {
-    std::cerr << "IDMap: Bad field list length; got " << fields.size()
-              << "; expected ";
+  requires std::convertible_to<std::result_of_t<VALFUNC(size_t)>, PAYLOAD>
+IDMap<PAYLOAD>::IDMap(std::span<const FieldDesc_t> fields, payload_t invalid, std::span<const key_t> ids,
+                      VALFUNC valfunc, size_t sizeHint /*= 0*/, size_t nfields /*= 0*/)
+    : m_invalid(invalid) {
+  if (fields.size() > MAXFIELDS || fields.size() == 0 || (nfields != 0 && fields.size() != nfields)) {
+    std::cerr << "IDMap: Bad field list length; got " << fields.size() << "; expected ";
     if (nfields && nfields <= MAXFIELDS && nfields > 0)
       std::cerr << nfields;
     else
@@ -459,100 +411,83 @@ IDMap<PAYLOAD>::IDMap (std::span<const FieldDesc_t> fields,
   m_nfields = fields.size();
   for (size_t i = 0; i < fields.size(); ++i) {
     if (fields[i].second > 20 || fields[i].first + fields[i].second >= 64) {
-      std::cerr << "IDMap: Bad field offset/width: " << fields[i].first
-                << " " << fields[i].second << "\n";
+      std::cerr << "IDMap: Bad field offset/width: " << fields[i].first << " " << fields[i].second << "\n";
       std::abort();
     }
     m_fields[i] = Field(fields[i].first, fields[i].second);
   }
 
   // For all fields but the last, set the size based on the bit width.
-  for (size_t i = 0; i < m_nfields-1; ++i)
+  for (size_t i = 0; i < m_nfields - 1; ++i)
     m_fields[i].m_size = 1u << fields[i].second;
 
   // Set the size of the last field based on the maximum observed value
   // in the identifier list.
-  Field& lastfield = m_fields[m_nfields-1];
+  Field& lastfield = m_fields[m_nfields - 1];
   for (key_t id : ids) {
-    lastfield.updateSize (id);
+    lastfield.updateSize(id);
   }
 
   // Allocate the root block.
   if (sizeHint > 0) {
-    m_data.reserve (sizeHint);
+    m_data.reserve(sizeHint);
   }
-  m_data.resize (m_fields[0].size() * sizeof(index_t));
+  m_data.resize(m_fields[0].size() * sizeof(index_t));
   m_stats[0].nblock = 1;
 
   // Initialize the mapping.
   for (size_t i = 0; i < ids.size(); ++i) {
-    insert (ids[i], valfunc(i));
+    insert(ids[i], valfunc(i));
   }
 }
-
 
 /**
  * @brief Look up a value in the mapping.
  */
 template <IDMapPayload PAYLOAD>
-inline
-auto IDMap<PAYLOAD>::lookup (key_t k) const -> payload_t
-{
-  return lookup (k, m_nfields);
+inline auto IDMap<PAYLOAD>::lookup(key_t k) const -> payload_t {
+  return lookup(k, m_nfields);
 }
-
 
 /**
  * @brief Return the number of keys in the mapping.
  */
 template <IDMapPayload PAYLOAD>
-inline
-size_t IDMap<PAYLOAD>::size() const
-{
+inline size_t IDMap<PAYLOAD>::size() const {
   // Size is just the number of insertions we've made in leaf nodes.
-  return m_stats[m_nfields-1].filled;
+  return m_stats[m_nfields - 1].filled;
 }
-
 
 /**
  * @brief Return the allocated size of the mapping data, in bytes.
  */
 template <IDMapPayload PAYLOAD>
-inline
-size_t IDMap<PAYLOAD>::byteSize() const
-{
+inline size_t IDMap<PAYLOAD>::byteSize() const {
   return m_data.size();
 }
-
 
 /**
  * @brief Format some statistics on the mapping.
  */
 template <IDMapPayload PAYLOAD>
-void IDMap<PAYLOAD>::printStats (std::ostream& s) const
-{
+void IDMap<PAYLOAD>::printStats(std::ostream& s) const {
   unsigned tot = 0;
   for (size_t i = 0; i < m_stats.size(); ++i) {
-    s << "trie level " << i << " "
-      << m_stats[i].nblock << " blocks of size "
-      << m_stats[i].size << " for total "
-      << m_stats[i].nblock*m_stats[i].size << " with "
-      << m_stats[i].filled << " ("
-      << (m_stats[i].filled ? static_cast<float>(m_stats[i].filled)/(m_stats[i].nblock*m_stats[i].size)*100 : 0)
+    s << "trie level " << i << " " << m_stats[i].nblock << " blocks of size " << m_stats[i].size << " for total "
+      << m_stats[i].nblock * m_stats[i].size << " with " << m_stats[i].filled << " ("
+      << (m_stats[i].filled ? static_cast<float>(m_stats[i].filled) / (m_stats[i].nblock * m_stats[i].size) * 100 : 0)
       << "%) filled" << "\n";
-     size_t this_sz = i == m_stats.size()-1 ? sizeof(payload_t) : sizeof(void*);
-     tot += m_stats[i].nblock*m_stats[i].size * this_sz;
+    size_t this_sz = i == m_stats.size() - 1 ? sizeof(payload_t) : sizeof(void*);
+    tot += m_stats[i].nblock * m_stats[i].size * this_sz;
   }
-  s << "tot " << (float)tot/1024/1024 << "MB\n";
+  s << "tot " << (float)tot / 1024 / 1024 << "MB\n";
 }
-
 
 /**
  * @brief Look up a value in the mapping.
  */
 template <IDMapPayload PAYLOAD>
-auto IDMap<PAYLOAD>::lookup (key_t k, size_t nfields) const -> payload_t
-{
+auto IDMap<PAYLOAD>::lookup(key_t k, size_t nfields) const -> payload_t {
   // Start of the mapping data.
   const char* data = m_data.data();
 
@@ -563,14 +498,14 @@ auto IDMap<PAYLOAD>::lookup (key_t k, size_t nfields) const -> payload_t
   const Field* f = m_fields;
 
   // Extract it from the identifier.
-  unsigned ndx = f->extract (k);
+  unsigned ndx = f->extract(k);
 
   // Looping over fields.
   for (size_t ifield = 1; ifield < nfields; ++ifield) {
     ++f;
 
     // Pointer to the node we're currently looking at.
-    const index_t* node = reinterpret_cast<const index_t*> (data + pos);
+    const index_t* node = reinterpret_cast<const index_t*>(data + pos);
 
     // Index of the node in the next trie level; return if it's null.
     index_t next_pos = node[ndx];
@@ -580,24 +515,23 @@ auto IDMap<PAYLOAD>::lookup (key_t k, size_t nfields) const -> payload_t
 
     // Looking at the next node, and extract the value of the next field.
     pos = next_pos;
-    ndx = f->extract (k);
+    ndx = f->extract(k);
   }
 
   // Check the bounds for the leaf node.
-  if (ndx >= f->size()) [[unlikely]] return m_invalid;
+  if (ndx >= f->size()) [[unlikely]]
+    return m_invalid;
 
   // Return the value from the leaf node.
-  const payload_t* leaf = reinterpret_cast<const payload_t*> (data + pos);
+  const payload_t* leaf = reinterpret_cast<const payload_t*>(data + pos);
   return leaf[ndx];
 }
-
 
 /**
  * @brief Insert a new value in the map.
  */
 template <IDMapPayload PAYLOAD>
-void IDMap<PAYLOAD>::insert (key_t k, payload_t v)
-{
+void IDMap<PAYLOAD>::insert(key_t k, payload_t v) {
   if (v == m_invalid) {
     std::cerr << "IDMap: Attempt to insert invalid value.\n";
     std::abort();
@@ -607,13 +541,13 @@ void IDMap<PAYLOAD>::insert (key_t k, payload_t v)
   index_t pos = 0;
 
   // Extract the value of the first field.
-  unsigned ndx = m_fields[0].extract (k);
+  unsigned ndx = m_fields[0].extract(k);
 
   for (size_t ifield = 1; ifield < m_nfields; ++ifield) {
     const Field& f = m_fields[ifield];
 
     // Pointer to the (non-leaf) node we're looking at.
-    index_t* node = reinterpret_cast<index_t*> (m_data.data() + pos);
+    index_t* node = reinterpret_cast<index_t*>(m_data.data() + pos);
 
     // Get the pointer from that node.
     index_t next_pos = node[ndx];
@@ -621,45 +555,42 @@ void IDMap<PAYLOAD>::insert (key_t k, payload_t v)
       // It hasn't been set yet.  We need to make a new node.
       // It goes at the end of the data vector.
       next_pos = m_data.size();
-      if (ifield < m_nfields-1) {
+      if (ifield < m_nfields - 1) {
         // A non-leaf node.
-        m_data.resize (m_data.size() + f.size() * sizeof(index_t));
-      }
-      else {
+        m_data.resize(m_data.size() + f.size() * sizeof(index_t));
+      } else {
         // A leaf node.
-        m_data.resize (m_data.size() + f.size() * sizeof(payload_t));
-        payload_t* data = reinterpret_cast<payload_t*> (m_data.data() + next_pos);
-        std::fill (data, data+f.size(), m_invalid);
+        m_data.resize(m_data.size() + f.size() * sizeof(payload_t));
+        payload_t* data = reinterpret_cast<payload_t*>(m_data.data() + next_pos);
+        std::fill(data, data + f.size(), m_invalid);
       }
 
       // Get the pointer to our current node again; it may have moved.
-      node = reinterpret_cast<index_t*> (m_data.data() + pos);
+      node = reinterpret_cast<index_t*>(m_data.data() + pos);
 
       // Fill in the node pointer.
       node[ndx] = next_pos;
 
       // Maintain some statistics.
       m_stats[ifield].nblock += 1;
-      m_stats[ifield-1].filled += 1;
+      m_stats[ifield - 1].filled += 1;
     }
 
     // Move to the next field.
     pos = next_pos;
-    ndx = f.extract (k);
+    ndx = f.extract(k);
   }
 
   // Pointer to the leaf field.
-  payload_t* leaf = reinterpret_cast<payload_t*> (m_data.data() + pos);
+  payload_t* leaf = reinterpret_cast<payload_t*>(m_data.data() + pos);
 
   // Fill in the value.
   if (leaf[ndx] == m_invalid) {
-    m_stats[m_nfields-1].filled += 1;
+    m_stats[m_nfields - 1].filled += 1;
   }
   leaf[ndx] = v;
 }
 
-
 } // namespace k4::recCalo
-
 
 #endif // not RECCALOCOMMON_IDMAP_H

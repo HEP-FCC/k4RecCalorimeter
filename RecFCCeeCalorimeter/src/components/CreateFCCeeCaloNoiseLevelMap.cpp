@@ -186,7 +186,7 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
               decoder->set(cellId, "theta",
                            itheta + numCells[2]); // start from the minimum existing theta cell in this layer
               uint64_t id = cellId;
-              std::pair<double, double> noise { 0, 0 };
+              std::pair<double, double> noise{0, 0};
               if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
                 noise = m_ecalBarrelNoiseTool->getNoisePerCell(id);
               } else if (m_fieldValuesSegmented[iSys] == m_hcalBarrelSysId) {
@@ -224,7 +224,7 @@ StatusCode CreateFCCeeCaloNoiseLevelMap::initialize() {
                                itheta * moduleThetaSegmentation->mergedThetaCells(
                                             ilayer)); // start from the minimum existing theta cell in this layer
               uint64_t id = cellId;
-              std::pair<double, double> noise { 0, 0 };
+              std::pair<double, double> noise{0, 0};
               if (m_fieldValuesSegmented[iSys] == m_ecalBarrelSysId) {
                 noise = m_ecalBarrelNoiseTool->getNoisePerCell(id);
               } else {

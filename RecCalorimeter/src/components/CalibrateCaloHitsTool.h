@@ -30,7 +30,7 @@ public:
   /** @brief  Calibrate Geant4 hit energy to EM scale
    */
   virtual void calibrate(std::unordered_map<CellID, double>& aHits) const override final;
-  virtual void calibrate(std::vector<std::pair<CellID, double> >& aHits) const override final;
+  virtual void calibrate(std::vector<std::pair<CellID, double>>& aHits) const override final;
 
 private:
   /// Value of 1/sampling fraction

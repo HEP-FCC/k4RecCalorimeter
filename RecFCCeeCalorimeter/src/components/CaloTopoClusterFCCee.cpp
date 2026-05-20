@@ -96,12 +96,12 @@ StatusCode CaloTopoClusterFCCee::initialize() {
 
   if (m_createClusterCellCollection) {
     std::vector<int> IDs;
-    for (auto ID: m_caloIDs) {
+    for (auto ID : m_caloIDs) {
       IDs.push_back(ID);
     }
 
     std::vector<std::string> colls;
-    for (auto coll: m_cellCollections) {
+    for (auto coll : m_cellCollections) {
       colls.push_back(coll);
     }
 
@@ -109,7 +109,8 @@ StatusCode CaloTopoClusterFCCee::initialize() {
       k4FWCore::putCollectionParameter(m_clusterCollection.objKey(), "inputSystemIDs", IDs, this);
       k4FWCore::putCollectionParameter(m_clusterCollection.objKey(), "inputCellCollections", colls, this);
     } else {
-      warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written" << endmsg;
+      warning() << "Sizes of input cell and systemID collections of tower tool are different, no metadata written"
+                << endmsg;
     }
   }
 
@@ -212,7 +213,7 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
       sumCellPhi += cellPos.Phi() * protoCell.getEnergy();
       sumCellTheta += cellPos.Theta() * protoCell.getEnergy();
 
-      if(m_createClusterCellCollection){
+      if (m_createClusterCellCollection) {
         auto cell = protoCell.clone();
         outClusterCells->push_back(cell);
         cluster.addToHits(cell);
@@ -220,7 +221,7 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
         for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
           const edm4hep::CalorimeterHitCollection* coll = m_cellCollectionHandles[ih]->get();
           for (const auto& hit : *coll) {
-            if(hit.getCellID() == protoCell.getCellID()){
+            if (hit.getCellID() == protoCell.getCellID()) {
               cluster.addToHits(hit);
             }
           }
@@ -254,7 +255,7 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
   debug() << "Total energy of clusters above threshold:                           " << checkTotEnergyAboveThreshold
           << endmsg;
-  if(m_createClusterCellCollection){
+  if (m_createClusterCellCollection) {
     debug() << "Leftover cells :                                    " << inCells->size() - outClusterCells->size()
             << endmsg;
   }

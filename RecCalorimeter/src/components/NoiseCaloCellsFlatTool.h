@@ -22,7 +22,7 @@
  *  @date   2024-07
  */
 
-class NoiseCaloCellsFlatTool : public extends<AlgTool,  k4::recCalo::INoiseCaloCellsTool> {
+class NoiseCaloCellsFlatTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsFlatTool() = default;
@@ -36,7 +36,7 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
+  virtual void addRandomCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
@@ -44,14 +44,13 @@ public:
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double> >& aCells) const override final;
-
+  virtual void filterCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const override final;
 
 private:
   template <typename C>
-  void addRandomCellNoiseT (C& aCells) const;
+  void addRandomCellNoiseT(C& aCells) const;
   template <typename C>
-  void filterCellNoiseT (C& aCells) const;
+  void filterCellNoiseT(C& aCells) const;
 
   /// RMS of noise -- uniform RMS per cell in GeV
   Gaudi::Property<double> m_cellNoiseRMS{this, "cellNoiseRMS", 0.003, "uniform noise RMS per cell in GeV"};

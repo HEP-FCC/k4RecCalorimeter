@@ -29,18 +29,13 @@
  *  @author Anna Zaborowska
  */
 
-
 namespace k4::recCalo {
 
-
-class ICaloCreateMap : virtual public IService
-{
+class ICaloCreateMap : virtual public IService {
 public:
   DeclareInterfaceID(ICaloCreateMap, 1, 0);
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ICALOCREATEMAP_H */

@@ -117,13 +117,17 @@ private:
   /// Handle for neighbours tool
   mutable ToolHandle<k4::recCalo::ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
   /// Handle for tool to get positions in ECal Barrel
-  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsECalBarrelTool{"CellPositionsECalBarrelTool",
+                                                                                    this};
   /// Handle for tool to get positions in HCal Barrel
-  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{"CellPositionsHCalBarrelNoSegTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelNoSegTool{
+      "CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in HCal Barrel
-  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalBarrelTool{"CellPositionsHCalBarrelTool",
+                                                                                    this};
   /// Handle for tool to get positions in HCal Barrel and Ext Barrel, no Segmentation
-  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{"CellPositionsHCalBarrelNoSegTool", this};
+  mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsHCalExtBarrelTool{
+      "CellPositionsHCalBarrelNoSegTool", this};
   /// Handle for tool to get positions in Calo Discs
   mutable ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsEMECTool{"CellPositionsCaloDiscsTool", this};
   /// Handle for tool to get positions in Calo Discs

@@ -24,9 +24,7 @@
 // Gaudi
 #include "GaudiKernel/IAlgTool.h"
 
-
 namespace k4::recCalo {
-
 
 /** @class ICaloReadCrosstalkMap k4Interface/include/k4Interface/ICaloReadCrosstalkMap.h ICaloReadCrosstalkMap.h
  *
@@ -44,8 +42,6 @@ public:
   virtual std::span<const double> getCrosstalks(CellID cellID) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_ICALOREADCROSSTALKMAP_H */

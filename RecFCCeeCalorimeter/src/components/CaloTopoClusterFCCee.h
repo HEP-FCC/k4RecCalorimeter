@@ -12,10 +12,10 @@
 #include "GaudiKernel/ToolHandle.h"
 
 // Key4HEP
-#include "k4FWCore/DataHandle.h"
 #include "RecCaloCommon/ICaloReadNeighboursMap.h"
-#include "k4Interface/IGeoSvc.h"
 #include "RecCaloCommon/INoiseConstTool.h"
+#include "k4FWCore/DataHandle.h"
+#include "k4Interface/IGeoSvc.h"
 
 // EDM4HEP
 namespace edm4hep {
@@ -112,8 +112,7 @@ private:
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
       "clusterCells", Gaudi::DataHandle::Writer, this};
 
-  Gaudi::Property<std::vector<int>> m_caloIDs{
-    this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
+  Gaudi::Property<std::vector<int>> m_caloIDs{this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
   /// Handle for the cells noise tool
   mutable ToolHandle<k4::recCalo::INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};

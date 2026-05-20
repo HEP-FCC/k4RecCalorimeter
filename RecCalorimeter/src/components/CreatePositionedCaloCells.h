@@ -3,6 +3,9 @@
 
 // k4FWCore
 #include "k4FWCore/DataHandle.h"
+#include "k4FWCore/Transformer.h"
+
+#include <tuple>
 
 // Interfaces
 #include "RecCaloCommon/ICalibrateCaloHitsTool.h"
@@ -47,18 +50,30 @@
  *
  */
 
-class CreatePositionedCaloCells : public Gaudi::Algorithm {
+struct CreatePositionedCaloCells final
+    : k4FWCore::MultiTransformer<
+          std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>(
+              const edm4hep::SimCalorimeterHitCollection&)> {
 
-public:
-  CreatePositionedCaloCells(const std::string& name, ISvcLocator* svcLoc);
-
-  StatusCode initialize();
-
-  StatusCode execute(const EventContext&) const;
-
-  StatusCode finalize();
+  CreatePositionedCaloCells(const std::string& name, ISvcLocator* svcLoc)
+      : MultiTransformer(name, svcLoc, {KeyValue("hits", "")}, /// Hits from which to create cells (input)
+                         {
+                             KeyValue("cells", ""), /// The created calorimeter cells (output)
+                             KeyValue("links", ""), /// The links between hits and cells (output)
+                         }) {
+    declareProperty("positionsTool", m_cellPositionsTool, "Handle for cell positions tool");
+    declareProperty("crosstalkTool", m_crosstalkTool, "Handle for the cell crosstalk tool");
+    declareProperty("calibTool", m_calibTool, "Handle for tool to calibrate Geant4 energy to EM scale tool");
+    declareProperty("noiseTool", m_noiseTool, "Handle for the calorimeter cells noise tool");
+    declareProperty("geometryTool", m_geoTool, "Handle for the geometry tool");
+    m_decoder = nullptr;
+  }
 
   virtual ~CreatePositionedCaloCells();
+
+  StatusCode initialize() override;
+  std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>
+  operator()(const edm4hep::SimCalorimeterHitCollection& hits) const override;
 
 private:
   /// Handle for tool to get cells positions
@@ -82,13 +97,11 @@ private:
   Gaudi::Property<bool> m_filterCellNoise{this, "filterCellNoise", false,
                                           "Save only cells with energy above threshold?"};
 
-  /// Handle for calo hits (input collection)
-  mutable k4FWCore::DataHandle<edm4hep::SimCalorimeterHitCollection> m_hits{"hits", Gaudi::DataHandle::Reader, this};
-  /// Handle for calo cells (output collection)
-  mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_cells{"cells", Gaudi::DataHandle::Writer, this};
-  /// Handle for hit<->cell link (output collection)
-  mutable k4FWCore::DataHandle<edm4hep::CaloHitSimCaloHitLinkCollection> m_links{"links", Gaudi::DataHandle::Writer,
-                                                                                 this};
+  /// Name for calo hits (input collection)
+  mutable std::string m_hits;
+  /// Name for calo cells (output collection)
+  mutable std::string m_cells;
+
   /// Maps of cell IDs (corresponding to DD4hep IDs) vs digitised cell energies
   mutable std::unordered_map<uint64_t, double> m_cellsMap;
   /// Maps of cell IDs (corresponding to DD4hep IDs) on transfer of signals due to crosstalk

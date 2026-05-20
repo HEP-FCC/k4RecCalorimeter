@@ -9,8 +9,8 @@
 DECLARE_COMPONENT(CellPositionsECalBarrelModuleThetaSegTool)
 
 StatusCode CellPositionsECalBarrelModuleThetaSegTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
 
   // get segmentation
   m_segmentation = dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(
@@ -71,8 +71,8 @@ dd4hep::Position CellPositionsECalBarrelModuleThetaSegTool::xyzPosition(const Ce
   dd4hep::VolumeManagerContext* vc = m_volman.lookupContext(volumeId);
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   dd4hep::Position outSeg = vc->localToWorld(dd4hep::Position(inSeg));
-  if (this->msgLevel(MSG::DEBUG)) { [[unlikely]]
-    debug() << "cellID: " << aCellId << endmsg;
+  if (this->msgLevel(MSG::DEBUG)) {
+    [[unlikely]] debug() << "cellID: " << aCellId << endmsg;
     debug() << "volumeID: " << volumeId << endmsg;
     debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
             << inSeg.z() / dd4hep::mm << endmsg;

@@ -6,8 +6,8 @@
 DECLARE_COMPONENT(CellPositionsDummyTool)
 
 StatusCode CellPositionsDummyTool::initialize() {
-  K4_GAUDI_CHECK( AlgTool::initialize() );
-  K4_GAUDI_CHECK( m_geoSvc.retrieve() );
+  K4_GAUDI_CHECK(AlgTool::initialize());
+  K4_GAUDI_CHECK(m_geoSvc.retrieve());
   return StatusCode::SUCCESS;
 }
 
@@ -38,6 +38,4 @@ dd4hep::Position CellPositionsDummyTool::xyzPosition(const CellID /*aCellId*/) c
   return dd4hep::Position(0, 0, 0);
 }
 
-int CellPositionsDummyTool::layerId(const CellID /*aCellId*/) const {
-  return 0;
-}
+int CellPositionsDummyTool::layerId(const CellID /*aCellId*/) const { return 0; }

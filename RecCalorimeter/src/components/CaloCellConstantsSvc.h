@@ -6,18 +6,14 @@
  * @brief Holder for data related to calorimeter cells.
  */
 
-
 #ifndef RECCALORIMETER_CALOCELLCONSTANTSSVC_H
 #define RECCALORIMETER_CALOCELLCONSTANTSSVC_H
 
-
-#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 #include "GaudiKernel/Service.h"
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 #include <mutex>
 
-
 namespace k4::recCalo {
-
 
 /**
  * @brief Holder for data related to calorimeter cells.
@@ -39,12 +35,9 @@ namespace k4::recCalo {
  * really seem intended for the storage of data which is not meant
  * to be persistent.
  */
-class CaloCellConstantsSvc
-  : public extends<Service, ICaloCellConstantsSvc>
-{
+class CaloCellConstantsSvc : public extends<Service, ICaloCellConstantsSvc> {
 public:
   using base_class::base_class;
-
 
   /**
    * @brief Retrieve an object from the store, as a @c std::any.
@@ -54,8 +47,7 @@ public:
    * with key @c key.  Returns a pointer to a @c std::any holding the
    * object, or @c nullptr if the key wasn't found.
    */
-  virtual const std::any* getAnyObj (const std::string& key) const override;
-
+  virtual const std::any* getAnyObj(const std::string& key) const override;
 
   /**
    * @brief Record an object in the store, as a @c std::any.
@@ -65,8 +57,7 @@ public:
    * Returns true if the object was successfully recorded, false if not
    * (an object was already recorded with the same key, for example).
    */
-  virtual bool putAnyObj (const std::string& key, std::any&& obj) override;
-
+  virtual bool putAnyObj(const std::string& key, std::any&& obj) override;
 
 private:
   /// The stored objects.
@@ -76,8 +67,6 @@ private:
   mutable std::mutex m_mutex;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif // not RECCALORIMETER_CALOCELLCONSTANTSSVC_H

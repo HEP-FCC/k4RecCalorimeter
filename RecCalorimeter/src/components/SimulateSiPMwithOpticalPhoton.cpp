@@ -199,8 +199,9 @@ StatusCode SimulateSiPMwithOpticalPhoton::execute(const EventContext&) const {
     // Compute integral (energy) and time of arrival
     // if the signal never exceeds the threshold, it will return -1.
     const double integral =
-        std::max(0., anaSignal.integral(m_gateStart - minTime, m_gateL, m_thres));           // (intStart, intGate, threshold)
-    const double toa = std::max(0., anaSignal.toa(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
+        std::max(0., anaSignal.integral(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
+    const double toa =
+        std::max(0., anaSignal.toa(m_gateStart - minTime, m_gateL, m_thres)); // (intStart, intGate, threshold)
 
     // Set digitized hit properties
     digiHit.setEnergy(integral * m_scaleADC.value());

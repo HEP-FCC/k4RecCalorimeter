@@ -41,8 +41,7 @@ public:
   /// Find the appropriate noise constant from the histogram
   virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
   virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
-  virtual std::pair<double, double>
-  getNoisePerCell(CellID aCellID) const override final;
+  virtual std::pair<double, double> getNoisePerCell(CellID aCellID) const override final;
 
 private:
   /// Add pileup contribution to the electronics noise? (only if read from file)
@@ -87,7 +86,7 @@ private:
   std::vector<TH1F> m_histoElecNoiseOffset;
 
   /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
   /// PhiEta segmentation
   dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
   // Decoder

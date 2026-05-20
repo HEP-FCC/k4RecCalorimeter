@@ -32,7 +32,8 @@ class TH1F;
  *
  */
 
-class NoiseCaloCellsTurbineEndcapFromFileTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool, k4::recCalo::INoiseConstTool> {
+class NoiseCaloCellsTurbineEndcapFromFileTool
+    : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool, k4::recCalo::INoiseConstTool> {
 public:
   using base_class::base_class;
   virtual ~NoiseCaloCellsTurbineEndcapFromFileTool() = default;
@@ -71,7 +72,7 @@ private:
 
   /// Handle for tool to get cell positions
   ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
-                                                     "Handle for tool to retrieve cell positions"};
+                                                                  "Handle for tool to retrieve cell positions"};
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,

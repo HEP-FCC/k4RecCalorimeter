@@ -24,9 +24,7 @@
 // from Gaudi
 #include "GaudiKernel/IAlgTool.h"
 
-
 namespace k4::recCalo {
-
 
 /** @class INoiseConstTool
  *
@@ -60,8 +58,6 @@ public:
   virtual std::pair<double, double> getNoisePerCell(CellID aCellID) const = 0;
 };
 
-
 } // namespace k4::recCalo
-
 
 #endif /* RECCALOCOMMON_INOISECONSTTOOL_H */
