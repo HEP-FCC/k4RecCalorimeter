@@ -592,8 +592,10 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                       iMatchRho = iECrho;
                     }
                   }
-		  (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
-                  if (ecalEndcapTurbineSegmentation->rho(endcapCellId) + ecalEndcapTurbineSegmentation->gridSizeRho(iWheel)/2. < m_eCalBarrelMinRho)
+                  (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
+                  if (ecalEndcapTurbineSegmentation->rho(endcapCellId) +
+                          ecalEndcapTurbineSegmentation->gridSizeRho(iWheel) / 2. <
+                      m_eCalBarrelMinRho)
                     continue;
                   unsigned iECmodule;
                   if (iSide == -1) {
@@ -675,7 +677,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 decoder->set(cellId, "z", iz);
 
                 double endcapRho = ecalEndcapTurbineSegmentation->rho(cellId);
-                if (iWheel == 2 && iz == 0 && (endcapRho > m_eCalBarrelMinRho) ) {
+                if (iWheel == 2 && iz == 0 && (endcapRho > m_eCalBarrelMinRho)) {
                   nextToEMBarrel = true;
                 }
 
@@ -1954,14 +1956,14 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
           double inLocal[] = {0, 0, 0};
           const auto outGlobal = detelement.nominal().localToWorld(inLocal);
           double eCalBarrelPhiOffset = std::atan2(outGlobal.Y(), outGlobal.X());
-	  if (iBarrelLayer == 0) {
-	    eCalBarrelRho0 = outGlobal.rho();
-	  }
-	  if (iBarrelLayer == 1 && iBarrelModule == 0) {
-	    eCalBarrelRho1 = outGlobal.rho();
-	    m_eCalBarrelMinRho = eCalBarrelRho0 - (eCalBarrelRho1 - eCalBarrelRho0)/.2;
-	  }
-	 
+          if (iBarrelLayer == 0) {
+            eCalBarrelRho0 = outGlobal.rho();
+          }
+          if (iBarrelLayer == 1 && iBarrelModule == 0) {
+            eCalBarrelRho1 = outGlobal.rho();
+            m_eCalBarrelMinRho = eCalBarrelRho0 - (eCalBarrelRho1 - eCalBarrelRho0) / .2;
+          }
+
           double eCalBarrelPhi = eCalBarrelPhiOffset;
           double eCalBarrelTheta = moduleThetaSegmentation->theta(barrelVolumeId);
 
