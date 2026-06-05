@@ -1934,7 +1934,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
       for (unsigned iBarrelLayer = 0; iBarrelLayer < nBarrelLayers; iBarrelLayer++) {
         std::vector<Float_t> phis, thetas;
-        unsigned nModulesBarrel = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
+        unsigned nModulesBarrel = (numCells[0]) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
         std::string histname = "h_EMB_modulevphi_" + std::to_string(iBarrelLayer);
         TH1F* h_phi = new TH1F(histname.c_str(), histname.c_str(), nModulesBarrel, -TMath::Pi(), TMath::Pi());
         for (unsigned iBarrelModule = 0; iBarrelModule < nModulesBarrel; iBarrelModule++) {
@@ -1962,7 +1962,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
           h_phi->SetBinContent(h_phi->FindBin(eCalBarrelPhi), iBarrelModule);
           phis.push_back(eCalBarrelPhi);
-
           if (iBarrelModule == 0)
             m_EMB_theta_lookup.push_back(eCalBarrelTheta);
         }
