@@ -1962,6 +1962,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
           h_phi->SetBinContent(h_phi->FindBin(eCalBarrelPhi), iBarrelModule);
           phis.push_back(eCalBarrelPhi);
+
           if (iBarrelModule == 0)
             m_EMB_theta_lookup.push_back(eCalBarrelTheta);
         }
