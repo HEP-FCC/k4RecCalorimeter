@@ -18,7 +18,19 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include <algorithm>
+#include <cmath>
+
 #include "OnnxruntimeUtilities.h"
+
+namespace {
+constexpr double kDeltaThetaCalo = 0.009817477 / 4.0;
+constexpr double kDeltaPhiCalo = 2.0 * 3.14159265358979323846 / 1536.0;
+
+float pythonModuloOne(double value) {
+  return static_cast<float>(value - std::floor(value));
+}
+} // namespace
 
 DECLARE_COMPONENT(CalibrateCaloClusters)
 
@@ -261,12 +273,18 @@ StatusCode CalibrateCaloClusters::readCalibrationFile(const std::string& calibra
 
   // the output should be a single value (the correction)
   // and the inputs should be n(layers)+1 (fractions + total E)
+  // or n(layers)+4 (fractions + theta + theta mod cell + phi mod cell + total E)
   // the first dimension of the tensors are the number of clusters
   // to be calibrated simultaneously (-1 = dynamic)
   // we will calibrate once at a time
-  if (m_input_shapes.size() != 2 || m_output_shapes.size() != 2 || m_input_shapes[1] != (m_numLayersTotal + 1) ||
+  const std::int64_t expectedInputs = m_numLayersTotal + 1;
+  const std::int64_t expectedInputsWithExtraFeatures = m_numLayersTotal + 4;
+  if (m_input_shapes.size() != 2 || m_output_shapes.size() != 2 ||
+      (m_input_shapes[1] != expectedInputs && m_input_shapes[1] != expectedInputsWithExtraFeatures) ||
       m_output_shapes[1] != 1) {
-    error() << "The input or output shapes in the calibration files do not match the expected architecture" << endmsg;
+    error() << "The input or output shapes in the calibration files do not match the expected architecture. "
+            << "Expected input width " << expectedInputs << " or " << expectedInputsWithExtraFeatures
+            << ", got " << (m_input_shapes.size() == 2 ? m_input_shapes[1] : -1) << endmsg;
     return StatusCode::FAILURE;
   }
 
@@ -277,8 +295,8 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
                                                     edm4hep::ClusterCollection* outClusters) const {
 
   // this vector will contain the input features for the calibration
-  // i.e. the fraction of energy in each layer and the total energy
-  std::vector<float> energiesInLayers(m_numLayersTotal + 1);
+  // i.e. the fraction of energy in each layer, optional position features, and the total energy
+  std::vector<float> energiesInLayers(static_cast<std::size_t>(m_input_shapes[1]));
 
   // loop over the input clusters and perform the calibration
   for (unsigned int j = 0; j < inClusters->size(); ++j) {
@@ -294,7 +312,7 @@ StatusCode CalibrateCaloClusters::calibrateClusters(const edm4hep::ClusterCollec
     // calculate cluster energy in each layer and normalize by total cluster energy
     calcEnergiesInLayers(inClusters->at(j), energiesInLayers);
     verbose() << "Calibration inputs:" << endmsg;
-    for (unsigned short int k = 0; k < energiesInLayers.size(); ++k) {
+    for (std::size_t k = 0; k < energiesInLayers.size(); ++k) {
       verbose() << "    f" << k << " : " << energiesInLayers[k] << endmsg;
     }
 
@@ -338,6 +356,8 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster, std::
 
   // get total cluster energy
   double ecl = cluster.getEnergy();
+  const bool useExtraFeatures = energiesInLayers.size() == static_cast<std::size_t>(m_numLayersTotal + 4);
+  const std::size_t rawEnergyPosition = energiesInLayers.size() - 1;
 
   // if all inputs are available as shapeParameters, use them
   if (m_inputPositionsInShapeParameters.size() == m_numLayersTotal) {
@@ -346,8 +366,6 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster, std::
     for (unsigned short int i = 0; i < m_numLayersTotal; i++) {
       energiesInLayers[i] = cluster.getShapeParameters(m_inputPositionsInShapeParameters[i]);
     }
-    // add as last input the total raw cluster energy
-    energiesInLayers[m_numLayersTotal] = ecl;
   } else {
     // calculate the energy fractions from the cells
     // loop over the various readouts/subsystems/...
@@ -377,7 +395,25 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster, std::
     for (unsigned short int k = 0; k < m_numLayersTotal; ++k) {
       energiesInLayers[k] /= ecl;
     }
-    // add as last input the total cluster energy
-    energiesInLayers[m_numLayersTotal] = ecl;
   }
+
+  if (useExtraFeatures) {
+    const auto position = cluster.getPosition();
+    const double radius =
+        std::sqrt(position.x * position.x + position.y * position.y + position.z * position.z);
+    double theta = 0.0;
+    double phi = 0.0;
+    if (radius > 0.0) {
+      double cosTheta = position.z / radius;
+      cosTheta = std::min(1.0, std::max(-1.0, cosTheta));
+      theta = std::acos(cosTheta);
+      phi = std::atan2(position.y, position.x);
+    }
+    energiesInLayers[m_numLayersTotal] = static_cast<float>(theta);
+    energiesInLayers[m_numLayersTotal + 1] = pythonModuloOne(theta / kDeltaThetaCalo);
+    energiesInLayers[m_numLayersTotal + 2] = pythonModuloOne(phi / kDeltaPhiCalo);
+  }
+
+  // add as last input the total raw cluster energy
+  energiesInLayers[rawEnergyPosition] = ecl;
 }
