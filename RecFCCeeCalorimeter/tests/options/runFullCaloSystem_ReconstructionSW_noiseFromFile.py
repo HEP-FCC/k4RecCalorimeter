@@ -8,21 +8,18 @@ ecalBarrelReadoutName = "ECalBarrelPhiEta"
 
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 import sys
 
-podioevent = k4DataSvc("EventDataSvc")
-podioevent.input = "output_fullCalo_SimAndDigi.root"
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
+iosvc = IOSvc()
+iosvc.Input = "output_fullCalo_SimAndDigi.root"
+iosvc.CollectionNames = [
+    ecalBarrelCellsName,
+    "GenParticles",
+]
 
-podioinput = PodioInput(
-    "PodioReader",
-    collections=[
-        ecalBarrelCellsName,
-        "GenParticles",
-    ],
-)
+podioevent = EventDataSvc("EventDataSvc")
 
 
 from Configurables import GeoSvc
@@ -139,11 +136,7 @@ createClusters = CreateCaloClustersSlidingWindow(
 createClusters.clusters.Path = "CaloClustersFinal"
 createClusters.clusterCells.Path = "CaloClusterCellsFinal"
 
-import uuid
-
-out = PodioOutput(
-    "out", filename="output_allCalo_reco_noise_" + uuid.uuid4().hex + ".root"
-)
+iosvc.Output = "output_allCalo_reco_noise.root"
 
 # CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -151,12 +144,10 @@ from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-podioinput.AuditExecute = True
 createClusters.AuditExecute = True
-out.AuditExecute = True
 
 ApplicationMgr(
-    TopAlg=[podioinput, createemptycells, createEcalBarrelCells, createClusters, out],
+    TopAlg=[createemptycells, createEcalBarrelCells, createClusters],
     EvtSel="NONE",
     EvtMax=2,
     ExtSvc=[podioevent, geoservice],

@@ -107,6 +107,8 @@ private:
   // re-calculating positions inside the double loop over cells that occurs when
   // looking for neighbors.
 
+  double m_eCalBarrelMinRho; // minimum rho for the EM barrel. Stored to
+                             // prevent matching of endcap cells at smaller rho
   std::vector<TH1F*> m_EMB_h_module_vs_phi;
   std::vector<std::vector<Float_t>> m_EMB_phi_lookup;
   std::vector<Float_t> m_EMB_theta_lookup;

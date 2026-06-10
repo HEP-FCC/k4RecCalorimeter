@@ -31,6 +31,16 @@ StatusCode CalorimeterToolBase::initialize() {
     m_readout = it->second;
   }
 
+  // Find the detector ID.
+  std::string detName = this->detectorName();
+  if (detName.empty()) {
+    if (m_readout.isValid()) {
+      m_id = m_readout.segmentation().detector()->id;
+    }
+  } else {
+    m_id = m_geoSvc->getDetector()->constant<int>("DetID_" + detName);
+  }
+
   // Need to do this after m_readout is defined, since it may ask us
   // for our id.
   K4_GAUDI_CHECK(m_constantsSvc.retrieve());
@@ -77,11 +87,16 @@ const std::string& CalorimeterToolBase::readoutName() const { return m_readoutNa
 /** Return the subdetector ID.
  */
 int CalorimeterToolBase::id() const {
-  if (!m_readout) {
-    error() << name() << ": " << "Readout not found; can't find detector ID" << endmsg;
+  if (m_id < 0) {
+    error() << name() << ": " << "Detector ID not defined." << endmsg;
   }
-  return m_readout.segmentation().detector()->id;
+  return m_id;
 }
+
+/** Return the name of this subdetector, to be used to find the
+    subdetector ID.
+*/
+std::string CalorimeterToolBase::detectorName() const { return ""; }
 
 /** Create the list of cells and store with the constants service.
  */

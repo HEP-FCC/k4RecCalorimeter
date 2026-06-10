@@ -592,7 +592,10 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                       iMatchRho = iECrho;
                     }
                   }
-                  if (minDelTheta > 0.5)
+                  (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
+                  if (ecalEndcapTurbineSegmentation->rho(endcapCellId) +
+                          ecalEndcapTurbineSegmentation->gridSizeRho(iWheel) / 2. <
+                      m_eCalBarrelMinRho)
                     continue;
                   unsigned iECmodule;
                   if (iSide == -1) {
@@ -657,11 +660,6 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
           debug() << "Extrema[1]: " << extrema[1].first << " , " << extrema[1].second << endmsg;
           debug() << "Extrema[2]: " << extrema[2].first << " , " << extrema[2].second << endmsg;
 
-          // Set up some variables that will be useful when finding neighbors
-          // in the EM barrel.  These will be calculated the first time through
-          // the loop
-          float minRhoEMBarrel = -1.;
-
           // Loop over segmentation cells
           for (unsigned imodule = 0; imodule < numModules; imodule++) {
             for (unsigned irho = 0; irho < numCellsRho; irho++) {
@@ -679,7 +677,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 decoder->set(cellId, "z", iz);
 
                 double endcapRho = ecalEndcapTurbineSegmentation->rho(cellId);
-                if (iWheel == 2 && iz == 0 && ((endcapRho > minRhoEMBarrel) || (minRhoEMBarrel < 0.))) {
+                if (iWheel == 2 && iz == 0 && (endcapRho > m_eCalBarrelMinRho)) {
                   nextToEMBarrel = true;
                 }
 
@@ -1932,9 +1930,10 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
       m_EMB_phi_lookup.reserve(nBarrelLayers);
       auto numCells = det::utils::numberOfCells(m_ecalBarrelSysId, *moduleThetaSegmentation);
 
+      double eCalBarrelRho0 = 0., eCalBarrelRho1 = 0.;
       for (unsigned iBarrelLayer = 0; iBarrelLayer < nBarrelLayers; iBarrelLayer++) {
         std::vector<Float_t> phis, thetas;
-        unsigned nModulesBarrel = (numCells[0] - 1) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
+        unsigned nModulesBarrel = (numCells[0]) * moduleThetaSegmentation->mergedModules(iBarrelLayer);
         std::string histname = "h_EMB_modulevphi_" + std::to_string(iBarrelLayer);
         TH1F* h_phi = new TH1F(histname.c_str(), histname.c_str(), nModulesBarrel, -TMath::Pi(), TMath::Pi());
         for (unsigned iBarrelModule = 0; iBarrelModule < nModulesBarrel; iBarrelModule++) {
@@ -1957,6 +1956,14 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
           double inLocal[] = {0, 0, 0};
           const auto outGlobal = detelement.nominal().localToWorld(inLocal);
           double eCalBarrelPhiOffset = std::atan2(outGlobal.Y(), outGlobal.X());
+          if (iBarrelLayer == 0) {
+            eCalBarrelRho0 = outGlobal.rho();
+          }
+          if (iBarrelLayer == 1 && iBarrelModule == 0) {
+            eCalBarrelRho1 = outGlobal.rho();
+            m_eCalBarrelMinRho = eCalBarrelRho0 - (eCalBarrelRho1 - eCalBarrelRho0) / .2;
+          }
+
           double eCalBarrelPhi = eCalBarrelPhiOffset;
           double eCalBarrelTheta = moduleThetaSegmentation->theta(barrelVolumeId);
 

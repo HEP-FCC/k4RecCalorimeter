@@ -21,27 +21,24 @@ hcalFwdReadoutName = "HFwdPhiEta"
 num_events = 3
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc("EventDataSvc", input="output_allCalo_reco.root")
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
+iosvc = IOSvc()
+iosvc.Input = "output_allCalo_reco.root"
+iosvc.CollectionNames = [
+    "GenParticles",
+    "GenVertices",
+    ecalBarrelCellsName,
+    ecalEndcapCellsName,
+    ecalFwdCellsName,
+    "newHCalBarrelCells",
+    "newHCalExtBarrelCells",
+    hcalEndcapCellsName,
+    hcalFwdCellsName,
+]
 
-podioinput = PodioInput(
-    "PodioReader",
-    collections=[
-        "GenParticles",
-        "GenVertices",
-        ecalBarrelCellsName,
-        ecalEndcapCellsName,
-        ecalFwdCellsName,
-        "newHCalBarrelCells",
-        "newHCalExtBarrelCells",
-        hcalEndcapCellsName,
-        hcalFwdCellsName,
-    ],
-    OutputLevel=DEBUG,
-)
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -139,7 +136,7 @@ audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
 
 ApplicationMgr(
-    TopAlg=[podioinput, createClusters, correct],
+    TopAlg=[createClusters, correct],
     EvtSel="NONE",
     EvtMax=num_events,
     ExtSvc=[podioevent, geoservice],

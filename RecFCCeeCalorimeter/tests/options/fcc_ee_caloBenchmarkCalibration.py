@@ -4,7 +4,8 @@ from GaudiKernel.SystemOfUnits import GeV
 from Gaudi.Configuration import INFO, WARNING
 
 # Application manager
-from Configurables import ApplicationMgr
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr
 
 ApplicationMgr().EvtSel = "NONE"
 ApplicationMgr().EvtMax = 2
@@ -12,9 +13,7 @@ ApplicationMgr().OutputLevel = INFO
 
 
 # Data service
-from Configurables import k4DataSvc
-
-DATASERVICE = k4DataSvc("EventDataSvc")
+DATASERVICE = EventDataSvc("EventDataSvc")
 ApplicationMgr().ExtSvc += [DATASERVICE]
 
 

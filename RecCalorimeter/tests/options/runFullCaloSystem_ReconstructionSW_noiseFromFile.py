@@ -30,26 +30,17 @@ hcalEndcapReadoutName = "HECPhiEtaReco"
 hcalFwdReadoutName = "HFwdPhiEta"
 
 from Gaudi.Configuration import *
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
 num_events = 3
 ApplicationMgr().EvtSel = "NONE"
 ApplicationMgr().EvtMax = num_events
 ApplicationMgr().OutputLevel = DEBUG
 
-from Configurables import k4DataSvc
-
-podioevent = k4DataSvc("EventDataSvc")
-# produced with Reconstruction/RecCalorimeter/tests/options/runFullCaloSystem_SimAndDigitisation.py
-podioevent.input = "http://fccsw.web.cern.ch/fccsw/testsamples/output_fullCalo_SimAndDigi_e50GeV_3events.root"
-ApplicationMgr().ExtSvc += [podioevent]
-
-
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
-
-podioinput = PodioInput()
-podioinput.collections = [
+iosvc = IOSvc()
+iosvc.Input = "http://fccsw.web.cern.ch/fccsw/testsamples/output_fullCalo_SimAndDigi_e50GeV_3events.root"
+iosvc.CollectionNames = [
     ecalBarrelCellsName,
     ecalEndcapCellsName,
     ecalFwdCellsName,
@@ -58,7 +49,9 @@ podioinput.collections = [
     hcalEndcapCellsName,
     hcalFwdCellsName,
 ]
-ApplicationMgr().TopAlg += [podioinput]
+
+podioevent = EventDataSvc("EventDataSvc")
+ApplicationMgr().ExtSvc += [podioevent]
 
 from Configurables import GeoSvc
 
@@ -323,11 +316,8 @@ createClusters.clusterCells.Path = "CaloClusterCells"
 createClusters.AuditExecute = True
 ApplicationMgr().TopAlg += [createClusters]
 
-out = PodioOutput("out")
-out.filename = "output_runFullCaloSystem_ReconstructionSW_noiseFromFile.root"
-out.outputCommands = ["keep *"]
-out.AuditExecute = True
-ApplicationMgr().TopAlg += [out]
+iosvc.Output = "output_runFullCaloSystem_ReconstructionSW_noiseFromFile.root"
+iosvc.outputCommands = ["keep *"]
 
 
 # ApplicationMgr(

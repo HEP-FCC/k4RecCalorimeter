@@ -1,17 +1,13 @@
 from Gaudi.Configuration import *
 
-from Configurables import ApplicationMgr, k4DataSvc, PodioOutput
+from Configurables import EventDataSvc
+from k4FWCore import ApplicationMgr, IOSvc
 
-podioevent = k4DataSvc(
-    "EventDataSvc", input="output_hcalSim_e50GeV_eta036_10events.root"
-)
+iosvc = IOSvc()
+iosvc.Input = "output_hcalSim_e50GeV_eta036_10events.root"
+iosvc.CollectionNames = ["HCalHits", "ExtHCalHits"]
 
-# reads HepMC text file and write the HepMC::GenEvent to the data service
-from Configurables import PodioInput
-
-podioinput = PodioInput(
-    "PodioReader", collections=["HCalHits", "ExtHCalHits"], OutputLevel=DEBUG
-)
+podioevent = EventDataSvc("EventDataSvc")
 
 from Configurables import GeoSvc
 
@@ -134,10 +130,8 @@ createHcalExtBarrelCells = CreateCaloCells(
     cells="ExtHCalCells",
 )
 
-out = PodioOutput(
-    "out", filename="output_HCalCells_digitisation_noNoise.root", OutputLevel=DEBUG
-)
-out.outputCommands = ["keep *"]
+iosvc.Output = "output_HCalCells_digitisation_noNoise.root"
+iosvc.outputCommands = ["keep *"]
 
 # CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -145,13 +139,10 @@ from Configurables import AuditorSvc, ChronoAuditor
 chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
-podioinput.AuditExecute = True
 createHcalBarrelCells.AuditExecute = True
-out.AuditExecute = True
 
 ApplicationMgr(
     TopAlg=[
-        podioinput,
         resegmentHcalBarrel,
         resegmentHcalExtBarrel,
         rewriteHCal,
@@ -160,7 +151,6 @@ ApplicationMgr(
         createHcalExtBarrelTiles,
         createHcalBarrelCells,
         createHcalExtBarrelCells,
-        out,
     ],
     EvtSel="NONE",
     EvtMax=1,
