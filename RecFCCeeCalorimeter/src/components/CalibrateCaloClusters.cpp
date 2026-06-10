@@ -24,9 +24,6 @@
 #include "OnnxruntimeUtilities.h"
 
 namespace {
-constexpr double kDeltaThetaCalo = 0.009817477 / 4.0;
-constexpr double kDeltaPhiCalo = 2.0 * 3.14159265358979323846 / 1536.0;
-
 float pythonModuloOne(double value) {
   return static_cast<float>(value - std::floor(value));
 }
@@ -410,8 +407,8 @@ void CalibrateCaloClusters::calcEnergiesInLayers(edm4hep::Cluster cluster, std::
       phi = std::atan2(position.y, position.x);
     }
     energiesInLayers[m_numLayersTotal] = static_cast<float>(theta);
-    energiesInLayers[m_numLayersTotal + 1] = pythonModuloOne(theta / kDeltaThetaCalo);
-    energiesInLayers[m_numLayersTotal + 2] = pythonModuloOne(phi / kDeltaPhiCalo);
+    energiesInLayers[m_numLayersTotal + 1] = pythonModuloOne(theta / m_deltaThetaCalo.value());
+    energiesInLayers[m_numLayersTotal + 2] = pythonModuloOne(phi / m_deltaPhiCalo.value());
   }
 
   // add as last input the total raw cluster energy

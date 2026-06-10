@@ -119,6 +119,13 @@ private:
   // Gaudi::Property<std::vector<std::string>> m_calibrationFiles {
   //    this, "calibrationFiles", {}, "Files with the calibration parameters"};
   Gaudi::Property<std::string> m_calibrationFile{this, "calibrationFile", {}, "File with the calibration parameters"};
+  /// Theta granularity used to calculate the fractional theta feature for extended calibration models
+  Gaudi::Property<double> m_deltaThetaCalo{
+      this, "deltaThetaCalo", 0.009817477 / 4.0, "Theta granularity used for the fractional theta input feature"};
+  /// Phi granularity used to calculate the fractional phi feature for extended calibration models
+  Gaudi::Property<double> m_deltaPhiCalo{
+      this, "deltaPhiCalo", 2.0 * 3.14159265358979323846 / 1536.0,
+      "Phi granularity used for the fractional phi input feature"};
 
   // total number of layers summed over the various subsystems
   // should be equal to the number of input features of the MVA
