@@ -115,7 +115,7 @@ StatusCode AugmentClustersFCCee::initialize() {
       nModules.push_back(0); // will be ignored
       for (size_t iLayer = 0; iLayer < m_numLayers[k]; ++iLayer) {
         nMergedThetaCells.push_back(0); // will be ignored
-        nMergedModules.push_back(0); // will be ignored
+        nMergedModules.push_back(0);    // will be ignored
       }
     }
   }
@@ -410,7 +410,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
           int theta_id = decoder->get(cID, thetaField);
           int module_id = decoder->get(cID, moduleField);
           if (isResetModuleID && module_id > nModules_EMB / 2) {
-              module_id -= nModules[k]; // transition near 1535..0, reset the module ID
+            module_id -= nModules[k]; // transition near 1535..0, reset the module ID
           }
 
           // E, theta_id, and module_id of cells in layer
