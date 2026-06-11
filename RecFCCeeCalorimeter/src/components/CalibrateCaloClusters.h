@@ -74,13 +74,15 @@ private:
                                edm4hep::ClusterCollection* outClusters) const;
 
   /**
-   * Get sum of energy from cells in each layer.
-   * This energy is not calibrated.
+   * Fill the input features used by the MVA energy calibration.
+   *
+   * The features contain the energy fraction in each layer, optional position
+   * features, and the raw cluster energy.
    *
    * @param[in]  cluster          Pointer to cluster of interest.
-   * @param[out] energiesInLayer  Reference to vector that will contain the energies
+   * @param[out] calibrationInputFeatures  Reference to vector that will contain the calibration input features
    */
-  void calcEnergiesInLayers(edm4hep::Cluster cluster, std::vector<float>& energiesInLayer) const;
+  void fillCalibrationInputFeatures(edm4hep::Cluster cluster, std::vector<float>& calibrationInputFeatures) const;
 
   /// Handle for input calorimeter clusters collection
   mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_inClusters{"inClusters", Gaudi::DataHandle::Reader, this};
@@ -120,12 +122,11 @@ private:
   //    this, "calibrationFiles", {}, "Files with the calibration parameters"};
   Gaudi::Property<std::string> m_calibrationFile{this, "calibrationFile", {}, "File with the calibration parameters"};
   /// Theta granularity used to calculate the fractional theta feature for extended calibration models
-  Gaudi::Property<double> m_deltaThetaCalo{
-      this, "deltaThetaCalo", 0.009817477 / 4.0, "Theta granularity used for the fractional theta input feature"};
+  Gaudi::Property<double> m_deltaThetaCalo{this, "deltaThetaCalo", 0.009817477 / 4.0,
+                                           "Theta granularity used for the fractional theta input feature"};
   /// Phi granularity used to calculate the fractional phi feature for extended calibration models
-  Gaudi::Property<double> m_deltaPhiCalo{
-      this, "deltaPhiCalo", 2.0 * 3.14159265358979323846 / 1536.0,
-      "Phi granularity used for the fractional phi input feature"};
+  Gaudi::Property<double> m_deltaPhiCalo{this, "deltaPhiCalo", 2.0 * 3.14159265358979323846 / 1536.0,
+                                         "Phi granularity used for the fractional phi input feature"};
 
   // total number of layers summed over the various subsystems
   // should be equal to the number of input features of the MVA
