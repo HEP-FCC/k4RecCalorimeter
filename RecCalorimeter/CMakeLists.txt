@@ -49,7 +49,7 @@ set_tests_properties(FCC_createTruthJets PROPERTIES FIXTURES_REQUIRED ALLEGRO_si
 
 add_test(NAME simulateSiPM
          COMMAND sh ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/scripts/testSiPM.sh
-         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(simulateSiPM)
 
