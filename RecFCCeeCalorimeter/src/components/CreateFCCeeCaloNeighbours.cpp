@@ -593,7 +593,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                     }
                   }
                   (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
-                  if (ecalEndcapTurbineSegmentation->rho(endcapCellId) +
+                  if (ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId) +
                           ecalEndcapTurbineSegmentation->gridSizeRho(iWheel) / 2. <
                       m_eCalBarrelMinRho)
                     continue;
@@ -676,7 +676,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 decoder->set(cellId, "rho", irho);
                 decoder->set(cellId, "z", iz);
 
-                double endcapRho = ecalEndcapTurbineSegmentation->rho(cellId);
+                double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(cellId);
                 if (iWheel == 2 && iz == 0 && (endcapRho > m_eCalBarrelMinRho)) {
                   nextToEMBarrel = true;
                 }
@@ -1900,8 +1900,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
 
             double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(),
                                             ecalEndcapTurbineSegmentation->position(endcapCellId).x());
-            double endcapRho = ecalEndcapTurbineSegmentation->rho(endcapCellId);
-            double endcapZ = ecalEndcapTurbineSegmentation->z(endcapCellId);
+            double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId);
+            double endcapZ = ecalEndcapTurbineSegmentation->getGlobalZ(endcapCellId);
             double endcapTheta = TMath::ATan2(endcapRho, endcapZ);
 
             if (iSide == -1) {

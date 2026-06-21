@@ -86,7 +86,7 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const CellID
     outSeg.SetZ(-outSeg.z());
     outSeg.SetY(-outSeg.y());
   }
-  
+
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
           << outSeg.z() / dd4hep::mm << "\n"
           << endmsg;
