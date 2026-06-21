@@ -13,19 +13,18 @@
 // ROOT
 #include "TFile.h"
 #include "TH2F.h"
-#include "TMath.h"
 #include "TSystem.h"
 
 DECLARE_COMPONENT(NoiseCaloCellsTurbineEndcapFromFileTool)
 
 StatusCode NoiseCaloCellsTurbineEndcapFromFileTool::initialize() {
-  K4RECCALORIMETER_CHECK(m_geoSvc.retrieve());
-  K4RECCALORIMETER_CHECK(m_cellPositionsTool.retrieve());
-  K4RECCALORIMETER_CHECK(m_randSvc = service<IRndmGenSvc>("RndmGenSvc", false));
-  K4RECCALORIMETER_CHECK(m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)));
+  K4RECCALORIMETER_CHECK( m_geoSvc.retrieve() );
+  K4RECCALORIMETER_CHECK( m_cellPositionsTool.retrieve() );
+  K4RECCALORIMETER_CHECK( m_randSvc = service<IRndmGenSvc> ("RndmGenSvc", false) );
+  K4RECCALORIMETER_CHECK( m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)) );
 
   // open and check file, read the histograms with noise constants
-  K4RECCALORIMETER_CHECK(initNoiseFromFile());
+  K4RECCALORIMETER_CHECK( initNoiseFromFile() );
 
   // Get decoder and index of layer field
   // put in try... block
@@ -34,7 +33,7 @@ StatusCode NoiseCaloCellsTurbineEndcapFromFileTool::initialize() {
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
-  K4RECCALORIMETER_CHECK(AlgTool::initialize());
+  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
 
   return StatusCode::SUCCESS;
 }
@@ -47,12 +46,11 @@ void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoiseT(C& aCells) con
   }
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(
-    std::vector<std::pair<uint64_t, double>>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
@@ -61,20 +59,20 @@ void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoiseT(C& aCells) const 
   // Erase a cell if it has energy below a threshold from the vector
   if (m_useAbsInFilter) {
     std::erase_if(aCells, [&](auto& p) {
-      return std::abs(p.second - getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first);
+        return std::abs(p.second - getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first);
     });
   } else {
     std::erase_if(aCells, [&](auto& p) {
-      return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first);
+        return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first);
     });
   }
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
   filterCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   filterCellNoiseT(aCells);
 }
 
@@ -147,7 +145,7 @@ StatusCode NoiseCaloCellsTurbineEndcapFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
+double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseRMSPerCell(CellID aCellId) const {
 
   double elecNoiseRMS = 0.;
   double pileupNoiseRMS = 0.;
@@ -188,7 +186,7 @@ double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseRMSPerCell(uint64_t aCel
   return totalNoiseRMS;
 }
 
-double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
+double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseOffsetPerCell(CellID aCellId) const {
 
   if (!m_setNoiseOffset)
     return 0.;
@@ -232,6 +230,6 @@ double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseOffsetPerCell(uint64_t a
   return totalNoiseOffset;
 }
 
-std::pair<double, double> NoiseCaloCellsTurbineEndcapFromFileTool::getNoisePerCell(uint64_t aCellId) const {
+std::pair<double, double> NoiseCaloCellsTurbineEndcapFromFileTool::getNoisePerCell(CellID aCellId) const {
   return std::make_pair(getNoiseRMSPerCell(aCellId), getNoiseOffsetPerCell(aCellId));
 }
