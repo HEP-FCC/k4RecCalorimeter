@@ -13,10 +13,8 @@ unsigned NoiseCaloCellsFromFileTurbineEndcapTool::getBin(CellID aCellId) const {
   unsigned ibin = 0;
   if (iRho > NbinsRho || iZ > NbinsZ) {
     error() << "bins outside range of the histograms! Bins: " << iRho << "," << iZ
-            << " , Nbins in histogram: " << NbinsRho << "," << NbinsZ
-            << endmsg;
-  }
-  else {
+            << " , Nbins in histogram: " << NbinsRho << "," << NbinsZ << endmsg;
+  } else {
     ibin = m_histoElecNoiseRMS.at(iHist)->GetBin(iZ, iRho);
   }
 

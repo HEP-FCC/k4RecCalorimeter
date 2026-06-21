@@ -19,7 +19,6 @@
 #include "TH1F.h"
 class TFile;
 
-
 /** @class NoiseCaloCellsFromFileBaseTool
  *
  *  Common base class for calorimeter noise-from-file tools
@@ -34,7 +33,8 @@ class TFile;
  *
  */
 
-class NoiseCaloCellsFromFileBaseTool : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool,  k4::recCalo::INoiseConstTool> {
+class NoiseCaloCellsFromFileBaseTool
+    : public extends<AlgTool, k4::recCalo::INoiseCaloCellsTool, k4::recCalo::INoiseConstTool> {
 public:
   using CellID = k4::recCalo::INoiseCaloCellsTool::CellID;
 
@@ -50,7 +50,7 @@ public:
   /** @brief Create random CaloHits (gaussian distribution) for the vector of cells (aCells).
    * Vector of cells must contain all cells in the calorimeter with their cellIDs.
    */
-  virtual void addRandomCellNoise(std::vector<std::pair<CellID, double> >& aCells) const override final;
+  virtual void addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const override final;
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
@@ -58,7 +58,7 @@ public:
 
   /** @brief Remove cells with energy below threshold*sigma from the vector of cells
    */
-  virtual void filterCellNoise(std::vector<std::pair<CellID, double> >& aCells) const override final;
+  virtual void filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const override final;
 
   /// Open file and read noise histograms in the memory
   StatusCode initNoiseFromFile();
@@ -71,7 +71,7 @@ public:
 protected:
   /// Handle for tool to get cell positions - available also to derived classes
   ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "CellPositionsDummyTool",
-      "Handle for tool to retrieve cell positions"};
+                                                                  "Handle for tool to retrieve cell positions"};
   // Decoder for readout
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   /// index of layer or wheel
@@ -87,9 +87,9 @@ protected:
 
 private:
   template <typename C>
-  void addRandomCellNoiseT (C& aCells) const;
+  void addRandomCellNoiseT(C& aCells) const;
   template <typename C>
-  void filterCellNoiseT (C& aCells) const;
+  void filterCellNoiseT(C& aCells) const;
 
   /// Add pileup contribution to the electronics noise? (only if read from file)
   Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
@@ -138,7 +138,7 @@ private:
   Rndm::Numbers m_gauss;
 
   /// Pointer to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc { this, "GeoSvc", "GeoSvc" };
+  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
 
   /// get index of histogram for given cellID
   unsigned getIndexHistogram(CellID aCellId) const;

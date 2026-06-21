@@ -18,13 +18,13 @@
 DECLARE_COMPONENT(NoiseCaloCellsTurbineEndcapFromFileTool)
 
 StatusCode NoiseCaloCellsTurbineEndcapFromFileTool::initialize() {
-  K4RECCALORIMETER_CHECK( m_geoSvc.retrieve() );
-  K4RECCALORIMETER_CHECK( m_cellPositionsTool.retrieve() );
-  K4RECCALORIMETER_CHECK( m_randSvc = service<IRndmGenSvc> ("RndmGenSvc", false) );
-  K4RECCALORIMETER_CHECK( m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)) );
+  K4RECCALORIMETER_CHECK(m_geoSvc.retrieve());
+  K4RECCALORIMETER_CHECK(m_cellPositionsTool.retrieve());
+  K4RECCALORIMETER_CHECK(m_randSvc = service<IRndmGenSvc>("RndmGenSvc", false));
+  K4RECCALORIMETER_CHECK(m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)));
 
   // open and check file, read the histograms with noise constants
-  K4RECCALORIMETER_CHECK( initNoiseFromFile() );
+  K4RECCALORIMETER_CHECK(initNoiseFromFile());
 
   // Get decoder and index of layer field
   // put in try... block
@@ -33,7 +33,7 @@ StatusCode NoiseCaloCellsTurbineEndcapFromFileTool::initialize() {
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
 
   return StatusCode::SUCCESS;
 }
@@ -59,11 +59,11 @@ void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoiseT(C& aCells) const 
   // Erase a cell if it has energy below a threshold from the vector
   if (m_useAbsInFilter) {
     std::erase_if(aCells, [&](auto& p) {
-        return std::abs(p.second - getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first);
+      return std::abs(p.second - getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first);
     });
   } else {
     std::erase_if(aCells, [&](auto& p) {
-        return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first);
+      return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first);
     });
   }
 }

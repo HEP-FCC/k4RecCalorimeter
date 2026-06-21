@@ -15,13 +15,13 @@
 #include "TSystem.h"
 
 StatusCode NoiseCaloCellsFromFileBaseTool::initialize() {
-  K4RECCALORIMETER_CHECK( m_geoSvc.retrieve() );
-  K4RECCALORIMETER_CHECK( m_cellPositionsTool.retrieve() );
-  K4RECCALORIMETER_CHECK( m_randSvc = service<IRndmGenSvc> ("RndmGenSvc", false) );
-  K4RECCALORIMETER_CHECK( m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)) );
+  K4RECCALORIMETER_CHECK(m_geoSvc.retrieve());
+  K4RECCALORIMETER_CHECK(m_cellPositionsTool.retrieve());
+  K4RECCALORIMETER_CHECK(m_randSvc = service<IRndmGenSvc>("RndmGenSvc", false));
+  K4RECCALORIMETER_CHECK(m_gauss.initialize(m_randSvc, Rndm::Gauss(0., 1.)));
 
   // open and check file, read the histograms with noise constants
-  K4RECCALORIMETER_CHECK( initNoiseFromFile() );
+  K4RECCALORIMETER_CHECK(initNoiseFromFile());
 
   // Get decoder and get index of layer/wheel field .. should put in try catch block
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
@@ -29,7 +29,7 @@ StatusCode NoiseCaloCellsFromFileBaseTool::initialize() {
 
   debug() << "Filter noise threshold: " << m_filterThreshold << "*sigma" << endmsg;
 
-  K4RECCALORIMETER_CHECK( AlgTool::initialize() );
+  K4RECCALORIMETER_CHECK(AlgTool::initialize());
 
   return StatusCode::SUCCESS;
 }
@@ -46,7 +46,7 @@ void NoiseCaloCellsFromFileBaseTool::addRandomCellNoise(std::unordered_map<CellI
   addRandomCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsFromFileBaseTool::addRandomCellNoise(std::vector<std::pair<CellID, double> >& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
@@ -54,21 +54,22 @@ template <typename C>
 void NoiseCaloCellsFromFileBaseTool::filterCellNoiseT(C& aCells) const {
   // Erase a cell if it has energy below a threshold from the vector
   if (m_useAbsInFilter) {
-    std::erase_if(aCells,
-                  [&](auto& p) { return std::abs(p.second-getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first); });
-  }
-  else {
-    std::erase_if(aCells,
-                  [&](auto& p) { return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first); });
+    std::erase_if(aCells, [&](auto& p) {
+      return std::abs(p.second - getNoiseOffsetPerCell(p.first)) < m_filterThreshold * getNoiseRMSPerCell(p.first);
+    });
+  } else {
+    std::erase_if(aCells, [&](auto& p) {
+      return p.second < getNoiseOffsetPerCell(p.first) + m_filterThreshold * getNoiseRMSPerCell(p.first);
+    });
   }
 }
 
 void NoiseCaloCellsFromFileBaseTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
-  filterCellNoiseT (aCells);
+  filterCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsFromFileBaseTool::filterCellNoise(std::vector<std::pair<CellID, double> >& aCells) const {
-  filterCellNoiseT (aCells);
+void NoiseCaloCellsFromFileBaseTool::filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
+  filterCellNoiseT(aCells);
 }
 
 StatusCode NoiseCaloCellsFromFileBaseTool::readHistograms(TFile* noiseFile) {
@@ -110,8 +111,7 @@ StatusCode NoiseCaloCellsFromFileBaseTool::readHistograms(TFile* noiseFile) {
       if (m_setNoiseOffset) {
         pileupNoiseOffsetLayerHistoName = m_pileupNoiseOffsetHistoName + std::to_string(i + 1);
         debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
-        m_histoPileupNoiseOffset.push_back(
-            dynamic_cast<TH1*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
+        m_histoPileupNoiseOffset.push_back(dynamic_cast<TH1*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
         if (m_histoPileupNoiseOffset.at(i)->GetNbinsX() < 1) {
           error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
                   << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
@@ -200,9 +200,9 @@ double NoiseCaloCellsFromFileBaseTool::getNoiseRMSPerCell(CellID aCellId) const 
         pileupNoiseRMS = m_histoPileupNoiseRMS.at(indexHistogram)->GetBinContent(ibin);
       }
     } else {
-      error()
-          << "Index of histogram is larger than the number of noise histograms that are available !!!! Using the last one for all histograms outside the range."
-          << endmsg;
+      error() << "Index of histogram is larger than the number of noise histograms that are available !!!! Using the "
+                 "last one for all histograms outside the range."
+              << endmsg;
     }
   } else {
     error() << "No histograms with noise constants!!!!! " << endmsg;
@@ -217,8 +217,7 @@ double NoiseCaloCellsFromFileBaseTool::getNoiseRMSPerCell(CellID aCellId) const 
   }
 
   if (totalNoiseRMS < 1e-6) {
-      warning() << "Zero noise RMS: cell ID " << aCellId
-              << endmsg;
+    warning() << "Zero noise RMS: cell ID " << aCellId << endmsg;
   }
 
   return totalNoiseRMS;
@@ -244,9 +243,9 @@ double NoiseCaloCellsFromFileBaseTool::getNoiseOffsetPerCell(CellID aCellId) con
         pileupNoiseOffset = m_histoPileupNoiseOffset.at(indexHistogram)->GetBinContent(ibin);
       }
     } else {
-      error()
-          << "Index of histogram is larger than the number of noise histograms that are available !!!! Using the last one for all histograms outside the range."
-          << endmsg;
+      error() << "Index of histogram is larger than the number of noise histograms that are available !!!! Using the "
+                 "last one for all histograms outside the range."
+              << endmsg;
     }
   } else {
     error() << "No histograms with noise offset!!!!! " << endmsg;
@@ -259,10 +258,6 @@ double NoiseCaloCellsFromFileBaseTool::getNoiseOffsetPerCell(CellID aCellId) con
   return totalNoiseOffset;
 }
 
-
-std::pair<double, double>
-NoiseCaloCellsFromFileBaseTool::getNoisePerCell(CellID aCellId) const
-{
-  return std::make_pair (getNoiseRMSPerCell(aCellId),
-                         getNoiseOffsetPerCell(aCellId));
+std::pair<double, double> NoiseCaloCellsFromFileBaseTool::getNoisePerCell(CellID aCellId) const {
+  return std::make_pair(getNoiseRMSPerCell(aCellId), getNoiseOffsetPerCell(aCellId));
 }
