@@ -681,8 +681,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                   nextToEMBarrel = true;
                 }
 
-                double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(cellId).y(),
-                                                ecalEndcapTurbineSegmentation->position(cellId).x());
+                double endcapPhi = ecalEndcapTurbineSegmentation->getGlobalPhi(cellId);
 
                 unsigned iLayerZ = iz / (numCellsZ / numCellsZCalib);
                 unsigned iLayerRho = irho / (numCellsRho / numCellsRhoCalib);
@@ -1898,9 +1897,8 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
             (*endcapDecoder)[m_activeFieldNamesSegmented[iSys]].set(
                 endcapCellId, ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));
 
-            double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(),
-                                            ecalEndcapTurbineSegmentation->position(endcapCellId).x());
-            double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId);
+            double endcapPhi = ecalEndcapTurbineSegmentation->getGlobalPhi(endcapCellId);
+	    double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId);
             double endcapZ = ecalEndcapTurbineSegmentation->getGlobalZ(endcapCellId);
             double endcapTheta = TMath::ATan2(endcapRho, endcapZ);
 
