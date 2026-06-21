@@ -228,6 +228,7 @@ CreatePositionedCaloCells::operator()(const edm4hep::SimCalorimeterHitCollection
       auto cached_pos = m_positions_cache.find(cellid);
       if (cached_pos == m_positions_cache.end()) {
         // retrieve position from tool
+	debug() << "Calling xyzPosition" << endmsg;
         dd4hep::Position posCell = m_cellPositionsTool->xyzPosition(cellid);
         edm4hep::Vector3f edmPos;
         edmPos.x = posCell.x() / dd4hep::mm;
@@ -243,7 +244,7 @@ CreatePositionedCaloCells::operator()(const edm4hep::SimCalorimeterHitCollection
       int layer = m_decoder->get(cellid, "layer");
       newCell.setType(m_calotype + 10 * m_caloid + 1000 * m_layout + 10000 * layer);
 
-      debug() << "Cell energy (GeV) : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID() << "\tcellType "
+      debug() << "Cell energy (GeV) KAZOWIE : " << newCell.getEnergy() << "\tcellID " << newCell.getCellID() << "\tcellType "
               << newCell.getType() << endmsg;
       debug() << "Position of cell (mm) : \t" << newCell.getPosition().x << "\t" << newCell.getPosition().y << "\t"
               << newCell.getPosition().z << endmsg;
