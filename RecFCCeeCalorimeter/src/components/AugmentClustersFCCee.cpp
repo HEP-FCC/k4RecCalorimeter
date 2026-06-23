@@ -111,8 +111,12 @@ StatusCode AugmentClustersFCCee::initialize() {
         nMergedModules.push_back(1);
       }
     } else {
-      error() << "Segmentation type not handled, aborting..." << endmsg;
-      return StatusCode::FAILURE;
+      // for other segmentations we do not use module and merged theta cell/module information
+      nModules.push_back(0); // will be ignored
+      for (size_t iLayer = 0; iLayer < m_numLayers[k]; ++iLayer) {
+        nMergedThetaCells.push_back(0); // will be ignored
+        nMergedModules.push_back(0);    // will be ignored
+      }
     }
   }
 
@@ -222,6 +226,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
     double phiMax = -9999.;
     int module_id_Min = 9999;
     int module_id_Max = -9999;
+    int nModules_EMB = -9999;
 
     // loop over each system/readout
     int startPositionToFill = 0;
@@ -229,6 +234,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
       if (k > 0)
         startPositionToFill += m_numLayers[k - 1];
       int systemID = m_systemIDs[k];
+      if (systemID == systemID_EMB)
+        nModules_EMB = nModules[k];
       std::string layerField = m_layerFieldNames[k];
       std::string moduleField = m_moduleFieldNames[k];
       std::string readoutName = m_readoutNames[k];
@@ -243,9 +250,8 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (sysId != systemID)
           continue;
 
-        // retrieve layer and module ID
+        // retrieve layer
         uint layer = decoder->get(cID, layerField);
-        int module_id = decoder->get(cID, moduleField);
 
         // retrieve cell energy, update sum of cell energies per layer, total energy, and max cell energy
         double eCell = cell->getEnergy();
@@ -254,17 +260,22 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (maxCellEnergyInLayer[layer + startPositionToFill] < eCell)
           maxCellEnergyInLayer[layer + startPositionToFill] = eCell;
 
-        // compute phi and module of cell to determine min/max phi and module ID of cluster
+        // compute phi of cell to determine min/max phi of cluster
         TVector3 v = TVector3(cell->getPosition().x, cell->getPosition().y, cell->getPosition().z);
         double phi = v.Phi();
         if (phi < phiMin)
           phiMin = phi;
         if (phi > phiMax)
           phiMax = phi;
-        if (module_id > module_id_Max)
-          module_id_Max = module_id;
-        if (module_id < module_id_Min)
-          module_id_Min = module_id;
+
+        // for EMB, compute module of cell to determine min/max module ID of cluster
+        if (systemID == systemID_EMB) {
+          int module_id = decoder->get(cID, moduleField);
+          if (module_id > module_id_Max)
+            module_id_Max = module_id;
+          if (module_id < module_id_Min)
+            module_id_Min = module_id;
+        }
 
         // add cell 4-momentum to cluster 4-momentum
         TVector3 pCell = v * (eCell / v.Mag());
@@ -285,7 +296,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
     bool isResetModuleID = false;
     // near the 1535..0 transition, reset module ID
-    if (module_id_Max - module_id_Min > nModules[0] * .9)
+    if (module_id_Max - module_id_Min > nModules_EMB * .9)
       isResetModuleID = true;
 
     // calculate the theta positions with log(E) weighting in each layer
@@ -326,6 +337,7 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
     // theta/module width using all cells
     std::vector<double> width_theta(numLayersTotal, 0.);
     std::vector<double> width_module(numLayersTotal, 0.);
+
     // theta width using only cells within deltaThetaBin = +-1, +-2, +-3, +-4
     std::vector<double> width_theta_3Bin(numLayersTotal, 0.);
     std::vector<double> width_theta_5Bin(numLayersTotal, 0.);
@@ -370,8 +382,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (sysId != systemID)
           continue;
         uint layer = decoder->get(cID, layerField);
-        int theta_id = decoder->get(cID, thetaField);
-        int module_id = decoder->get(cID, moduleField);
 
         double eCell = cell->getEnergy();
         double weightLog =
@@ -386,10 +396,6 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
         if (isClusterPhiNearPi && phi < 0.) {
           phi += TMath::TwoPi();
         }
-        if (systemID == systemID_EMB && isResetModuleID && module_id > nModules[k] / 2) {
-          module_id -= nModules[k]; // transition near 1535..0, reset the module ID
-        }
-
         if (m_thetaRecalcLayerWeights[k][layer] < 0)
           sumThetaLayer[layer + startPositionToFill] += (eCell * theta);
         else
@@ -399,6 +405,14 @@ StatusCode AugmentClustersFCCee::execute([[maybe_unused]] const EventContext& ev
 
         // do pi0/photon shape var only for EMB
         if (m_do_photon_shapeVar && systemID == systemID_EMB) {
+
+          // get theta, module ID
+          int theta_id = decoder->get(cID, thetaField);
+          int module_id = decoder->get(cID, moduleField);
+          if (isResetModuleID && module_id > nModules_EMB / 2) {
+            module_id -= nModules[k]; // transition near 1535..0, reset the module ID
+          }
+
           // E, theta_id, and module_id of cells in layer
           vec_E_cell_layer[layer + startPositionToFill].push_back(eCell);
           vec_theta_cell_layer[layer + startPositionToFill].push_back(theta_id);
