@@ -228,7 +228,6 @@ CreatePositionedCaloCells::operator()(const edm4hep::SimCalorimeterHitCollection
       auto cached_pos = m_positions_cache.find(cellid);
       if (cached_pos == m_positions_cache.end()) {
         // retrieve position from tool
-	debug() << "Calling xyzPosition" << endmsg;
         dd4hep::Position posCell = m_cellPositionsTool->xyzPosition(cellid);
         edm4hep::Vector3f edmPos;
         edmPos.x = posCell.x() / dd4hep::mm;
