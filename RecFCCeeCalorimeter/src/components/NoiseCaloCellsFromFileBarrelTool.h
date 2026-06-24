@@ -21,7 +21,7 @@ public:
 
 private:
   /// get bin in histogram for given cellID
-  unsigned getBin(CellID aCellId) const override final;
+  unsigned getBin(k4::recCalo::INoiseCaloCellsTool::CellID aCellId) const override final;
 };
 
 #endif /* RECFCCEECALORIMETER_NOISECALOCELLFROMFILEBARRELTOOL_H */
