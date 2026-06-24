@@ -27,10 +27,10 @@ if ! test -f ./elecNoise_ecalBarrelFCCee_theta.root; then  # assumes that if the
 fi
 
 # run the DIGI step to add noise
-# debug
-nm -C libRecFCCeeCalorimeter.so | grep Barrel
-# end debug
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # workaround to have ctests working
+# debug
+nm -C $SCRIPT_DIR/../../RecFCCeeCalorimeter/libk4RecFCCeeCalorimeterPlugins.so | grep FromFile
+# end debug
 if ! test -f noise_digi.root; then
     k4run $SCRIPT_DIR/test_noise.py --IOSvc.Input=noise_sim.root --IOSvc.Output=noise_digi.root || exit 1
 fi
