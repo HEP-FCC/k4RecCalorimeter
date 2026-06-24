@@ -29,7 +29,7 @@ fi
 # run the DIGI step to add noise
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # workaround to have ctests working
 # debug
-nm -C $SCRIPT_DIR/../../RecFCCeeCalorimeter/libk4RecFCCeeCalorimeterPlugins.so | grep FromFile
+nm -C $SCRIPT_DIR/../../install/lib/libk4RecFCCeeCalorimeterPlugins.so | grep FromFile
 # end debug
 if ! test -f noise_digi.root; then
     k4run $SCRIPT_DIR/test_noise.py --IOSvc.Input=noise_sim.root --IOSvc.Output=noise_digi.root || exit 1
