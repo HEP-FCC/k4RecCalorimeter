@@ -609,4 +609,4 @@ applicationMgr = ApplicationMgr(
 for algo in applicationMgr.TopAlg:
     algo.AuditExecute = True
     # for debug
-    # algo.OutputLevel = DEBUG
+    algo.OutputLevel = DEBUG

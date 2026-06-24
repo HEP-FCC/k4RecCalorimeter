@@ -2,7 +2,7 @@
 
 DECLARE_COMPONENT(NoiseCaloCellsFromFileBarrelTool)
 
-unsigned NoiseCaloCellsFromFileBarrelTool::getBin(k4::recCalo::INoiseCaloCellsTool::CellID aCellId) const {
+unsigned NoiseCaloCellsFromFileBarrelTool::getBin(CellID aCellId) const {
   double cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
 
   // All histograms have same binning, all bins with same size
