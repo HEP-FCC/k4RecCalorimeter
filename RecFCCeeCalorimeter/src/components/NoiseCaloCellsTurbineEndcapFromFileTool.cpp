@@ -13,7 +13,6 @@
 // ROOT
 #include "TFile.h"
 #include "TH2F.h"
-#include "TMath.h"
 #include "TSystem.h"
 
 DECLARE_COMPONENT(NoiseCaloCellsTurbineEndcapFromFileTool)
@@ -47,12 +46,11 @@ void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoiseT(C& aCells) con
   }
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(
-    std::vector<std::pair<uint64_t, double>>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
@@ -70,11 +68,11 @@ void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoiseT(C& aCells) const 
   }
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::unordered_map<uint64_t, double>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
   filterCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::vector<std::pair<uint64_t, double>>& aCells) const {
+void NoiseCaloCellsTurbineEndcapFromFileTool::filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   filterCellNoiseT(aCells);
 }
 
@@ -147,7 +145,7 @@ StatusCode NoiseCaloCellsTurbineEndcapFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseRMSPerCell(uint64_t aCellId) const {
+double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseRMSPerCell(CellID aCellId) const {
 
   double elecNoiseRMS = 0.;
   double pileupNoiseRMS = 0.;
@@ -188,7 +186,7 @@ double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseRMSPerCell(uint64_t aCel
   return totalNoiseRMS;
 }
 
-double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseOffsetPerCell(uint64_t aCellId) const {
+double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseOffsetPerCell(CellID aCellId) const {
 
   if (!m_setNoiseOffset)
     return 0.;
@@ -232,6 +230,6 @@ double NoiseCaloCellsTurbineEndcapFromFileTool::getNoiseOffsetPerCell(uint64_t a
   return totalNoiseOffset;
 }
 
-std::pair<double, double> NoiseCaloCellsTurbineEndcapFromFileTool::getNoisePerCell(uint64_t aCellId) const {
+std::pair<double, double> NoiseCaloCellsTurbineEndcapFromFileTool::getNoisePerCell(CellID aCellId) const {
   return std::make_pair(getNoiseRMSPerCell(aCellId), getNoiseOffsetPerCell(aCellId));
 }

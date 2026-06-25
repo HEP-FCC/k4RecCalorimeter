@@ -18,7 +18,6 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       ROOT::Hist
                       onnxruntime::onnxruntime
                       nlohmann_json::nlohmann_json
-                      RecCaloCommon
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
@@ -28,6 +27,12 @@ install(TARGETS k4RecFCCeeCalorimeterPlugins
 
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
+
+add_test(NAME test_noise
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_noise.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(test_noise)
 
 add_test(NAME ALLEGRO_o1_v03_sim_reco
          COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/ALLEGRO_o1_v03.sh
