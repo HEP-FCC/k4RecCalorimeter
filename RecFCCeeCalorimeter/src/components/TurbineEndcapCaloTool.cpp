@@ -83,11 +83,19 @@ std::unique_ptr<k4::recCalo::ICaloIndexer> TurbineEndcapCaloTool::indexer() cons
     return nullptr;
   }
 
-  using Indexer_t = k4::recCalo::IDMapIndexer<5>; // 5 fields to use for indexing (including ignored ones): side, wheel,
+  using Indexer_t = k4::recCalo::IDMapIndexer<4>; // 5 fields to use for indexing: side & wheel (grouped),
                                                   // rho, z, module
   dd4hep::IDDescriptor idSpec = readout().idSpec();
-  std::vector<Indexer_t::FieldDesc_t> fields{Indexer_t::IDMap_t::makeDesc(*idSpec.field(seg->fieldNameSide())),
-                                             Indexer_t::IDMap_t::makeDesc(*idSpec.field(seg->fieldNameWheel())),
+  // Combine side+wheel together into a single field.
+  const dd4hep::BitFieldElement* bfe_side = idSpec.field("side");
+  const dd4hep::BitFieldElement* bfe_wheel = idSpec.field("wheel");
+  if (bfe_side->offset() + bfe_side->width() != bfe_wheel->offset()) {
+    error() << "side and wheel fields not adjacent" << endmsg;
+    return nullptr;
+  }
+  Indexer_t::FieldDesc_t field_sidewheel(bfe_side->offset(), bfe_side->width() + bfe_wheel->width());
+
+  std::vector<Indexer_t::FieldDesc_t> fields{field_sidewheel,
                                              Indexer_t::IDMap_t::makeDesc(*idSpec.field(seg->fieldNameRho())),
                                              Indexer_t::IDMap_t::makeDesc(*idSpec.field(seg->fieldNameZ())),
                                              Indexer_t::IDMap_t::makeDesc(*idSpec.field(seg->fieldNameModule()))};
