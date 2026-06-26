@@ -3,7 +3,7 @@
  * @file RecFCCeeCalorimeter/src/components/TurbineEndcapCaloTool.h
  * @author Giovanni Marchiori <giovanni.marchiori@cern.ch>
  * @date June, 2026
- * @brief Calorimeter tool for Allegro ECal endcap
+ * @brief Calorimeter tool for ALLEGRO ECal endcap
  */
 
 #ifndef RECFCCEECALORIMETER_TURBINEENDCAPCALOTOOL_H
@@ -13,7 +13,7 @@
 
 /** @class TurbineEndcapCaloTool
  *
- *  Manage IDs for HCal (with row indexing).
+ *  Manage IDs for ALLEGRO ECal turbine endcap
  */
 class TurbineEndcapCaloTool : public CalorimeterToolBase {
 public:

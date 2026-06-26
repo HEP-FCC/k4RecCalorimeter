@@ -2,7 +2,7 @@
  * @file RecFCCeeCalorimeter/src/components/TurbineEndcapCaloTool.cpp
  * @author Giovanni Marchiori <giovanni.marchiori@cern.ch>
  * @date June, 2026
- * @brief Calorimeter tool for Allegro ECal endcap
+ * @brief Calorimeter tool for ALLEGRO ECal endcap
  */
 
 #include "TurbineEndcapCaloTool.h"
@@ -15,7 +15,7 @@ DECLARE_COMPONENT(TurbineEndcapCaloTool)
 /** Fill vector with all existing cells for this geometry.
  */
 StatusCode TurbineEndcapCaloTool::collectCells(std::vector<uint64_t>& cells) const {
-  cells.reserve(1203200);
+
   const auto* seg =
       dynamic_cast<const dd4hep::DDSegmentation::FCCSWEndcapTurbine_k4geo*>(readout().segmentation().segmentation());
   if (!seg) {
@@ -40,8 +40,16 @@ StatusCode TurbineEndcapCaloTool::collectCells(std::vector<uint64_t>& cells) con
   size_t rho_id = decoder.index(seg->fieldNameRho());
   size_t z_id = decoder.index(seg->fieldNameZ());
 
-  int sides[2] = {-1, 1};
-  int nWheels = 3; // TODO: add numWheels method to segmentation class, returning numWheels from dd4hepgeo constants
+  const int nsides = 2;
+  int sides[nsides] = {-1, 1};
+  const int nWheels = 3;
+  // TODO: add numWheels method to segmentation class, returning numWheels from dd4hepgeo constants
+  int ncells = 0;
+  for (int iWheel = 0; iWheel < nWheels; ++iWheel) {
+    ncells += seg->nModules(iWheel) * seg->numCellsRho(iWheel) * seg->numCellsZ(iWheel);
+  }
+  ncells *= nsides;
+  cells.reserve(ncells);
   for (int iside : sides) {
     decoder.set(cID, side_id, iside);
     for (int iWheel = 0; iWheel < nWheels; ++iWheel) {
