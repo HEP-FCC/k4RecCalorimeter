@@ -42,8 +42,7 @@ StatusCode TurbineEndcapCaloTool::collectCells(std::vector<uint64_t>& cells) con
 
   const int nsides = 2;
   int sides[nsides] = {-1, 1};
-  const int nWheels = 3;
-  // TODO: add numWheels method to segmentation class, returning numWheels from dd4hepgeo constants
+  const int nWheels = seg->numWheels();
   int ncells = 0;
   for (int iWheel = 0; iWheel < nWheels; ++iWheel) {
     ncells += seg->nModules(iWheel) * seg->numCellsRho(iWheel) * seg->numCellsZ(iWheel);
