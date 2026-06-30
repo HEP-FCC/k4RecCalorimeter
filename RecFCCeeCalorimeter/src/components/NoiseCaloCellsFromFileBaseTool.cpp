@@ -1,4 +1,4 @@
-#include "NoiseCaloCellsVsThetaFromFileTool.h"
+#include "NoiseCaloCellsFromFileBaseTool.h"
 #include "RecCaloCommon/k4RecCalorimeter_check.h"
 
 // k4geo
@@ -12,13 +12,9 @@
 
 // ROOT
 #include "TFile.h"
-#include "TH1F.h"
-#include "TMath.h"
 #include "TSystem.h"
 
-DECLARE_COMPONENT(NoiseCaloCellsVsThetaFromFileTool)
-
-StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
+StatusCode NoiseCaloCellsFromFileBaseTool::initialize() {
   K4RECCALORIMETER_CHECK(m_geoSvc.retrieve());
   K4RECCALORIMETER_CHECK(m_cellPositionsTool.retrieve());
   K4RECCALORIMETER_CHECK(m_randSvc = service<IRndmGenSvc>("RndmGenSvc", false));
@@ -27,8 +23,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
   // open and check file, read the histograms with noise constants
   K4RECCALORIMETER_CHECK(initNoiseFromFile());
 
-  // Get decoder and index of layer field
-  // put in try... block
+  // Get decoder and get index of layer/wheel field .. should put in try catch block
   m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).idSpec().decoder();
   m_index_activeField = m_decoder->index(m_activeFieldName);
 
@@ -40,23 +35,23 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initialize() {
 }
 
 template <class C>
-void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoiseT(C& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::addRandomCellNoiseT(C& aCells) const {
   for (auto& p : aCells) {
     p.second += getNoiseOffsetPerCell(p.first);
     p.second += (getNoiseRMSPerCell(p.first) * m_gauss.shoot());
   }
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::addRandomCellNoise(std::unordered_map<CellID, double>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::addRandomCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   addRandomCellNoiseT(aCells);
 }
 
 template <typename C>
-void NoiseCaloCellsVsThetaFromFileTool::filterCellNoiseT(C& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::filterCellNoiseT(C& aCells) const {
   // Erase a cell if it has energy below a threshold from the vector
   if (m_useAbsInFilter) {
     std::erase_if(aCells, [&](auto& p) {
@@ -69,15 +64,67 @@ void NoiseCaloCellsVsThetaFromFileTool::filterCellNoiseT(C& aCells) const {
   }
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::filterCellNoise(std::unordered_map<CellID, double>& aCells) const {
   filterCellNoiseT(aCells);
 }
 
-void NoiseCaloCellsVsThetaFromFileTool::filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
+void NoiseCaloCellsFromFileBaseTool::filterCellNoise(std::vector<std::pair<CellID, double>>& aCells) const {
   filterCellNoiseT(aCells);
 }
 
-StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
+StatusCode NoiseCaloCellsFromFileBaseTool::readHistograms(TFile* noiseFile) {
+  std::string elecNoiseRMSLayerHistoName, pileupNoiseRMSLayerHistoName;
+  std::string elecNoiseOffsetLayerHistoName, pileupNoiseOffsetLayerHistoName;
+  debug() << "Retrieving histograms" << endmsg;
+  // Read the histograms with electronics noise and pileup from the file
+  for (unsigned i = 0; i < m_numHistograms; i++) {
+    elecNoiseRMSLayerHistoName = m_elecNoiseRMSHistoName + std::to_string(i + 1);
+    debug() << "Getting histogram with a name " << elecNoiseRMSLayerHistoName << endmsg;
+    m_histoElecNoiseRMS.push_back(dynamic_cast<TH1*>(noiseFile->Get(elecNoiseRMSLayerHistoName.c_str())));
+    if (m_histoElecNoiseRMS.at(i)->GetNbinsX() < 1) {
+      error() << "Histogram  " << elecNoiseRMSLayerHistoName
+              << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
+      return StatusCode::FAILURE;
+    }
+    m_histoElecNoiseRMS.at(i)->SetDirectory(0); // prevent deletion when file is closed
+    if (m_setNoiseOffset) {
+      elecNoiseOffsetLayerHistoName = m_elecNoiseOffsetHistoName + std::to_string(i + 1);
+      debug() << "Getting histogram with a name " << elecNoiseOffsetLayerHistoName << endmsg;
+      m_histoElecNoiseOffset.push_back(dynamic_cast<TH1*>(noiseFile->Get(elecNoiseOffsetLayerHistoName.c_str())));
+      if (m_histoElecNoiseOffset.at(i)->GetNbinsX() < 1) {
+        error() << "Histogram  " << elecNoiseOffsetLayerHistoName
+                << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
+        return StatusCode::FAILURE;
+      }
+      m_histoElecNoiseOffset.at(i)->SetDirectory(0); // prevent deletion when file is closed
+    }
+    if (m_addPileup) {
+      pileupNoiseRMSLayerHistoName = m_pileupNoiseRMSHistoName + std::to_string(i + 1);
+      debug() << "Getting histogram with a name " << pileupNoiseRMSLayerHistoName << endmsg;
+      m_histoPileupNoiseRMS.push_back(dynamic_cast<TH1*>(noiseFile->Get(pileupNoiseRMSLayerHistoName.c_str())));
+      if (m_histoPileupNoiseRMS.at(i)->GetNbinsX() < 1) {
+        error() << "Histogram  " << pileupNoiseRMSLayerHistoName
+                << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
+        return StatusCode::FAILURE;
+      }
+      m_histoPileupNoiseRMS.at(i)->SetDirectory(0); // prevent deletion when file is closed
+      if (m_setNoiseOffset) {
+        pileupNoiseOffsetLayerHistoName = m_pileupNoiseOffsetHistoName + std::to_string(i + 1);
+        debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
+        m_histoPileupNoiseOffset.push_back(dynamic_cast<TH1*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
+        if (m_histoPileupNoiseOffset.at(i)->GetNbinsX() < 1) {
+          error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
+                  << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
+          return StatusCode::FAILURE;
+        }
+        m_histoPileupNoiseOffset.at(i)->SetDirectory(0); // prevent deletion when file is closed
+      }
+    }
+  }
+  return StatusCode::SUCCESS;
+}
+
+StatusCode NoiseCaloCellsFromFileBaseTool::initNoiseFromFile() {
   // Check if file exists
   if (m_noiseFileName.empty()) {
     error() << "Name of the file with the noise values not provided!" << endmsg;
@@ -89,7 +136,7 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
     return StatusCode::FAILURE;
   }
   std::unique_ptr<TFile> noiseFile(TFile::Open(m_noiseFileName.value().c_str(), "READ"));
-  if (noiseFile->IsZombie()) {
+  if (!noiseFile || noiseFile->IsZombie()) {
     error() << "Unable to open the file with the noise values!" << endmsg;
     error() << "File path: " << m_noiseFileName.value() << endmsg;
     return StatusCode::FAILURE;
@@ -97,50 +144,8 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
     info() << "Using the following file with noise values: " << m_noiseFileName.value() << endmsg;
   }
 
-  std::string elecNoiseRMSLayerHistoName, pileupNoiseRMSLayerHistoName;
-  std::string elecNoiseOffsetLayerHistoName, pileupNoiseOffsetLayerHistoName;
-  // Read the histograms with electronics noise and pileup from the file
-  for (unsigned i = 0; i < m_numRadialLayers; i++) {
-    elecNoiseRMSLayerHistoName = m_elecNoiseRMSHistoName + std::to_string(i + 1);
-    debug() << "Getting histogram with a name " << elecNoiseRMSLayerHistoName << endmsg;
-    m_histoElecNoiseRMS.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(elecNoiseRMSLayerHistoName.c_str())));
-    if (m_histoElecNoiseRMS.at(i).GetNbinsX() < 1) {
-      error() << "Histogram  " << elecNoiseRMSLayerHistoName
-              << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
-      return StatusCode::FAILURE;
-    }
-    if (m_setNoiseOffset) {
-      elecNoiseOffsetLayerHistoName = m_elecNoiseOffsetHistoName + std::to_string(i + 1);
-      debug() << "Getting histogram with a name " << elecNoiseOffsetLayerHistoName << endmsg;
-      m_histoElecNoiseOffset.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(elecNoiseOffsetLayerHistoName.c_str())));
-      if (m_histoElecNoiseOffset.at(i).GetNbinsX() < 1) {
-        error() << "Histogram  " << elecNoiseOffsetLayerHistoName
-                << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
-        return StatusCode::FAILURE;
-      }
-    }
-    if (m_addPileup) {
-      pileupNoiseRMSLayerHistoName = m_pileupNoiseRMSHistoName + std::to_string(i + 1);
-      debug() << "Getting histogram with a name " << pileupNoiseRMSLayerHistoName << endmsg;
-      m_histoPileupNoiseRMS.push_back(*dynamic_cast<TH1F*>(noiseFile->Get(pileupNoiseRMSLayerHistoName.c_str())));
-      if (m_histoPileupNoiseRMS.at(i).GetNbinsX() < 1) {
-        error() << "Histogram  " << pileupNoiseRMSLayerHistoName
-                << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
-        return StatusCode::FAILURE;
-      }
-      if (m_setNoiseOffset) {
-        pileupNoiseOffsetLayerHistoName = m_pileupNoiseOffsetHistoName + std::to_string(i + 1);
-        debug() << "Getting histogram with a name " << pileupNoiseOffsetLayerHistoName << endmsg;
-        m_histoPileupNoiseOffset.push_back(
-            *dynamic_cast<TH1F*>(noiseFile->Get(pileupNoiseOffsetLayerHistoName.c_str())));
-        if (m_histoPileupNoiseOffset.at(i).GetNbinsX() < 1) {
-          error() << "Histogram  " << pileupNoiseOffsetLayerHistoName
-                  << " has 0 bins! check the file with noise and the name of the histogram!" << endmsg;
-          return StatusCode::FAILURE;
-        }
-      }
-    }
-  }
+  K4RECCALORIMETER_CHECK(readHistograms(noiseFile.get()));
+
   noiseFile->Close();
 
   // Check if we have same number of histograms (all layers) for pileup and electronics noise
@@ -174,29 +179,30 @@ StatusCode NoiseCaloCellsVsThetaFromFileTool::initNoiseFromFile() {
   return StatusCode::SUCCESS;
 }
 
-double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(CellID aCellId) const {
+unsigned NoiseCaloCellsFromFileBaseTool::getIndexHistogram(CellID aCellId) const {
+  return m_decoder->get(aCellId, m_index_activeField);
+}
+
+double NoiseCaloCellsFromFileBaseTool::getNoiseRMSPerCell(CellID aCellId) const {
 
   double elecNoiseRMS = 0.;
   double pileupNoiseRMS = 0.;
 
-  double cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
-  unsigned cellLayer = m_decoder->get(aCellId, m_index_activeField);
-
-  // All histograms have same binning, all bins with same size
-  // Using the histogram in the first layer to get the bin size
   if (m_histoElecNoiseRMS.size() != 0) {
-    unsigned index = 0;
-    int ibin = m_histoElecNoiseRMS.at(index).FindFixBin(cellTheta);
-    // Check that there are not more layers than the constants are provided for
-    if (cellLayer < m_histoElecNoiseRMS.size()) {
-      elecNoiseRMS = m_histoElecNoiseRMS.at(cellLayer).GetBinContent(ibin);
+    // retrieve index of histogram
+    unsigned indexHistogram = getIndexHistogram(aCellId);
+    // retrieve bin in histogram
+    int ibin = getBin(aCellId);
+
+    if (indexHistogram < m_histoElecNoiseRMS.size()) {
+      elecNoiseRMS = m_histoElecNoiseRMS.at(indexHistogram)->GetBinContent(ibin);
       if (m_addPileup) {
-        pileupNoiseRMS = m_histoPileupNoiseRMS.at(cellLayer).GetBinContent(ibin);
+        pileupNoiseRMS = m_histoPileupNoiseRMS.at(indexHistogram)->GetBinContent(ibin);
       }
     } else {
-      error()
-          << "More radial layers than we have noise for!!!! Using the last layer for all histograms outside the range."
-          << endmsg;
+      error() << "Index of histogram is larger than the number of noise histograms that are available !!!! Using the "
+                 "last one for all histograms outside the range."
+              << endmsg;
     }
   } else {
     error() << "No histograms with noise constants!!!!! " << endmsg;
@@ -211,14 +217,13 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseRMSPerCell(CellID aCellId) con
   }
 
   if (totalNoiseRMS < 1e-6) {
-    warning() << "Zero noise RMS: cell theta " << cellTheta << " layer " << cellLayer << " noise RMS " << totalNoiseRMS
-              << endmsg;
+    warning() << "Zero noise RMS: cell ID " << aCellId << endmsg;
   }
 
   return totalNoiseRMS;
 }
 
-double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(CellID aCellId) const {
+double NoiseCaloCellsFromFileBaseTool::getNoiseOffsetPerCell(CellID aCellId) const {
 
   if (!m_setNoiseOffset)
     return 0.;
@@ -226,32 +231,21 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(CellID aCellId) 
   double elecNoiseOffset = 0.;
   double pileupNoiseOffset = 0.;
 
-  // Get cell coordinates: theta and radial layer
-  double cellTheta = m_cellPositionsTool->xyzPosition(aCellId).Theta();
-  unsigned cellLayer = m_decoder->get(aCellId, m_activeFieldName);
-
-  // All histograms have same binning, all bins with same size
-  // Using the histogram in the first layer to get the bin size
   if (m_histoElecNoiseOffset.size() != 0) {
-    unsigned index = 0;
-    int Nbins = m_histoElecNoiseOffset.at(index).GetNbinsX();
-    int ibin = m_histoElecNoiseOffset.at(index).FindFixBin(cellTheta);
-    if (ibin > Nbins) {
-      error() << "theta outside range of the histograms! Cell theta: " << cellTheta << " Nbins in histogram: " << Nbins
-              << endmsg;
-      ibin = Nbins;
-    }
+    // retrieve index of histogram
+    unsigned indexHistogram = getIndexHistogram(aCellId);
+    // retrieve bin in histogram
+    int ibin = getBin(aCellId);
 
-    // Check that there are not more layers than the constants are provided for
-    if (cellLayer < m_histoElecNoiseOffset.size()) {
-      elecNoiseOffset = m_histoElecNoiseOffset.at(cellLayer).GetBinContent(ibin);
+    if (indexHistogram < m_histoElecNoiseOffset.size()) {
+      elecNoiseOffset = m_histoElecNoiseOffset.at(indexHistogram)->GetBinContent(ibin);
       if (m_addPileup) {
-        pileupNoiseOffset = m_histoPileupNoiseOffset.at(cellLayer).GetBinContent(ibin);
+        pileupNoiseOffset = m_histoPileupNoiseOffset.at(indexHistogram)->GetBinContent(ibin);
       }
     } else {
-      error()
-          << "More radial layers than we have noise for!!!! Using the last layer for all histograms outside the range."
-          << endmsg;
+      error() << "Index of histogram is larger than the number of noise histograms that are available !!!! Using the "
+                 "last one for all histograms outside the range."
+              << endmsg;
     }
   } else {
     error() << "No histograms with noise offset!!!!! " << endmsg;
@@ -264,6 +258,6 @@ double NoiseCaloCellsVsThetaFromFileTool::getNoiseOffsetPerCell(CellID aCellId) 
   return totalNoiseOffset;
 }
 
-std::pair<double, double> NoiseCaloCellsVsThetaFromFileTool::getNoisePerCell(CellID aCellId) const {
+std::pair<double, double> NoiseCaloCellsFromFileBaseTool::getNoisePerCell(CellID aCellId) const {
   return std::make_pair(getNoiseRMSPerCell(aCellId), getNoiseOffsetPerCell(aCellId));
 }
