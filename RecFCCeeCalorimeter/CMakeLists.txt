@@ -79,6 +79,7 @@ if(BUILD_TESTING)
   gaudi_add_module( k4RecFCCeeCalorimeterTests
                     SOURCES
                     tests/src/TubeLayerModuleThetaCaloToolTestAlg.cpp
+                    tests/src/TurbineEndcapCaloToolTestAlg.cpp
                     tests/src/HCalPhiCaloToolTestAlg.cpp
                     LINK k4FWCore::k4FWCore
                     k4geo::detectorSegmentations
@@ -92,6 +93,12 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
           )
   set_test_env( TubeLayerModuleThetaCaloTool_test )
+
+  add_test( NAME TurbineEndcapCaloTool_test
+            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TurbineEndcapCaloTool_test.py
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+          )
+  set_test_env( TurbineEndcapCaloTool_test )
 
   add_test( NAME HCalPhiThetaCaloTool_test
             COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiThetaCaloTool_test.py
