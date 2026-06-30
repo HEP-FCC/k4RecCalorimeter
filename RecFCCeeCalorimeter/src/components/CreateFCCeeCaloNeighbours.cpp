@@ -593,7 +593,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                     }
                   }
                   (*endcapDecoder)["rho"].set(endcapCellId, iMatchRho);
-                  if (ecalEndcapTurbineSegmentation->rho(endcapCellId) +
+                  if (ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId) +
                           ecalEndcapTurbineSegmentation->gridSizeRho(iWheel) / 2. <
                       m_eCalBarrelMinRho)
                     continue;
@@ -676,13 +676,12 @@ StatusCode CreateFCCeeCaloNeighbours::initialize() {
                 decoder->set(cellId, "rho", irho);
                 decoder->set(cellId, "z", iz);
 
-                double endcapRho = ecalEndcapTurbineSegmentation->rho(cellId);
+                double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(cellId);
                 if (iWheel == 2 && iz == 0 && (endcapRho > m_eCalBarrelMinRho)) {
                   nextToEMBarrel = true;
                 }
 
-                double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(cellId).y(),
-                                                ecalEndcapTurbineSegmentation->position(cellId).x());
+                double endcapPhi = ecalEndcapTurbineSegmentation->getGlobalPhi(cellId);
 
                 unsigned iLayerZ = iz / (numCellsZ / numCellsZCalib);
                 unsigned iLayerRho = irho / (numCellsRho / numCellsRhoCalib);
@@ -1898,10 +1897,9 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
             (*endcapDecoder)[m_activeFieldNamesSegmented[iSys]].set(
                 endcapCellId, ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));
 
-            double endcapPhi = TMath::ATan2(ecalEndcapTurbineSegmentation->position(endcapCellId).y(),
-                                            ecalEndcapTurbineSegmentation->position(endcapCellId).x());
-            double endcapRho = ecalEndcapTurbineSegmentation->rho(endcapCellId);
-            double endcapZ = ecalEndcapTurbineSegmentation->z(endcapCellId);
+            double endcapPhi = ecalEndcapTurbineSegmentation->getGlobalPhi(endcapCellId);
+	    double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId);
+            double endcapZ = ecalEndcapTurbineSegmentation->getGlobalZ(endcapCellId);
             double endcapTheta = TMath::ATan2(endcapRho, endcapZ);
 
             if (iSide == -1) {
