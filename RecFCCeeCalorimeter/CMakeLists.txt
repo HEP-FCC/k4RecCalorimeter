@@ -18,7 +18,6 @@ gaudi_add_module(k4RecFCCeeCalorimeterPlugins
                       ROOT::Hist
                       onnxruntime::onnxruntime
                       nlohmann_json::nlohmann_json
-                      RecCaloCommon
                       )
 install(TARGETS k4RecFCCeeCalorimeterPlugins
   EXPORT k4RecCalorimeterTargets
@@ -29,6 +28,12 @@ install(TARGETS k4RecFCCeeCalorimeterPlugins
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
 
+add_test(NAME test_noise
+         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_noise.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(test_noise)
+
 add_test(NAME ALLEGRO_o1_v03_sim_reco
          COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/ALLEGRO_o1_v03.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
@@ -38,13 +43,13 @@ set_tests_properties(ALLEGRO_o1_v03_sim_reco PROPERTIES FIXTURES_REQUIRED ALLEGR
 
 add_test(NAME FCCeeLAr_benchmarkCalibration
          COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
-         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(FCCeeLAr_benchmarkCalibration)
 
 add_test(NAME FCCeeLAr_xtalkNeighbours
   COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runCaloXTalkNeighbours.py
-         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(FCCeeLAr_xtalkNeighbours)
 
@@ -57,7 +62,7 @@ set_tests_properties(FCCeeLAr_benchmarkCorrection PROPERTIES FIXTURES_REQUIRED A
 
 add_test(NAME IDEA_o1_v03_reco
          COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/IDEA_o1_v03_reco.py
-         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
 set_test_env(IDEA_o1_v03_reco)
 set_tests_properties(IDEA_o1_v03_reco PROPERTIES DEPENDS simulateSiPM)
@@ -74,6 +79,7 @@ if(BUILD_TESTING)
   gaudi_add_module( k4RecFCCeeCalorimeterTests
                     SOURCES
                     tests/src/TubeLayerModuleThetaCaloToolTestAlg.cpp
+                    tests/src/TurbineEndcapCaloToolTestAlg.cpp
                     tests/src/HCalPhiCaloToolTestAlg.cpp
                     LINK k4FWCore::k4FWCore
                     k4geo::detectorSegmentations
@@ -87,6 +93,12 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
           )
   set_test_env( TubeLayerModuleThetaCaloTool_test )
+
+  add_test( NAME TurbineEndcapCaloTool_test
+            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TurbineEndcapCaloTool_test.py
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+          )
+  set_test_env( TurbineEndcapCaloTool_test )
 
   add_test( NAME HCalPhiThetaCaloTool_test
             COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiThetaCaloTool_test.py

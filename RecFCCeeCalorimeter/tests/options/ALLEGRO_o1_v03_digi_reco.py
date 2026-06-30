@@ -411,9 +411,9 @@ else:
 if addNoise:
     ecalBarrelNoisePath = "elecNoise_ecalBarrelFCCee_theta.root"
     ecalBarrelNoiseRMSHistName = "h_elecNoise_fcc_"
-    from Configurables import NoiseCaloCellsVsThetaFromFileTool
+    from Configurables import NoiseCaloCellsFromFileBarrelTool
 
-    ecalBarrelNoiseTool = NoiseCaloCellsVsThetaFromFileTool(
+    ecalBarrelNoiseTool = NoiseCaloCellsFromFileBarrelTool(
         "ecalBarrelNoiseTool",
         cellPositionsTool=cellPositionEcalBarrelToolForNoise,
         readoutName=ecalBarrelReadoutName,
@@ -424,7 +424,7 @@ if addNoise:
         addPileup=False,
         filterNoiseThreshold=1,
         useAbsInFilter=True,
-        numRadialLayers=ecalBarrelLayers,
+        numHistograms=ecalBarrelLayers,
         scaleFactor=1 / 1000.0,  # MeV to GeV
         OutputLevel=INFO,
     )
