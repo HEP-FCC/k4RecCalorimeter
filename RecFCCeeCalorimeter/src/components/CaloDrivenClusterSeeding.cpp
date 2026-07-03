@@ -8,31 +8,26 @@
 
 #include "ClusterSeedMerging.h" // for enum
 
+#include <cstdint>
+#include <queue>
 #include <unordered_map>
 #include <vector>
-#include <queue>
-#include <cstdint>
 
 // ============================================================
 //  CaloDrivenClusterSeeding
 // ============================================================
 
-CaloDrivenClusterSeeding::CaloDrivenClusterSeeding(const std::string& name,
-                                                   ISvcLocator*      svcLoc)
-    : ClusterSeedingBase(name, svcLoc,
-                       {KeyValues("InputCaloHitCollections", {})},
-                       {KeyValue("OutputSeedsA", "CaloDrivenSeedsA"),
-                        KeyValue("OutputSeedsB", "CaloDrivenSeedsB")}) {}
-
-StatusCode CaloDrivenClusterSeeding::initialize() {
-  return ClusterSeedingBase::initialize();
+CaloDrivenClusterSeeding::CaloDrivenClusterSeeding(const std::string& name, ISvcLocator* svcLoc)
+    : ClusterSeedingBase(name, svcLoc, {KeyValues("InputCaloHitCollections", {})},
+                         {KeyValue("OutputSeedsA", "CaloDrivenSeedsA"), KeyValue("OutputSeedsB", "CaloDrivenSeedsB")}) {
 }
+
+StatusCode CaloDrivenClusterSeeding::initialize() { return ClusterSeedingBase::initialize(); }
 
 // ------------------------------------------------------------
 
 std::tuple<edm4hep::ClusterCollection, edm4hep::ClusterCollection>
-CaloDrivenClusterSeeding::operator()(
-    const std::vector<const edm4hep::CalorimeterHitCollection*>& caloHitColls) const {
+CaloDrivenClusterSeeding::operator()(const std::vector<const edm4hep::CalorimeterHitCollection*>& caloHitColls) const {
 
   edm4hep::ClusterCollection seedsA;
   edm4hep::ClusterCollection seedsB;
@@ -68,9 +63,8 @@ CaloDrivenClusterSeeding::operator()(
   // Step 2: For each above-threshold crystal, check seeding conditions.
   // ------------------------------------------------------------------
 
-  auto isLocalMax = [&energyMap,this](const uint64_t cellID,
-                             const float energy,
-                             const std::set<uint64_t>& nbrs) -> bool {
+  auto isLocalMax = [&energyMap, this](const uint64_t cellID, const float energy,
+                                       const std::set<uint64_t>& nbrs) -> bool {
     for (const uint64_t nb : nbrs) {
       if (nb == cellID)
         continue;
@@ -93,7 +87,7 @@ CaloDrivenClusterSeeding::operator()(
 
   for (const auto& [cellID, energy] : energyMap) {
     if (!passSelection(cellID))
-        continue;
+      continue;
 
     // --- Type A ---
     // the seed crystal exceeds the threshold
@@ -165,8 +159,8 @@ CaloDrivenClusterSeeding::operator()(
     }
   } // loop over seedsTypeB
 
-  debug() << "CaloDrivenClusterSeeding: found " << seedsTypeA.size()
-          << " Type-A seeds and " << seedsTypeB.size() << " Type-B seeds." << endmsg;
+  debug() << "CaloDrivenClusterSeeding: found " << seedsTypeA.size() << " Type-A seeds and " << seedsTypeB.size()
+          << " Type-B seeds." << endmsg;
 
   return std::make_tuple(std::move(seedsA), std::move(seedsB));
 } // operator()
