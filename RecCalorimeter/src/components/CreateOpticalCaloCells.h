@@ -34,9 +34,9 @@
  */
 
 class CreateOpticalCaloCells final
-    : public k4FWCore::MultiTransformer<std::tuple<edm4hep::CalorimeterHitCollection,
-                                                   edm4hep::CaloHitSimCaloHitLinkCollection>(
-          const edm4hep::SimCalorimeterHitCollection&, const edm4hep::SimCalorimeterHitCollection&)> {
+    : public k4FWCore::MultiTransformer<
+          std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>(
+              const edm4hep::SimCalorimeterHitCollection&, const edm4hep::SimCalorimeterHitCollection&)> {
 public:
   CreateOpticalCaloCells(const std::string& name, ISvcLocator* svcLoc);
 
