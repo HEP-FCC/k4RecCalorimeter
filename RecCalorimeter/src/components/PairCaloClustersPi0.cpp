@@ -29,8 +29,10 @@ StatusCode PairCaloClustersPi0::initialize() {
   if (shapeParametersLabels.has_value()) {
     info() << "Found " << shapeParametersLabels->size() << " shape parameters labels" << endmsg;
     std::vector<std::string> shapeParameterNames = shapeParametersLabels.value_or(std::vector<std::string>{});
-    k4FWCore::putCollectionParameter(m_pairedClusters.objKey(), edm4hep::labels::ShapeParameterNames, shapeParameterNames, this);
-    k4FWCore::putCollectionParameter(m_unpairedClusters.objKey(), edm4hep::labels::ShapeParameterNames, shapeParameterNames, this);
+    k4FWCore::putCollectionParameter(m_pairedClusters.objKey(), edm4hep::labels::ShapeParameterNames,
+                                     shapeParameterNames, this);
+    k4FWCore::putCollectionParameter(m_unpairedClusters.objKey(), edm4hep::labels::ShapeParameterNames,
+                                     shapeParameterNames, this);
   } else {
     info() << "No shapeParameters metadata in the input cluster collection" << endmsg;
   }
