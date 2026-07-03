@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <map>
 #include <sys/types.h>
+#include <utility>
 #include <vector>
 
 // Gaudi
@@ -45,6 +46,7 @@ namespace DDSegmentation {
  * "lastNeighbourSigma". In case that a neighbour is found that has already been assigned to another cluster, both
  * clusters are merged and assigned to the "older" clusterID, this is the one originating from a higher seed energy. The
  * iteration over neighburing cellIDs is continued.
+ *
  *  @author Coralie Neubueser
  *  @author Giovanni Marchiori - algorithm rewritten for significant speed-up
  */
@@ -60,8 +62,7 @@ struct FastCell {
   float SoverN;
 };
 using FastCluster = std::vector<FastCell>;
-using FastClusterMap = std::unordered_map<uint32_t, FastCluster>;
-using ClusterMaskMap = std::unordered_map<uint32_t, std::unordered_set<uint64_t>>;
+using FastClusterMap = std::map<uint32_t, FastCluster>; // TODO make it unordered or a vector
 
 class CaloTopoClusterFCCee : public Gaudi::Algorithm {
 public:
@@ -72,17 +73,36 @@ public:
    */
   StatusCode initialize();
 
-  /** Build clusters from seed cells (cells with S/N > seedSigma)
-   * The function searches for neighbour cells with S/N > neighbourSigma
-   * iteratively, until no more neighbours are found. Then a last round
-   * of adding neighbouring cells to the cluster is run where the parameter
-   * lastNeighbourSigma is applied.
-   *   @param[in] seedCells, collection of seeding cells.
-   *   @param[in] allCells, collection of all cells.
-   *   @param[in] clusters, map of clusterID -> FastCluster (will be filled by the algorithm)
+  /** Build clusters from the found seeds.
+   * First the function initialises a cluster in the preClusterCollection for the seed cells,
+   * then it calls the CaloTopoClusterFCCee::searchForNeighbours function to retrieve the vector of next cellIDs to add
+   * and loop over to find neighbours. The iteration of search for neighbours is continued until no more neihgbours are
+   * found. Then a last round of adding neighbouring cells to the cluster is run where the parameter lastNeighbourSigma
+   * is applied.
+   *   @param[in] seedCells, collection of seeding cells (vector of fastcells)
+   *   @param[in] allCells, collection of all cells (map cellID -> fastcell)
+   *   @param[in] clusters, collection of clusters to be filled by the algorithm (map of clusterID -> FastCluster)
    */
-  StatusCode buildClusters(const std::vector<FastCell>& seedCells, const std::vector<FastCell>& allCells,
-                           FastClusterMap& clusters) const;
+  StatusCode buildClusters(const std::vector<FastCell>& seedCells,
+                           const std::unordered_map<uint64_t, FastCell>& allCells, FastClusterMap& clusters) const;
+  /** Search for neighbours and add them to cluster collection
+   *   @param[in] cellID, the cell ID for which to find the neighbours
+   *   @param[in] clusterID, the current cluster ID
+   *   @param[in] nSigma, the signal/noise ratio to be exceeded by the neighbouring cell to be added to cluster
+   *   @param[in] allCells, map of all cells (CellID -> FastCell)
+   *   @param[in] usedCells, map of used cells (CellID -> cluster ID)
+   *   @param[in] clusters, map that is filled with clusterID pointing to the associated cells, in a pair of
+   *              cluster index and cell collection
+   *   @param[in] clusterMembers, map (cluster ID -> set of CellIDs) that is filled by the algorithm to keep track of
+   * clustered cells
+   *   @param[in] allowClusterMerge, bool to allow for clusters to be merged
+   *   return vector of cellID of found neighbours
+   */
+  std::vector<uint64_t> searchForNeighbours(const uint64_t cellID, uint& clusterID, int nSigma,
+                                            const std::unordered_map<uint64_t, FastCell>& allCells,
+                                            std::unordered_map<uint64_t, uint32_t>& usedCells, FastClusterMap& clusters,
+                                            std::unordered_map<uint32_t, std::unordered_set<uint64_t>>& clusterMembers,
+                                            bool allowClusterMerge) const;
 
   StatusCode execute(const EventContext&) const;
 
@@ -92,27 +112,26 @@ private:
   /// List of input cell collections
   Gaudi::Property<std::vector<std::string>> m_cellCollections{
       this, "cells", {}, "Names of CalorimeterHit collections to read"};
-  /// Vector of input k4FWCore::DataHandles for the input cell collections
+  /// the vector of input k4FWCore::DataHandles for the input cell collections
   std::vector<k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection>*> m_cellCollectionHandles;
-  /// Output cluster collection
+  // Cluster collection (output)
   mutable k4FWCore::DataHandle<edm4hep::ClusterCollection> m_clusterCollection{"clusters", Gaudi::DataHandle::Writer,
                                                                                this};
-  /// Output collection of clustered cells
+  // Cluster cells in collection (output)
   mutable k4FWCore::DataHandle<edm4hep::CalorimeterHitCollection> m_clusterCellsCollection{
       "clusterCells", Gaudi::DataHandle::Writer, this};
 
-  /// List of systemIDs for the cells being clustered
   Gaudi::Property<std::vector<int>> m_caloIDs{this, "calorimeterIDs", {}, "Corresponding list of calorimeter IDs"};
 
   /// Handle for the cells noise tool
   mutable ToolHandle<k4::recCalo::INoiseConstTool> m_noiseTool{"TopoCaloNoisyCells", this};
   /// Handle for neighbours tool
   mutable ToolHandle<k4::recCalo::ICaloReadNeighboursMap> m_neighboursTool{"TopoCaloNeighbours", this};
-  /// flag to use a pre-calculated neighbor map
+  // flag to use a pre-calculated neighbor map
   Gaudi::Property<bool> m_useNeighborMap{this, "useNeighborMap", true, "use pre-calculated neighbor map"};
-  /// use GeoSvc when the neighbor map is not present
+  // use GeoSvc when the neighbor map is not present
   SmartIF<IGeoSvc> m_geoSvc;
-  /// name of the readout: only needed if useNeighborMap is set to false
+  // name of the readout: only needed if useNeighborMap is set to false
   Gaudi::Property<std::string> m_readoutName{this, "readoutName", "",
                                              "name of the readout (needed if useNeighborMap=false)"};
   // pointer to the segmentation object
@@ -136,8 +155,5 @@ private:
   /// positions tool to use
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   int m_indexSystem;
-
-  /// internal cache cID -> EDM cell
-  mutable std::unordered_map<uint64_t, edm4hep::CalorimeterHit> m_cellCache;
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */

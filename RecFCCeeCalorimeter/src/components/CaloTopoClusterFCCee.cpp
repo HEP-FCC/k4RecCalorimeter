@@ -65,13 +65,11 @@ StatusCode CaloTopoClusterFCCee::initialize() {
     if (!m_geoSvc) {
       error() << "Unable to locate Geometry Service. "
               << "Make sure you have GeoSvc in the configuration." << endmsg;
-
       return StatusCode::FAILURE;
     }
 
     if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
       error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
-
       return StatusCode::FAILURE;
     }
 
@@ -126,27 +124,25 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
     outClusterCells = m_clusterCellsCollection.createAndPut();
   }
 
-  // get input collection with calorimeter cells and build flat cell cache
-  m_cellCache.clear();
-  m_cellCache.reserve(2000000);
-  std::vector<FastCell> allCells;
+  // get input collection with calorimeter cells and build cell cache and flat cell map
+  std::unordered_map<uint64_t, const edm4hep::CalorimeterHit> allCellsMap;
+  allCellsMap.reserve(2000000);
+  std::unordered_map<uint64_t, FastCell> allCells;
   allCells.reserve(2000000);
 
-  for (size_t ih = 0; ih < m_cellCollectionHandles.size(); ih++) {
-
-    const auto* coll = m_cellCollectionHandles[ih]->get();
+  for (auto& hdl : m_cellCollectionHandles) {
+    const auto* coll = hdl->get();
     for (const auto& hit : *coll) {
-
       // cache EDM hit
       const uint64_t cID = hit.getCellID();
-      m_cellCache.emplace(cID, hit);
+      allCellsMap.emplace(cID, hit);
 
       // create fast flat cell
       float energy = hit.getEnergy();
       auto pos = hit.getPosition();
       auto [rms, offset] = m_noiseTool->getNoisePerCell(cID);
       float sovern = (rms > 0.) ? (std::fabs(energy - offset) / rms) : 999999.;
-      allCells.emplace_back(FastCell{cID, energy, (float)pos.x, (float)pos.y, (float)pos.z, 0, sovern});
+      allCells.emplace(cID, FastCell{cID, energy, (float)pos.x, (float)pos.y, (float)pos.z, 0, sovern});
     }
   }
 
@@ -161,42 +157,55 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   // and sort by energy in reversed order
   std::vector<FastCell> seedCellsVec;
   seedCellsVec.reserve(allCells.size() / 10);
-
-  for (const auto& cell : allCells) {
+  for (const auto& [cID, cell] : allCells) {
+    if (msgLevel() <= MSG::VERBOSE)
+      verbose() << "cellID   = " << cID << endmsg;
     if (cell.SoverN > m_seedSigma) {
+      if (msgLevel() <= MSG::VERBOSE)
+        verbose() << "Found seed" << endmsg;
       seedCellsVec.push_back(cell);
     }
   }
-
   std::sort(seedCellsVec.begin(), seedCellsVec.end(),
             [](const FastCell& a, const FastCell& b) { return a.energy > b.energy; });
 
   debug() << "Number of seeds found                                : " << seedCellsVec.size() << endmsg;
 
   // build clusters (find neighbouring cells)
-  FastClusterMap clusters;
-  clusters.reserve(seedCellsVec.size());
+  // cluster maps clusterID to a FastCluster (vector of FastCells)
+  debug() << "Building clusters" << endmsg;
 
+  FastClusterMap clusters;
   StatusCode sc = buildClusters(seedCellsVec, allCells, clusters);
+
   if (sc.isFailure()) {
-    error() << "Unable to build clusters!" << endmsg;
+    error() << "Unable to build the clusters!" << endmsg;
     return StatusCode::FAILURE;
   }
 
   // keep only clusters with sufficient energy and build EDM output clusters
-  debug() << "Building " << clusters.size() << " EDM clusters" << endmsg;
+  debug() << "Building EDM clusters from " << clusters.size() << " clusters" << endmsg;
+
   double checkTotEnergy = 0.;
   double checkTotEnergyAboveThreshold = 0.;
   int clusterWithMixedCells = 0;
 
-  for (auto& [clusterId, cluster] : clusters) {
+  for (const auto& [clusterId, cluster] : clusters) {
 
     double clusterEnergy = 0.;
-    for (const auto& c : cluster) {
-      clusterEnergy += c.energy;
+    std::unordered_map<int, int> system;
+    system.reserve(4);
+
+    for (const auto& fastcell : cluster) {
+
+      clusterEnergy += fastcell.energy;
+      auto systemId = m_decoder->get(fastcell.cellID, m_indexSystem);
+      system[int(systemId)]++;
     }
+
     checkTotEnergy += clusterEnergy;
-    verbose() << "Cluster energy:     " << clusterEnergy << endmsg;
+    if (msgLevel() <= MSG::VERBOSE)
+      verbose() << "Cluster energy: " << clusterEnergy << endmsg;
     if (clusterEnergy < m_minClusterEnergy) {
       continue;
     }
@@ -207,320 +216,283 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
 
     // set cluster energy
     outCluster.setEnergy(clusterEnergy);
+    checkTotEnergyAboveThreshold += clusterEnergy;
 
     // loop over the cells attached to the cluster to calculate cluster barycenter and attach cells to cluster
-    double cx = 0, cy = 0, cz = 0;
+    double clusterPosX = 0.;
+    double clusterPosY = 0.;
+    double clusterPosZ = 0.;
 
-    std::vector<double> phiVec;
-    std::vector<double> thetaVec;
-    std::vector<double> eVec;
+    double sumCellPhi = 0.;
+    double sumCellTheta = 0.;
 
-    phiVec.reserve(cluster.size());
-    thetaVec.reserve(cluster.size());
-    eVec.reserve(cluster.size());
+    double deltaR = 0.;
 
-    double sumPhi = 0;
-    double sumTheta = 0;
+    std::vector<double> cellPhi;
+    std::vector<double> cellTheta;
+    std::vector<double> cellEnergy;
 
-    std::map<int, int> system;
+    cellPhi.reserve(cluster.size());
+    cellTheta.reserve(cluster.size());
+    cellEnergy.reserve(cluster.size());
 
-    for (const auto& c : cluster) {
+    for (const auto& fastcell : cluster) {
 
-      auto it = m_cellCache.find(c.cellID);
-      if (it == m_cellCache.end())
-        continue;
+      const auto& cell = allCellsMap.at(fastcell.cellID);
 
-      const auto& hit = it->second;
+      double energy = fastcell.energy;
 
-      // identify calo system
-      auto sys = m_decoder->get(hit.getCellID(), m_indexSystem);
-      system[(int)sys]++;
+      clusterPosX += fastcell.x * energy;
+      clusterPosY += fastcell.y * energy;
+      clusterPosZ += fastcell.z * energy;
 
-      // get position, calculate phi/theta
-      cx += c.x * c.energy;
-      cy += c.y * c.energy;
-      cz += c.z * c.energy;
-      dd4hep::Position pos(c.x, c.y, c.z);
+      double phi = std::atan2(fastcell.y, fastcell.x);
+      double theta = std::atan2(std::hypot(fastcell.x, fastcell.y), fastcell.z);
 
-      phiVec.push_back(pos.Phi());
-      thetaVec.push_back(pos.Theta());
-      eVec.push_back(c.energy);
+      cellPhi.push_back(phi);
+      cellTheta.push_back(theta);
+      cellEnergy.push_back(energy);
 
-      sumPhi += pos.Phi() * c.energy;
-      sumTheta += pos.Theta() * c.energy;
+      sumCellPhi += phi * energy;
+      sumCellTheta += theta * energy;
 
+      // attach cell
       if (m_createClusterCellCollection) {
-        auto edmCell = hit.clone();
-        outClusterCells->push_back(edmCell);
-        outCluster.addToHits(edmCell);
+
+        auto newcell = cell.clone();
+        newcell.setType(fastcell.type);
+        outClusterCells->push_back(newcell);
+        outCluster.addToHits(newcell);
+
       } else {
-        outCluster.addToHits(hit);
+        outCluster.addToHits(cell);
       }
     }
 
-    outCluster.setPosition(edm4hep::Vector3f(cx / clusterEnergy, cy / clusterEnergy, cz / clusterEnergy));
+    // calculate cluster barycenter
+    if (clusterEnergy > 0.0) {
+      outCluster.setPosition(
+          edm4hep::Vector3f(clusterPosX / clusterEnergy, clusterPosY / clusterEnergy, clusterPosZ / clusterEnergy));
 
-    sumPhi /= clusterEnergy;
-    sumTheta /= clusterEnergy;
+      sumCellPhi /= clusterEnergy;
+      sumCellTheta /= clusterEnergy;
 
-    double deltaR = 0.;
-    for (size_t i = 0; i < eVec.size(); i++) {
-      deltaR += std::sqrt(std::pow(thetaVec[i] - sumTheta, 2) + std::pow(phiVec[i] - sumPhi, 2)) * eVec[i];
+      for (size_t i = 0; i < cellEnergy.size(); ++i) {
+        deltaR +=
+            std::sqrt(std::pow(cellTheta[i] - sumCellTheta, 2) + std::pow(cellPhi[i] - sumCellPhi, 2)) * cellEnergy[i];
+      }
+      outCluster.addToShapeParameters(deltaR / clusterEnergy);
+    } else {
+      outCluster.setPosition(edm4hep::Vector3f(0., 0., 0.));
+      outCluster.addToShapeParameters(0.0);
     }
-    outCluster.addToShapeParameters(deltaR / clusterEnergy);
 
     outClusters->push_back(outCluster);
 
     if (system.size() > 1)
       clusterWithMixedCells++;
-
-    checkTotEnergyAboveThreshold += clusterEnergy;
   }
 
-  debug() << "Number of clusters with cells in E and HCal:        " << clusterWithMixedCells << endmsg;
-  debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
-  debug() << "Total energy of clusters above threshold:           " << checkTotEnergyAboveThreshold << endmsg;
-  if (m_createClusterCellCollection) {
-    debug() << "Leftover cells :                                    " << allCells.size() - outClusterCells->size()
-            << endmsg;
+  if (msgLevel() <= MSG::DEBUG) {
+    debug() << "Number of clusters:                                 " << outClusters->size() << endmsg;
+    debug() << "Number of clusters with cells in multiple systems:  " << clusterWithMixedCells << endmsg;
+    debug() << "Total energy of clusters:                           " << checkTotEnergy << endmsg;
+    debug() << "Total energy of clusters above threshold:           " << checkTotEnergyAboveThreshold << endmsg;
+    if (m_createClusterCellCollection) {
+      debug() << "Leftover cells :                                    " << allCells.size() - outClusterCells->size()
+              << endmsg;
+    }
   }
 
   return StatusCode::SUCCESS;
 }
 
 StatusCode CaloTopoClusterFCCee::buildClusters(const std::vector<FastCell>& seedCells,
-                                               const std::vector<FastCell>& allCells, FastClusterMap& clusters) const {
+                                               const std::unordered_map<uint64_t, FastCell>& allCells,
+                                               FastClusterMap& clusters) const {
 
-  // will create clusters finding in allCells the neighbours of seedCells and
-  // of their own neighbours
-  // clusters will be saved in a map (clusters) of clusterId -> FastClusters
+  if (msgLevel() <= MSG::VERBOSE)
+    verbose() << "Initial number of seeds to loop over: " << seedCells.size() << endmsg;
 
-  verbose() << "Initial number of seeds to loop over: " << seedCells.size() << endmsg;
+  std::unordered_map<uint64_t, uint32_t> usedCells;
+  usedCells.reserve(allCells.size());
 
-  // build fast lookup (CellID -> FastCell)
-  std::unordered_map<uint64_t, const FastCell*> cellMap;
-  cellMap.reserve(allCells.size());
-  for (const auto& c : allCells) {
-    cellMap.emplace(c.cellID, &c);
-  }
-
-  // initialise map of already used cells
-  std::unordered_map<uint64_t, uint32_t> used;
-  used.reserve(allCells.size());
-
-  // initialise map of clusterId -> set(cellIDs)
-  ClusterMaskMap clusterMembers;
+  std::unordered_map<uint32_t, std::unordered_set<uint64_t>> clusterMembers;
   clusterMembers.reserve(seedCells.size());
 
   // loop over every seeds in calo to build a cluster (or merge with another cluster if appropriate)
   uint32_t seedCounter = 0;
-  for (const auto& seed : seedCells) {
-    ++seedCounter;
-    if (msgLevel() <= MSG::VERBOSE) {
+  for (const auto& seedCell : seedCells) {
+    seedCounter++;
+    if (msgLevel() <= MSG::VERBOSE)
       verbose() << "Looking at seed: " << seedCounter << endmsg;
-    }
 
-    // skip already used seeds
-    if (used.count(seed.cellID)) {
-      if (msgLevel() <= MSG::VERBOSE) {
-        verbose() << "Seed is already assigned to another cluster!" << endmsg;
-      }
+    auto seedId = seedCell.cellID;
+    if (usedCells.find(seedId) != usedCells.end()) {
+      if (msgLevel() <= MSG::VERBOSE)
+        verbose() << "Seed already assigned to another cluster" << endmsg;
       continue;
     }
 
     uint32_t clusterId = seedCounter;
 
-    // create cluster
-    clusterMembers[clusterId].clear();
-    clusters[clusterId].clear();
-    clusterMembers[clusterId].reserve(256);
-    clusters[clusterId].reserve(256);
+    // seed insertion (type = 1)
+    auto& cluster = clusters[clusterId];
+    cluster.reserve(128);
+    cluster.push_back(seedCell);
+    cluster.back().type = 1;
+    usedCells[seedId] = clusterId;
+    clusterMembers[clusterId].insert(seedId);
 
-    // insert seed and set its type to 1
-    clusters[clusterId].push_back(seed);
-    clusters[clusterId].back().type = 1;
-    used[seed.cellID] = clusterId;
-    clusterMembers[clusterId].insert(seed.cellID);
+    std::vector<std::vector<uint64_t>> nextNeighbours(100);
+    nextNeighbours[0] =
+        searchForNeighbours(seedId, clusterId, m_neighbourSigma, allCells, usedCells, clusters, clusterMembers, true);
+    if (msgLevel() <= MSG::VERBOSE)
+      verbose() << "Found " << nextNeighbours[0].size() << " neighbours.." << endmsg;
 
-    // attach neighbours
-    // recursively find neighbours (nextLayer) of cells in current layer
-    std::vector<uint64_t> currentLayer;
-    std::vector<uint64_t> nextLayer;
-    currentLayer.reserve(1024);
-    nextLayer.reserve(1024);
-
-    // start with neighbours of seed
-    currentLayer.push_back(seed.cellID);
-
-    // the flag restartBFS is needed to restart the neighbour search
-    // after two clusters are merged and currentLayer is updated
-    bool restartBFS = false;
-    while (!currentLayer.empty()) {
-
-      nextLayer.clear();
-      restartBFS = false;
-
-      // loop over cells in currentLayer
-      for (uint64_t cid : currentLayer) {
-
-        if (msgLevel() <= MSG::VERBOSE) {
-          verbose() << "For cluster: " << clusterId << endmsg;
+    // first loop over seeds neighbours
+    int it = 0;
+    while (nextNeighbours[it].size() > 0) {
+      it++;
+      if (msgLevel() <= MSG::VERBOSE)
+        verbose() << "it: " << it << endmsg;
+      nextNeighbours.emplace_back(std::vector<uint64_t>{});
+      for (auto& id : nextNeighbours[it - 1]) {
+        if (id == 0) {
+          error() << "Building of cluster is stopped due to missing cell ID "
+                     "in neighbours map!"
+                  << endmsg;
+          return StatusCode::FAILURE;
         }
-
-        auto itCell = cellMap.find(cid);
-        if (itCell == cellMap.end())
-          continue;
-
-        // retrieve neighbours of cell
-        std::vector<uint64_t> neighboursVec;
-        if (m_useNeighborMap) {
-          neighboursVec = m_neighboursTool->neighbours(cid);
-        } else {
-          std::set<dd4hep::DDSegmentation::CellID> tmp;
-          m_segmentation->neighbours(cid, tmp);
-          neighboursVec.assign(tmp.begin(), tmp.end());
-        }
-        if (neighboursVec.size() == 0) {
-          error() << "No neighbours for cellID found! " << endmsg;
-          error() << "to cellID :  " << cid << endmsg;
-          error() << "in system:   " << m_decoder->get(cid, m_indexSystem) << endmsg;
-        }
-
-        // loop over neighbours
-        for (uint64_t nid : neighboursVec) {
-
-          auto itN = cellMap.find(nid);
-          if (itN == cellMap.end())
-            continue;
-
-          // check if neighbour is used
-          const FastCell& ncell = *(itN->second);
-          auto itUsed = used.find(nid);
-
-          // new cell (not used yet)
-          if (itUsed == used.end()) {
-            if (msgLevel() <= MSG::VERBOSE) {
-              verbose() << "Found neighbour with CellID: " << nid << endmsg;
-            }
-
-            bool accept = (ncell.SoverN > m_neighbourSigma) || (m_neighbourSigma == 0);
-            if (!accept)
-              continue;
-
-            used[nid] = clusterId;
-            clusters[clusterId].push_back(FastCell{nid, ncell.energy, ncell.x, ncell.y, ncell.z, 2, ncell.SoverN});
-            clusterMembers[clusterId].insert(nid);
-            nextLayer.push_back(nid);
-          } else if (itUsed->second != clusterId) {
-            // cell already used for a different cluster -> merge
-            const uint32_t source = clusterId;
-            const uint32_t target = itUsed->second;
-            auto& srcCluster = clusters[source];
-            auto& dstCluster = clusters[target];
-            auto& dstMask = clusterMembers[target];
-            if (msgLevel() <= MSG::VERBOSE) {
-              verbose() << "This neighbour was found in cluster " << target << ", cluster " << source
-                        << " will be merged!" << endmsg;
-              verbose() << "Assigning all cells ( " << srcCluster.size() << " ) to Cluster " << target << " with ( "
-                        << dstCluster.size() << " ). " << endmsg;
-            }
-
-            // move ALL cells from source -> target
-            for (const auto& c : srcCluster) {
-
-              // update global ownership FIRST
-              used[c.cellID] = target;
-
-              // avoid duplicates
-              if (!dstMask.insert(c.cellID).second)
-                continue;
-
-              dstCluster.push_back(c);
-            }
-
-            // erase source cluster completely
-            srcCluster.clear();
-            clusters.erase(source);
-            clusterMembers.erase(source);
-
-            // update current clusterId
-            clusterId = target;
-
-            // continue search from merged context
-            restartBFS = true;
-            currentLayer.clear();
-            for (const auto& c : clusters[clusterId]) {
-              currentLayer.push_back(c.cellID);
-            }
-            break; // leave neighbour loop
-          }
-        } // end of neighbour loop
-        if (msgLevel() <= MSG::VERBOSE) {
-          verbose() << "Found " << nextLayer.size() << " neighbours.." << endmsg;
-        }
-        if (restartBFS)
-          break; // leave currentLayer loop
-      } // end of currentLayer loop
-
-      if (restartBFS)
-        continue; // restart search for currentLayer since we rebuilt it after merge
-
-      // go to next layer
-      currentLayer.swap(nextLayer);
+        if (msgLevel() <= MSG::VERBOSE)
+          verbose() << "Next neighbours assigned to cluster ID: " << clusterId << endmsg;
+        auto additionalNeighbours =
+            searchForNeighbours(id, clusterId, m_neighbourSigma, allCells, usedCells, clusters, clusterMembers, true);
+        nextNeighbours[it].insert(nextNeighbours[it].end(), additionalNeighbours.begin(), additionalNeighbours.end());
+      }
+      if (msgLevel() <= MSG::VERBOSE)
+        verbose() << "Found " << nextNeighbours[it].size() << " more neighbours.." << endmsg;
     }
 
-    // add last set of neighbours
-    // loop over the cells of the cluster
-    int lastNeighbours(0);
-    for (const auto& c : clusters[clusterId]) {
-      int lastNeighboursOfCell(0);
-
-      // skip type-3 cells (last neighbours)
-      if (c.type > 2)
-        continue;
-
-      // retrieve neighbours of cell
-      std::vector<uint64_t> lastVec;
-      if (m_useNeighborMap) {
-        lastVec = m_neighboursTool->neighbours(c.cellID);
-      } else {
-        std::set<dd4hep::DDSegmentation::CellID> tmp;
-        m_segmentation->neighbours(c.cellID, tmp);
-        lastVec.assign(tmp.begin(), tmp.end());
+    // last try with different condition on neighbours
+    if (nextNeighbours[it].size() == 0) {
+      // loop over all clustered cells
+      auto& aCluster = clusters[clusterId];
+      for (size_t i = 0; i < aCluster.size(); ++i) {
+        const auto& cell = aCluster[i];
+        if (cell.type <= 2) {
+          uint64_t cID = cell.cellID;
+          if (msgLevel() <= MSG::VERBOSE)
+            verbose() << "Add neighbours of " << cID << " in last round with thr = " << m_lastNeighbourSigma.value()
+                      << " x sigma." << endmsg;
+          auto lastNeighbours = searchForNeighbours(cID, clusterId, m_lastNeighbourSigma, allCells, usedCells, clusters,
+                                                    clusterMembers, false);
+        }
       }
-
-      // loop over neighbours
-      // verbose() << "Number of neighbours for cell " << c.cellID << " : " << lastVec.size() << endmsg;
-      for (uint64_t nid : lastVec) {
-        // skip already used neighbours
-        if (used.count(nid))
-          continue;
-
-        // find corresponding cell
-        auto itN = cellMap.find(nid);
-        if (itN == cellMap.end())
-          continue;
-        const FastCell& ncell = *(itN->second);
-
-        // skip cells with S/N below threshold
-        if (m_lastNeighbourSigma != 0 && ncell.SoverN < m_lastNeighbourSigma)
-          continue;
-
-        // add cell to cluster
-        used[nid] = clusterId;
-        clusters[clusterId].push_back(FastCell{nid, ncell.energy, ncell.x, ncell.y, ncell.z, 3, ncell.SoverN});
-        clusterMembers[clusterId].insert(nid);
-        lastNeighboursOfCell++;
-        lastNeighbours++;
-      }
-      // verbose() << "Added " << lastNeighboursOfCell << " last neighbours for cell " << c.cellID << endmsg;
-    }
-    if (msgLevel() <= MSG::VERBOSE) {
-      verbose() << "Found " << lastNeighbours << " last neighbours.." << endmsg;
     }
   }
 
   return StatusCode::SUCCESS;
+}
+
+std::vector<uint64_t> CaloTopoClusterFCCee::searchForNeighbours(
+    const uint64_t cellID, uint& clusterID, int nSigma, const std::unordered_map<uint64_t, FastCell>& allCells,
+    std::unordered_map<uint64_t, uint32_t>& usedCells, FastClusterMap& clusters,
+    std::unordered_map<uint32_t, std::unordered_set<uint64_t>>& clusterMembers, bool allowClusterMerge) const {
+
+  std::vector<uint64_t> additionalNeighbours;
+
+  assert(allCells.find(cellID) != allCells.end());
+
+  // retrieve neighbours
+  std::vector<uint64_t> neighboursVec;
+  if (m_useNeighborMap) {
+
+    neighboursVec = m_neighboursTool->neighbours(cellID);
+
+  } else {
+
+    std::set<dd4hep::DDSegmentation::CellID> outputNeighbors;
+    m_segmentation->neighbours(cellID, outputNeighbors);
+    neighboursVec.assign(outputNeighbors.begin(), outputNeighbors.end());
+  }
+
+  if (neighboursVec.empty()) {
+    error() << "No neighbours for cellID " << cellID << endmsg;
+    return {0};
+  }
+
+  // loop over neighbours
+  if (msgLevel() <= MSG::VERBOSE)
+    verbose() << "For cluster: " << clusterID << " , cell " << cellID << endmsg;
+  for (const auto& neighbourID : neighboursVec) {
+
+    auto itCell = allCells.find(neighbourID);
+    auto itUsed = usedCells.find(neighbourID);
+
+    // CASE 1: unused cell -> candidate addition
+    if (itCell != allCells.end() && itUsed == usedCells.end()) {
+      if (msgLevel() <= MSG::VERBOSE)
+        verbose() << "Found neighbour with CellID: " << neighbourID << endmsg;
+
+      // const auto& hit = *(itCell->second);
+      const auto& hit = (itCell->second);
+      bool addNeighbour = (hit.SoverN > nSigma) || (nSigma == 0);
+
+      if (addNeighbour) {
+        if (msgLevel() <= MSG::VERBOSE)
+          verbose() << "Neighbour kept, hit = " << hit.cellID << endmsg;
+        int cellType = (nSigma == m_lastNeighbourSigma) ? 3 : 2;
+        auto& cluster = clusters[clusterID];
+        cluster.push_back(hit);
+        cluster.back().type = cellType;
+        usedCells[neighbourID] = clusterID;
+        clusterMembers[clusterID].insert(neighbourID);
+        additionalNeighbours.emplace_back(neighbourID);
+      } else {
+        if (msgLevel() <= MSG::VERBOSE)
+          verbose() << "Neighbour NOT kept, hit = " << hit.cellID << endmsg;
+      }
+    }
+
+    // CASE 2: already used -> possible merge
+    else if (itUsed != usedCells.end() && itUsed->second != clusterID && allowClusterMerge) {
+
+      uint32_t targetCluster = itUsed->second;
+
+      auto& src = clusters[clusterID];
+      auto& dst = clusters[targetCluster];
+      auto& dstMembers = clusterMembers[targetCluster];
+
+      if (msgLevel() <= MSG::VERBOSE) {
+        verbose() << "Neighbour " << neighbourID << " was found in cluster " << targetCluster << ", cluster "
+                  << clusterID << " will be merged!" << endmsg;
+        verbose() << "Assigning all cells ( " << clusters[clusterID].size() << " ) to Cluster " << targetCluster
+                  << " with ( " << clusters[targetCluster].size() << " ). " << endmsg;
+      }
+
+      // merge all cells
+      for (const auto& c : src) {
+
+        usedCells[c.cellID] = targetCluster;
+
+        if (dstMembers.insert(c.cellID).second) {
+          dst.push_back(c);
+        }
+      }
+
+      clusters.erase(clusterID);
+      clusterMembers.erase(clusterID);
+      // changed clusterId -> if more neighbours are found, correct assignment
+      clusterID = targetCluster;
+      // found neighbour for next search
+      additionalNeighbours.emplace_back(neighbourID);
+      // end loop to ensure correct cluster assignment
+      break;
+    }
+  }
+
+  return additionalNeighbours;
 }
 
 StatusCode CaloTopoClusterFCCee::finalize() {
