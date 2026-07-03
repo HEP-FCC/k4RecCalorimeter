@@ -65,29 +65,79 @@ def optical_digi(name, optical, truth, out, link, calib, mask=False):
 
 # ECAL crystals: scint & Cherenkov share one deposit -> mask cherenkov in the link
 ecalDigis = [
-    optical_digi("createEcalScintCells", "SCEPCal_MainScounts", "SCEPCal_MainEdep",
-                 "SCEPCal_digi_scint", "SCEPCal_scint_link", 1.0 / 1965.0, mask=True),
-    optical_digi("createEcalCherenCells", "SCEPCal_MainCcounts", "SCEPCal_MainEdep",
-                 "SCEPCal_digi_cheren", "SCEPCal_cheren_link", 1.0 / 97.75, mask=True),
+    optical_digi(
+        "createEcalScintCells",
+        "SCEPCal_MainScounts",
+        "SCEPCal_MainEdep",
+        "SCEPCal_digi_scint",
+        "SCEPCal_scint_link",
+        1.0 / 1965.0,
+        mask=True,
+    ),
+    optical_digi(
+        "createEcalCherenCells",
+        "SCEPCal_MainCcounts",
+        "SCEPCal_MainEdep",
+        "SCEPCal_digi_cheren",
+        "SCEPCal_cheren_link",
+        1.0 / 97.75,
+        mask=True,
+    ),
 ]
 
 # HCAL tubes: scint & Cherenkov are distinct cells -> full-cellID link (default)
 hcalDigis = [
-    optical_digi("createHcalBarrelScintCells", "DRBTScin", "DRTubeEdep",
-                 "DRBTScin_digi", "DRBTScin_link", 1.0 / 206.25),
-    optical_digi("createHcalBarrelCherenCells", "DRBTCher", "DRTubeEdep",
-                 "DRBTCher_digi", "DRBTCher_link", 1.0 / 68.25),
+    optical_digi(
+        "createHcalBarrelScintCells",
+        "DRBTScin",
+        "DRTubeEdep",
+        "DRBTScin_digi",
+        "DRBTScin_link",
+        1.0 / 206.25,
+    ),
+    optical_digi(
+        "createHcalBarrelCherenCells",
+        "DRBTCher",
+        "DRTubeEdep",
+        "DRBTCher_digi",
+        "DRBTCher_link",
+        1.0 / 68.25,
+    ),
 ]
 if not CI:  # DR endcap exists only in the full geometry
     hcalDigis += [
-        optical_digi("createHcalEndcapRScintCells", "DRETScinRight", "DRTubeEdep",
-                     "DRETScinRight_digi", "DRETScinRight_link", 1.0 / 206.25),
-        optical_digi("createHcalEndcapRCherenCells", "DRETCherRight", "DRTubeEdep",
-                     "DRETCherRight_digi", "DRETCherRight_link", 1.0 / 68.25),
-        optical_digi("createHcalEndcapLScintCells", "DRETScinLeft", "DRTubeEdep",
-                     "DRETScinLeft_digi", "DRETScinLeft_link", 1.0 / 206.25),
-        optical_digi("createHcalEndcapLCherenCells", "DRETCherLeft", "DRTubeEdep",
-                     "DRETCherLeft_digi", "DRETCherLeft_link", 1.0 / 68.25),
+        optical_digi(
+            "createHcalEndcapRScintCells",
+            "DRETScinRight",
+            "DRTubeEdep",
+            "DRETScinRight_digi",
+            "DRETScinRight_link",
+            1.0 / 206.25,
+        ),
+        optical_digi(
+            "createHcalEndcapRCherenCells",
+            "DRETCherRight",
+            "DRTubeEdep",
+            "DRETCherRight_digi",
+            "DRETCherRight_link",
+            1.0 / 68.25,
+        ),
+        optical_digi(
+            "createHcalEndcapLScintCells",
+            "DRETScinLeft",
+            "DRTubeEdep",
+            "DRETScinLeft_digi",
+            "DRETScinLeft_link",
+            1.0 / 206.25,
+        ),
+        optical_digi(
+            "createHcalEndcapLCherenCells",
+            "DRETCherLeft",
+            "DRTubeEdep",
+            "DRETCherLeft_digi",
+            "DRETCherLeft_link",
+            1.0 / 68.25,
+        ),
     ]
 
 # ---- Seed -> merge -> grow clustering (SCEPCal) ----
@@ -174,8 +224,10 @@ createTruthLinksECAL = CreateTruthLinks(
 hcal_links = ["DRBTScin_link", "DRBTCher_link"]
 if not CI:
     hcal_links += [
-        "DRETScinRight_link", "DRETCherRight_link",
-        "DRETScinLeft_link", "DRETCherLeft_link",
+        "DRETScinRight_link",
+        "DRETCherRight_link",
+        "DRETScinLeft_link",
+        "DRETCherLeft_link",
     ]
 
 createTruthLinksHCAL = CreateTruthLinks(
