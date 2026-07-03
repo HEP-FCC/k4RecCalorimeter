@@ -15,12 +15,11 @@
 //  ClusterSeedMerging
 // ============================================================
 
-ClusterSeedMerging::ClusterSeedMerging(const std::string& name,
-                                       ISvcLocator*      svcLoc)
+ClusterSeedMerging::ClusterSeedMerging(const std::string& name, ISvcLocator* svcLoc)
     : ClusterSeedingBase(name, svcLoc,
-                       {KeyValues("CaloDrivenSeeds", {}), // allow multiple input collections to be merged together
-                        KeyValues("TrackDrivenSeeds", {})},
-                       {KeyValue("OutputMergedSeeds", "MergedSeeds")}) {}
+                         {KeyValues("CaloDrivenSeeds", {}), // allow multiple input collections to be merged together
+                          KeyValues("TrackDrivenSeeds", {})},
+                         {KeyValue("OutputMergedSeeds", "MergedSeeds")}) {}
 
 // ------------------------------------------------------------
 
@@ -33,9 +32,8 @@ StatusCode ClusterSeedMerging::initialize() {
 // ------------------------------------------------------------
 
 std::tuple<edm4hep::ClusterCollection>
-ClusterSeedMerging::operator()(
-    const std::vector<const edm4hep::ClusterCollection*>& caloSeeds,
-    const std::vector<const edm4hep::ClusterCollection*>& trackSeeds) const {
+ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollection*>& caloSeeds,
+                               const std::vector<const edm4hep::ClusterCollection*>& trackSeeds) const {
 
   edm4hep::ClusterCollection mergedOut;
 
@@ -44,9 +42,9 @@ ClusterSeedMerging::operator()(
   //         theta, phi).
   // ------------------------------------------------------------------
   struct Node {
-    int   type; // seed types: 1 = calo-driven A, 2 = calo-driven B, 4 = track-driven C
-    int   collIdx; // index of the source collection in the input vector
-    int   srcIdx; // index in the source collection
+    int type;      // seed types: 1 = calo-driven A, 2 = calo-driven B, 4 = track-driven C
+    int collIdx;   // index of the source collection in the input vector
+    int srcIdx;    // index in the source collection
     float x, y, z; // position of the seed (mm)
   };
 
@@ -61,7 +59,7 @@ ClusterSeedMerging::operator()(
   auto addNodes = [&nodes](const edm4hep::ClusterCollection* coll, int collIdx) {
     for (int i = 0; i < static_cast<int>(coll->size()); ++i) {
       const auto& cl = (*coll)[i];
-      const auto& p  = cl.getPosition();
+      const auto& p = cl.getPosition();
       const int type = cl.getType();
       nodes.push_back({type, collIdx, i, p.x, p.y, p.z});
     }
@@ -93,18 +91,18 @@ ClusterSeedMerging::operator()(
   auto adjacent = [&nodes, mergeDist](int i, int j) -> bool {
     const Node& ni = nodes[i];
     const Node& nj = nodes[j];
-    const float r2i = ni.x*ni.x + ni.y*ni.y + ni.z*ni.z;
-    const float r2j = nj.x*nj.x + nj.y*nj.y + nj.z*nj.z;
+    const float r2i = ni.x * ni.x + ni.y * ni.y + ni.z * ni.z;
+    const float r2j = nj.x * nj.x + nj.y * nj.y + nj.z * nj.z;
     if (r2i <= 0.f || r2j <= 0.f)
       return false;
 
-    const float dotij = ni.x*nj.x + ni.y*nj.y + ni.z*nj.z;
+    const float dotij = ni.x * nj.x + ni.y * nj.y + ni.z * nj.z;
     if (dotij <= 0.f)
       return false; // opposite hemisphere - never adjacent
 
     // opening angle between the two position vectors
     const float cosAlpha = dotij / std::sqrt(r2i * r2j);
-    const float alpha    = std::acos(std::max(-1.f, std::min(1.f, cosAlpha)));
+    const float alpha = std::acos(std::max(-1.f, std::min(1.f, cosAlpha)));
 
     return alpha < std::atan2(mergeDist, std::sqrt(r2i));
   }; // lambda adjacent
@@ -128,7 +126,8 @@ ClusterSeedMerging::operator()(
     q.push(i);
 
     while (!q.empty()) {
-      const int cur = q.front(); q.pop();
+      const int cur = q.front();
+      q.pop();
       if (visited[cur])
         continue;
 
@@ -219,8 +218,7 @@ ClusterSeedMerging::operator()(
   } // while anyAbsorbed
 
   debug() << "ClusterSeedMerging: " << std::count(absorbed.begin(), absorbed.end(), -1)
-          << " output components after absorbing "
-          << (nComp - std::count(absorbed.begin(), absorbed.end(), -1))
+          << " output components after absorbing " << (nComp - std::count(absorbed.begin(), absorbed.end(), -1))
           << " fully-overlapping components." << endmsg;
 
   // ------------------------------------------------------------------
@@ -279,7 +277,7 @@ ClusterSeedMerging::operator()(
 
       if (d < bestDist) {
         bestDist = d;
-        winner   = ci;
+        winner = ci;
       }
     } // loop over owners to find winner
 
@@ -292,8 +290,8 @@ ClusterSeedMerging::operator()(
     } // loop over owners to remove losers
   } // loop over contested hits
 
-  debug() << "ClusterSeedMerging: redistributed " << nRedistributed
-          << " contested hits via opening-angle distance." << endmsg;
+  debug() << "ClusterSeedMerging: redistributed " << nRedistributed << " contested hits via opening-angle distance."
+          << endmsg;
 
   // ------------------------------------------------------------------
   // Step 6: Build output collections.
@@ -320,8 +318,7 @@ ClusterSeedMerging::operator()(
       merged.addToHits(hit);
   } // loop over components
 
-  debug() << "ClusterSeedMerging: "
-          << mergedOut.size()  << " merged groups." << endmsg;
+  debug() << "ClusterSeedMerging: " << mergedOut.size() << " merged groups." << endmsg;
 
   return std::make_tuple(std::move(mergedOut));
 }

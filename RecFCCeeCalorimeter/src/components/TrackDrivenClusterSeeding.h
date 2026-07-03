@@ -42,11 +42,11 @@
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/TrackCollection.h"
 
-#include "k4FWCore/Transformer.h"
 #include "Gaudi/Property.h"
+#include "k4FWCore/Transformer.h"
 
-#include "ClusterSeedingBase.h"
 #include "ClusterSeedMerging.h" // for SeedType enum
+#include "ClusterSeedingBase.h"
 
 #include <cmath>
 #include <limits>
@@ -55,10 +55,8 @@
 #include <vector>
 
 struct TrackDrivenClusterSeeding final
-    : ClusterSeedingBase<
-          std::tuple<edm4hep::ClusterCollection>(
-              const edm4hep::TrackCollection&,
-              const std::vector<const edm4hep::CalorimeterHitCollection*>&)> {
+    : ClusterSeedingBase<std::tuple<edm4hep::ClusterCollection>(
+          const edm4hep::TrackCollection&, const std::vector<const edm4hep::CalorimeterHitCollection*>&)> {
 
   TrackDrivenClusterSeeding(const std::string& name, ISvcLocator* svcLoc);
 
@@ -71,12 +69,10 @@ struct TrackDrivenClusterSeeding final
 
   // ---- Algorithm parameters ----
   Gaudi::Property<float> m_seedEnergyThreshold{
-      this, "SeedEnergyThreshold", 0.020f,
-      "Minimum crystal energy [GeV] to be considered as a Type-C seed candidate"};
-  Gaudi::Property<float> m_trackWindow{
-      this, "TrackWindow", 0.05f,
-      "Angular search cone half-angle [rad] around the track impact point: "
-      "sqrt(dTheta^2 + dPhi^2) < TrackWindow"};
+      this, "SeedEnergyThreshold", 0.020f, "Minimum crystal energy [GeV] to be considered as a Type-C seed candidate"};
+  Gaudi::Property<float> m_trackWindow{this, "TrackWindow", 0.05f,
+                                       "Angular search cone half-angle [rad] around the track impact point: "
+                                       "sqrt(dTheta^2 + dPhi^2) < TrackWindow"};
 };
 
 #endif // TrackDrivenClusterSeeding_h

@@ -51,20 +51,17 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/ClusterCollection.h"
 
-#include "k4FWCore/Transformer.h"
 #include "Gaudi/Property.h"
+#include "k4FWCore/Transformer.h"
 
 #include "ClusterSeedingBase.h"
 
 #include <tuple>
 #include <vector>
 
-struct ClusterSeedGrower final
-    : ClusterSeedingBase<
-          std::tuple<edm4hep::ClusterCollection>(
-              const std::vector<const edm4hep::ClusterCollection*>&,
-              const std::vector<const edm4hep::CalorimeterHitCollection*>&)>
-{
+struct ClusterSeedGrower final : ClusterSeedingBase<std::tuple<edm4hep::ClusterCollection>(
+                                     const std::vector<const edm4hep::ClusterCollection*>&,
+                                     const std::vector<const edm4hep::CalorimeterHitCollection*>&)> {
   ClusterSeedGrower(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize() override;
@@ -77,18 +74,16 @@ struct ClusterSeedGrower final
 private:
   // Contest resolution strategy for grow().
   enum class ContestStrategy {
-    ResolveByDist,   // closest cluster by opening-angle distance keeps hit; others get nothing
-    MergeClusters    // contested hit fully merges the two clusters (union-find)
+    ResolveByDist, // closest cluster by opening-angle distance keeps hit; others get nothing
+    MergeClusters  // contested hit fully merges the two clusters (union-find)
   };
 
   // Find all connected components in *pool* where every member has
   // E >= threshold, using VN neighbourhood distance vnDist.
   // Returns one Hitmap per component; components with fewer than
   // minHits members are already filtered out before returning.
-  std::vector<ClusterSeedingBase::Hitmap> connectedSeeds(const ClusterSeedingBase::Hitmap& pool,
-                                                         unsigned int vnDist,
-                                                         float threshold,
-                                                         unsigned int minHits) const;
+  std::vector<ClusterSeedingBase::Hitmap> connectedSeeds(const ClusterSeedingBase::Hitmap& pool, unsigned int vnDist,
+                                                         float threshold, unsigned int minHits) const;
 
   // Layer-by-layer BFS growth of *seeds* into *pool* hits above *growThreshold*.
   // Seeds are moved in; the fully-grown Hitmaps are returned.
@@ -97,12 +92,9 @@ private:
   //   MergeClusters:  contested hits cause a full union-find merge of the
   //                   two competing clusters; output contains one Hitmap
   //                   per surviving (root) cluster.
-  std::vector<ClusterSeedingBase::Hitmap>
-  grow(ContestStrategy                         strategy,
-       const ClusterSeedingBase::Hitmap&       pool,
-       const std::vector<ClusterSeedingBase::Hitmap>& seeds,
-       unsigned int                            vnDist,
-       float                                   growThreshold) const;
+  std::vector<ClusterSeedingBase::Hitmap> grow(ContestStrategy strategy, const ClusterSeedingBase::Hitmap& pool,
+                                               const std::vector<ClusterSeedingBase::Hitmap>& seeds,
+                                               unsigned int vnDist, float growThreshold) const;
 
   // Attach isolated hits above HardThreshold to the nearest cluster by opening-angle distance
   void attachIsolatedHits(const ClusterSeedingBase::Hitmap& pool,
@@ -111,26 +103,21 @@ private:
 
   // ---- Cell-ID inclusion (daughter-specific) ----
   Gaudi::Property<std::vector<std::string>> m_fieldStringsToInclude{
-      this, "FieldStringsToInclude", {},
-      "BitField names used to include hits (e.g. 'cherenkov', 'layer')"};
+      this, "FieldStringsToInclude", {}, "BitField names used to include hits (e.g. 'cherenkov', 'layer')"};
   Gaudi::Property<std::vector<int>> m_fieldValuesToInclude{
-      this, "FieldValuesToInclude", {},
-      "Values corresponding to FieldStringsToInclude for hit selection"};
+      this, "FieldValuesToInclude", {}, "Values corresponding to FieldStringsToInclude for hit selection"};
 
   // ---- Energy thresholds ----
-  Gaudi::Property<float> m_growThreshold{
-      this, "GrowThreshold", 0.01f,
-      "Minimum hit energy [GeV] for BFS propagation. "
-      "Hits below this threshold block further topological growth."};
-  Gaudi::Property<float> m_hardThreshold{
-      this, "HardThreshold", 0.01f,
-      "Absolute minimum hit energy [GeV]. Hits below this are never attached "
-      "to any cluster (HardThreshold <= GrowThreshold is expected)."};
-  Gaudi::Property<float> m_unseededThreshold{
-      this, "UnseededThreshold", 0.04f,
-      "Minimum hit energy [GeV] required to seed an unseeded cluster candidate. "
-      "A group of >= MinUnseededHits connected hits all above this threshold "
-      "forms one unseeded cluster seed."};
+  Gaudi::Property<float> m_growThreshold{this, "GrowThreshold", 0.01f,
+                                         "Minimum hit energy [GeV] for BFS propagation. "
+                                         "Hits below this threshold block further topological growth."};
+  Gaudi::Property<float> m_hardThreshold{this, "HardThreshold", 0.01f,
+                                         "Absolute minimum hit energy [GeV]. Hits below this are never attached "
+                                         "to any cluster (HardThreshold <= GrowThreshold is expected)."};
+  Gaudi::Property<float> m_unseededThreshold{this, "UnseededThreshold", 0.04f,
+                                             "Minimum hit energy [GeV] required to seed an unseeded cluster candidate. "
+                                             "A group of >= MinUnseededHits connected hits all above this threshold "
+                                             "forms one unseeded cluster seed."};
 
   // ---- Neighbourhood distances ----
   Gaudi::Property<unsigned int> m_vnDistSeeded{

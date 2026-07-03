@@ -31,8 +31,8 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/ClusterCollection.h"
 
-#include "k4FWCore/Transformer.h"
 #include "Gaudi/Property.h"
+#include "k4FWCore/Transformer.h"
 
 #include "ClusterSeedingBase.h"
 
@@ -40,9 +40,8 @@
 #include <vector>
 
 struct CaloDrivenClusterSeeding final
-    : ClusterSeedingBase<
-          std::tuple<edm4hep::ClusterCollection, edm4hep::ClusterCollection>(
-              const std::vector<const edm4hep::CalorimeterHitCollection*>&)> {
+    : ClusterSeedingBase<std::tuple<edm4hep::ClusterCollection, edm4hep::ClusterCollection>(
+          const std::vector<const edm4hep::CalorimeterHitCollection*>&)> {
 
   CaloDrivenClusterSeeding(const std::string& name, ISvcLocator* svcLoc);
 
@@ -63,7 +62,7 @@ struct CaloDrivenClusterSeeding final
       this, "MinAboveThresholdNeighbours", 2,
       "Minimum number of above-threshold neighbours (including seed) for a Type-B seed"};
   Gaudi::Property<int> m_vnDistance{this, "VonNeumannDistance", 2,
-      "Von Neumann distance for neighbourhood definition (applies to both seed types)"};
+                                    "Von Neumann distance for neighbourhood definition (applies to both seed types)"};
 };
 
 #endif // CaloDrivenClusterSeeding_h

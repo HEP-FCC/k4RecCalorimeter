@@ -11,10 +11,10 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <queue>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <queue>
 #include <vector>
 
 // ============================================================
@@ -22,10 +22,8 @@
 // ============================================================
 
 ClusterSeedGrower::ClusterSeedGrower(const std::string& name, ISvcLocator* svcLoc)
-    : ClusterSeedingBase(name, svcLoc,
-                       {KeyValues("InputSeeds", {}),
-                        KeyValues("InputHits",  {})},
-                       {KeyValue("OutputClusters", "TopoGrownClusters")}) {}
+    : ClusterSeedingBase(name, svcLoc, {KeyValues("InputSeeds", {}), KeyValues("InputHits", {})},
+                         {KeyValue("OutputClusters", "TopoGrownClusters")}) {}
 
 // ------------------------------------------------------------
 
@@ -48,9 +46,9 @@ StatusCode ClusterSeedGrower::initialize() {
   }
 
   if (m_hardThreshold.value() > m_growThreshold.value()) {
-    warning() << "ClusterSeedGrower: HardThreshold (" << m_hardThreshold.value()
-              << " GeV) > GrowThreshold (" << m_growThreshold.value()
-              << " GeV). No isolated hits will ever be assigned in the post-BFS phase." << endmsg;
+    warning() << "ClusterSeedGrower: HardThreshold (" << m_hardThreshold.value() << " GeV) > GrowThreshold ("
+              << m_growThreshold.value() << " GeV). No isolated hits will ever be assigned in the post-BFS phase."
+              << endmsg;
   }
 
   return StatusCode::SUCCESS;
@@ -58,11 +56,8 @@ StatusCode ClusterSeedGrower::initialize() {
 
 // ------------------------------------------------------------
 
-auto ClusterSeedGrower::connectedSeeds(const Hitmap& pool,
-                                       unsigned int  vnDist,
-                                       float         threshold,
-                                       unsigned int  minHits) const
-    -> std::vector<Hitmap> {
+auto ClusterSeedGrower::connectedSeeds(const Hitmap& pool, unsigned int vnDist, float threshold,
+                                       unsigned int minHits) const -> std::vector<Hitmap> {
   // visited tracks which cells in *pool* have already been consumed
   // into a component.  Only cells present in *pool* are ever visited.
   std::unordered_map<uint64_t, bool> visited;
@@ -122,14 +117,11 @@ auto ClusterSeedGrower::connectedSeeds(const Hitmap& pool,
 
 // ------------------------------------------------------------
 
-auto ClusterSeedGrower::grow(ContestStrategy         strategy,
-                             const Hitmap&           pool,
-                             const std::vector<Hitmap>& seeds,
-                             unsigned int            vnDist,
-                             float                   growThreshold) const
-    -> std::vector<Hitmap> {
+auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const std::vector<Hitmap>& seeds,
+                             unsigned int vnDist, float growThreshold) const -> std::vector<Hitmap> {
   const int n = static_cast<int>(seeds.size());
-  if (n == 0) return {};
+  if (n == 0)
+    return {};
 
   // Working copy: starts identical to seeds and accumulates new hits layer by layer.
   // Returned to the caller when done (possibly with fewer entries for MergeClusters).
@@ -334,12 +326,12 @@ auto ClusterSeedGrower::grow(ContestStrategy         strategy,
 // ------------------------------------------------------------
 
 void ClusterSeedGrower::attachIsolatedHits(const ClusterSeedingBase::Hitmap& pool,
-                                          std::vector<ClusterSeedingBase::Hitmap>& seededClusters,
-                                          std::vector<ClusterSeedingBase::Hitmap>& unseededClusters) const {
+                                           std::vector<ClusterSeedingBase::Hitmap>& seededClusters,
+                                           std::vector<ClusterSeedingBase::Hitmap>& unseededClusters) const {
   // --- Snapshot barycenters for all clusters (seeded + unseeded) ---
-  const int nSeeded   = static_cast<int>(seededClusters.size());
+  const int nSeeded = static_cast<int>(seededClusters.size());
   const int nUnseeded = static_cast<int>(unseededClusters.size());
-  const int nTotal    = nSeeded + nUnseeded;
+  const int nTotal = nSeeded + nUnseeded;
 
   // for i < nSeeded   -> seededClusters[i]
   // for i >= nSeeded  -> unseededClusters[i - nSeeded]
@@ -367,29 +359,29 @@ void ClusterSeedGrower::attachIsolatedHits(const ClusterSeedingBase::Hitmap& poo
     if (ownedCells.count(cid))
       continue; // already in a cluster
 
-    const auto& pos  = hit.getPosition();
-    const float rh   = std::sqrt(pos.x*pos.x + pos.y*pos.y + pos.z*pos.z);
+    const auto& pos = hit.getPosition();
+    const float rh = std::sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
     if (rh < std::numeric_limits<float>::epsilon())
       continue; // degenerate hit position
 
-    int   bestIdx = -1;
-    float bestDist  = std::numeric_limits<float>::max();
+    int bestIdx = -1;
+    float bestDist = std::numeric_limits<float>::max();
 
     for (int i = 0; i < nTotal; ++i) {
       const ClusterState& cs = statesBeforeAttach[i];
-      const float rc = std::sqrt(cs.x*cs.x + cs.y*cs.y + cs.z*cs.z);
+      const float rc = std::sqrt(cs.x * cs.x + cs.y * cs.y + cs.z * cs.z);
       if (rc < std::numeric_limits<float>::epsilon())
         continue;
 
       // Opening-angle preselection: cosine of angle between cluster
       // barycenter direction and hit direction.
-      const float cosAngle = (cs.x*pos.x + cs.y*pos.y + cs.z*pos.z) / (rc * rh);
+      const float cosAngle = (cs.x * pos.x + cs.y * pos.y + cs.z * pos.z) / (rc * rh);
       if (cosAngle < cosGate)
         continue; // opening angle > MaxOpeningAngle
 
       const float dist = openingAngleDist(cs, pos.x, pos.y, pos.z);
       if (dist < bestDist) {
-        bestDist  = dist;
+        bestDist = dist;
         bestIdx = i;
       }
     } // loop over all clusters
@@ -406,17 +398,15 @@ void ClusterSeedGrower::attachIsolatedHits(const ClusterSeedingBase::Hitmap& poo
     ++nAttached;
   } // loop over hitPool cells
 
-  debug() << "ClusterSeedGrower: Step 5 attached " << nAttached
-          << " previously unowned hit(s) to existing clusters "
+  debug() << "ClusterSeedGrower: Step 5 attached " << nAttached << " previously unowned hit(s) to existing clusters "
           << "(MaxOpeningAngle = " << m_maxOpeningAngle.value() << " rad)." << endmsg;
 } // attachIsolatedHits
 
 // ------------------------------------------------------------
 
 std::tuple<edm4hep::ClusterCollection>
-ClusterSeedGrower::operator()(
-    const std::vector<const edm4hep::ClusterCollection*>& seedColls,
-    const std::vector<const edm4hep::CalorimeterHitCollection*>& hitColls) const {
+ClusterSeedGrower::operator()(const std::vector<const edm4hep::ClusterCollection*>& seedColls,
+                              const std::vector<const edm4hep::CalorimeterHitCollection*>& hitColls) const {
 
   edm4hep::ClusterCollection output;
 
@@ -458,7 +448,7 @@ ClusterSeedGrower::operator()(
   // seedTypes records each input seed's type so Step 6 can reproduce it.
   // A temporary flat set handles shared seed hits: first seed wins.
   std::vector<ClusterSeedingBase::Hitmap> initClusterHits(nClusters);
-  std::vector<int32_t>                    seedTypes(nClusters);
+  std::vector<int32_t> seedTypes(nClusters);
   {
     std::unordered_set<uint64_t> initAssigned;
     initAssigned.reserve(hitPool.size());
@@ -484,11 +474,8 @@ ClusterSeedGrower::operator()(
   // ------------------------------------------------------------------
   // Step 3: BFS growth of seeded clusters (opening-angle distance contest resolution).
   // ------------------------------------------------------------------
-  auto seededClusters = grow(ContestStrategy::ResolveByDist,
-                             hitPool,
-                             initClusterHits,
-                             m_vnDistSeeded.value(),
-                             m_growThreshold.value());
+  auto seededClusters =
+      grow(ContestStrategy::ResolveByDist, hitPool, initClusterHits, m_vnDistSeeded.value(), m_growThreshold.value());
 
   // ------------------------------------------------------------------
   // Step 4: Unseeded cluster formation from unassigned hits.
@@ -500,9 +487,9 @@ ClusterSeedGrower::operator()(
   //      VN distance VNDistUnseeded); a contested hit fully merges the
   //      two competing clusters (union-find).
   // ------------------------------------------------------------------
-  const unsigned int vnUnseeded  = m_vnDistUnseeded.value();
-  const float        unseededThr = m_unseededThreshold.value();
-  const unsigned int minUHits    = m_minUnseededHits.value();
+  const unsigned int vnUnseeded = m_vnDistUnseeded.value();
+  const float unseededThr = m_unseededThreshold.value();
+  const unsigned int minUHits = m_minUnseededHits.value();
 
   // Build unowned pool: hitPool cells not assigned to any seeded cluster.
   std::unordered_set<uint64_t> seededOwned;
@@ -521,11 +508,8 @@ ClusterSeedGrower::operator()(
 
   // Find connected seed groups, then grow them (merging on contest).
   auto unseededClusters =
-      grow(ContestStrategy::MergeClusters,
-           unownedPool,
-           connectedSeeds(unownedPool, vnUnseeded, unseededThr, minUHits),
-           vnUnseeded,
-           m_growThreshold.value());
+      grow(ContestStrategy::MergeClusters, unownedPool, connectedSeeds(unownedPool, vnUnseeded, unseededThr, minUHits),
+           vnUnseeded, m_growThreshold.value());
 
   // Count discarded hits (in unownedPool but not in any unseeded cluster)
   int nAssignedUnseeded = 0;
@@ -533,10 +517,9 @@ ClusterSeedGrower::operator()(
     nAssignedUnseeded += static_cast<int>(hm.size());
 
   const int nDiscarded = nUnownedAfterSeeded - nAssignedUnseeded;
-  debug() << "ClusterSeedGrower: " << nUnownedAfterSeeded
-          << " unowned hits after seeded BFS; "
-          << unseededClusters.size() << " unseeded cluster(s) formed; "
-          << nDiscarded << " hit(s) discarded after unseeded BFS." << endmsg;
+  debug() << "ClusterSeedGrower: " << nUnownedAfterSeeded << " unowned hits after seeded BFS; "
+          << unseededClusters.size() << " unseeded cluster(s) formed; " << nDiscarded
+          << " hit(s) discarded after unseeded BFS." << endmsg;
 
   // ------------------------------------------------------------------
   // Step 5 (optional): Attach remaining unowned hitPool cells to the nearest cluster.
@@ -561,7 +544,7 @@ ClusterSeedGrower::operator()(
   auto addCompanions = [&](ClusterSeedingBase::Hitmap& hm) {
     for (unsigned int idx = 0; idx < m_fieldStringsToInclude.size(); ++idx) {
       const std::string& field = m_fieldStringsToInclude.value()[idx];
-      const int64_t      value = m_fieldValuesToInclude.value()[idx];
+      const int64_t value = m_fieldValuesToInclude.value()[idx];
       // Snapshot before the loop so we don't re-process companions just added.
       const ClusterSeedingBase::Hitmap snapshot = hm;
       for (const auto& [origCid, hit] : snapshot) {
@@ -613,10 +596,8 @@ ClusterSeedGrower::operator()(
     ++nUnseededOut;
   } // loop over unseeded clusters
 
-  debug() << "ClusterSeedGrower: produced " << output.size() << " clusters total ("
-          << (output.size() - nUnseededOut) << " seeded + "
-          << nUnseededOut << " unseeded) from a hit pool of "
-          << hitPool.size() << " cells." << endmsg;
+  debug() << "ClusterSeedGrower: produced " << output.size() << " clusters total (" << (output.size() - nUnseededOut)
+          << " seeded + " << nUnseededOut << " unseeded) from a hit pool of " << hitPool.size() << " cells." << endmsg;
 
   return std::make_tuple(std::move(output));
 }

@@ -56,9 +56,9 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/MutableCluster.h"
 
+#include "Gaudi/Property.h"
 #include "k4FWCore/Transformer.h"
 #include "k4Interface/IGeoSvc.h"
-#include "Gaudi/Property.h"
 
 #include "DD4hep/Detector.h"
 #include "DD4hep/Readout.h"
@@ -73,11 +73,11 @@
 
 // forward declarations
 namespace dd4hep {
-  namespace DDSegmentation {
-    class Segmentation;
-    class BitFieldCoder;
-  }
-}
+namespace DDSegmentation {
+  class Segmentation;
+  class BitFieldCoder;
+} // namespace DDSegmentation
+} // namespace dd4hep
 
 // ============================================================
 //  ClusterSeedingBase
@@ -116,18 +116,18 @@ protected:
       return StatusCode::FAILURE;
     }
 
-    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) ==
-        m_geoSvc->getDetector()->readouts().end()) {
+    if (m_geoSvc->getDetector()->readouts().find(m_readoutName) == m_geoSvc->getDetector()->readouts().end()) {
       this->error() << "Readout <<" << m_readoutName << ">> does not exist." << endmsg;
       return StatusCode::FAILURE;
     }
 
     m_segmentation = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().segmentation();
-    m_decoder      = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().decoder();
+    m_decoder = m_geoSvc->getDetector()->readout(m_readoutName).segmentation().decoder();
 
     if (m_fieldStringsToFilter.size() != m_fieldValuesToFilter.size()) {
       this->error() << "FieldStringsToFilter and FieldValuesToFilter must have the same number of entries "
-              << "(got " << m_fieldStringsToFilter.size() << " vs " << m_fieldValuesToFilter.size() << ")." << endmsg;
+                    << "(got " << m_fieldStringsToFilter.size() << " vs " << m_fieldValuesToFilter.size() << ")."
+                    << endmsg;
       return StatusCode::FAILURE;
     }
 
@@ -301,27 +301,23 @@ protected:
   // ---- Shared protected properties ----
 
   // Readout / cell-ID decoding
-  Gaudi::Property<std::string> m_readoutName{
-      this, "ReadoutName", "",
-      "Name of the calorimeter readout (used to retrieve the segmentation)"};
+  Gaudi::Property<std::string> m_readoutName{this, "ReadoutName", "",
+                                             "Name of the calorimeter readout (used to retrieve the segmentation)"};
 
   // Exclude cells matching any (field, value) pair
   Gaudi::Property<std::vector<std::string>> m_fieldStringsToFilter{
-      this, "FieldStringsToFilter", {},
-      "BitField names used to filter (exclude) hits, e.g. 'cherenkov', 'layer'"};
+      this, "FieldStringsToFilter", {}, "BitField names used to filter (exclude) hits, e.g. 'cherenkov', 'layer'"};
   Gaudi::Property<std::vector<int>> m_fieldValuesToFilter{
-      this, "FieldValuesToFilter", {},
-      "Values corresponding to FieldStringsToFilter"};
+      this, "FieldValuesToFilter", {}, "Values corresponding to FieldStringsToFilter"};
 
   // Barycenter / distance parameters
-  Gaudi::Property<float> m_w0{
-      this, "W0", 4.6f,
-      "Log-weight offset in log-weighted barycenter: w_i = max(0, W0 + ln(E_i/E_tot))"};
+  Gaudi::Property<float> m_w0{this, "W0", 4.6f,
+                              "Log-weight offset in log-weighted barycenter: w_i = max(0, W0 + ln(E_i/E_tot))"};
 
   // ---- Shared protected data members ----
-  SmartIF<IGeoSvc>                                   m_geoSvc;
-  dd4hep::DDSegmentation::Segmentation*              m_segmentation{nullptr};
-  const dd4hep::DDSegmentation::BitFieldCoder*       m_decoder{nullptr};
+  SmartIF<IGeoSvc> m_geoSvc;
+  dd4hep::DDSegmentation::Segmentation* m_segmentation{nullptr};
+  const dd4hep::DDSegmentation::BitFieldCoder* m_decoder{nullptr};
 };
 
 #endif // ClusterSeedingBase_h

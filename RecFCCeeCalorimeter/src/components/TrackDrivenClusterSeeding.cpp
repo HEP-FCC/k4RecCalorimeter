@@ -18,29 +18,25 @@
 //  TrackDrivenClusterSeeding
 // ============================================================
 
-TrackDrivenClusterSeeding::TrackDrivenClusterSeeding(const std::string& name,
-                                                     ISvcLocator*      svcLoc)
-    : ClusterSeedingBase(name, svcLoc,
-                       {KeyValue ("InputTrackCollection",   "TracksFromGenParticles"),
-                        KeyValues("InputCaloHitCollections", {})},
-                       {KeyValue ("OutputSeedsC", "TrackDrivenSeedsC")}) {}
+TrackDrivenClusterSeeding::TrackDrivenClusterSeeding(const std::string& name, ISvcLocator* svcLoc)
+    : ClusterSeedingBase(
+          name, svcLoc,
+          {KeyValue("InputTrackCollection", "TracksFromGenParticles"), KeyValues("InputCaloHitCollections", {})},
+          {KeyValue("OutputSeedsC", "TrackDrivenSeedsC")}) {}
 
 // ------------------------------------------------------------
 
-StatusCode TrackDrivenClusterSeeding::initialize() {
-  return ClusterSeedingBase::initialize();
-}
+StatusCode TrackDrivenClusterSeeding::initialize() { return ClusterSeedingBase::initialize(); }
 
 // ------------------------------------------------------------
 
 std::tuple<edm4hep::ClusterCollection>
-TrackDrivenClusterSeeding::operator()(
-    const edm4hep::TrackCollection&                                  trackColl,
-    const std::vector<const edm4hep::CalorimeterHitCollection*>& caloHitColls) const {
+TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
+                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& caloHitColls) const {
 
   edm4hep::ClusterCollection seedsC;
 
-  const float thr    = m_seedEnergyThreshold.value();
+  const float thr = m_seedEnergyThreshold.value();
   const float window = m_trackWindow.value();
 
   // ------------------------------------------------------------------
@@ -51,10 +47,12 @@ TrackDrivenClusterSeeding::operator()(
   ClusterSeedingBase::Hitmap hitMap;
 
   for (const auto* coll : caloHitColls) {
-    if (!coll) continue;
+    if (!coll)
+      continue;
     for (const auto& hit : *coll) {
       const uint64_t cellID = hit.getCellID();
-      if (!passSelection(cellID)) continue;
+      if (!passSelection(cellID))
+        continue;
       energyMap[cellID] += hit.getEnergy();
       hitMap.try_emplace(cellID, hit);
     }
@@ -65,7 +63,7 @@ TrackDrivenClusterSeeding::operator()(
   //         sqrt/atan2 calls during the per-track search.
   // ------------------------------------------------------------------
 
-  std::unordered_map<uint64_t, std::pair<float,float>> posMap; // cellID -> (theta, phi)
+  std::unordered_map<uint64_t, std::pair<float, float>> posMap; // cellID -> (theta, phi)
   posMap.reserve(hitMap.size());
   for (const auto& [cellID, hit] : hitMap) {
     const auto& p = hit.getPosition();
@@ -76,7 +74,7 @@ TrackDrivenClusterSeeding::operator()(
   // Step 3: Collect all track states at the calorimeter surface.
   //         edm4hep TrackState location == 4: AtCalorimeter.
   // ------------------------------------------------------------------
-  std::vector<std::pair<float,float>> trackImpacts; // (theta, phi)
+  std::vector<std::pair<float, float>> trackImpacts; // (theta, phi)
   for (const auto& track : trackColl) {
     for (const auto& ts : track.getTrackStates()) {
       if (ts.location != edm4hep::TrackState::AtCalorimeter)
@@ -122,7 +120,7 @@ TrackDrivenClusterSeeding::operator()(
         if (passSelection(nb))
           filteredNbrs.insert(nb);
       }
-  
+
       bool isLocalMax = true;
       for (const uint64_t nb : filteredNbrs) {
         if (nb == cellID)
@@ -164,8 +162,7 @@ TrackDrivenClusterSeeding::operator()(
     }
   } // loop over track impacts
 
-  debug() << "TrackDrivenClusterSeeding: found " << seedsC.size()
-          << " Type-C seeds from " << trackImpacts.size()
+  debug() << "TrackDrivenClusterSeeding: found " << seedsC.size() << " Type-C seeds from " << trackImpacts.size()
           << " track states." << endmsg;
 
   return std::make_tuple(std::move(seedsC));
