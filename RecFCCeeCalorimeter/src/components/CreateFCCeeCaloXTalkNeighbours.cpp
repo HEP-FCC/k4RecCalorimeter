@@ -172,8 +172,8 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
             }
             // Debug: save cell position
             if (m_debugCellInfo) {
-              saveCellInfo = det::crosstalk::getCellIndices(
-                  *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"}, id);
+              saveCellInfo = det::crosstalk::getCellIndices(*moduleThetaSegmentation, *decoder,
+                                                           {m_activeFieldNamesSegmented[iSys], "module", "theta"}, id);
             }
             tree.Fill();
 
