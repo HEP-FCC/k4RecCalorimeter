@@ -84,7 +84,7 @@ public:
             // Retrieve the score from the shape parameters and if it exceeds the threshold
             // create and fill a new ReconstructedParticle
             float clusterScore = cluster.getShapeParameters(m_scoreIndex.value());
-            debug() << "Cluster score: " << clusterScore << endmsg;
+            debug() << "Cluster score: " << clusterScore << ", threshold: " << m_threshold << endmsg;
             if (clusterScore > m_threshold) {
                 auto particle = outputParticles.create();
                 particle.addToClusters(cluster);
@@ -95,12 +95,11 @@ public:
                 particle.setGoodnessOfPID(clusterScore);
                 particle.setEnergy(energy);
                 particle.setMass(0.1349768); // From PDG table
+                // Assuming pi0 is coming from the IP, will change this once the tool to retrieve cluster direction is implemented
                 edm4hep::Vector3f momentum = calculateMomentum(energy, position, edm4hep::Vector3f(0, 0, 0));
                 particle.setMomentum(momentum);
-
             }
         }
-
         return std::make_tuple(std::move(outputParticles));
     }
 
