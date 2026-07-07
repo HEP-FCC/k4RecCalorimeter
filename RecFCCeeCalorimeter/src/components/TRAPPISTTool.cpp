@@ -1,19 +1,43 @@
-// k4FWCore / k4Interface
+// k4FWCore
 #include "k4FWCore/Transformer.h"
+#include "k4FWCore/MetadataUtils.h"
+#include "k4FWCore/DataHandle.h"
+
+// Gaudi
+#include "GaudiKernel/ToolHandle.h"
 
 // EDM4hep
 #include "edm4hep/CalorimeterHitCollection.h"
-#include "edm4hep/ReconstructedParticleCollection.h"
 #include "edm4hep/ClusterCollection.h"
+
+// ONNX
+#include "onnxruntime_cxx_api.h"
+#include "onnxruntime_run_options_config_keys.h"
+#include "OnnxruntimeUtilities.h"
 
 // STL
 #include <vector>
 
+/** @struct TRAPPISTTool
+ *
+ * Gaudi MultiTransformer that produces produces a classification score for a given cluster using a 
+ * pre-trained ONNX model based on the GATr architecture (https://arxiv.org/abs/2305.18415). For each
+ * input cluster, the tool extracts the positions and energies of its hits, formats them into tensors,
+ * and feeds them into the ONNX model to obtain a classification score. The score is then appended 
+ * to the cluster's shapeParameters, and the new cluster is added to the output collection.
+ *
+ * input: edm4hep::ClusterCollection
+ * output: edm4hep::ClusterCollection
+ *
+ *  @author Jacopo Fanini
+ *  @date   2026-07
+ *
+ */
+
 struct TRAPPISTTool final 
     : k4FWCore::MultiTransformer<
         std::tuple<
-            edm4hep::CalorimeterHitCollection,
-            edm4hep::ReconstructedParticleCollection
+            edm4hep::ClusterCollection
         >(
             const edm4hep::ClusterCollection&
         )
@@ -24,56 +48,132 @@ public:
         : MultiTransformer(
             name,
             svcLoc,
-            {
-                KeyValues("Clusters", {"UnpairedClusters"})
+            {   
+                KeyValues("inClusters", {"unpairedClusters"})
             },
             {
-                KeyValues("Pi0Hits", {"DefaultOutputCollectionName1"}),
-                KeyValues("Pi0Particles", {"DefaultOutputCollectionName2"})
+                KeyValues("outClusters", {"clustersWithScore"})
             }
         )
         {}
     
     StatusCode initialize() override {
-        // Initialize the tool, onnx, model, etc.
+        // Initialize ONNX memory allocation and environment
+        m_memoryInfo = std::make_unique<Ort::MemoryInfo>(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
+        m_Env = std::make_unique<Ort::Env>(Ort::Env(ORT_LOGGING_LEVEL_WARNING, "ONNX_Runtime"));
+        // Set session options: single-threaded execution, disable graph optimizations
+        Ort::SessionOptions session_opts;
+        session_opts.SetIntraOpNumThreads(1);
+        session_opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+        // Create ONNX inference session to load the model specified by modelPath
+        m_ortSession = std::make_unique<Ort::Session>(Ort::Session(*m_Env, m_modelPath.value().c_str(), session_opts));
+        // Create ONNX allocator to manage memory allocations during runtime
+        Ort::AllocatorWithDefaultOptions allocator;
+        // Retrieve input and output names from the ONNX model for inference
+        for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++) {
+            m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).release());
+        }
+        for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++) {
+            m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).release());
+        }
+        // Hooks for handling collection metadata 
+        auto inputKey  = this->inputLocations("inClusters")[0];
+        auto outputKey = this->outputLocations("outClusters")[0];
+        auto shapeParameterNames = k4FWCore::getCollectionParameter<std::vector<std::string>>(
+                                inputKey, edm4hep::labels::ShapeParameterNames, this)
+                                .value_or(std::vector<std::string>{});
+        debug() << "Input cluster has " << shapeParameterNames.size() << " names in metadata" << endmsg;
+        // Append ClusterScore to the shape parameter names
+        shapeParameterNames.push_back("ClusterScore");
+        k4FWCore::putCollectionParameter(outputKey, edm4hep::labels::ShapeParameterNames,
+                                     shapeParameterNames, this);
+
         return StatusCode::SUCCESS;
     }
 
-    std::tuple <edm4hep::CalorimeterHitCollection, 
-                edm4hep::ReconstructedParticleCollection> 
+    std::tuple <edm4hep::ClusterCollection> 
     operator()(const edm4hep::ClusterCollection& unpairedClusters) const override {
-        // body of the tool
-        std::vector<Hit4D> hitsData; // input for the GATr classifier
-        //hitsData.reserve(clusteredHits.size());
-        for (const auto& cluster : unpairedClusters) {
-            for (const auto& hit : cluster.getHits()) {
-                const auto& pos = hit.getPosition();
-                hitsData.push_back({pos.x, pos.y, pos.z, hit.getEnergy()});
-            }
+        edm4hep::ClusterCollection outputClusters;
+        if (unpairedClusters.empty()) {
+            debug() << "Input cluster collection is empty. No clusters to process" << endmsg;
+            return std::make_tuple(std::move(outputClusters));
+        } else {
+            debug() << "Processing " << unpairedClusters.size() << " unpaired clusters" << endmsg;
         }
-        edm4hep::CalorimeterHitCollection pi0Hits;
-        edm4hep::ReconstructedParticleCollection pi0Particles;
-
-    return std::make_tuple(std::move(pi0Hits), std::move(pi0Particles));
+        // Loop over each cluster in the input collection and extract hits 
+        for (const auto& cluster : unpairedClusters) {
+            const auto& hits = cluster.getHits();
+            const std::size_t numHits = hits.size();
+            debug() << "Processing cluster with " << numHits << " hits" << endmsg;
+            GATrInput clusterData;
+            clusterData.positions.reserve(numHits * 3);
+            clusterData.energies.reserve(numHits);
+            for (const auto& hit : hits) {
+                const auto& pos = hit.getPosition();
+                clusterData.positions.push_back(pos.x);
+                clusterData.positions.push_back(pos.y);
+                clusterData.positions.push_back(pos.z);
+                clusterData.energies.push_back(hit.getEnergy());
+            }
+            // Define shape of input tensors and convert cluster data to ONNX tensors
+            std::vector<int64_t> pos_shape = { static_cast<int64_t>(numHits), 3 }; 
+            std::vector<int64_t> en_shape  = { static_cast<int64_t>(numHits), 1 };
+            std::vector<Ort::Value> input_tensors;
+            input_tensors.emplace_back(vec_to_tensor<float>(clusterData.positions, pos_shape, *m_memoryInfo));
+            input_tensors.emplace_back(vec_to_tensor<float>(clusterData.energies, en_shape, *m_memoryInfo));
+            // Run ONNX inference 
+            auto output_tensors = m_ortSession->Run(
+                Ort::RunOptions{nullptr}, 
+                m_input_names.data(),   
+                input_tensors.data(),    
+                input_tensors.size(),    
+                m_output_names.data(),   
+                m_output_names.size()    
+            );
+            if (output_tensors.empty() || !output_tensors[0].IsTensor()) {
+                error() << "Failed to get a valid output tensor from ONNX session." << endmsg;
+                throw std::runtime_error("ONNX output tensor is empty or not a tensor");
+            }
+            // Extract the two raw logits and compute sigmoid to get the probability for the pi0 class 
+            float* logits = output_tensors[0].GetTensorMutableData<float>();
+            float logit_gamma = logits[0];
+            float logit_pi0 = logits[1];
+            float logits_diff = logit_pi0 - logit_gamma;
+            float sigmoid_output = 1.0f / (1.0f + std::exp(-logits_diff));
+            debug() << "Logits: " << logit_gamma << " " << logit_pi0 << "\n" 
+                    << "Sigmoid output: " << sigmoid_output << endmsg;
+            // Create  new cluster with the computed score added to its shapeParameters
+            auto outputCluster = cluster.clone();
+            outputCluster.addToShapeParameters(sigmoid_output);
+            outputClusters.push_back(std::move(outputCluster));
+        }
+    return std::make_tuple(std::move(outputClusters));
 
     }
 
-
-
     StatusCode finalize() override {
-        // Finalize the tool, write report, etc.
         return StatusCode::SUCCESS;
     }
 
 
 private:
-    struct Hit4D {
-        float x;
-        float y;
-        float z;
-        float e;
-    };
 
+    // ONNX memory info: manages memory allocation for tensors during inference
+    std::unique_ptr<Ort::MemoryInfo> m_memoryInfo{nullptr};
+    // ONNX environment: manages global settings and logging for ONNX Runtime
+    std::unique_ptr<Ort::Env> m_Env{nullptr};
+    // ONNX session: manages the loaded model and performs inference
+    std::unique_ptr<Ort::Session> m_ortSession{nullptr};
+    // Input and output names for the ONNX model, used to identify tensors during inference
+    std::vector<const char*> m_input_names;
+    std::vector<const char*> m_output_names;
+    // Struct to hold input data 
+    struct GATrInput {
+        std::vector<float> positions; 
+        std::vector<float> energies;  
+    };
+    // Path to ONNX model to be used for inference 
+    Gaudi::Property<std::string> m_modelPath{this, "ONNXModelPath", "", "Path to the ONNX model to be used for inference"};
 };
 
 DECLARE_COMPONENT(TRAPPISTTool)
