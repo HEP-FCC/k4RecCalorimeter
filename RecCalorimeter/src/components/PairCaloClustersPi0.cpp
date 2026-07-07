@@ -1,4 +1,6 @@
 #include "PairCaloClustersPi0.h"
+// Key4HEP
+#include "k4FWCore/MetadataUtils.h"
 
 // Include the <cmath> header for sqrt, pow
 #include <cmath>
@@ -21,6 +23,16 @@ StatusCode PairCaloClustersPi0::initialize() {
     }
   }
 
+  // If there are shapeParameters metadata in the input cluster collection, ship them to the output cluster collections
+  auto shapeParameterNames = k4FWCore::getCollectionParameter<std::vector<std::string>>(
+                                 m_inClusters.objKey(), edm4hep::labels::ShapeParameterNames, this)
+                                 .value_or(std::vector<std::string>{});
+  if (shapeParameterNames.size() > 0) {
+    k4FWCore::putCollectionParameter(m_pairedClusters.objKey(), edm4hep::labels::ShapeParameterNames,
+                                     shapeParameterNames, this);
+    k4FWCore::putCollectionParameter(m_unpairedClusters.objKey(), edm4hep::labels::ShapeParameterNames,
+                                     shapeParameterNames, this);
+  }
   // print pi0 mass window
   info() << "pi0 mass window for cluster pairing: [" << m_massLow << "," << m_massHigh << "] GeV, peak= " << m_massPeak
          << " GeV" << endmsg;

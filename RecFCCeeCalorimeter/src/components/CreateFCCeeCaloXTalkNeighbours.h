@@ -4,26 +4,9 @@
 // Gaudi
 #include "GaudiKernel/Service.h"
 
-// k4FWCore
-#include "k4FWCore/DataHandle.h"
-
 // Interface
 #include "RecCaloCommon/ICaloCreateMap.h"
 #include "k4Interface/IGeoSvc.h"
-
-// k4geo
-#include "detectorCommon/DetUtils_k4geo.h"
-#include "detectorCommon/xtalk_neighbors_moduleThetaMergedSegmentation.h"
-
-// DD4hep
-#include "DD4hep/Readout.h"
-#include "DD4hep/Volumes.h"
-#include "DDSegmentation/Segmentation.h"
-
-// ROOT
-#include "TGeoManager.h"
-
-class IGeoSvc;
 
 /** @class CreateFCCeeCaloXTalkNeighbours
  *
@@ -57,8 +40,6 @@ private:
   Gaudi::Property<std::vector<std::string>> m_activeFieldNamesSegmented{this, "activeFieldNames", {"layer", "layer"}};
   /// Number of layers in the segmented volumes
   Gaudi::Property<std::vector<unsigned int>> m_activeVolumesNumbersSegmented{this, "activeVolumesNumbers", {12, 13}};
-  // Theta ranges of layers in the segmented volumes
-  Gaudi::Property<std::vector<std::vector<double>>> m_activeVolumesTheta{this, "activeVolumesTheta"};
 
   // for crosstalk coefficient, please see https://indico.cern.ch/event/1368231/contributions/5904291/
   // These numbers are for ECAL only. Consider to extend them to a vector in future development.
@@ -78,20 +59,8 @@ private:
 
   // Properties below are intended for future implementation of cross-talk between ECAL and HCAL. Currently not used.
 
-  // System ID of ECAL and HCAL barrels
-  Gaudi::Property<uint> m_ecalBarrelSysId{this, "ecalBarrelSysId", 4};
-  Gaudi::Property<uint> m_hcalBarrelSysId{this, "hcalBarrelSysId", 8};
-
   // For combination of barrels: flag if ECal and HCal barrels should be merged
   Gaudi::Property<bool> m_connectBarrels{this, "connectBarrels", false};
-  // For combination of barrels: size of HCal cell along z axis
-  Gaudi::Property<double> m_hCalZSize{this, "hCalZsize", 18};
-  // For combination of barrels: offset of HCal detector in z (lower edge)
-  Gaudi::Property<double> m_hCalZOffset{this, "hCalZoffset", -4590};
-  // For combination of barrels: HCal inner radius for calculation of eta from z ???
-  Gaudi::Property<double> m_hCalRinner{this, "hCalRinner", 2850};
-  // For combination of barrels: offset of HCal modules in phi (lower edge)
-  Gaudi::Property<double> m_hCalPhiOffset{this, "hCalPhiOffset"};
 
   /// Name of output file
   std::string m_outputFileName;

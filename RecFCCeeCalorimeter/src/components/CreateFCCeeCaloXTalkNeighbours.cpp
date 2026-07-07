@@ -8,10 +8,9 @@
 
 // k4geo
 #include "detectorCommon/DetUtils_k4geo.h"
+#include "detectorCommon/xtalk_neighbors_moduleThetaMergedSegmentation.h"
 #include "detectorSegmentations/FCCSWGridModuleThetaMerged_k4geo.h"
-#include "detectorSegmentations/FCCSWGridPhiTheta_k4geo.h"
 #include "detectorSegmentations/GridTheta_k4geo.h"
-
 // ROOT
 #include "TFile.h"
 #include "TSystem.h"
@@ -39,7 +38,33 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
   if (m_connectBarrels) {
     warning() << "connectBarrels feature is not yet implemented!" << endmsg;
   }
-  std::unordered_map<uint64_t, std::vector<std::pair<uint64_t, double>>> map;
+
+  // Check if output directory exists (do it before the heavy computation to fail early)
+  std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
+  if (!gSystem->OpenDirectory(outDirPath.c_str())) {
+    error() << "Output directory \"" << outDirPath << "\" does not exists! Please create it." << endmsg;
+    return StatusCode::FAILURE;
+  }
+
+  std::unique_ptr<TFile> outFile(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
+  outFile->cd();
+  TTree tree("crosstalk_neighbours", "Tree with map of neighbours");
+  uint64_t saveCellId;
+  std::vector<uint64_t> saveNeighbours;
+  std::vector<double> saveCrosstalks;
+  std::vector<int> saveCellInfo;
+  tree.Branch("cellId", &saveCellId, "cellId/l");
+  tree.Branch("list_crosstalk_neighbours", &saveNeighbours);
+  tree.Branch("list_crosstalks", &saveCrosstalks);
+  // Debug: save cell position
+  if (m_debugCellInfo) {
+    tree.Branch("CellInfo", &saveCellInfo);
+  }
+
+  // Histogram of number of neighbours per cell (filled on the fly for debugging)
+  std::vector<int> counter;
+  counter.assign(40, 0);
+  uint64_t totalCells = 0;
 
   for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
     // Check if readout exists
@@ -132,101 +157,45 @@ StatusCode CreateFCCeeCaloXTalkNeighbours::initialize() {
             decoder->set(cellId, "module", imodule);
             decoder->set(cellId, "theta", itheta); // start from the minimum existing theta cell in this layer
             uint64_t id = cellId;
-            map.insert(std::pair<uint64_t, std::vector<std::pair<uint64_t, double>>>(
-                id, det::crosstalk::getNeighboursModuleThetaMerged(
-                        *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"},
-                        extrema_layer, id, m_xtalk_coef_radial, m_xtalk_coef_theta, m_xtalk_coef_diagonal,
-                        m_xtalk_coef_tower)));
+            std::vector<std::pair<uint64_t, double>> neighbours = det::crosstalk::getNeighboursModuleThetaMerged(
+                *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"},
+                extrema_layer, id, m_xtalk_coef_radial, m_xtalk_coef_theta, m_xtalk_coef_diagonal, m_xtalk_coef_tower);
+
+            saveCellId = id;
+            saveNeighbours.clear();
+            saveCrosstalks.clear();
+            saveNeighbours.reserve(neighbours.size());
+            saveCrosstalks.reserve(neighbours.size());
+            for (const auto& neighbour : neighbours) {
+              saveNeighbours.push_back(neighbour.first);
+              saveCrosstalks.push_back(neighbour.second);
+            }
+            // Debug: save cell position
+            if (m_debugCellInfo) {
+              saveCellInfo = det::crosstalk::getCellIndices(*moduleThetaSegmentation, *decoder,
+                                                            {m_activeFieldNamesSegmented[iSys], "module", "theta"}, id);
+            }
+            tree.Fill();
+
+            if (neighbours.size() < counter.size())
+              counter[neighbours.size()]++;
+            totalCells++;
           }
         }
       }
     }
-
-    if (msgLevel() <= MSG::DEBUG) {
-      std::vector<int> counter;
-      counter.assign(40, 0);
-      for (const auto& item : map) {
-        counter[item.second.size()]++;
-      }
-      for (uint iCount = 0; iCount < counter.size(); iCount++) {
-        if (counter[iCount] != 0) {
-          info() << counter[iCount] << " cells have " << iCount << " neighbours" << endmsg;
-        }
-      }
-    }
-    info() << "total number of cells:  " << map.size() << endmsg;
+    info() << "total number of cells:  " << totalCells << endmsg;
   }
 
   if (msgLevel() <= MSG::DEBUG) {
-    std::vector<int> counter;
-    counter.assign(40, 0);
-    for (const auto& item : map) {
-      counter[item.second.size()]++;
-    }
     for (uint iCount = 0; iCount < counter.size(); iCount++) {
       if (counter[iCount] != 0) {
-        debug() << counter[iCount] << " cells have " << iCount << " neighbours" << endmsg;
+        info() << counter[iCount] << " cells have " << iCount << " neighbours" << endmsg;
       }
     }
   }
   // debug() << "cells with neighbours across Calo boundaries: " << count << endmsg;
 
-  // Check if output directory exists
-  std::string outDirPath = gSystem->DirName(m_outputFileName.c_str());
-  if (!gSystem->OpenDirectory(outDirPath.c_str())) {
-    error() << "Output directory \"" << outDirPath << "\" does not exists! Please create it." << endmsg;
-    return StatusCode::FAILURE;
-  }
-
-  std::unique_ptr<TFile> outFile(TFile::Open(m_outputFileName.c_str(), "RECREATE"));
-  outFile->cd();
-  TTree tree("crosstalk_neighbours", "Tree with map of neighbours");
-  uint64_t saveCellId;
-  std::vector<uint64_t> saveNeighbours;
-  std::vector<double> saveCrosstalks;
-  tree.Branch("cellId", &saveCellId, "cellId/l");
-  tree.Branch("list_crosstalk_neighbours", &saveNeighbours);
-  tree.Branch("list_crosstalks", &saveCrosstalks);
-
-  // Debug: save cell position
-  std::vector<int> saveCellInfo;
-  if (m_debugCellInfo) {
-    tree.Branch("CellInfo", &saveCellInfo);
-  }
-
-  int count_map = 0;
-  for (const auto& item : map) {
-    saveCellId = item.first;
-    std::vector<std::pair<uint64_t, double>> temp_pair = item.second;
-    std::vector<uint64_t> temp_neighbours;
-    std::vector<double> temp_crosstalks;
-    for (const auto& this_temp : temp_pair) {
-      temp_neighbours.push_back(this_temp.first);
-      temp_crosstalks.push_back(this_temp.second);
-    }
-    saveNeighbours = temp_neighbours;
-    saveCrosstalks = temp_crosstalks;
-    // Debug: save cell position
-    if (m_debugCellInfo) {
-      for (uint iSys = 0; iSys < m_readoutNamesSegmented.size(); iSys++) {
-        dd4hep::DDSegmentation::Segmentation* aSegmentation =
-            m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).segmentation().segmentation();
-        std::string segmentationType = aSegmentation->type();
-        dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo* moduleThetaSegmentation = nullptr;
-        auto decoder = m_geoSvc->getDetector()->readout(m_readoutNamesSegmented[iSys]).idSpec().decoder();
-        if (segmentationType == "FCCSWGridModuleThetaMerged_k4geo") {
-          moduleThetaSegmentation =
-              dynamic_cast<dd4hep::DDSegmentation::FCCSWGridModuleThetaMerged_k4geo*>(aSegmentation);
-        }
-        saveCellInfo = det::crosstalk::getCellIndices(
-            *moduleThetaSegmentation, *decoder, {m_activeFieldNamesSegmented[iSys], "module", "theta"}, saveCellId);
-      }
-    }
-    tree.Fill();
-    count_map++;
-    if (!count_map % 1000)
-      std::cout << "Number of cells: " << count_map << std::endl;
-  }
   outFile->Write();
   outFile->Close();
 
