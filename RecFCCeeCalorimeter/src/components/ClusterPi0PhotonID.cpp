@@ -17,13 +17,15 @@
 #include <string>
 #include <vector>
 
-/** @struct Pi0IDTool
+/** @struct ClusterPi0PhotonID
  *
- * Gaudi MultiTransformer that identifies pi0 particles from a collection of clusters
- * with an associated classification score (e.g., from the TRAPPISTTool). The tool retrieves
- * the classification score from the shape parameters of each cluster based on a specified
- * shape parameter name, and if the score exceeds a user defined threshold, a new
- * ReconstructedParticle is created and added to the output collection.
+ * Gaudi MultiTransformer that identifies photons and pi0 candidates from a
+ * collection of clusters with associated classification scores (e.g. produced by the
+ * TRAPPISTTool). For each input cluster, the algorithm retrieves the classification score from the cluster
+ * shape parameters using a configurable shape parameter name. If the score is greater than
+ * a user-defined threshold, the cluster is identified as a pi0 candidate; otherwise,
+ * it is identified as a photon candidate. A corresponding ReconstructedParticle is created
+ * and added to the corresponding output collection.
  *
  * input: edm4hep::ClusterCollection
  * output: edm4hep::ReconstructedParticleCollection
@@ -33,12 +35,15 @@
  *
  */
 
-struct Pi0IDTool final : k4FWCore::MultiTransformer<std::tuple<edm4hep::ReconstructedParticleCollection>(
-                             const edm4hep::ClusterCollection&)> {
+struct ClusterPi0PhotonID final
+    : k4FWCore::MultiTransformer<
+          std::tuple<edm4hep::ReconstructedParticleCollection, edm4hep::ReconstructedParticleCollection>(
+              const edm4hep::ClusterCollection&)> {
 public:
-  Pi0IDTool(const std::string& name, ISvcLocator* svcLoc)
+  ClusterPi0PhotonID(const std::string& name, ISvcLocator* svcLoc)
       : MultiTransformer(name, svcLoc, {KeyValues("inClusters", {"clustersWithScore"})},
-                         {KeyValues("outParticles", {"IdentifiedParticles"})}) {}
+                         {KeyValues("outPi0Particles", {"IdentifiedPi0Particles"}),
+                          KeyValues("outPhotonParticles", {"IdentifiedPhotonParticles"})}) {}
 
   StatusCode initialize() override {
     // Retrieve shape parameter names for input cluster collection
@@ -61,32 +66,22 @@ public:
     return StatusCode::SUCCESS;
   }
 
-  std::tuple<edm4hep::ReconstructedParticleCollection>
+  std::tuple<edm4hep::ReconstructedParticleCollection, edm4hep::ReconstructedParticleCollection>
   operator()(const edm4hep::ClusterCollection& clustersWithScore) const override {
-    edm4hep::ReconstructedParticleCollection outputParticles;
+    edm4hep::ReconstructedParticleCollection outputPi0Particles;
+    edm4hep::ReconstructedParticleCollection outputPhotonParticles;
     for (const auto& cluster : clustersWithScore) {
       // Retrieve the score from the shape parameters and if it exceeds the threshold
       // create and fill a new ReconstructedParticle
       float clusterScore = cluster.getShapeParameters(m_scoreIndex.value());
       debug() << "Cluster score: " << clusterScore << ", threshold: " << m_threshold << endmsg;
       if (clusterScore > m_threshold) {
-        auto particle = outputParticles.create();
-        particle.addToClusters(cluster);
-        double energy = cluster.getEnergy();
-        edm4hep::Vector3f position =
-            edm4hep::Vector3f(cluster.getPosition().x, cluster.getPosition().y, cluster.getPosition().z);
-        particle.setPDG(111);
-        particle.setCharge(0);
-        particle.setGoodnessOfPID(clusterScore);
-        particle.setEnergy(energy);
-        particle.setMass(0.1349768); // From PDG table
-        // Assuming pi0 is coming from the IP, will change this once the tool to retrieve cluster direction is
-        // implemented
-        edm4hep::Vector3f momentum = calculateMomentum(energy, position, edm4hep::Vector3f(0, 0, 0));
-        particle.setMomentum(momentum);
+        buildParticle(outputPi0Particles, cluster, 111, 0.1349768, clusterScore);
+      } else {
+        buildParticle(outputPhotonParticles, cluster, 22, 0.0, (1. - clusterScore));
       }
     }
-    return std::make_tuple(std::move(outputParticles));
+    return std::make_tuple(std::move(outputPi0Particles), std::move(outputPhotonParticles));
   }
 
   StatusCode finalize() override { return StatusCode::SUCCESS; }
@@ -95,7 +90,8 @@ private:
   std::optional<std::size_t> m_scoreIndex = std::nullopt;
 
   Gaudi::Property<std::string> m_shapeParameterScoreName{
-      this, "ShapeParameterName", "ClusterScore", "Name of the shape parameter to be used for particle identification"};
+      this, "ShapeParameterName", "ClusterTRAPPISTScore",
+      "Name of the shape parameter to be used for particle identification"};
 
   Gaudi::Property<float> m_threshold{this, "Threshold", 0.5,
                                      "Threshold for particle identification based on the shape parameter value"};
@@ -105,12 +101,33 @@ private:
     double dirx = position.x - origin.x;
     double diry = position.y - origin.y;
     double dirz = position.z - origin.z;
-    double quadsum_dir = sqrt(pow(dirx, 2) + pow(diry, 2) + pow(dirz, 2));
+    double quadsum_dir = std::sqrt(dirx * dirx + diry * diry + dirz * dirz);
     double px = energy * dirx / quadsum_dir;
     double py = energy * diry / quadsum_dir;
     double pz = energy * dirz / quadsum_dir;
     return edm4hep::Vector3f(px, py, pz);
   }
+
+  void buildParticle(edm4hep::ReconstructedParticleCollection& collection, const edm4hep::Cluster& cluster, int pdg,
+                     float mass, float pidScore) const {
+
+    auto particle = collection.create();
+
+    particle.addToClusters(cluster);
+
+    const double energy = cluster.getEnergy();
+    particle.setEnergy(energy);
+
+    particle.setPDG(pdg);
+    particle.setCharge(0);
+    particle.setMass(mass);
+    particle.setGoodnessOfPID(pidScore);
+
+    edm4hep::Vector3f position{cluster.getPosition().x, cluster.getPosition().y, cluster.getPosition().z};
+    // Assuming particle is coming from the IP, will change this once the tool to retrieve cluster direction is
+    // implemented
+    particle.setMomentum(calculateMomentum(energy, position, edm4hep::Vector3f{0, 0, 0}));
+  }
 };
 
-DECLARE_COMPONENT(Pi0IDTool)
+DECLARE_COMPONENT(ClusterPi0PhotonID)

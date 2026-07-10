@@ -18,7 +18,7 @@
 // STL
 #include <vector>
 
-/** @struct TRAPPISTTool
+/** @struct TRAPPISTPi0PhotonInference
  *
  * Gaudi MultiTransformer that produces produces a classification score for a given cluster using a
  * pre-trained ONNX model based on the GATr architecture (https://arxiv.org/abs/2305.18415). For each
@@ -34,10 +34,10 @@
  *
  */
 
-struct TRAPPISTTool final
+struct TRAPPISTPi0PhotonInference final
     : k4FWCore::MultiTransformer<std::tuple<edm4hep::ClusterCollection>(const edm4hep::ClusterCollection&)> {
 public:
-  TRAPPISTTool(const std::string& name, ISvcLocator* svcLoc)
+  TRAPPISTPi0PhotonInference(const std::string& name, ISvcLocator* svcLoc)
       : MultiTransformer(name, svcLoc, {KeyValues("inClusters", {"unpairedClusters"})},
                          {KeyValues("outClusters", {"clustersWithScore"})}) {}
 
@@ -68,7 +68,7 @@ public:
             .value_or(std::vector<std::string>{});
     debug() << "Input cluster has " << shapeParameterNames.size() << " names in metadata" << endmsg;
     // Append ClusterScore to the shape parameter names
-    shapeParameterNames.push_back("ClusterScore");
+    shapeParameterNames.push_back("ClusterTRAPPISTScore");
     k4FWCore::putCollectionParameter(outputKey, edm4hep::labels::ShapeParameterNames, shapeParameterNames, this);
 
     return StatusCode::SUCCESS;
@@ -87,22 +87,23 @@ public:
       const auto& hits = cluster.getHits();
       const std::size_t numHits = hits.size();
       debug() << "Processing cluster with " << numHits << " hits" << endmsg;
-      GATrInput clusterData;
-      clusterData.positions.reserve(numHits * 3);
-      clusterData.energies.reserve(numHits);
+      std::vector<float> positions;
+      std::vector<float> energies;
+      positions.reserve(numHits * 3);
+      energies.reserve(numHits);
       for (const auto& hit : hits) {
         const auto& pos = hit.getPosition();
-        clusterData.positions.push_back(pos.x);
-        clusterData.positions.push_back(pos.y);
-        clusterData.positions.push_back(pos.z);
-        clusterData.energies.push_back(hit.getEnergy());
+        positions.push_back(pos.x);
+        positions.push_back(pos.y);
+        positions.push_back(pos.z);
+        energies.push_back(hit.getEnergy());
       }
       // Define shape of input tensors and convert cluster data to ONNX tensors
       std::vector<int64_t> pos_shape = {static_cast<int64_t>(numHits), 3};
       std::vector<int64_t> en_shape = {static_cast<int64_t>(numHits), 1};
       std::vector<Ort::Value> input_tensors;
-      input_tensors.emplace_back(vec_to_tensor<float>(clusterData.positions, pos_shape, *m_memoryInfo));
-      input_tensors.emplace_back(vec_to_tensor<float>(clusterData.energies, en_shape, *m_memoryInfo));
+      input_tensors.emplace_back(vec_to_tensor<float>(positions, pos_shape, *m_memoryInfo));
+      input_tensors.emplace_back(vec_to_tensor<float>(energies, en_shape, *m_memoryInfo));
       // Run ONNX inference
       auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr}, m_input_names.data(), input_tensors.data(),
                                               input_tensors.size(), m_output_names.data(), m_output_names.size());
@@ -115,7 +116,8 @@ public:
       float logit_gamma = logits[0];
       float logit_pi0 = logits[1];
       float logits_diff = logit_pi0 - logit_gamma;
-      float sigmoid_output = 1.0f / (1.0f + std::exp(-logits_diff));
+      // Sigmoid, but protected agaist overflows by using std::tanh
+      float sigmoid_output = 0.5f * (1.0f + std::tanh(0.5f * logits_diff));
       debug() << "Logits: " << logit_gamma << " " << logit_pi0 << "\n"
               << "Sigmoid output: " << sigmoid_output << endmsg;
       // Create  new cluster with the computed score added to its shapeParameters
@@ -138,14 +140,9 @@ private:
   // Input and output names for the ONNX model, used to identify tensors during inference
   std::vector<const char*> m_input_names;
   std::vector<const char*> m_output_names;
-  // Struct to hold input data
-  struct GATrInput {
-    std::vector<float> positions;
-    std::vector<float> energies;
-  };
   // Path to ONNX model to be used for inference
   Gaudi::Property<std::string> m_modelPath{this, "ONNXModelPath", "",
                                            "Path to the ONNX model to be used for inference"};
 };
 
-DECLARE_COMPONENT(TRAPPISTTool)
+DECLARE_COMPONENT(TRAPPISTPi0PhotonInference)
