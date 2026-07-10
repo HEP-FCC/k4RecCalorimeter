@@ -218,6 +218,9 @@ logEWeightInPhotonID = False
 # resolved pi0 reconstruction by cluster pairing
 addPi0RecoTool = True
 
+# TRAPPIST pi0 / gamma ID
+runTRAPPIST = True
+
 #
 # ALGORITHMS AND SERVICES SETUP
 #
@@ -1082,6 +1085,38 @@ if doTopoClustering:
             TopAlg += [photonIDECalBarrelTopoClusters]
             finalClusters.remove(inClusters)
             finalClusters += [outClusters]
+
+    if runTRAPPIST:
+        if not addPi0RecoTool:
+            raise RuntimeError(
+                "TRAPPIST tool cannot be run if resolved pi0 reconstruction is not performed."
+            )
+
+        inClusters = Pi0RecoAlg.unpairedClusters.Path
+
+        from Configurables import TRAPPISTPi0PhotonInference
+
+        TRAPPISTInferenceAlg = TRAPPISTPi0PhotonInference(
+            "TRAPPIST" + outClusters,
+            inClusters=[inClusters],
+            outClusters=[inClusters + "WithScore"],
+            ONNXModelPath="TRAPPIST_topoclustering.onnx",
+            OutputLevel=INFO,
+        )
+
+        from Configurables import ClusterPi0PhotonID
+
+        Pi0PhotonIDAlg = ClusterPi0PhotonID(
+            "IdentifiedPi0TRAPPISTScore",
+            inClusters=TRAPPISTInferenceAlg.outClusters,
+            outPi0Particles=["TRAPPISTIdentifiedPi0"],
+            outPhotonParticles=["TRAPPISTIdentifiedPhoton"],
+            Threshold=0.5,
+            OutputLevel=INFO,
+        )
+
+        TopAlg += [TRAPPISTInferenceAlg]
+        TopAlg += [Pi0PhotonIDAlg]
 
     # ECAL + HCAL
     if runHCal:
