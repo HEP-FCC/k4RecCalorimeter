@@ -59,7 +59,6 @@ public:
       debug() << "Feature " << m_shapeParameterScoreName.value() << " found in position " << m_scoreIndex.value()
               << " of collection metadata" << endmsg;
     } else {
-      error() << "Feature " << m_shapeParameterScoreName.value() << " not found, aborting..." << endmsg;
       throw std::runtime_error("Feature " + m_shapeParameterScoreName.value() + " not found in collection metadata");
     }
 

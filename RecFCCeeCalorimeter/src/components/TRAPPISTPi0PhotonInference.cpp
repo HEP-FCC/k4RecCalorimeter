@@ -76,12 +76,7 @@ public:
 
   std::tuple<edm4hep::ClusterCollection> operator()(const edm4hep::ClusterCollection& unpairedClusters) const override {
     edm4hep::ClusterCollection outputClusters;
-    if (unpairedClusters.empty()) {
-      debug() << "Input cluster collection is empty. No clusters to process" << endmsg;
-      return std::make_tuple(std::move(outputClusters));
-    } else {
-      debug() << "Processing " << unpairedClusters.size() << " unpaired clusters" << endmsg;
-    }
+    debug() << "Processing " << unpairedClusters.size() << " unpaired clusters" << endmsg;
     // Loop over each cluster in the input collection and extract hits
     for (const auto& cluster : unpairedClusters) {
       const auto& hits = cluster.getHits();
