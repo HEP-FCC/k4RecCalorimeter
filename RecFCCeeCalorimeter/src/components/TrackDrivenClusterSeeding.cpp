@@ -155,7 +155,14 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
     // use the seed hit position as the cluster position
     cluster.setPosition(hitMap[bestCell].getPosition());
 
+    // Add the seed cell itself. m_segmentation->neighbours() returns only the
+    // surrounding cells, so bestCell (the local-max that defines the seed) is NOT in
+    // bestNbrs and would otherwise be dropped -- leaving isolated MIP seeds with 0 hits.
+    cluster.addToHits(hitMap[bestCell]);
+
     for (const auto& id : bestNbrs) {
+      if (id == bestCell)
+        continue; // guard against double-add if neighbours() ever includes the query cell
       auto it = hitMap.find(id);
       if (it != hitMap.end())
         cluster.addToHits(it->second);
