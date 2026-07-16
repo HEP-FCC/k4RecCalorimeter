@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <map>
 #include <sys/types.h>
+#include <utility>
 #include <vector>
 
 // Gaudi
@@ -45,9 +46,23 @@ namespace DDSegmentation {
  * "lastNeighbourSigma". In case that a neighbour is found that has already been assigned to another cluster, both
  * clusters are merged and assigned to the "older" clusterID, this is the one originating from a higher seed energy. The
  * iteration over neighburing cellIDs is continued.
+ *
  *  @author Coralie Neubueser
- *  @author Giovanni Marchiori, based on code from Juraj Smiesko
+ *  @author Giovanni Marchiori - algorithm rewritten for significant speed-up
  */
+
+/// internal cell representation used for clustering, to avoid cloning EDM objects repeatedly
+struct FastCell {
+  uint64_t cellID;
+  float energy;
+  float x;
+  float y;
+  float z;
+  uint8_t type; // 0=unused,1=seed,2=neighbour,3=lastNeighbour
+  float SoverN;
+};
+using FastCluster = std::vector<FastCell>;
+using FastClusterMap = std::map<uint32_t, FastCluster>; // TODO make it unordered or a vector
 
 class CaloTopoClusterFCCee : public Gaudi::Algorithm {
 public:
@@ -58,42 +73,36 @@ public:
    */
   StatusCode initialize();
 
-  /**  Find cells with a signal to noise ratio > m_seedSigma.
-   *   @param[in] allCells, the map of all cells.
-   *   @param[out] the collection of seed cells to build proto-clusters.
-   */
-  edm4hep::CalorimeterHitCollection findSeeds(const edm4hep::CalorimeterHitCollection* allCells) const;
-
-  /** Build proto-clusters from the found seeds.
+  /** Build clusters from the found seeds.
    * First the function initialises a cluster in the preClusterCollection for the seed cells,
    * then it calls the CaloTopoClusterFCCee::searchForNeighbours function to retrieve the vector of next cellIDs to add
    * and loop over to find neighbours. The iteration of search for neighbours is continued until no more neihgbours are
    * found. Then a last round of adding neighbouring cells to the cluster is run where the parameter lastNeighbourSigma
    * is applied.
-   *   @param[in] seedCells, collection of seeding cells.
-   *   @param[in] allCells, collection of all cells.
-   *   @param[in] protoClusters, map that is filled with clusterID pointing to the associated cells, in a pair of
-   * clsuter index and cell collection
+   *   @param[in] seedCells, collection of seeding cells (vector of fastcells)
+   *   @param[in] allCells, collection of all cells (map cellID -> fastcell)
+   *   @param[in] clusters, collection of clusters to be filled by the algorithm (map of clusterID -> FastCluster)
    */
-  StatusCode buildProtoClusters(const edm4hep::CalorimeterHitCollection& seedCells,
-                                const edm4hep::CalorimeterHitCollection* allCells,
-                                std::map<uint32_t, edm4hep::CalorimeterHitCollection>& protoClusters) const;
-  /** Search for neighbours and add them to preClusterCollection
-   * The
-   *   @param[in] aCellId, the cell ID for which to find the neighbours.
-   *   @param[in] aClusterID, the current cluster ID.
-   *   @param[in] aNumSigma, the signal/noise ratio to be exceeded by the neighbouring cell to be added to cluster.
-   *   @param[in] aCellsMap, map of all cells (CellID, cell pointer).
-   *   @param[in] aClusterOfCell, map of cellID to clusterID.
-   *   @param[in] protoClusters, map that is filled with clusterID pointing to the associated cells, in a pair of
-   * cluster index and cell collection.
-   *   @param[in] allowClusterMerge, bool to allow for clusters to be merged, set to false in case of last iteration in
-   * CaloTopoClusterFCCee::buildingProtoCluster. return vector of pairs with cellID and energy of found neighbours.
+  StatusCode buildClusters(const std::vector<FastCell>& seedCells,
+                           const std::unordered_map<uint64_t, FastCell>& allCells, FastClusterMap& clusters) const;
+  /** Search for neighbours and add them to cluster collection
+   *   @param[in] cellID, the cell ID for which to find the neighbours
+   *   @param[in] clusterID, the current cluster ID
+   *   @param[in] nSigma, the signal/noise ratio to be exceeded by the neighbouring cell to be added to cluster
+   *   @param[in] allCells, map of all cells (CellID -> FastCell)
+   *   @param[in] usedCells, map of used cells (CellID -> cluster ID)
+   *   @param[in] clusters, map that is filled with clusterID pointing to the associated cells, in a pair of
+   *              cluster index and cell collection
+   *   @param[in] clusterMembers, map (cluster ID -> set of CellIDs) that is filled by the algorithm to keep track of
+   * clustered cells
+   *   @param[in] allowClusterMerge, bool to allow for clusters to be merged
+   *   return vector of cellID of found neighbours
    */
-  std::vector<std::pair<uint64_t, uint32_t>> searchForNeighbours(
-      const uint64_t aCellId, uint32_t& aClusterID, const int aNumSigma,
-      std::map<uint64_t, const edm4hep::CalorimeterHit>& aCellsMap, std::map<uint64_t, uint32_t>& aClusterOfCell,
-      std::map<uint32_t, edm4hep::CalorimeterHitCollection>& protoClusters, const bool aAllowClusterMerge) const;
+  std::vector<uint64_t> searchForNeighbours(const uint64_t cellID, uint& clusterID, int nSigma,
+                                            const std::unordered_map<uint64_t, FastCell>& allCells,
+                                            std::unordered_map<uint64_t, uint32_t>& usedCells, FastClusterMap& clusters,
+                                            std::unordered_map<uint32_t, std::unordered_set<uint64_t>>& clusterMembers,
+                                            bool allowClusterMerge) const;
 
   StatusCode execute(const EventContext&) const;
 
@@ -146,8 +155,5 @@ private:
   /// positions tool to use
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
   int m_indexSystem;
-
-  // Utility functions
-  inline bool cellIdInColl(const uint64_t cellId, const edm4hep::CalorimeterHitCollection& coll) const;
 };
 #endif /* RECFCCEECALORIMETER_CALOTOPOCLUSTERFCCEE_H */
