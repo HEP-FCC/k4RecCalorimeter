@@ -1898,7 +1898,7 @@ StatusCode CreateFCCeeCaloNeighbours::initialize_lookups() {
                 endcapCellId, ecalEndcapTurbineSegmentation->expLayer(iWheel, iECrho, iECz));
 
             double endcapPhi = ecalEndcapTurbineSegmentation->getGlobalPhi(endcapCellId);
-	    double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId);
+            double endcapRho = ecalEndcapTurbineSegmentation->getGlobalRho(endcapCellId);
             double endcapZ = ecalEndcapTurbineSegmentation->getGlobalZ(endcapCellId);
             double endcapTheta = TMath::ATan2(endcapRho, endcapZ);
 
