@@ -2,6 +2,9 @@
 #define RECFCCEECALORIMETER_NOISECALOCELLSFROMFILETURBINEENDCAPTOOL_H
 
 #include "NoiseCaloCellsFromFileBaseTool.h"
+#include "RecCaloCommon/ICellPositionsTool.h"
+
+#include "GaudiKernel/ToolHandle.h"
 
 /** @class NoiseCaloCellsFromFileTurbineEndcapTool
  *
@@ -18,11 +21,21 @@
 
 class NoiseCaloCellsFromFileTurbineEndcapTool : public NoiseCaloCellsFromFileBaseTool {
 public:
-  using NoiseCaloCellsFromFileBaseTool::NoiseCaloCellsFromFileBaseTool;
+  NoiseCaloCellsFromFileTurbineEndcapTool(const std::string& type, const std::string& name, const IInterface* parent)
+      : NoiseCaloCellsFromFileBaseTool(type, name, parent) {
+    // Override some property defaults from the base class.
+    m_readoutName = "ECalEndcapTurbine";
+  }
+
+protected:
+  virtual StatusCode initBinning(NoiseData& data, const k4::recCalo::ICaloIndexer& indexer) const override;
 
 private:
-  /// get bin in histogram for given cellID
-  unsigned getBin(CellID aCellId) const override final;
+  unsigned getBin(const char* what, const TH1& h, unsigned iRho, unsigned iZ) const;
+
+  /// Unused, but temporarily here for config compatibility
+  ToolHandle<k4::recCalo::ICellPositionsTool> m_cellPositionsTool{this, "cellPositionsTool", "",
+                                                                  "Handle for tool to retrieve cell positions"};
 };
 
 #endif /* RECFCCEECALORIMETER_NOISECALOCELLFROMFILETURBINEENDCAPTOOL_H */

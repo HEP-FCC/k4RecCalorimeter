@@ -1,23 +1,7 @@
 #ifndef RECCALORIMETER_READNOISEFROMFILETOOL_H
 #define RECCALORIMETER_READNOISEFROMFILETOOL_H
 
-// from Gaudi
-#include "GaudiKernel/AlgTool.h"
-#include "GaudiKernel/ToolHandle.h"
-
-// k4FWCore
-#include "k4FWCore/DataHandle.h"
-
-// Interfaces
-#include "RecCaloCommon/INoiseConstTool.h"
-
-// k4geo
-#include "detectorSegmentations/FCCSWGridPhiEta_k4geo.h"
-
-class IGeoSvc;
-
-// Root
-class TH1F;
+#include "RecCaloCommon/ReadNoiseFromFileBaseTool.h"
 
 /** @class ReadNoiseFromFileTool
  *
@@ -29,68 +13,13 @@ class TH1F;
  *
  */
 
-class ReadNoiseFromFileTool : public extends<AlgTool, k4::recCalo::INoiseConstTool> {
+class ReadNoiseFromFileTool : public ReadNoiseFromFileBaseTool {
 public:
-  using base_class::base_class;
+  using ReadNoiseFromFileBaseTool::ReadNoiseFromFileBaseTool;
   virtual ~ReadNoiseFromFileTool() = default;
 
-  virtual StatusCode initialize() override final;
-
-  /// Open file and read noise histograms in the memory
-  StatusCode initNoiseFromFile();
-  /// Find the appropriate noise constant from the histogram
-  virtual double getNoiseRMSPerCell(CellID aCellID) const override final;
-  virtual double getNoiseOffsetPerCell(CellID aCellID) const override final;
-  virtual std::pair<double, double> getNoisePerCell(CellID aCellID) const override final;
-
-private:
-  /// Add pileup contribution to the electronics noise? (only if read from file)
-  Gaudi::Property<bool> m_addPileup{this, "addPileup", true,
-                                    "Add pileup contribution to the electronics noise? (only if read from file)"};
-  /// Noise offset, if false, mean is set to 0
-  Gaudi::Property<bool> m_setNoiseOffset{this, "setNoiseOffset", true, "Set a noise offset per cell"};
-
-  /// Name of the file with noise constants
-  Gaudi::Property<std::string> m_noiseFileName{this, "noiseFileName", "", "Name of the file with noise constants"};
-  /// Name of the detector readout
-  Gaudi::Property<std::string> m_readoutName{this, "readoutName", "ECalHitsPhiEta", "Name of the detector readout"};
-  /// Name of active layers for sampling calorimeter
-  Gaudi::Property<std::string> m_activeFieldName{this, "activeFieldName", "active_layer",
-                                                 "Name of active layers for sampling calorimeter"};
-  /// Name of pileup histogram
-  Gaudi::Property<std::string> m_pileupHistoName{this, "pileupHistoName", "h_pileup_layer", "Name of pileup histogram"};
-  /// Name of electronics noise histogram
-  Gaudi::Property<std::string> m_elecNoiseHistoName{this, "elecNoiseHistoName", "h_elecNoise_layer",
-                                                    "Name of electronics noise histogram"};
-  /// Name of electronics noise offset histogram
-  Gaudi::Property<std::string> m_elecNoiseOffsetHistoName{this, "elecNoiseOffsetHistoName", "h_mean_pileup_layer",
-                                                          "Name of electronics noise offset histogram"};
-  /// Name of pileup offset histogram
-  Gaudi::Property<std::string> m_pileupOffsetHistoName{this, "pileupOffsetHistoName", "h_pileup_layer",
-                                                       "Name of pileup offset histogram"};
-
-  /// Number of radial layers
-  Gaudi::Property<uint> m_numRadialLayers{this, "numRadialLayers", 3, "Number of radial layers"};
-
-  /// Factor to apply to the noise values to get them in GeV if e.g. they were produced in MeV
-  Gaudi::Property<float> m_scaleFactor{this, "scaleFactor", 1, "Factor to apply to the noise values"};
-
-  /// Histograms with pileup RMS (index in array - radial layer)
-  std::vector<TH1F> m_histoPileupNoiseRMS;
-  /// Histograms with electronics noise RMS (index in array - radial layer)
-  std::vector<TH1F> m_histoElecNoiseRMS;
-
-  /// Histograms with pileup offset (index in array - radial layer)
-  std::vector<TH1F> m_histoPileupOffset;
-  /// Histograms with electronics noise offset (index in array - radial layer)
-  std::vector<TH1F> m_histoElecNoiseOffset;
-
-  /// Handle to the geometry service
-  ServiceHandle<IGeoSvc> m_geoSvc{this, "GeoSvc", "GeoSvc"};
-  /// PhiEta segmentation
-  dd4hep::DDSegmentation::FCCSWGridPhiEta_k4geo* m_segmentation;
-  // Decoder
-  dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
+protected:
+  virtual StatusCode initBinning(NoiseData& data, const k4::recCalo::ICaloIndexer& indexer) const;
 };
 
 #endif /* RECCALORIMETER_READNOISEFROMFILETOOL_H */
