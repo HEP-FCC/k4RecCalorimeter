@@ -3,6 +3,7 @@
 ################################################################################
 
 find_package(boost_timer REQUIRED)
+find_package(boost_unit_test_framework REQUIRED)
 file(GLOB _sources src/*.cpp )
 
 gaudi_add_library(RecCaloCommon
@@ -46,4 +47,11 @@ if(BUILD_TESTING)
     LINK DD4hep::DDCore k4FWCore::k4Interface k4FWCore::k4FWCore
     TEST)
   target_include_directories(MultiIndexer_test.exe AFTER PUBLIC include)
+
+
+  gaudi_add_executable(phihelper_test.exe
+    SOURCES tests/phihelper_test.cpp
+    LINK Boost::unit_test_framework
+    TEST)
+  target_include_directories(phihelper_test.exe AFTER PUBLIC include)
 endif()
