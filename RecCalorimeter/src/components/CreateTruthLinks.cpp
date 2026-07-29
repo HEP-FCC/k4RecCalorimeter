@@ -501,12 +501,12 @@ StatusCode CreateTruthLinks::execute(const EventContext&) const {
 
       std::map<int, double> mcpEnergy; // map of (index_MCParticle, total energy contributed to the cluster)
 
-      // We need to find all seen hits this clutser is made of, which sim hits each
+      // We need to find all seen hits this cluster is made of, which sim hits each
       // of the seen hits came from, and finally which true particles actually created
       // each sim hit. Contrary to the sim tracker hits above, a sim-calo hit can be
       // made by several true particles. They also have a signal size (energy) value.
       // In addition, the true particle creating sometimes needs to be back-tracked
-      // to the particle actually entering tha calorimeter.
+      // to the particle actually entering the calorimeter.
 
       debug() << endmsg;
       debug() << "=================" << endmsg;
@@ -530,7 +530,7 @@ StatusCode CreateTruthLinks::execute(const EventContext&) const {
         // is quite more complex, and tries to reassign calo->particle links for some rare cases
         for (const auto& assoc : *caloHitMCParticleLinkCollection) {
           const auto& caloHit = assoc.getFrom();
-          if (caloHit.id() != cell.id())
+          if (caloHit.getCellID() != cell.getCellID())
             continue;
           const auto& mcp = assoc.getTo();
           double w = assoc.getWeight(); // fraction of energy of this hit due to mcp
