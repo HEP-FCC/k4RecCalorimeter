@@ -1,0 +1,102 @@
+/*
+  Copyright (C) 2002-2026 CERN for the benefit of the ATLAS collaboration
+*/
+/**
+ * @file RecCaloCommon/include/RecCaloCommon/phihelper.h
+ *
+ * Adapted from CxxUtils/phihelper.h from ATLAS:
+ * @author Frank Winklmeier
+ * @date May 2019
+ * @brief Helper for azimuthal angle calculations
+ */
+#ifndef RECCALOCOMMON_PHIHELPER_H
+#define RECCALOCOMMON_PHIHELPER_H
+
+#include <cmath>
+#include <numbers>
+#include <type_traits>
+
+namespace k4::recCalo {
+
+/**
+ * Wrap angle in radians to [-pi, pi]
+ *
+ * Odd positive (negative) multiples of pi map to (-)pi.
+ * (May not always be true for the long double case.)
+ *
+ * If phi is too large (larger than the largest integer that can be
+ * represented exactly as a T), this may fail to produce a value
+ * in the specified range.
+ */
+template <std::floating_point T>
+inline constexpr T wrapToPi(T phi) {
+  constexpr T TWOPI = 2 * std::numbers::pi_v<T>;
+  constexpr T INV2PI = std::numbers::inv_pi_v<T> / 2;
+  T x = phi * INV2PI;
+
+  // Round x to the nearest integer.
+  // https://stackoverflow.com/questions/17035464/a-fast-method-to-round-a-double-to-a-32-bit-int-explained
+  static_assert(std::numeric_limits<T>::digits <= sizeof(long int) * CHAR_BIT);
+  constexpr T TOINT = 0x1.8p0 * (1ul << (std::numeric_limits<T>::digits - 1));
+  T ix = (x + TOINT) - TOINT;
+
+  // Above gives banker's rounding; that is, halves round to even integers.
+  // However, to get the cases of phi=Npi right, we want halves to round
+  // towards zero.  Fix up the rounding in that case.  Is there a
+  // better way of doing this?
+  T diff = ix - x;
+  if (std::abs(diff) == 0.5) {
+    if (ix > 0)
+      --ix;
+    else if (ix < 0)
+      ++ix;
+  }
+
+  return phi - TWOPI * ix;
+}
+
+/**
+ * Return difference phiA - phiB in range [-pi, pi]
+ */
+template <std::floating_point T>
+inline constexpr T deltaPhi(T phiA, T phiB) {
+  return wrapToPi(phiA - phiB);
+}
+
+/**
+ * Calculate average of two angles
+ *
+ * The average is calculated as the angle of the sum of the two unit vectors
+ * with angles phiA and phiB. As such it always returns the angle in the
+ * narrower of the two complimentary regions spanned by phiA and phiB. If the
+ * vector sum is zero, return the angle within [-pi/2, pi/2]. This method is
+ * symmetric in its arguments except if |mean| equals pi.
+ *
+ * The returned value is within the range [-pi, pi].
+ */
+template <std::floating_point T>
+inline constexpr T phiMean(T phiA, T phiB) {
+  const T diff = wrapToPi(phiA - phiB);
+  return wrapToPi(phiB + 0.5 * diff);
+}
+
+/**
+ * Bisect (average) the angle spanned by phiA and phiB
+ *
+ * The average is calculated by rotating phiA half-way counter-clockwise onto
+ * phiB. Note that his method is not symmetric in its arguments. Typical
+ * use-cases are to determine the centre of a region in the detector.
+ *
+ * The returned value is within the range [-pi, pi].
+ */
+template <std::floating_point T>
+inline constexpr T phiBisect(T phiA, T phiB) {
+  T phi = 0.5 * (phiA + phiB);
+  if (phiA > phiB)
+    phi += std::numbers::pi;
+  return wrapToPi(phi);
+}
+
+} // namespace k4::recCalo
+
+#endif // not RECCALOCOMMON_PHIHELPER_H
