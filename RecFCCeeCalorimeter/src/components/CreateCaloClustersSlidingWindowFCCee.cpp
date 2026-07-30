@@ -94,10 +94,10 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
   m_preClusters.clear();
   int halfThetaPos = floor(m_nThetaPosition / 2.);
   int halfPhiPos = floor(m_nPhiPosition / 2.);
-  float posX = 0;
-  float posY = 0;
-  float posZ = 0;
-  float sumEnergyPos = 0;
+  double posX = 0;
+  double posY = 0;
+  double posZ = 0;
+  double sumEnergyPos = 0;
   std::map<std::pair<uint, uint>, std::vector<edm4hep::CalorimeterHit>> cellsInTowersMap = m_towerTool->cellsInTowers();
 
   // final cluster window

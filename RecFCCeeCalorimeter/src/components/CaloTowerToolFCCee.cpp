@@ -129,6 +129,8 @@ uint CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
   int iPhi = 0;
   uint clusteredCells = 0;
 
+  std::vector<double> dTowers(m_nThetaTower * m_nPhiTower);
+
   for (const auto& cell : *aCells) {
     float cellX = cell.getPosition().x;
     float cellY = cell.getPosition().y;
@@ -150,7 +152,8 @@ uint CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
     // debug() << "Cell: theta = " << cellTheta << " phi = " << cellPhi << endmsg;
     // debug() << "Cell: iTheta = " << iTheta << " iPhi = " << iPhi << " iPhi(cyclic) = " << phiIndexTower(iPhi) <<
     // endmsg;
-    aTowers[iTheta][phiIndexTower(iPhi)] += cell.getEnergy() * sin(cellTheta);
+    double et = cell.getEnergy() * sin(cellTheta);
+    dTowers[iTheta * m_nPhiTower + phiIndexTower(iPhi)] += et;
     if (fillTowersCells) {
       clusteredCells++;
       m_cellsInTowers[std::make_pair(iTheta, phiIndexTower(iPhi))].push_back(cell);
@@ -158,6 +161,12 @@ uint CaloTowerToolFCCee::CellsIntoTowers(std::vector<std::vector<float>>& aTower
 
       if (ncells > 5)
         verbose() << "NUM CELLs IN TOWER : " << ncells << endmsg;
+    }
+  }
+
+  for (size_t jTheta = 0; (int)jTheta < m_nThetaTower; ++jTheta) {
+    for (size_t jPhi = 0; (int)jPhi < m_nPhiTower; ++jPhi) {
+      aTowers[jTheta][jPhi] = dTowers[jTheta * m_nPhiTower + jPhi];
     }
   }
 
