@@ -71,30 +71,22 @@ dd4hep::Position CellPositionsECalEndcapTurbineSegTool::xyzPosition(const CellID
 
   // find position of volume corresponding to first of group of merged cells
   debug() << "cellID: " << aCellId << endmsg;
-  dd4hep::DDSegmentation::CellID volumeId = aCellId;
-  debug() << "volumeId: " << volumeId << endmsg;
-  m_decoder->set(volumeId, "rho", 0);
-  debug() << "volumeId: " << volumeId << endmsg;
-  m_decoder->set(volumeId, "z", 0);
-  debug() << "volumeId: " << volumeId << endmsg;
-  auto detelement = m_volman.lookupDetElement(volumeId);
-  double inLocal[] = {0, 0, 0};
-  const auto outGlobal = detelement.nominal().localToWorld(inLocal);
-  debug() << "Position of volume (mm) : \t" << outGlobal.X() / dd4hep::mm << "\t" << outGlobal.Y() / dd4hep::mm << "\t"
-          << outGlobal.Z() / dd4hep::mm << endmsg;
 
-  // get R, phi of volume
-  double radius = std::sqrt(std::pow(outGlobal.X(), 2) + std::pow(outGlobal.Y(), 2));
-  double phi = std::atan2(outGlobal.Y(), outGlobal.X());
-  debug() << "R (mm), phi of volume : \t" << radius / dd4hep::mm << " , " << phi << endmsg;
+  auto detelement = m_volman.lookupDetElement(aCellId);
 
-  // now get offset in theta and in phi from cell ID (due to theta grid + merging in theta/modules)
-  // the local position is normalised to r_xy=1 so theta is atan(1/z)
+  // get local position of readout cell wrt parent calibration layer
   dd4hep::DDSegmentation::Vector3D inSeg = m_segmentation->position(aCellId);
   debug() << "Local position of cell (mm) : \t" << inSeg.x() / dd4hep::mm << "\t" << inSeg.y() / dd4hep::mm << "\t"
           << inSeg.z() / dd4hep::mm << endmsg;
-  dd4hep::Position outSeg;
-  outSeg = inSeg;
+  // translate to global position
+  dd4hep::Position outSeg = detelement.nominal().localToWorld(dd4hep::Position(inSeg));
+  CellID iSide = m_decoder->get(aCellId, "side");
+  if (iSide != 1) {
+    // account for the fact that -z endcap is mirrored from the +z one
+    outSeg.SetZ(-outSeg.z());
+    outSeg.SetY(-outSeg.y());
+  }
+
   debug() << "Position of cell (mm) : \t" << outSeg.x() / dd4hep::mm << "\t" << outSeg.y() / dd4hep::mm << "\t"
           << outSeg.z() / dd4hep::mm << "\n"
           << endmsg;
