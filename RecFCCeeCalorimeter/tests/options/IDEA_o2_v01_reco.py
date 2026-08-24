@@ -1,7 +1,7 @@
 from Gaudi.Configuration import *
 import os
 
-# CI mode -> barrel wedge (IDEA_o2_v01_CI.xml); otherwise the full detector.
+# CI mode -> barrel wedge (IDEA_o2_v01_CI); otherwise the full detector.
 CI = bool(os.environ.get("IDEA_O2_CI"))
 
 # ---- I/O ----
@@ -20,8 +20,8 @@ geoservice = GeoSvc("GeoSvc")
 geoservice.detectors = [
     os.path.join(
         os.environ.get("K4GEO", ""),
-        "FCCee/IDEA/compact/IDEA_o2_v01",
-        "IDEA_o2_v01_CI.xml" if CI else "IDEA_o2_v01.xml",
+        "FCCee/IDEA/compact",
+        "IDEA_o2_v01_CI/IDEA_o2_v01_CI.xml" if CI else "IDEA_o2_v01/IDEA_o2_v01.xml",
     )
 ]
 geoservice.OutputLevel = INFO

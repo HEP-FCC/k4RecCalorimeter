@@ -4,7 +4,7 @@
 set -e
 
 SOURCE_DIR=$(dirname "$0")
-COMPACT="$K4GEO/FCCee/IDEA/compact/IDEA_o2_v01/IDEA_o2_v01_CI.xml"
+COMPACT="$K4GEO/FCCee/IDEA/compact/IDEA_o2_v01_CI/IDEA_o2_v01_CI.xml"
 
 # Steering wires the DR/SCEPCal SDs; use $K4GEO's copy if present, else fetch it.
 STEERING="$K4GEO/example/SteeringFile_IDEA_o2_v01.py"
