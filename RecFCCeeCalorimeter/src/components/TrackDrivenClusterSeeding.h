@@ -72,7 +72,7 @@ struct TrackDrivenClusterSeeding final
       this, "SeedEnergyThreshold", 0.020f, "Minimum crystal energy [GeV] to be considered as a Type-C seed candidate"};
   Gaudi::Property<float> m_trackWindow{this, "TrackWindow", 0.05f,
                                        "Angular search cone half-angle [rad] around the track impact point: "
-                                       "sqrt(dTheta^2 + dPhi^2) < TrackWindow"};
+                                       "opening angle to the track impact direction < TrackWindow"};
 };
 
 #endif // TrackDrivenClusterSeeding_h

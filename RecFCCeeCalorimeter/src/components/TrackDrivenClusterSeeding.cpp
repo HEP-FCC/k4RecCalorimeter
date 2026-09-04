@@ -39,7 +39,8 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
   edm4hep::ClusterCollection seedsC;
 
   const float thr = m_seedEnergyThreshold.value();
-  const float window = m_trackWindow.value();
+  // the search cone as 1 - cos(alpha), to compare directly against openingAngleDist
+  const float maxDist = 1.f - std::cos(m_trackWindow.value());
 
   // ------------------------------------------------------------------
   // Step 1: Build energy and position maps for above-threshold hits
@@ -68,29 +69,17 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
   }
 
   // ------------------------------------------------------------------
-  // Step 2: Pre-compute (theta, phi) for each hit to avoid repeated
-  //         sqrt/atan2 calls during the per-track search.
-  // ------------------------------------------------------------------
-
-  std::unordered_map<uint64_t, std::pair<float, float>> posMap; // cellID -> (theta, phi)
-  posMap.reserve(hitMap.size());
-  for (const auto& [cellID, hit] : hitMap) {
-    const auto& p = hit.getPosition();
-    posMap[cellID] = ClusterSeeding::toThetaPhi(p.x, p.y, p.z);
-  }
-
-  // ------------------------------------------------------------------
-  // Step 3: Collect all track states at the calorimeter surface.
+  // Step 2: Collect all track states at the calorimeter surface.
   //         edm4hep TrackState location == 4: AtCalorimeter.
   // ------------------------------------------------------------------
-  std::vector<std::pair<float, float>> trackImpacts; // (theta, phi)
+  std::vector<ClusterSeedingBase::ClusterState> trackImpacts; // impact point (x, y, z)
   for (const auto& track : trackColl) {
     for (const auto& ts : track.getTrackStates()) {
       if (ts.location != edm4hep::TrackState::AtCalorimeter)
         continue; // AtCalorimeter only
 
       const auto& rp = ts.referencePoint;
-      trackImpacts.push_back(ClusterSeeding::toThetaPhi(rp.x, rp.y, rp.z));
+      trackImpacts.push_back({rp.x, rp.y, rp.z, 0.f});
       break;
     }
   } // loop over tracks
@@ -100,7 +89,7 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
   // ------------------------------------------------------------------
   std::set<uint64_t> usedSeeds; // avoid duplicating a seed for two close tracks
 
-  for (const auto& [tth, tph] : trackImpacts) {
+  for (const auto& impact : trackImpacts) {
     uint64_t bestCell = 0;
     std::set<uint64_t> bestNbrs; // best seed + VN-d1 neighbors that pass selection
     float bestDist = std::numeric_limits<float>::max();
@@ -109,15 +98,15 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
       if (energy < thr)
         continue;
 
-      auto posIt = posMap.find(cellID);
-      if (posIt == posMap.end())
+      const auto hitIt = hitMap.find(cellID);
+      if (hitIt == hitMap.end())
         continue;
 
-      const auto& [cth, cph] = posIt->second;
+      const auto& p = hitIt->second.getPosition();
 
-      // Angular distance from track impact
-      const float dist = ClusterSeeding::angularDist(cth, cph, tth, tph);
-      if (dist >= window)
+      // Opening angle from the track impact direction, as 1 - cos(alpha)
+      const float dist = openingAngleDist(impact, p.x, p.y, p.z);
+      if (dist >= maxDist)
         continue;
 
       // Local maximum check within VN neighbourhood

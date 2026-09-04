@@ -46,6 +46,12 @@
  *       Grown seeded clusters followed by unseeded clusters.
  *       Position = log-weighted barycenter; energy = total energy of all
  *       attached hits.
+ *
+ *       The energy is a plain sum over the hits, not a calibrated cluster
+ *       energy.  Where one cell is read out through several channels (e.g. the
+ *       scintillation and Cherenkov readings of a crystal), every reading is
+ *       summed, so the sum is not the deposited energy.  The calibrated energy
+ *       depends on what the object turns out to be and is set downstream.
  */
 
 #include "edm4hep/CalorimeterHitCollection.h"

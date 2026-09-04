@@ -81,13 +81,6 @@ inline float deltaPhi(float ph1, float ph2) {
     d += 2.f * pi;
   return d;
 }
-
-// Angular distance sqrt(dTheta^2 + dPhi_wrapped^2).
-inline float angularDist(float th1, float ph1, float th2, float ph2) {
-  const float dth = th1 - th2;
-  const float dph = deltaPhi(ph1, ph2);
-  return std::sqrt(dth * dth + dph * dph);
-}
 } // namespace ClusterSeeding
 
 struct ClusterSeedMerging final : ClusterSeedingBase<std::tuple<edm4hep::ClusterCollection>(  // merged output
