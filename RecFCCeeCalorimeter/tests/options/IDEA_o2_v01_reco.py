@@ -213,7 +213,7 @@ from Configurables import CreateTruthLinks
 
 createTruthLinksECAL = CreateTruthLinks(
     "CreateTruthLinksECAL",
-    cell_hit_links=["SCEPCal_scint_link"],
+    cell_hit_links=["SCEPCal_scint_link", "SCEPCal_cheren_link"],
     clusters=["TopoGrownClusters"],
     mcparticles="MCParticles",
     cell_mcparticle_links="SCEPCal_CaloHitMCParticleLinks",

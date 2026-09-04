@@ -13,7 +13,7 @@
  *   reachable neighbours within Von Neumann distance VNDistSeeded.
  *   A neighbour is eligible for growth only when its energy exceeds
  *   GrowThreshold; hits below this threshold block further propagation.
- *   Hits below HardThreshold are discarded entirely.
+ *   Hits below HardThreshold never enter the growth pool.
  *
  *   Contested hits (claimed by two or more seeds at the same BFS layer) are
  *   resolved with the opening angle distance:
@@ -118,8 +118,9 @@ private:
                                          "Minimum hit energy [GeV] for BFS propagation. "
                                          "Hits below this threshold block further topological growth."};
   Gaudi::Property<float> m_hardThreshold{this, "HardThreshold", 0.01f,
-                                         "Absolute minimum hit energy [GeV]. Hits below this are never attached "
-                                         "to any cluster (HardThreshold <= GrowThreshold is expected)."};
+                                         "Minimum hit energy [GeV] to enter the growth pool. Hits below this are "
+                                         "never picked up by growth; cells already carried by an input seed are kept "
+                                         "regardless (HardThreshold <= GrowThreshold is expected)."};
   Gaudi::Property<float> m_unseededThreshold{this, "UnseededThreshold", 0.04f,
                                              "Minimum hit energy [GeV] required to seed an unseeded cluster candidate. "
                                              "A group of >= MinUnseededHits connected hits all above this threshold "
