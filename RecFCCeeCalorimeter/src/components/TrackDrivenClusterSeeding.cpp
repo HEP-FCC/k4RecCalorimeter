@@ -8,6 +8,8 @@
 #include "DD4hep/Detector.h"
 #include "DDSegmentation/Segmentation.h"
 
+#include "GaudiKernel/GaudiException.h"
+
 #include <cmath>
 #include <limits>
 #include <set>
@@ -53,8 +55,15 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
       const uint64_t cellID = hit.getCellID();
       if (!passSelection(cellID))
         continue;
-      energyMap[cellID] += hit.getEnergy();
-      hitMap.try_emplace(cellID, hit);
+
+      // Assume there is only a single representation of the same cell.
+      if (!hitMap.try_emplace(cellID, hit).second) {
+        error() << "Cell ID " << cellID << " appears in more than one of InputCaloHitCollections; "
+                << "these collections must be disjoint in cell ID." << endmsg;
+        throw GaudiException("Duplicate cell ID across input collections", name(), StatusCode::FAILURE);
+      }
+
+      energyMap[cellID] = hit.getEnergy();
     }
   }
 

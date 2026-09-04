@@ -6,6 +6,8 @@
 #include "DD4hep/Detector.h"
 #include "DDSegmentation/Segmentation.h"
 
+#include "GaudiKernel/GaudiException.h"
+
 #include "ClusterSeedMerging.h" // for enum
 
 #include <cstdint>
@@ -54,8 +56,14 @@ CaloDrivenClusterSeeding::operator()(const std::vector<const edm4hep::Calorimete
       if (!passSelection(cellID))
         continue;
 
+      // Assume there is only a single representation of the same cell.
+      if (!hitMap.try_emplace(cellID, hit).second) {
+        error() << "Cell ID " << cellID << " appears in more than one of InputCaloHitCollections; "
+                << "these collections must be disjoint in cell ID." << endmsg;
+        throw GaudiException("Duplicate cell ID across input collections", name(), StatusCode::FAILURE);
+      }
+
       energyMap[cellID] = hit.getEnergy();
-      hitMap.try_emplace(cellID, hit);
     }
   }
 
