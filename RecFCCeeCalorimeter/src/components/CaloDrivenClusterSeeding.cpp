@@ -140,7 +140,7 @@ CaloDrivenClusterSeeding::operator()(const std::vector<const edm4hep::Calorimete
       continue;
 
     auto cluster = seedsA.create();
-    cluster.setType(static_cast<int>(ClusterSeeding::SeedType::CaloDrivenA)); // Type A seed
+    cluster.setType(ClusterSeeding::encodeType(0, ClusterSeeding::SeedType::CaloDrivenA)); // Type A seed
     // use the seed hit position as the cluster position
     cluster.setPosition(hitMap[seed.cellID].getPosition());
     // attach only hits that have actual energy deposits
@@ -156,7 +156,7 @@ CaloDrivenClusterSeeding::operator()(const std::vector<const edm4hep::Calorimete
       continue;
 
     auto cluster = seedsB.create();
-    cluster.setType(static_cast<int>(ClusterSeeding::SeedType::CaloDrivenB)); // Type B seed
+    cluster.setType(ClusterSeeding::encodeType(0, ClusterSeeding::SeedType::CaloDrivenB)); // Type B seed
     // use the seed hit position as the cluster position
     cluster.setPosition(hitMap[seed.cellID].getPosition());
     // attach only hits that have actual energy deposits

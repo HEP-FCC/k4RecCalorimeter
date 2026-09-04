@@ -61,8 +61,8 @@ struct CaloDrivenClusterSeeding final
   Gaudi::Property<unsigned int> m_minAboveThresholdNeighbours{
       this, "MinAboveThresholdNeighbours", 2,
       "Minimum number of above-threshold neighbours (including seed) for a Type-B seed"};
-  Gaudi::Property<int> m_vnDistance{this, "VonNeumannDistance", 2,
-                                    "Von Neumann distance for neighbourhood definition (applies to both seed types)"};
+  Gaudi::Property<unsigned int> m_vnDistance{
+      this, "VonNeumannDistance", 2u, "Von Neumann distance for neighbourhood definition (applies to both seed types)"};
 };
 
 #endif // CaloDrivenClusterSeeding_h

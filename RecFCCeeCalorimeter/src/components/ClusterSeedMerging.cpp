@@ -132,7 +132,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
         continue;
 
       // Enforce at-most-one-C rule
-      if (nodes[cur].type == static_cast<int>(ClusterSeeding::SeedType::TrackDrivenC)) {
+      if (ClusterSeeding::hasSeed(nodes[cur].type, ClusterSeeding::SeedType::TrackDrivenC)) {
         if (compHasC)
           continue; // defer this C node to its own component
 

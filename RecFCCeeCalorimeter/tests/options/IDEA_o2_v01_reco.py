@@ -2,7 +2,7 @@ from Gaudi.Configuration import *
 import os
 
 # CI mode -> barrel wedge (IDEA_o2_v01_CI); otherwise the full detector.
-CI = bool(os.environ.get("IDEA_O2_CI"))
+CI = os.environ.get("IDEA_O2_CI") == "1"
 
 # ---- I/O ----
 from k4FWCore import IOSvc, ApplicationMgr

@@ -285,11 +285,19 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
         anyAdded = true;
       } // loop over candidates
 
+      // A representative can stop being one later in this same layer, when a
+      // subsequent candidate merges the group a cell was just filed under.  Re-key
+      // with the final representatives, or those cells would be looked up under a
+      // stale key below and drop out of the next layer.
+      std::unordered_map<int, std::set<uint64_t>> mergedFrontier;
+      for (auto& [r, cells] : newFrontier)
+        mergedFrontier[findRep(r)].merge(cells);
+
       // Propagate the new frontier back to per-index structures for next layer.
       for (int i = 0; i < n; ++i) {
         const int r = findRep(i);
-        const auto it = newFrontier.find(r);
-        frontier[i] = (it != newFrontier.end()) ? it->second : std::set<uint64_t>{};
+        const auto it = mergedFrontier.find(r);
+        frontier[i] = (it != mergedFrontier.end()) ? it->second : std::set<uint64_t>{};
       } // loop over clusters to update frontiers
     } // if MergeClusters strategy
   } // while anyAdded
@@ -581,7 +589,7 @@ ClusterSeedGrower::operator()(const std::vector<const edm4hep::ClusterCollection
     addCompanions(hm);
 
     auto out = output.create();
-    out.setType(static_cast<int32_t>(ClusterSeeding::SeedType::Unseeded)); // unseeded cluster
+    out.setType(ClusterSeeding::encodeType(0, ClusterSeeding::SeedType::Unseeded)); // unseeded cluster
 
     const ClusterState finalState = calcBarycenter(hm);
     out.setPosition({finalState.x, finalState.y, finalState.z});

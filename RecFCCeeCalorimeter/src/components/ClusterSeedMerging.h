@@ -61,6 +61,9 @@ enum class SeedType { CaloDrivenA = 0x1, CaloDrivenB = 0x2, TrackDrivenC = 0x4, 
 inline int encodeType(int pdg, SeedType seed) { return (pdg & 0xFFFF) | ((static_cast<int>(seed) & 0xFFFF) << 16); }
 inline int decodePdg(int t) { return static_cast<int16_t>(t & 0xFFFF); }
 inline SeedType decodeSeed(int t) { return static_cast<SeedType>((t >> 16) & 0xFFFF); }
+// Whether the seed-type mask of t carries the given seed type.  The mask can hold
+// several types at once, since ClusterSeedMerging ORs the types of the merged seeds.
+inline bool hasSeed(int t, SeedType s) { return (static_cast<int>(decodeSeed(t)) & static_cast<int>(s)) != 0; }
 
 // ---- Geometry helpers (free functions) ----
 // Convert (x,y,z) to (theta, phi).  Returns (0,0) if |r| ~ 0.

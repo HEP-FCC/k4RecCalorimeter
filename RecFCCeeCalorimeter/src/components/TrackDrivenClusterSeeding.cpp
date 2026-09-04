@@ -149,7 +149,8 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
 
     // Build the cluster: seed hit + above-threshold VN-d1 neighbourhood
     auto cluster = seedsC.create();
-    cluster.setType(static_cast<int>(ClusterSeeding::SeedType::TrackDrivenC)); // Type C seed (track-driven)
+    cluster.setType(
+        ClusterSeeding::encodeType(0, ClusterSeeding::SeedType::TrackDrivenC)); // Type C seed (track-driven)
     // use the seed hit position as the cluster position
     cluster.setPosition(hitMap[bestCell].getPosition());
 

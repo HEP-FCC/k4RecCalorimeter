@@ -34,7 +34,7 @@
  *       Returns true if all cells in the set form one connected component
  *       under VN-d1 adjacency.
  *
- *   calcBarycenter(hits)  /  calcBarycenter(hitMap)
+ *   calcBarycenter(hitMap)
  *       Overloaded log-weighted barycenter helper returning a ClusterState.
  *       w_i = max(0, W0 + ln(E_i / E_tot)).
  *
@@ -218,38 +218,7 @@ protected:
     return visited.size() == cells.size();
   } // isConnected
 
-  // ---- Log-weighted barycenter (vector<hit> overload) ----
-  ClusterState calcBarycenter(const std::vector<edm4hep::CalorimeterHit>& hits) const {
-    float totE = 0.f;
-    for (const auto& h : hits)
-      totE += h.getEnergy();
-
-    ClusterState s;
-    s.energy = totE;
-
-    // Guard against zero/negative total energy to avoid NaNs
-    if (totE <= 0.f)
-      return s;
-
-    float totW = 0.f;
-    for (const auto& h : hits) {
-      const float w = std::max(0.f, m_w0.value() + std::log(h.getEnergy() / totE));
-      totW += w;
-      const auto& p = h.getPosition();
-      s.x += w * p.x;
-      s.y += w * p.y;
-      s.z += w * p.z;
-    }
-    if (totW > 0.f) {
-      s.x /= totW;
-      s.y /= totW;
-      s.z /= totW;
-    }
-
-    return s;
-  } // calcBarycenter
-
-  // ---- Log-weighted barycenter (Hitmap overload) ----
+  // ---- Log-weighted barycenter ----
   ClusterState calcBarycenter(const Hitmap& hitMap) const {
     float totE = 0.f;
     for (const auto& [id, h] : hitMap)
@@ -275,7 +244,26 @@ protected:
       s.x /= totW;
       s.y /= totW;
       s.z /= totW;
+
+      return s;
     }
+
+    // Every log weight was clipped to zero, i.e. no hit carries more than exp(-W0)
+    // of the cluster energy.  A real shower should never be this flat, so say so
+    // and fall back to the energy-weighted barycenter instead of the origin.
+    this->warning() << "ClusterSeedingBase::calcBarycenter: all log weights vanished for a cluster of " << hitMap.size()
+                    << " hits with E = " << totE << " GeV (W0 = " << m_w0.value()
+                    << "); falling back to the energy-weighted barycenter." << endmsg;
+
+    for (const auto& [id, h] : hitMap) {
+      const auto& p = h.getPosition();
+      s.x += h.getEnergy() * p.x;
+      s.y += h.getEnergy() * p.y;
+      s.z += h.getEnergy() * p.z;
+    }
+    s.x /= totE;
+    s.y /= totE;
+    s.z /= totE;
 
     return s;
   } // calcBarycenter
