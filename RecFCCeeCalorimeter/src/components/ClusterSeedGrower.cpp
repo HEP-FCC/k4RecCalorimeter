@@ -60,15 +60,13 @@ auto ClusterSeedGrower::connectedSeeds(const Hitmap& pool, unsigned int vnDist, 
                                        unsigned int minHits) const -> std::vector<Hitmap> {
   // visited tracks which cells in *pool* have already been consumed
   // into a component.  Only cells present in *pool* are ever visited.
-  std::unordered_map<uint64_t, bool> visited;
+  std::unordered_set<uint64_t> visited;
   visited.reserve(pool.size());
-  for (const auto& [cid, hit] : pool)
-    visited[cid] = false;
 
   std::vector<ClusterSeedingBase::Hitmap> result;
 
   for (const auto& [startCID, startHit] : pool) {
-    if (visited[startCID])
+    if (visited.contains(startCID))
       continue; // already consumed into a previous component
     if (startHit.getEnergy() < threshold)
       continue; // below seeding threshold
@@ -83,9 +81,8 @@ auto ClusterSeedGrower::connectedSeeds(const Hitmap& pool, unsigned int vnDist, 
       const uint64_t cur = bfsQueue.front();
       bfsQueue.pop();
 
-      if (visited[cur])
-        continue;
-      visited[cur] = true;
+      if (!visited.insert(cur).second)
+        continue; // already consumed
 
       const auto& curHit = pool.at(cur);
       if (curHit.getEnergy() < threshold)
@@ -98,12 +95,12 @@ auto ClusterSeedGrower::connectedSeeds(const Hitmap& pool, unsigned int vnDist, 
       // are returned.
       const std::set<uint64_t> vnn = vonNeumannNeighbors(cur, vnDist);
       for (const uint64_t nb : vnn) {
-        if (nb == cur)
-          continue;
-        const auto vit = visited.find(nb);
-        if (vit == visited.end() || vit->second)
-          continue; // not in pool, or already visited
-        if (pool.at(nb).getEnergy() >= threshold)
+        if (nb == cur || visited.contains(nb))
+          continue; // self, or already consumed
+        const auto pit = pool.find(nb);
+        if (pit == pool.end())
+          continue; // not in pool
+        if (pit->second.getEnergy() >= threshold)
           bfsQueue.push(nb);
       }
     } // BFS
