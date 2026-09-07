@@ -23,8 +23,9 @@
  *       initialisation should call ClusterSeedingBase::initialize() first.
  *
  *   passSelection(cellID)
- *       Returns true if the cell passes all (FieldStringsToFilter/Values) and
- *       all (FieldStringsToInclude/Values) cuts.
+ *       Returns true if the cell matches every (FieldStringsToFilter/Values)
+ *       pair, i.e. the pairs select which cells are kept, they do not exclude.
+ *       With no pairs configured every cell passes.
  *
  *   vonNeumannNeighbors(cellID, half)
  *       Returns the set of cellIDs that are reachable from cellID within Von
@@ -135,9 +136,9 @@ protected:
   } // initialize
 
   // ---- Cell-ID selection ----
-  // Returns false if:
-  //   for each (field, value) in FieldStringsToFilter:  decoder[field] != value
-  //   (i.e. the cell is filtered out)
+  // Keeps a cell only when decoder[field] == value for every configured
+  // (FieldStringsToFilter, FieldValuesToFilter) pair; any mismatch drops it.
+  // An empty configuration keeps everything.
   bool passSelection(uint64_t cellID) const {
     if (!m_decoder)
       return true;
@@ -292,11 +293,15 @@ protected:
   Gaudi::Property<std::string> m_readoutName{this, "ReadoutName", "",
                                              "Name of the calorimeter readout (used to retrieve the segmentation)"};
 
-  // Exclude cells matching any (field, value) pair
+  // Keep only the cells matching every (field, value) pair
   Gaudi::Property<std::vector<std::string>> m_fieldStringsToFilter{
-      this, "FieldStringsToFilter", {}, "BitField names used to filter (exclude) hits, e.g. 'cherenkov', 'layer'"};
+      this,
+      "FieldStringsToFilter",
+      {},
+      "BitField names the cell is filtered on, e.g. 'cherenkov', 'layer'. A cell is kept only if it matches "
+      "the corresponding FieldValuesToFilter entry, so these pairs select cells rather than exclude them."};
   Gaudi::Property<std::vector<int>> m_fieldValuesToFilter{
-      this, "FieldValuesToFilter", {}, "Values corresponding to FieldStringsToFilter"};
+      this, "FieldValuesToFilter", {}, "Values the cell must have for the corresponding FieldStringsToFilter entry"};
 
   // Barycenter / distance parameters
   Gaudi::Property<float> m_w0{this, "W0", 4.6f,

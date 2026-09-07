@@ -6,12 +6,16 @@ set -e
 SOURCE_DIR=$(dirname "$0")
 COMPACT="$K4GEO/FCCee/IDEA/compact/IDEA_o2_v01_CI/IDEA_o2_v01_CI.xml"
 
-# Steering wires the DR/SCEPCal SDs; use $K4GEO's copy if present, else fetch it.
+# Steering wires the DR/SCEPCal SDs.  It ships with k4geo alongside the CI geometry
+# above, so both must come from the same k4geo the environment provides.
 STEERING="$K4GEO/example/SteeringFile_IDEA_o2_v01.py"
-if [ ! -f "$STEERING" ]; then
-  [ -d k4geo ] || { git clone --no-checkout https://github.com/key4hep/k4geo && ( cd k4geo && git checkout HEAD example ); }
-  STEERING="k4geo/example/SteeringFile_IDEA_o2_v01.py"
-fi
+
+for required in "$COMPACT" "$STEERING"; do
+  if [ ! -f "$required" ]; then
+    echo "$(basename "$0"): missing $required" >&2
+    exit 1
+  fi
+done
 
 # IDEA_O2_CI=1 selects the CI wedge in both the steering and the reco config.
 export IDEA_O2_CI=1

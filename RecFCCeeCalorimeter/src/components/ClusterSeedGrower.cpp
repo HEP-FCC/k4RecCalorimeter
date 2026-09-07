@@ -444,10 +444,10 @@ ClusterSeedGrower::operator()(const std::vector<const edm4hep::ClusterCollection
       nClusters += static_cast<int>(coll->size());
   }
 
-  if (nClusters == 0) {
-    warning() << "ClusterSeedGrower: no input seeds — returning empty collection." << endmsg;
-    return std::make_tuple(std::move(output));
-  }
+  // Events without any seed still can form unseeded clusters, although it could be
+  // a sign of misconfiguration.  Print warning if there is no input seed.
+  if (nClusters == 0)
+    warning() << "ClusterSeedGrower: no input seeds; only unseeded clustering will run." << endmsg;
 
   // Per-cluster hit maps (cellID → hit); initial frontier is the seed hits.
   // seedTypes records each input seed's type so Step 6 can reproduce it.

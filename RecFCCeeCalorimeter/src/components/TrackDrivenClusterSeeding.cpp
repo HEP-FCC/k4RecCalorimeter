@@ -147,7 +147,7 @@ TrackDrivenClusterSeeding::operator()(const edm4hep::TrackCollection& trackColl,
       continue; // already seeded by another track
     usedSeeds.insert(bestCell);
 
-    // Build the cluster: seed hit + above-threshold VN-d1 neighbourhood
+    // Build the cluster: seed hit + its full VN-d1 neighbourhood
     auto cluster = seedsC.create();
     cluster.setType(
         ClusterSeeding::encodeType(0, ClusterSeeding::SeedType::TrackDrivenC)); // Type C seed (track-driven)

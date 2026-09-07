@@ -25,15 +25,17 @@ CreateOpticalCaloCells::CreateOpticalCaloCells(const std::string& name, ISvcLoca
 StatusCode CreateOpticalCaloCells::initialize() {
   info() << name() << ": calibration constant = " << m_calibConst.value() << endmsg;
 
+  // The output cells keep the input cell IDs, so they need the same encoding.
+  const std::string opticalKey = inputLocations("OpticalHits")[0];
+  auto encoding = k4FWCore::getCellIDEncoding(opticalKey, this);
+  if (!encoding.has_value()) {
+    error() << "The cellID encoding of '" << opticalKey << "' could not be retrieved" << endmsg;
+    return StatusCode::FAILURE;
+  }
+  k4FWCore::putCellIDEncoding(outputLocations("OutputCollection")[0], encoding.value(), this);
+
   if (m_maskCherenkov.value()) {
-    // Locate the 'cherenkov' field in the input cellID encoding to build its mask
-    const std::string opticalKey = inputLocations("OpticalHits")[0];
-    auto encoding = k4FWCore::getCellIDEncoding(opticalKey, this);
-    if (!encoding.has_value()) {
-      error() << "maskCherenkovForTruthLink is set but the cellID encoding of '" << opticalKey
-              << "' could not be retrieved" << endmsg;
-      return StatusCode::FAILURE;
-    }
+    // Locate the 'cherenkov' field in the cellID encoding to build its mask
     dd4hep::DDSegmentation::BitFieldCoder decoder(encoding.value());
     try {
       m_cherenkovMask = decoder[m_cherenkovField.value()].mask();

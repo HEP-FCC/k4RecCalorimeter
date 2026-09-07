@@ -35,7 +35,8 @@
  * ------
  *   edm4hep::ClusterCollection
  *       One cluster per accepted track seed.  Each cluster holds the seed
- *       crystal plus all above-threshold hits from its VN-d1 neighbourhood.
+ *       crystal plus every hit in its VN-d1 neighbourhood: SeedEnergyThreshold
+ *       qualifies the seed crystal only, the neighbourhood is taken whole.
  */
 
 #include "edm4hep/CalorimeterHitCollection.h"
