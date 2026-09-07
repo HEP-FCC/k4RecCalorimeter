@@ -18,8 +18,9 @@
  *
  *   Adjacency is propagated transitively via BFS.  At most one Type-C seed may
  *   belong to any merged group: a group containing several is split into one
- *   group per Type-C seed, and every other seed joins the Type-C seed closest
- *   to it in opening angle.
+ *   group per Type-C seed, and every other seed joins the closest in opening
+ *   angle among the Type-C seeds that reach it along the chain of adjacent
+ *   seeds, without passing through another Type-C seed.
  *
  * Outputs
  * -------

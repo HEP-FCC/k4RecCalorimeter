@@ -47,6 +47,12 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     int collIdx;   // index of the source collection in the input vector
     int srcIdx;    // index in the source collection
     float x, y, z; // position of the seed (mm)
+
+    // Scratch for the Step 3 split: the opening angle to the track seed that owns this
+    // node, and which one (index into that component's trackNodes).  Each node belongs
+    // to exactly one component, so this is written at most once.
+    float reachDist{std::numeric_limits<float>::max()};
+    size_t reachOwner{0};
   };
 
   // One merged group of seeds.  The fields are filled in stages: nodes and
@@ -127,26 +133,12 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   // Step 3: BFS to find connected components, then enforce the invariant that
   //   each component holds AT MOST ONE Type-C node.  A component holding several
   //   is split into one component per Type-C node, and every other seed joins the
-  //   Type-C node closest to it in opening angle.
+  //   closest in opening angle among the Type-C nodes that can reach it along the
+  //   chain of adjacent seeds.
   // ------------------------------------------------------------------
   auto isTrackSeed = [&nodes](int idx) {
     return ClusterSeeding::hasSeed(nodes[idx].type, ClusterSeeding::SeedType::TrackDrivenC);
   };
-
-  // Index into trackNodes of the track seed closest to nd in opening angle.
-  auto nearestTrack = [&nodes, this](const std::vector<int>& trackNodes, const Node& nd) {
-    size_t best = 0;
-    float bestDist = std::numeric_limits<float>::max();
-    for (size_t k = 0; k < trackNodes.size(); ++k) {
-      const Node& t = nodes[trackNodes[k]];
-      const float d = openingAngleDist({t.x, t.y, t.z, 0.f}, nd.x, nd.y, nd.z);
-      if (d < bestDist) {
-        bestDist = d;
-        best = k;
-      }
-    }
-    return best;
-  }; // lambda nearestTrack
 
   std::vector<Component> components;
   std::vector<bool> visited(n, false);
@@ -183,14 +175,42 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       continue;
     }
 
-    // Several track seeds: one component each, every other seed joins the nearest.
+    // Several track seeds: one component each.  A track seed can claim only the seeds it
+    // reaches through the adjacency chain, and among the candidates the nearest in angle wins.
     const size_t firstOfSplit = components.size();
     for (const int t : trackNodes)
       components.push_back({{t}, true});
 
+    for (size_t k = 0; k < trackNodes.size(); ++k) {
+      const Node& track = nodes[trackNodes[k]];
+      std::unordered_set<int> reached;
+      std::queue<int> frontier;
+      frontier.push(trackNodes[k]);
+
+      while (!frontier.empty()) {
+        const int cur = frontier.front();
+        frontier.pop();
+
+        for (const int nb : comp) {
+          if (nb == cur || isTrackSeed(nb) || !adjacent(cur, nb))
+            continue; // not on the chain, or another track seed
+          if (!reached.insert(nb).second)
+            continue; // this track has already walked through it
+
+          const float d = openingAngleDist({track.x, track.y, track.z, 0.f}, nodes[nb].x, nodes[nb].y, nodes[nb].z);
+          if (d < nodes[nb].reachDist) {
+            nodes[nb].reachDist = d;
+            nodes[nb].reachOwner = k;
+          }
+
+          frontier.push(nb);
+        } // loop over the other seeds of this component
+      } // while the chain still grows
+    } // loop over track seeds
+
     for (const int idx : comp) {
       if (!isTrackSeed(idx))
-        components[firstOfSplit + nearestTrack(trackNodes, nodes[idx])].nodes.push_back(idx);
+        components[firstOfSplit + nodes[idx].reachOwner].nodes.push_back(idx);
     }
   } // loop over nodes
 
