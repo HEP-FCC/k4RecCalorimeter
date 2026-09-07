@@ -14,7 +14,7 @@ K4GEO_PREFIX=$(dirname "$(dirname "$K4GEO")")
 K4GEO_VERSION=$(sed -n 's/^set(k4geo_VERSION \([0-9.]*\)).*/\1/p' \
                 "$K4GEO_PREFIX/lib/cmake/k4geo/k4geoConfig.cmake")
 case "$K4GEO" in
-  */nightlies/*|*/HEAD/*) K4GEO_REF=main ;;
+  *nightlies*|*/HEAD/*) K4GEO_REF=main ;;
   *) K4GEO_REF=$(echo "$K4GEO_VERSION" | awk -F. '{printf "v%02d-%02d", $1, $2}') ;;
 esac
 echo "Taking the steering file from k4geo $K4GEO_REF (installed version ${K4GEO_VERSION:-unknown})"
