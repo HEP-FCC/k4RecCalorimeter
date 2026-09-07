@@ -59,13 +59,13 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   // hasTrackSeed when the group is formed in Step 3, cellIDs and absorbedBy by the
   // absorption in Step 4, and types/hits/state by Step 5.
   struct Component {
-    std::vector<int> nodes;               // indices into nodes[]
-    bool hasTrackSeed{false};             // at most one Type-C seed per group
-    std::unordered_set<uint64_t> cellIDs; // union of its seeds' cell IDs
-    int absorbedBy{-1};                   // >= 0: swallowed by that component
-    int types{0};                         // OR of its seeds' Cluster::type
-    ClusterSeedingBase::Hitmap hits;      // deduplicated hits, refined by Step 5.5
-    ClusterState state{};                 // frozen barycenter used for redistribution
+    std::vector<int> nodes;                 // indices into nodes[]
+    bool hasTrackSeed{false};               // at most one Type-C seed per group
+    std::unordered_set<uint64_t> cellIDs{}; // union of its seeds' cell IDs
+    int absorbedBy{-1};                     // >= 0: swallowed by that component
+    int types{0};                           // OR of its seeds' Cluster::type
+    ClusterSeedingBase::Hitmap hits{};      // deduplicated hits, refined by Step 5.5
+    ClusterState state{};                   // frozen barycenter used for redistribution
   };
 
   std::vector<Node> nodes;
