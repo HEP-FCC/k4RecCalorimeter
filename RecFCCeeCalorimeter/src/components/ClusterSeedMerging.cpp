@@ -49,11 +49,17 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     float x, y, z; // position of the seed (mm)
   };
 
-  // One merged group: the seed nodes it holds, and whether one of them is a track seed
-  // (Step 3 allows at most one, and Step 4 must not put two back together).
+  // One merged group of seeds.  The fields are filled in stages: nodes and
+  // hasTrackSeed when the group is formed in Step 3, cellIDs and absorbedBy by the
+  // absorption in Step 4, and types/hits/state by Step 5.
   struct Component {
-    std::vector<int> nodes;
-    bool hasTrackSeed;
+    std::vector<int> nodes;               // indices into nodes[]
+    bool hasTrackSeed{false};             // at most one Type-C seed per group
+    std::unordered_set<uint64_t> cellIDs; // union of its seeds' cell IDs
+    int absorbedBy{-1};                   // >= 0: swallowed by that component
+    int types{0};                         // OR of its seeds' Cluster::type
+    ClusterSeedingBase::Hitmap hits;      // deduplicated hits, refined by Step 5.5
+    ClusterState state{};                 // frozen barycenter used for redistribution
   };
 
   std::vector<Node> nodes;
@@ -206,44 +212,40 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   };
 
   // Build per-component cellID sets for subset testing
-  std::vector<std::unordered_set<uint64_t>> compCellIDs(nComp);
   for (int ci = 0; ci < nComp; ++ci) {
     for (const int idx : components[ci].nodes) {
       const Node& nd = nodes[idx];
       for (const auto& hit : (*retrieveSrcColl(nd.collIdx))[nd.srcIdx].getHits())
-        compCellIDs[ci].insert(hit.getCellID());
+        components[ci].cellIDs.insert(hit.getCellID());
     }
   }
-
-  // absorbed[i] = j means component i is swallowed by component j
-  std::vector<int> absorbed(nComp, -1);
 
   bool anyAbsorbed = true;
   while (anyAbsorbed) {
     anyAbsorbed = false;
     for (int i = 0; i < nComp; ++i) {
-      if (absorbed[i] >= 0 || compCellIDs[i].empty())
+      if (components[i].absorbedBy >= 0 || components[i].cellIDs.empty())
         continue;
 
       for (int j = 0; j < nComp; ++j) {
-        if (i == j || absorbed[j] >= 0)
+        if (i == j || components[j].absorbedBy >= 0)
           continue;
         if (components[i].hasTrackSeed && components[j].hasTrackSeed)
           continue; // absorbing would put two track seeds in one group
-        if (compCellIDs[j].size() < compCellIDs[i].size())
+        if (components[j].cellIDs.size() < components[i].cellIDs.size())
           continue; // j must be at least as large as i
 
         // Test i ⊆ j
         bool isSubset = true;
-        for (const uint64_t cid : compCellIDs[i]) {
-          if (!compCellIDs[j].count(cid)) {
+        for (const uint64_t cid : components[i].cellIDs) {
+          if (!components[j].cellIDs.count(cid)) {
             isSubset = false;
             break;
           }
         }
 
         if (isSubset) {
-          absorbed[i] = j;
+          components[i].absorbedBy = j;
           components[j].hasTrackSeed = components[j].hasTrackSeed || components[i].hasTrackSeed;
           // Merge i's nodes into j so the type bitmask is collected in Step 6
           for (const int idx : components[i].nodes)
@@ -256,8 +258,9 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     } // loop over i
   } // while anyAbsorbed
 
-  debug() << "ClusterSeedMerging: " << std::count(absorbed.begin(), absorbed.end(), -1)
-          << " output components after absorbing " << (nComp - std::count(absorbed.begin(), absorbed.end(), -1))
+  const int nSurviving = static_cast<int>(
+      std::count_if(components.begin(), components.end(), [](const Component& c) { return c.absorbedBy < 0; }));
+  debug() << "ClusterSeedMerging: " << nSurviving << " output components after absorbing " << (nComp - nSurviving)
           << " fully-overlapping components." << endmsg;
 
   // ------------------------------------------------------------------
@@ -271,28 +274,25 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
 
   // Build per-component deduplicated hit maps, frozen cluster states, and
   // the cellOwners index (reused in Step 7).
-  std::vector<ClusterState> frozenState(nComp, {0.f, 0.f, 0.f, 0.f});
-  std::vector<ClusterSeedingBase::Hitmap> compHitMaps(nComp);
-  std::vector<int> compTypes(nComp, 0);
   std::unordered_map<uint64_t, std::vector<int>> cellOwners;
 
   for (int ci = 0; ci < nComp; ++ci) {
-    if (absorbed[ci] >= 0)
+    if (components[ci].absorbedBy >= 0)
       continue;
 
     for (const int idx : components[ci].nodes) {
       const Node& nd = nodes[idx];
-      compTypes[ci] |= nd.type;
+      components[ci].types |= nd.type;
 
       for (const auto& hit : (*retrieveSrcColl(nd.collIdx))[nd.srcIdx].getHits())
-        compHitMaps[ci].try_emplace(hit.getCellID(), hit);
+        components[ci].hits.try_emplace(hit.getCellID(), hit);
     } // loop over nodes in component to build hit map
 
-    if (!compHitMaps[ci].empty()) {
-      auto bary = calcBarycenter(compHitMaps[ci]);
-      frozenState[ci] = {bary.x, bary.y, bary.z, bary.energy};
+    if (!components[ci].hits.empty()) {
+      auto bary = calcBarycenter(components[ci].hits);
+      components[ci].state = {bary.x, bary.y, bary.z, bary.energy};
 
-      for (const auto& [cellID, hit] : compHitMaps[ci])
+      for (const auto& [cellID, hit] : components[ci].hits)
         cellOwners[cellID].push_back(ci);
     } // if component has any hits
   } // loop over components
@@ -304,14 +304,14 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       continue; // not contested
 
     // Retrieve the hit from the first owner (all copies are identical)
-    const edm4hep::CalorimeterHit& hit = compHitMaps[owners[0]].at(cellID);
+    const edm4hep::CalorimeterHit& hit = components[owners[0]].hits.at(cellID);
     const edm4hep::Vector3f& hpos = hit.getPosition();
 
     int winner = owners[0];
     float bestDist = std::numeric_limits<float>::max();
 
     for (const int ci : owners) {
-      const ClusterState& cs = frozenState[ci];
+      const ClusterState& cs = components[ci].state;
       const float d = openingAngleDist(cs, hpos.x, hpos.y, hpos.z);
 
       if (d < bestDist) {
@@ -323,7 +323,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     // Remove from all losers
     for (const int ci : owners) {
       if (ci != winner) {
-        compHitMaps[ci].erase(cellID);
+        components[ci].hits.erase(cellID);
         ++nRedistributed;
       }
     } // loop over owners to remove losers
@@ -336,13 +336,13 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   // Step 6: Build output collections.
   //   Non-absorbed components -> one merged cluster with barycenter position.
   //   Absorbed components     -> skipped (their hits+types are in the absorbing component).
-  //   Uses compHitMaps built/refined by Step 5.5.
+  //   Uses the per-component hits built/refined by Step 5.5.
   // ------------------------------------------------------------------
   for (int ci = 0; ci < nComp; ++ci) {
-    if (absorbed[ci] >= 0)
+    if (components[ci].absorbedBy >= 0)
       continue; // swallowed by another component
 
-    auto& hitMap = compHitMaps[ci];
+    auto& hitMap = components[ci].hits;
     if (hitMap.empty())
       continue; // no hits left after redistribution - skip
 
@@ -351,7 +351,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     auto bary = calcBarycenter(hitMap);
     merged.setPosition({bary.x, bary.y, bary.z});
     merged.setEnergy(bary.energy);
-    merged.setType(compTypes[ci]);
+    merged.setType(components[ci].types);
 
     for (const auto& [cellID, hit] : hitMap)
       merged.addToHits(hit);
