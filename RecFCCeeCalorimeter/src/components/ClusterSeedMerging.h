@@ -10,16 +10,16 @@
  *
  * Merging criterion
  * -----------------
- *   Two seeds i and j are spatially adjacent when the opening angle between
- *   their position vectors is less than arctan(MergeDistance / |pos_i|):
+ *   Each seed carries an angular cone of half-angle arctan(MergeDistance / r)
+ *   at its own radius, and two seeds are adjacent when either lies inside the
+ *   other's cone:
  *
- *     alpha(i,j) < arctan(MergeDistance / |pos_i|)
+ *     alpha(i,j) < arctan(MergeDistance / min(|pos_i|, |pos_j|))
  *
- *   This defines a fixed angular cone of half-angle arctan(d/r_i) around
- *   seed i.  Adjacency is propagated transitively via BFS. The constraint
- *   that at most one Type-C seed may belong to any merged group is enforced
- *   during BFS (additional C seeds found while growing a component that
- *   already contains one C seed are deferred to their own component).
+ *   Adjacency is propagated transitively via BFS.  At most one Type-C seed may
+ *   belong to any merged group: a group containing several is split into one
+ *   group per Type-C seed, and every other seed joins the Type-C seed closest
+ *   to it in opening angle.
  *
  * Outputs
  * -------

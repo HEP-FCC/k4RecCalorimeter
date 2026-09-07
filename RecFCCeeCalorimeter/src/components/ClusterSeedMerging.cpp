@@ -3,6 +3,7 @@
 #include "edm4hep/Cluster.h"
 #include "edm4hep/MutableCluster.h"
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <numeric>
@@ -46,6 +47,13 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     int collIdx;   // index of the source collection in the input vector
     int srcIdx;    // index in the source collection
     float x, y, z; // position of the seed (mm)
+  };
+
+  // One merged group: the seed nodes it holds, and whether one of them is a track seed
+  // (Step 3 allows at most one, and Step 4 must not put two back together).
+  struct Component {
+    std::vector<int> nodes;
+    bool hasTrackSeed;
   };
 
   std::vector<Node> nodes;
@@ -104,16 +112,37 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     const float cosAlpha = dotij / std::sqrt(r2i * r2j);
     const float alpha = std::acos(std::max(-1.f, std::min(1.f, cosAlpha)));
 
-    return alpha < std::atan2(mergeDist, std::sqrt(r2i));
+    // Union of the two cones: adjacent when either seed lies inside the other's.
+    // The smaller radius gives the wider cone.
+    return alpha < std::atan2(mergeDist, std::sqrt(std::min(r2i, r2j)));
   }; // lambda adjacent
 
   // ------------------------------------------------------------------
-  // Step 3: BFS to find connected components.
-  //   Invariant: each component holds AT MOST ONE Type-C node.
-  //   If a second C node is encountered while growing a component, it is
-  //   skipped (left unvisited) so it will seed its own component later.
+  // Step 3: BFS to find connected components, then enforce the invariant that
+  //   each component holds AT MOST ONE Type-C node.  A component holding several
+  //   is split into one component per Type-C node, and every other seed joins the
+  //   Type-C node closest to it in opening angle.
   // ------------------------------------------------------------------
-  std::vector<std::vector<int>> components;
+  auto isTrackSeed = [&nodes](int idx) {
+    return ClusterSeeding::hasSeed(nodes[idx].type, ClusterSeeding::SeedType::TrackDrivenC);
+  };
+
+  // Index into trackNodes of the track seed closest to nd in opening angle.
+  auto nearestTrack = [&nodes, this](const std::vector<int>& trackNodes, const Node& nd) {
+    size_t best = 0;
+    float bestDist = std::numeric_limits<float>::max();
+    for (size_t k = 0; k < trackNodes.size(); ++k) {
+      const Node& t = nodes[trackNodes[k]];
+      const float d = openingAngleDist({t.x, t.y, t.z, 0.f}, nd.x, nd.y, nd.z);
+      if (d < bestDist) {
+        bestDist = d;
+        best = k;
+      }
+    }
+    return best;
+  }; // lambda nearestTrack
+
+  std::vector<Component> components;
   std::vector<bool> visited(n, false);
 
   for (int i = 0; i < n; ++i) {
@@ -121,7 +150,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       continue;
 
     std::vector<int> comp;
-    bool compHasC = false;
+    std::vector<int> trackNodes;
     std::queue<int> q;
     q.push(i);
 
@@ -131,16 +160,10 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       if (visited[cur])
         continue;
 
-      // Enforce at-most-one-C rule
-      if (ClusterSeeding::hasSeed(nodes[cur].type, ClusterSeeding::SeedType::TrackDrivenC)) {
-        if (compHasC)
-          continue; // defer this C node to its own component
-
-        compHasC = true;
-      }
-
       visited[cur] = true;
       comp.push_back(cur);
+      if (isTrackSeed(cur))
+        trackNodes.push_back(cur);
 
       // add all adjacent nodes to the queue
       for (int j = 0; j < n; ++j) {
@@ -149,7 +172,20 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       }
     } // while queue not empty
 
-    components.push_back(std::move(comp));
+    if (trackNodes.size() <= 1) {
+      components.push_back({std::move(comp), !trackNodes.empty()});
+      continue;
+    }
+
+    // Several track seeds: one component each, every other seed joins the nearest.
+    const size_t firstOfSplit = components.size();
+    for (const int t : trackNodes)
+      components.push_back({{t}, true});
+
+    for (const int idx : comp) {
+      if (!isTrackSeed(idx))
+        components[firstOfSplit + nearestTrack(trackNodes, nodes[idx])].nodes.push_back(idx);
+    }
   } // loop over nodes
 
   // ------------------------------------------------------------------
@@ -172,7 +208,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   // Build per-component cellID sets for subset testing
   std::vector<std::unordered_set<uint64_t>> compCellIDs(nComp);
   for (int ci = 0; ci < nComp; ++ci) {
-    for (const int idx : components[ci]) {
+    for (const int idx : components[ci].nodes) {
       const Node& nd = nodes[idx];
       for (const auto& hit : (*retrieveSrcColl(nd.collIdx))[nd.srcIdx].getHits())
         compCellIDs[ci].insert(hit.getCellID());
@@ -192,6 +228,8 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       for (int j = 0; j < nComp; ++j) {
         if (i == j || absorbed[j] >= 0)
           continue;
+        if (components[i].hasTrackSeed && components[j].hasTrackSeed)
+          continue; // absorbing would put two track seeds in one group
         if (compCellIDs[j].size() < compCellIDs[i].size())
           continue; // j must be at least as large as i
 
@@ -206,9 +244,10 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
 
         if (isSubset) {
           absorbed[i] = j;
+          components[j].hasTrackSeed = components[j].hasTrackSeed || components[i].hasTrackSeed;
           // Merge i's nodes into j so the type bitmask is collected in Step 6
-          for (const int idx : components[i])
-            components[j].push_back(idx);
+          for (const int idx : components[i].nodes)
+            components[j].nodes.push_back(idx);
 
           anyAbsorbed = true;
           break;
@@ -241,7 +280,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     if (absorbed[ci] >= 0)
       continue;
 
-    for (const int idx : components[ci]) {
+    for (const int idx : components[ci].nodes) {
       const Node& nd = nodes[idx];
       compTypes[ci] |= nd.type;
 
