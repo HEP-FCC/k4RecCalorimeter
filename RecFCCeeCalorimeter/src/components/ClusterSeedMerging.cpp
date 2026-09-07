@@ -43,10 +43,11 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   //         theta, phi).
   // ------------------------------------------------------------------
   struct Node {
-    int type;      // seed types: 1 = calo-driven A, 2 = calo-driven B, 4 = track-driven C
-    int collIdx;   // index of the source collection in the input vector
-    int srcIdx;    // index in the source collection
-    float x, y, z; // position of the seed (mm)
+    int type;               // seed types: 1 = calo-driven A, 2 = calo-driven B, 4 = track-driven C
+    int collIdx;            // index of the source collection in the input vector
+    int srcIdx;             // index in the source collection
+    float x, y, z;          // position of the seed (mm)
+    uint64_t trackSeedCell; // Type-C only: the crystal the track extrapolates onto, else 0
 
     // Scratch for the Step 3 split: the opening angle to the track seed that owns this
     // node, and which one (index into that component's trackNodes).  Each node belongs
@@ -61,6 +62,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   struct Component {
     std::vector<int> nodes;                 // indices into nodes[]
     bool hasTrackSeed{false};               // at most one Type-C seed per group
+    uint64_t anchorCell{0};                 // its track seed's crystal: never redistributed
     std::unordered_set<uint64_t> cellIDs{}; // union of its seeds' cell IDs
     int absorbedBy{-1};                     // >= 0: swallowed by that component
     int types{0};                           // OR of its seeds' Cluster::type
@@ -81,7 +83,13 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
       const auto& cl = (*coll)[i];
       const auto& p = cl.getPosition();
       const int type = cl.getType();
-      nodes.push_back({type, collIdx, i, p.x, p.y, p.z});
+      // TrackDrivenClusterSeeding attaches the crystal the track points at ahead of the
+      // neighbourhood, so for a Type-C seed it is the first hit.
+      const uint64_t seedCell =
+          (ClusterSeeding::hasSeed(type, ClusterSeeding::SeedType::TrackDrivenC) && cl.hits_size() > 0)
+              ? (*cl.getHits().begin()).getCellID()
+              : 0;
+      nodes.push_back({type, collIdx, i, p.x, p.y, p.z, seedCell});
     }
   }; // lambda addNodes
 
@@ -171,7 +179,8 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     } // while queue not empty
 
     if (trackNodes.size() <= 1) {
-      components.push_back({std::move(comp), !trackNodes.empty()});
+      const uint64_t anchor = trackNodes.empty() ? 0 : nodes[trackNodes.front()].trackSeedCell;
+      components.push_back({std::move(comp), !trackNodes.empty(), anchor});
       continue;
     }
 
@@ -179,7 +188,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     // reaches through the adjacency chain, and among the candidates the nearest in angle wins.
     const size_t firstOfSplit = components.size();
     for (const int t : trackNodes)
-      components.push_back({{t}, true});
+      components.push_back({{t}, true, nodes[t].trackSeedCell});
 
     for (size_t k = 0; k < trackNodes.size(); ++k) {
       const Node& track = nodes[trackNodes[k]];
@@ -331,6 +340,11 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     float bestDist = std::numeric_limits<float>::max();
 
     for (const int ci : owners) {
+      if (components[ci].hasTrackSeed && components[ci].anchorCell == cellID) {
+        winner = ci;
+        break; // a track never loses the crystal it points at
+      }
+
       const ClusterState& cs = components[ci].state;
       const float d = openingAngleDist(cs, hpos.x, hpos.y, hpos.z);
 
