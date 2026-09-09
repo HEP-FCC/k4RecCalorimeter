@@ -27,8 +27,9 @@
  *   "unseeded" cluster candidates.  A candidate requires at least
  *   MinUnseededHits connected hits all above UnseededThreshold within VN
  *   distance VNDistUnseeded.  Unseeded clusters are then grown topologically
- *   (E >= GrowThreshold, VN distance VNDistUnseeded); contested hits between
- *   two unseeded clusters cause a full merge of the two clusters.
+ *   (E >= GrowThreshold, VN distance VNDistUnseeded); two unseeded clusters are
+ *   fully merged when they contest a hit, or when their grown regions become
+ *   adjacent without ever contesting one.
  *
  * Inputs
  * ------

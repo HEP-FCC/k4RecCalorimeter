@@ -124,12 +124,12 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
   // Returned to the caller when done (possibly with fewer entries for MergeClusters).
   std::vector<ClusterSeedingBase::Hitmap> clusters(seeds);
 
-  // --- O(1) "is this cell already assigned?" bookkeeping ---
-  std::unordered_set<uint64_t> assigned;
-  assigned.reserve(pool.size());
-  for (const auto& hm : clusters)
-    for (const auto& [cid, h] : hm)
-      assigned.insert(cid);
+  // --- O(1) "which cluster owns this cell?" bookkeeping ---
+  std::unordered_map<uint64_t, int> assignedTo;
+  assignedTo.reserve(pool.size());
+  for (int i = 0; i < n; ++i)
+    for (const auto& [cid, h] : clusters[i])
+      assignedTo.emplace(cid, i);
 
   // --- Per-cluster BFS frontier: the cells added in the last layer. ---
   // In each new layer we expand outward from these cells.
@@ -177,19 +177,31 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
   };
 
   // --- Helper shared by both strategy branches ---
-  // Returns all cells in pool that neighbour fid (within vnDist), are not yet
-  // assigned to any cluster, and are above growThreshold.
+  // Splits the neighbours of fid (within vnDist) into those still free to claim -- in
+  // pool, unassigned, above growThreshold -- and the clusters already owning the rest.
+  // MergeClusters uses the owners; ResolveByDist ignores them.
+  struct Neighbourhood {
+    std::vector<uint64_t> free;
+    std::vector<int> owners;
+  };
+
   auto eligibleNeighbors = [&](uint64_t fid) {
-    std::vector<uint64_t> result;
+    Neighbourhood result;
     for (const uint64_t nb : vonNeumannNeighbors(fid, vnDist)) {
-      if (nb == fid || assigned.count(nb))
+      if (nb == fid)
         continue;
+
+      const auto own = assignedTo.find(nb);
+      if (own != assignedTo.end()) {
+        result.owners.push_back(own->second);
+        continue;
+      }
 
       const auto it = pool.find(nb);
       if (it == pool.end() || it->second.getEnergy() < growThreshold)
         continue;
 
-      result.push_back(nb);
+      result.free.push_back(nb);
     }
 
     return result;
@@ -206,10 +218,13 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
       // A cluster may appear multiple times (via different frontier cells),
       // so we deduplicate before resolving.
       std::unordered_map<uint64_t, std::vector<int>> candidates;
-      for (int i = 0; i < n; ++i)
-        for (const uint64_t fid : frontier[i])
-          for (const uint64_t nb : eligibleNeighbors(fid))
+      for (int i = 0; i < n; ++i) {
+        for (const uint64_t fid : frontier[i]) {
+          const auto nbrs = eligibleNeighbors(fid);
+          for (const uint64_t nb : nbrs.free)
             candidates[nb].push_back(i);
+        }
+      }
 
       for (auto& [cid, claimers] : candidates) {
         std::sort(claimers.begin(), claimers.end());
@@ -235,7 +250,7 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
           } // loop over claimers to find winner
         } // if multiple claimers
 
-        assigned.insert(cid);
+        assignedTo.emplace(cid, winner);
         clusters[winner].emplace(cid, hit);
         newFrontier[winner].insert(cid);
         gained[winner] = true;
@@ -260,11 +275,20 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
       }
 
       // Collect candidates: cellID -> set of representative indices that can reach it.
+      // Two fronts can also end up on adjacent cells without ever claiming the same one,
+      // when their layer indices just miss; merging on an owned neighbour keeps a
+      // connected grown region in one cluster either way.
       std::unordered_map<uint64_t, std::set<int>> candidates;
-      for (const auto& [r, fr] : repFrontier)
-        for (const uint64_t fid : fr)
-          for (const uint64_t nb : eligibleNeighbors(fid))
+      for (const auto& [r, fr] : repFrontier) {
+        for (const uint64_t fid : fr) {
+          const auto nbrs = eligibleNeighbors(fid);
+          for (const uint64_t nb : nbrs.free)
             candidates[nb].insert(r);
+
+          for (const int owner : nbrs.owners)
+            mergeReps(r, owner);
+        }
+      }
 
       // Assign the hit to the (merged) representative.
       // If multiple representatives can reach the same cell, merge them all
@@ -279,7 +303,7 @@ auto ClusterSeedGrower::grow(ContestStrategy strategy, const Hitmap& pool, const
           mergeReps(winner, findRep(*it));
 
         const int r = findRep(winner);
-        assigned.insert(cid);
+        assignedTo.emplace(cid, r);
         clusters[r].emplace(cid, hit);
         newFrontier[r].insert(cid);
         anyAdded = true;
