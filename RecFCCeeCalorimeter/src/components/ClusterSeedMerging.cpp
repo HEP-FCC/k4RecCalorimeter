@@ -110,7 +110,7 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
   //   Two seeds i and j are adjacent when the opening angle between their
   //   position vectors is less than arctan(MergeDistance / |pos_i|):
   //
-  //     alpha(i,j) < arctan(d / r_i)
+  //     alpha(i,j) < arctan(d / min(r_i, r_j))
   //
   //   The C+C rule is enforced later in BFS.
   // ------------------------------------------------------------------
@@ -275,7 +275,11 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
 
         if (isSubset) {
           components[i].absorbedBy = j;
-          components[j].hasTrackSeed = components[j].hasTrackSeed || components[i].hasTrackSeed;
+          // j inherits the track seed and its anchor; the guard above means j has none of its own
+          if (components[i].hasTrackSeed) {
+            components[j].hasTrackSeed = true;
+            components[j].anchorCell = components[i].anchorCell;
+          }
           // Merge i's nodes into j so the type bitmask is collected in Step 6
           for (const int idx : components[i].nodes)
             components[j].nodes.push_back(idx);
