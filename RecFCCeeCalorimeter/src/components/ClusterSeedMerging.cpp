@@ -137,6 +137,18 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
     return alpha < std::atan2(mergeDist, std::sqrt(std::min(r2i, r2j)));
   }; // lambda adjacent
 
+  // Adjacency is symmetric and read twice -- by the component BFS and by the per-track
+  // walk below -- so evaluate the geometry once.
+  std::vector<std::vector<int>> adjacency(n);
+  for (int i = 0; i < n; ++i) {
+    for (int j = i + 1; j < n; ++j) {
+      if (adjacent(i, j)) {
+        adjacency[i].push_back(j);
+        adjacency[j].push_back(i);
+      }
+    }
+  } // loop over node pairs
+
   // ------------------------------------------------------------------
   // Step 3: BFS to find connected components, then enforce the invariant that
   //   each component holds AT MOST ONE Type-C node.  A component holding several
@@ -172,8 +184,8 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
         trackNodes.push_back(cur);
 
       // add all adjacent nodes to the queue
-      for (int j = 0; j < n; ++j) {
-        if (!visited[j] && adjacent(cur, j))
+      for (const int j : adjacency[cur]) {
+        if (!visited[j])
           q.push(j);
       }
     } // while queue not empty
@@ -200,9 +212,10 @@ ClusterSeedMerging::operator()(const std::vector<const edm4hep::ClusterCollectio
         const int cur = frontier.front();
         frontier.pop();
 
-        for (const int nb : comp) {
-          if (nb == cur || isTrackSeed(nb) || !adjacent(cur, nb))
-            continue; // not on the chain, or another track seed
+        // adjacency defines the components, so every neighbour is in this one
+        for (const int nb : adjacency[cur]) {
+          if (isTrackSeed(nb))
+            continue; // track seeds are sources; paths never pass through them
           if (!reached.insert(nb).second)
             continue; // this track has already walked through it
 
