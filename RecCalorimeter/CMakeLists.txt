@@ -34,24 +34,21 @@ target_link_directories(k4RecCalorimeterPlugins PUBLIC ${FASTJET_LIBRARY_DIRS})
 include(CTest)
 
 add_test(NAME FCC_createJets
-         COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_recoJets.sh
+         COMMAND ${PROJECT_BINARY_DIR}/run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_recoJets.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(FCC_createJets)
 set_tests_properties(FCC_createJets PROPERTIES FIXTURES_SETUP ALLEGRO_sim_files)
 
 add_test(NAME FCC_createTruthJets
-         COMMAND ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_truthJets.sh
+         COMMAND ${PROJECT_BINARY_DIR}/run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/test_truthJets.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(FCC_createTruthJets)
 set_tests_properties(FCC_createTruthJets PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME simulateSiPM
-         COMMAND sh ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/scripts/testSiPM.sh
+         COMMAND ${PROJECT_BINARY_DIR}/run sh ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/scripts/testSiPM.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(simulateSiPM)
 
 
 gaudi_add_module(k4RecCalorimeterTests
@@ -65,22 +62,19 @@ gaudi_add_module(k4RecCalorimeterTests
                       RecCaloCommon
                       )
 add_test(NAME CaloCellConstantsSvc_test
-         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellConstantsSvc_test.py
+         COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellConstantsSvc_test.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(CaloCellConstantsSvc_test)
 
 add_test(NAME CaloCellIndexerSvc_test
-         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellIndexerSvc_test.py
+         COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/CaloCellIndexerSvc_test.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(CaloCellIndexerSvc_test)
 
 add_test(NAME ReadCaloCrosstalkMap_test
-         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/ReadCaloCrosstalkMap_test.py
+         COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecCalorimeter/tests/options/ReadCaloCrosstalkMap_test.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(ReadCaloCrosstalkMap_test)
 
 
 #install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests/options DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/Reconstruction/RecCalorimeter)
