@@ -2,8 +2,6 @@
 # Package: RecCaloCommon
 ################################################################################
 
-find_package(boost_timer REQUIRED)
-find_package(boost_unit_test_framework REQUIRED)
 file(GLOB _sources src/*.cpp )
 
 gaudi_add_library(RecCaloCommon
@@ -28,6 +26,10 @@ install(TARGETS RecCaloCommon
 
 
 if(BUILD_TESTING)
+  # Boost is only needed by the test executables
+  find_package(boost_timer REQUIRED)
+  find_package(boost_unit_test_framework REQUIRED)
+
   gaudi_add_executable(IDMap_test.exe
     SOURCES tests/IDMap_test.cpp
     LINK DD4hep::DDCore Boost::timer
