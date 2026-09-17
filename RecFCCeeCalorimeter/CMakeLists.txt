@@ -29,49 +29,42 @@ install(TARGETS k4RecFCCeeCalorimeterPlugins
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/tests DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/RecFCCeeCalorimeter)
 
 add_test(NAME test_noise
-         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_noise.sh
+         COMMAND ${PROJECT_BINARY_DIR}/run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_noise.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(test_noise)
 
 add_test(NAME ALLEGRO_o1_v03_sim_reco
-         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/ALLEGRO_o1_v03.sh
+         COMMAND ${PROJECT_BINARY_DIR}/run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/ALLEGRO_o1_v03.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(ALLEGRO_o1_v03_sim_reco)
 set_tests_properties(ALLEGRO_o1_v03_sim_reco PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME FCCeeLAr_benchmarkCalibration
-         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
+         COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/fcc_ee_caloBenchmarkCalibration.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(FCCeeLAr_benchmarkCalibration)
 
 add_test(NAME FCCeeLAr_xtalkNeighbours
-  COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runCaloXTalkNeighbours.py
+  COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runCaloXTalkNeighbours.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(FCCeeLAr_xtalkNeighbours)
 
 add_test(NAME FCCeeLAr_benchmarkCorrection
-         COMMAND ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_benchmarkCorr.sh
+         COMMAND ${PROJECT_BINARY_DIR}/run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_benchmarkCorr.sh
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(FCCeeLAr_benchmarkCorrection)
 set_tests_properties(FCCeeLAr_benchmarkCorrection PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 add_test(NAME IDEA_o1_v03_reco
-         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/IDEA_o1_v03_reco.py
+         COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/IDEA_o1_v03_reco.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(IDEA_o1_v03_reco)
 set_tests_properties(IDEA_o1_v03_reco PROPERTIES DEPENDS simulateSiPM)
 
 add_test(NAME FCCeeCalo_DigitizationWhiteningFilter
-         COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runDigitizationAndMatchedFilter.py
+         COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runDigitizationAndMatchedFilter.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
 )
-set_test_env(FCCeeCalo_DigitizationWhiteningFilter)
 set_tests_properties(FCCeeCalo_DigitizationWhiteningFilter PROPERTIES FIXTURES_REQUIRED ALLEGRO_sim_files)
 
 
@@ -89,32 +82,27 @@ if(BUILD_TESTING)
                   )
 
   add_test( NAME TubeLayerModuleThetaCaloTool_test
-            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TubeLayerModuleThetaCaloTool_test.py
+            COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TubeLayerModuleThetaCaloTool_test.py
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
           )
-  set_test_env( TubeLayerModuleThetaCaloTool_test )
 
   add_test( NAME TurbineEndcapCaloTool_test
-            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TurbineEndcapCaloTool_test.py
+            COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/TurbineEndcapCaloTool_test.py
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
           )
-  set_test_env( TurbineEndcapCaloTool_test )
 
   add_test( NAME HCalPhiThetaCaloTool_test
-            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiThetaCaloTool_test.py
+            COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiThetaCaloTool_test.py
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
         )
-  set_test_env( HCalPhiThetaCaloTool_test )
 
   add_test( NAME HCalPhiRowCaloTool_test
-            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiRowCaloTool_test.py
+            COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiRowCaloTool_test.py
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
         )
-  set_test_env( HCalPhiRowCaloTool_test )
 
   add_test( NAME HCalPhiGroupedRowCaloTool_test
-            COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiGroupedRowCaloTool_test.py
+            COMMAND ${PROJECT_BINARY_DIR}/run k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/HCalPhiGroupedRowCaloTool_test.py
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
         )
-  set_test_env( HCalPhiGroupedRowCaloTool_test )
 endif()
