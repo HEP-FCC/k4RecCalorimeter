@@ -67,6 +67,14 @@ add_test(NAME IDEA_o1_v03_reco
 set_test_env(IDEA_o1_v03_reco)
 set_tests_properties(IDEA_o1_v03_reco PROPERTIES DEPENDS simulateSiPM)
 
+add_test(NAME IDEA_o2_v01_reco
+         COMMAND sh ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/test_IDEAo2_reco.sh
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
+)
+set_test_env(IDEA_o2_v01_reco)
+# ddsim of the wedge peaks ~7 GB -> run alone to avoid OOM from parallel stacking
+set_tests_properties(IDEA_o2_v01_reco PROPERTIES RUN_SERIAL TRUE TIMEOUT 1800)
+
 add_test(NAME FCCeeCalo_DigitizationWhiteningFilter
          COMMAND k4run ${PROJECT_SOURCE_DIR}/RecFCCeeCalorimeter/tests/options/runDigitizationAndMatchedFilter.py
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Testing/Temporary
