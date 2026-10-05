@@ -27,18 +27,7 @@ find_package(DD4hep REQUIRED)
 find_package(k4geo 0.23 REQUIRED)
 find_package(FastJet REQUIRED)
 find_package(sipm REQUIRED)
-# New versions of ONNRuntime package provide onnxruntime-Config.cmake
-# and use the name onnxruntime
-find_package(onnxruntime)
-if (NOT onnxruntime_FOUND)
-  message(STATUS "Could not find onnxruntime (> 1.17.1). Looking for an older version")
-  find_package(ONNXRuntime)
-endif()
-
-if(onnxruntime_FOUND OR ONNXRuntime_FOUND)
-else()
-  message(FATAL_ERROR "Failed to locate ONNXRuntime!")
-endif()
+find_package(onnxruntime 1.16.0 REQUIRED)
 
 #---------------------------------------------------------------
 
@@ -47,6 +36,9 @@ set(GAUDI_GENCONF_DIR "genConfDir")
 function(set_test_env _testname)
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
                LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/lib64:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$<TARGET_FILE_DIR:ROOT::Core>:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>:$<TARGET_FILE_DIR:EDM4HEP::edm4hep>:$<TARGET_FILE_DIR:podio::podio>:$ENV{LD_LIBRARY_PATH})
+
+  set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
+               GAUDI_PLUGIN_PATH=${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$ENV{GAUDI_PLUGIN_PATH}:$ENV{LD_LIBRARY_PATH})
 
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
                PYTHONPATH=${CMAKE_BINARY_DIR}/RecCalorimeter/${GAUDI_GENCONF_DIR}:${CMAKE_BINARY_DIR}/RecFCCeeCalorimeter/${GAUDI_GENCONF_DIR}:${CMAKE_BINARY_DIR}/RecFCChhCalorimeter/${GAUDI_GENCONF_DIR}:$ENV{PYTHONPATH}:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>/../python:$ENV{PYTHONPATH})
