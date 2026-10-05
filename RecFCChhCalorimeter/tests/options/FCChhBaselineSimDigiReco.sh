@@ -27,7 +27,7 @@ if [ "$usePythia" -gt 0 ]; then
 	download_file "https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/gen/pythia_ee_z_qq_10evt.hepmc"
     fi
     # run ddsim
-    if ! test -f ALLEGRO_sim_ee_z_qq.root; then
+    if ! test -f FCChh_sim_ee_z_qq.root; then
 	echo "Performing the Geant4 simulation with ddsim"
 	ddsim --inputFiles pythia_ee_z_qq_10evt.hepmc --numberOfEvents 5 --outputFile FCChh_sim_ee_z_qq.root --compactFile $K4GEO/FCChh/compact/FCChhBaseline/FCChh_DectMaster.xml || { retcode=$? ; echo "Simulation failed" ; exit $retcode ; }
     fi
@@ -43,7 +43,7 @@ fi
 # run the DIGI step
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # workaround to have ctests working
 if [ "$usePythia" -gt 0 ]; then
-    k4run $SCRIPT_DIR/runFullCaloSystem_Digitisation.py || exit 1
+    k4run $SCRIPT_DIR/runFullCaloSystem_Digitisation.py --IOSvc.Input=FCChh_sim_ee_z_qq.root --IOSvc.Output=FCChh_sim_digi_ee_z_qq.root || exit 1
 else
     if ! test -f FCChh_sim_digi_e.root; then
 	k4run $SCRIPT_DIR/runFullCaloSystem_Digitisation.py --IOSvc.Input=FCChh_sim_e.root --IOSvc.Output=FCChh_sim_digi_e.root || exit 1
@@ -53,7 +53,7 @@ fi
 
 # run the RECO step
 if [ "$usePythia" -gt 0 ]; then
-    k4run $SCRIPT_DIR/runFullCaloSystem_ReconstructionSW_noNoise.py || exit 1
+    k4run $SCRIPT_DIR/runFullCaloSystem_ReconstructionSW_noNoise.py --IOSvc.Input=FCChh_sim_digi_ee_z_qq.root --IOSvc.Output=FCChh_sim_digi_reco_ee_z_qq.root || exit 1
 else
     if ! test -f FCChh_sim_digi_reco_e.root; then
 	k4run $SCRIPT_DIR/runFullCaloSystem_ReconstructionSW_noNoise.py --IOSvc.Input=FCChh_sim_digi_e.root --IOSvc.Output=FCChh_sim_digi_reco_e.root || exit 1
