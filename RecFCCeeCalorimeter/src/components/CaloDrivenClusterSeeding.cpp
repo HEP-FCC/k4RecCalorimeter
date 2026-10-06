@@ -71,8 +71,7 @@ CaloDrivenClusterSeeding::operator()(const std::vector<const edm4hep::Calorimete
   // Step 2: For each above-threshold crystal, check seeding conditions.
   // ------------------------------------------------------------------
 
-  auto isLocalMax = [&energyMap](const uint64_t cellID, const float energy,
-                                       const std::set<uint64_t>& nbrs) -> bool {
+  auto isLocalMax = [&energyMap](const uint64_t cellID, const float energy, const std::set<uint64_t>& nbrs) -> bool {
     for (const uint64_t nb : nbrs) {
       if (nb == cellID)
         continue;
