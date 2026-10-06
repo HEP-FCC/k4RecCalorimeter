@@ -2,6 +2,8 @@
 # Package: RecCalorimeter
 ################################################################################
 
+find_package(boost_graph REQUIRED)
+
 file(GLOB _module_sources src/components/*.cpp )
 
 gaudi_add_module(k4RecCalorimeterPlugins
@@ -18,6 +20,7 @@ gaudi_add_module(k4RecCalorimeterPlugins
                       k4geo::detectorSegmentations
                       k4geo::detectorCommon
                       RecCaloCommon
+                      Boost::graph
                       ${FASTJET_LIBRARIES}
                       )
 
