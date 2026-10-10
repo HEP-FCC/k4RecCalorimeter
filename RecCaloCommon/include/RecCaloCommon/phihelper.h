@@ -12,7 +12,9 @@
 #ifndef RECCALOCOMMON_PHIHELPER_H
 #define RECCALOCOMMON_PHIHELPER_H
 
+#include <climits>
 #include <cmath>
+#include <concepts>
 #include <numbers>
 #include <type_traits>
 
@@ -36,8 +38,14 @@ inline constexpr T wrapToPi(T phi) {
 
   // Round x to the nearest integer.
   // https://stackoverflow.com/questions/17035464/a-fast-method-to-round-a-double-to-a-32-bit-int-explained
-  static_assert(std::numeric_limits<T>::digits <= sizeof(long int) * CHAR_BIT);
-  constexpr T TOINT = 0x1.8p0 * (1ul << (std::numeric_limits<T>::digits - 1));
+  static_assert(std::numeric_limits<T>::digits / 2 <= sizeof(unsigned long long) * CHAR_BIT);
+  // Break up the exponent into two pieces to avoid overflowing a long int
+  // for an ARM long double with 113 mantissa bits.
+  // clang-format off
+  constexpr T TOINT = 0x1.8p0 *
+    (1ull<<(std::numeric_limits<T>::digits/2)) *
+    (1ull<<(std::numeric_limits<T>::digits-1-std::numeric_limits<T>::digits/2));
+  // clang-format on
   T ix = (x + TOINT) - TOINT;
 
   // Above gives banker's rounding; that is, halves round to even integers.

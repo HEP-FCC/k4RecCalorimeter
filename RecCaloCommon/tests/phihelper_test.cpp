@@ -10,6 +10,11 @@
  * @date May 2019
  * @brief Regression tests for phihelper
  */
+
+#if __clang_major__ >= 22
+#pragma clang diagnostic ignored "-Wc2y-extensions"
+#endif
+
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE phihelper_test
 #include <boost/mpl/list.hpp>
