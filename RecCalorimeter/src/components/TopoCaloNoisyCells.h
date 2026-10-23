@@ -4,10 +4,20 @@
 // from Gaudi
 #include "GaudiKernel/AlgTool.h"
 
-// k4FWCore
+// Interfaces
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
+#include "RecCaloCommon/ICaloCellIndexerSvc.h"
 #include "RecCaloCommon/INoiseConstTool.h"
+#include <memory>
+#include <utility>
+
+// DD4HEP
+namespace dd4hep::DDSegmentation {
+class BitFieldCoder;
+} // namespace dd4hep::DDSegmentation
 
 class IGeoSvc;
+class TFile;
 
 /** @class TopoCaloNoisyCells Reconstruction/RecCalorimeter/src/components/TopoCaloNoisyCells.h
  *TopoCaloNoisyCells.h
@@ -49,7 +59,28 @@ private:
   /// Name
   Gaudi::Property<std::string> m_fileName{this, "fileName",
                                           "/afs/cern.ch/user/c/cneubuse/public/FCChh/cellNoise_map_segHcal.root"};
-  std::unordered_map<uint64_t, std::pair<double, double>> m_map;
+  // clang-format off
+  ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc
+  { this, "CaloCellConstantsSvc", "k4::recCalo::CaloCellConstantsSvc", "" };
+  ServiceHandle<k4::recCalo::ICaloCellIndexerSvc> m_indexerSvc
+  { this, "CaloCellIndexerSvc", "k4::recCalo::CaloCellIndexerSvc", "" };
+  // clang-format on
+
+  /// System encoding string
+  Gaudi::Property<std::string> m_systemEncoding{this, "systemEncoding", "system:4", "System encoding string"};
+
+  struct NoiseData {
+    // rms, offset
+    std::vector<std::pair<double, double>> m_noise;
+    const k4::recCalo::ICaloIndexer* m_indexer;
+  };
+  const NoiseData* m_data = nullptr;
+
+  const k4::recCalo::ICaloIndexer* m_indexer = nullptr;
+  std::unique_ptr<dd4hep::DDSegmentation::BitFieldCoder> m_decoder;
+  int m_indexSystem = -1;
+
+  NoiseData readData(TFile& inFile) const;
 };
 
 #endif /* RECCALORIMETER_TOPOCALONOISYCELLS_H */
