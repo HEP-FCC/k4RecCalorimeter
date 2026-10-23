@@ -4,7 +4,9 @@
 #include "k4FWCore/Transformer.h"
 
 // Gaudi
+#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 
 // EDM4hep
 #include "edm4hep/CalorimeterHitCollection.h"
@@ -45,12 +47,24 @@ public:
     // Initialize ONNX memory allocation and environment
     m_memoryInfo = std::make_unique<Ort::MemoryInfo>(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
     m_Env = std::make_unique<Ort::Env>(Ort::Env(ORT_LOGGING_LEVEL_WARNING, "ONNX_Runtime"));
-    // Set session options: single-threaded execution, disable graph optimizations
-    Ort::SessionOptions session_opts;
-    session_opts.SetIntraOpNumThreads(1);
-    session_opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
-    // Create ONNX inference session to load the model specified by modelPath
-    m_ortSession = std::make_unique<Ort::Session>(Ort::Session(*m_Env, m_modelPath.value().c_str(), session_opts));
+
+    // Retrieve the shared constants service
+    if (m_constantsSvc.retrieve().isFailure()) {
+      error() << "Failed to retrieve CaloCellConstantsSvc" << endmsg;
+      return StatusCode::FAILURE;
+    }
+
+    // Share the ONNX session across instances using the same model file.
+    // The first instance to initialize creates the session; subsequent ones reuse it.
+    const std::string svcKey = "ort_session:" + m_modelPath.value();
+    if (m_constantsSvc->getObj<std::shared_ptr<Ort::Session>>(svcKey) == nullptr) {
+      Ort::SessionOptions session_opts;
+      session_opts.SetIntraOpNumThreads(1);
+      session_opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+      auto session = std::make_shared<Ort::Session>(*m_Env, m_modelPath.value().c_str(), session_opts);
+      m_constantsSvc->putObj(svcKey, std::move(session));
+    }
+    m_ortSession = *m_constantsSvc->getObj<std::shared_ptr<Ort::Session>>(svcKey);
     // Create ONNX allocator to manage memory allocations during runtime
     Ort::AllocatorWithDefaultOptions allocator;
     // Retrieve input and output names from the ONNX model for inference
@@ -130,8 +144,12 @@ private:
   std::unique_ptr<Ort::MemoryInfo> m_memoryInfo{nullptr};
   // ONNX environment: manages global settings and logging for ONNX Runtime
   std::unique_ptr<Ort::Env> m_Env{nullptr};
-  // ONNX session: manages the loaded model and performs inference
-  std::unique_ptr<Ort::Session> m_ortSession{nullptr};
+  // ONNX session: manages the loaded model and performs inference.
+  // Shared across instances using the same model file via ICaloCellConstantsSvc.
+  std::shared_ptr<Ort::Session> m_ortSession{nullptr};
+  // Handle to the shared constants service used to cache the ONNX session.
+  ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc{
+      this, "CaloCellConstantsSvc", "k4::recCalo::CaloCellConstantsSvc", ""};
   // Input and output names for the ONNX model, used to identify tensors during inference
   std::vector<const char*> m_input_names;
   std::vector<const char*> m_output_names;
