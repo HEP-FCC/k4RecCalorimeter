@@ -9,6 +9,7 @@
 
 // Interfaces
 #include "RecCaloCommon/ICalibrateCaloHitsTool.h"
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 #include "RecCaloCommon/ICaloReadCrosstalkMap.h"
 #include "RecCaloCommon/ICalorimeterTool.h"
 #include "RecCaloCommon/ICellPositionsTool.h"
@@ -16,6 +17,7 @@
 
 // Gaudi
 #include "Gaudi/Algorithm.h"
+#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
 
 // edm4hep
@@ -108,8 +110,22 @@ private:
   mutable std::unordered_map<uint64_t, double> m_crosstalkCellsMap;
   /// Maps of cell IDs with zero energy, for all cells in calo (needed if addNoise and filterNoise are both set)
   mutable std::unordered_map<uint64_t, double> m_emptyCellsMap;
-  /// Cache position vs cellID
+  /// Per-instance lazy position cache (used when positionsCacheKey is empty)
   mutable std::unordered_map<dd4hep::DDSegmentation::CellID, edm4hep::Vector3f> m_positions_cache{};
+
+  /// Key under which the shared positions map is stored in CaloCellConstantsSvc.
+  /// Instances processing the same detector should use the same key so they share
+  /// a single copy of the positions map.  Empty (the default) disables sharing.
+  Gaudi::Property<std::string> m_positionsCacheKey{
+      this, "positionsCacheKey", "",
+      "Key for sharing positions via CaloCellConstantsSvc (empty = per-instance cache)"};
+  /// Service holding cell-level constants shared across algorithm instances.
+  ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc{
+      this, "CaloCellConstantsSvc", "k4::recCalo::CaloCellConstantsSvc",
+      "Service for sharing cell constants across algorithm instances"};
+  /// Non-owning pointer into CaloCellConstantsSvc; set in initialize() when positionsCacheKey is non-empty.
+  using PositionsMap = std::unordered_map<uint64_t, edm4hep::Vector3f>;
+  const PositionsMap* m_sharedPositions{nullptr};
 
   /// For cell type - for PandoraPFA
   mutable int m_calotype;

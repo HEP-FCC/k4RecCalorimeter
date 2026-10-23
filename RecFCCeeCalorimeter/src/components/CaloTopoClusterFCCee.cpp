@@ -127,10 +127,14 @@ StatusCode CaloTopoClusterFCCee::execute(const EventContext&) const {
   }
 
   // get input collection with calorimeter cells and build cell cache and flat cell map
+  size_t totalInputCells = 0;
+  for (auto& hdl : m_cellCollectionHandles) {
+    totalInputCells += hdl->get()->size();
+  }
   std::unordered_map<uint64_t, const edm4hep::CalorimeterHit> allCellsMap;
-  allCellsMap.reserve(2000000);
+  allCellsMap.reserve(totalInputCells);
   std::unordered_map<uint64_t, FastCell> allCells;
-  allCells.reserve(2000000);
+  allCells.reserve(totalInputCells);
 
   for (auto& hdl : m_cellCollectionHandles) {
     const auto* coll = hdl->get();

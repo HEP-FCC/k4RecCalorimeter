@@ -72,6 +72,33 @@ StatusCode CreatePositionedCaloCells::initialize() {
     if (m_filterCellNoise) {
       m_emptyCellsMap = m_cellsMap;
     }
+
+    // Populate shared positions cache in CaloCellConstantsSvc when a key is set.
+    // All instances processing the same detector (same key) share one map.
+    if (!m_positionsCacheKey.value().empty()) {
+      if (!m_constantsSvc.retrieve()) {
+        error() << "Unable to retrieve CaloCellConstantsSvc" << endmsg;
+        return StatusCode::FAILURE;
+      }
+      const std::string svcKey = "positions:" + m_positionsCacheKey.value();
+      if (!m_constantsSvc->getObj<PositionsMap>(svcKey)) {
+        PositionsMap posMap;
+        posMap.reserve(m_cellsMap.size());
+        const double toMM = 1.0 / dd4hep::mm;
+        for (const auto& [cellId, _] : m_cellsMap) {
+          dd4hep::Position pos = m_cellPositionsTool->xyzPosition(cellId);
+          posMap.emplace(cellId, edm4hep::Vector3f{float(pos.x() * toMM),
+                                                    float(pos.y() * toMM),
+                                                    float(pos.z() * toMM)});
+        }
+        m_constantsSvc->putObj(svcKey, std::move(posMap));
+        info() << "Built and stored shared positions map '" << svcKey
+               << "' (" << m_cellsMap.size() << " cells)" << endmsg;
+      } else {
+        info() << "Using existing shared positions map '" << svcKey << "'" << endmsg;
+      }
+      m_sharedPositions = m_constantsSvc->getObj<PositionsMap>(svcKey);
+    }
   }
 
   // Copy over the CellIDEncoding string from the input collection to the output collection
@@ -224,19 +251,23 @@ CreatePositionedCaloCells::operator()(const edm4hep::SimCalorimeterHitCollection
       uint64_t cellid = cell.first;
       newCell.setCellID(cellid);
 
-      // add cell position
-      auto cached_pos = m_positions_cache.find(cellid);
-      if (cached_pos == m_positions_cache.end()) {
-        // retrieve position from tool
-        dd4hep::Position posCell = m_cellPositionsTool->xyzPosition(cellid);
-        edm4hep::Vector3f edmPos;
-        edmPos.x = posCell.x() / dd4hep::mm;
-        edmPos.y = posCell.y() / dd4hep::mm;
-        edmPos.z = posCell.z() / dd4hep::mm;
-        m_positions_cache[cellid] = edmPos;
-        newCell.setPosition(edmPos);
+      // add cell position — use shared service cache when available, else per-instance lazy cache
+      if (m_sharedPositions != nullptr) {
+        newCell.setPosition(m_sharedPositions->at(cellid));
       } else {
-        newCell.setPosition(cached_pos->second);
+        auto cached_pos = m_positions_cache.find(cellid);
+        if (cached_pos == m_positions_cache.end()) {
+          dd4hep::Position posCell = m_cellPositionsTool->xyzPosition(cellid);
+          const double toMM = 1.0 / dd4hep::mm;
+          edm4hep::Vector3f edmPos;
+          edmPos.x = posCell.x() * toMM;
+          edmPos.y = posCell.y() * toMM;
+          edmPos.z = posCell.z() * toMM;
+          m_positions_cache[cellid] = edmPos;
+          newCell.setPosition(edmPos);
+        } else {
+          newCell.setPosition(cached_pos->second);
+        }
       }
 
       // add cell type (for Pandora) - see iLCSoft/MarlinUtil/source/include/CalorimeterHitType.h
