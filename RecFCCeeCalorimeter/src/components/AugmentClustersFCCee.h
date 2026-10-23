@@ -107,8 +107,8 @@ private:
   struct SCurveTerm {
     bool isSin;
     int harmonic;
-    std::vector<int> energyNode;    // node of the hat function of each variable, -1 if none
-    std::vector<bool> timesAbsCos;  // whether each variable is multiplied by |cos theta|
+    std::vector<int> energyNode;   // node of the hat function of each variable, -1 if none
+    std::vector<bool> timesAbsCos; // whether each variable is multiplied by |cos theta|
     std::vector<double> coefficients;
   };
   /// S-curve terms per ECAL barrel layer (empty: layer not corrected)
