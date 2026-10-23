@@ -123,6 +123,16 @@ private:
   Gaudi::Property<int> m_nPhiFinal{this, "nPhiFinal", 15};
   /// Fraction of the energy threshold used in the position calculation
   Gaudi::Property<float> m_energyThresholdFraction{this, "energyThresholdFraction", 0.25};
+  /// Flag to re-centre the position window on the tower of the barycentre and recompute the barycentre, iteratively.
+  /// For small showers the sliding-window maximum is not unique and the position window can be off-centre,
+  /// truncating the shower and biasing the position.
+  Gaudi::Property<bool> m_recentrePositionWindow{this, "recentrePositionWindow", false};
+  /// Maximum number of re-centring iterations of the position window
+  Gaudi::Property<int> m_maxRecentringIterations{this, "maxRecentringIterations", 3};
+  /// Re-centre the position window also in phi (by default only in theta). In phi it can move the window, and the
+  /// final cluster window that follows the position, towards one of the two deposits of a converted photon and lose
+  /// the other one.
+  Gaudi::Property<bool> m_recentrePositionWindowInPhi{this, "recentrePositionWindowInPhi", false};
   /// Flag for the application of the correction for energy sharing between clusters
   Gaudi::Property<bool> m_energySharingCorrection{this, "energySharingCorrection", false};
   /// Flag for the ellipse used in the final cluster instead of the rectangle
