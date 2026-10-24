@@ -30,6 +30,10 @@ namespace DDSegmentation {
  *  Add to the cluster shape parameters the sum of the cluster cells energy and barycenter theta/phi coordinates
  *  per layer. The theta position is calculated with a log(E) weighting
  *
+ *  Optionally (thetaLayerCorrectionFile), the theta barycentres of the ECAL barrel layers are corrected for the
+ *  S-curve (bias towards the cell centre due to the finite granularity), with a parametrisation read from a JSON
+ *  file; the corrected values are stored in theta_<detector>_layer_<i> in place of the uncorrected ones.
+ *
  *  @author Alexis Maloizel
  *  @author Giovanni Marchiori
  *  @author Tong Li
@@ -90,6 +94,36 @@ private:
   std::vector<int> nMergedModules;
   // the number of modules / phi cells
   std::vector<int> nModules;
+
+  /// JSON file with the per-layer S-curve correction of the theta barycentres ("": no correction)
+  Gaudi::Property<std::string> m_thetaLayerCorrectionFile{
+      this, "thetaLayerCorrectionFile", "",
+      "JSON file with the parametrisation of the S-curve of the theta barycentre of each ECAL barrel layer. If set, "
+      "theta_<detector>_layer_<i> contains the corrected barycentres. Requires linear weights "
+      "(thetaRecalcWeights < 0) for the corrected layers."};
+
+  /// One term of the S-curve parametrisation of a layer:
+  /// f(2 pi n nu) * sum_i c_i x_i, with f = sin or cos and x_i = hat_k(log E) [* |cos theta|] or |cos theta| or 1
+  struct SCurveTerm {
+    bool isSin;
+    int harmonic;
+    std::vector<int> energyNode;   // node of the hat function of each variable, -1 if none
+    std::vector<bool> timesAbsCos; // whether each variable is multiplied by |cos theta|
+    std::vector<double> coefficients;
+  };
+  /// S-curve terms per ECAL barrel layer (empty: layer not corrected)
+  std::vector<std::vector<SCurveTerm>> m_thetaCorrTerms;
+  /// log(E/GeV) of the energy nodes of the hat functions
+  std::vector<double> m_thetaCorrLogENodes;
+  /// theta cell width per ECAL barrel layer and lower edge of the theta cells
+  std::vector<double> m_thetaCorrCellWidth;
+  double m_thetaCorrCellEdge = 0.;
+  /// index in m_readoutNames of the ECAL barrel, -1 if absent or no correction
+  int m_thetaCorrSystemIndex = -1;
+  /// read the correction file and set up the members above
+  StatusCode initThetaLayerCorrection();
+  /// S-curve correction (in units of the layer cell width) for a theta barycentre
+  double thetaLayerCorrection(unsigned layer, double theta, double energy) const;
 
   /// Limit of debug printing
   mutable uint debugIter = 0;

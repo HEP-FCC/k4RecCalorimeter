@@ -187,6 +187,45 @@ StatusCode CreateCaloClustersSlidingWindowFCCee::execute(const EventContext&) co
             posX /= sumEnergyPos;
             posY /= sumEnergyPos;
             posZ /= sumEnergyPos;
+            // Optionally re-centre the position window on the tower of the barycentre and recompute it,
+            // until the tower does not change. For small showers the sliding window is not unique and the
+            // position window can be off-centre, truncating the shower and biasing the position.
+            // By default only theta is re-centred and the window keeps the phi of the sliding window.
+            if (m_recentrePositionWindow) {
+              int centreTheta = iTheta;
+              int centrePhi = iPhi;
+              for (int iteration = 0; iteration < m_maxRecentringIterations; iteration++) {
+                int newTheta = m_towerTool->idTheta(atan2(sqrt(posX * posX + posY * posY), posZ));
+                int newPhi = m_recentrePositionWindowInPhi ? int(m_towerTool->idPhi(atan2(posY, posX))) : centrePhi;
+                if (newTheta == centreTheta && newPhi == centrePhi) {
+                  break;
+                }
+                double newX = 0, newY = 0, newZ = 0, newEnergy = 0;
+                for (int ipTheta = newTheta - halfThetaPos; ipTheta <= newTheta + halfThetaPos; ipTheta++) {
+                  if (ipTheta < 0 || ipTheta >= m_nThetaTower) {
+                    continue;
+                  }
+                  for (int ipPhi = newPhi - halfPhiPos; ipPhi <= newPhi + halfPhiPos; ipPhi++) {
+                    for (auto cell : cellsInTowersMap[std::make_pair(ipTheta, phiNeighbour(ipPhi))]) {
+                      newX += cell.getPosition().x * cell.getEnergy();
+                      newY += cell.getPosition().y * cell.getEnergy();
+                      newZ += cell.getPosition().z * cell.getEnergy();
+                      newEnergy += cell.getEnergy();
+                    }
+                  }
+                }
+                // keep the previous position if the re-centred window has too little energy
+                if (newEnergy <= m_energyThresholdFraction * m_energyThreshold) {
+                  break;
+                }
+                posX = newX / newEnergy;
+                posY = newY / newEnergy;
+                posZ = newZ / newEnergy;
+                sumEnergyPos = newEnergy;
+                centreTheta = newTheta;
+                centrePhi = newPhi;
+              }
+            }
           } else {
             posX = 0;
             posY = 0;
