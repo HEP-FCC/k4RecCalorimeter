@@ -35,7 +35,7 @@ set(GAUDI_GENCONF_DIR "genConfDir")
 
 function(set_test_env _testname)
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
-               LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/lib64:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$<TARGET_FILE_DIR:ROOT::Core>:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>:$<TARGET_FILE_DIR:EDM4HEP::edm4hep>:$<TARGET_FILE_DIR:podio::podio>:$ENV{LD_LIBRARY_PATH})
+               LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/lib64:$<TARGET_FILE_DIR:RecCaloCommon>:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$<TARGET_FILE_DIR:ROOT::Core>:$<TARGET_FILE_DIR:k4FWCore::k4FWCore>:$<TARGET_FILE_DIR:EDM4HEP::edm4hep>:$<TARGET_FILE_DIR:podio::podio>:$ENV{LD_LIBRARY_PATH})
 
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
                GAUDI_PLUGIN_PATH=${CMAKE_BINARY_DIR}:$<TARGET_FILE_DIR:k4RecCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCCeeCalorimeterPlugins>:$<TARGET_FILE_DIR:k4RecFCChhCalorimeterPlugins>:$ENV{GAUDI_PLUGIN_PATH}:$ENV{LD_LIBRARY_PATH})
