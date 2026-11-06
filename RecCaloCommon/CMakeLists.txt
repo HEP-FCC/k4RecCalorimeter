@@ -10,7 +10,9 @@ gaudi_add_library(RecCaloCommon
                        EDM4HEP::edm4hep
                        k4FWCore::k4FWCore
                        k4FWCore::k4Interface
+                       k4geo::detectorSegmentations
                        DD4hep::DDCore
+                       DD4hep::DDG4
                        ${FASTJET_LIBRARIES}
                      )
 # Make sure that when we run genconf on the plugin libraries that we find

@@ -367,6 +367,8 @@ if addNoise:
         OutputLevel=INFO,
     )
 
+    geotools = []
+
     from Configurables import TubeLayerModuleThetaCaloTool
 
     ecalBarrelGeometryTool = TubeLayerModuleThetaCaloTool(
@@ -381,6 +383,7 @@ if addNoise:
     )
     ecalEndcapNoisePath = "elecNoise_ecalendcap.root"
     ecalEndcapNoiseRMSHistName = "noise_endcap_wheel"
+    geotools += [ecalBarrelGeometryTool]
 
     # can enable only when geometry tool for ecal endcap is implemented
     # ecalEndcapGeometryTool = ..
@@ -402,6 +405,10 @@ else:
     ecalBarrelNoiseTool = None
     ecalBarrelGeometryTool = None
     ecalEndcapNoiseTool = None
+
+from Configurables import k4__recCalo__CaloCellIndexerSvc
+
+ExtSvc += [k4__recCalo__CaloCellIndexerSvc(GeoTools=geotools)]
 
 # Create cells in ECal barrel (calibrated and positioned - optionally with xtalk and noise added)
 # from uncalibrated cells (+cellID info) from ddsim

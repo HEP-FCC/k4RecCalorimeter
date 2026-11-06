@@ -62,7 +62,7 @@ ECalNoiseTool = ReadNoiseFromFileTool(
     setNoiseOffset=False,
     activeFieldName="layer",
     addPileup=False,
-    numRadialLayers=8,
+    numHistograms=8,
     OutputLevel=DEBUG,
 )
 
@@ -75,7 +75,7 @@ HCalNoiseTool = ReadNoiseFromFileTool(
     setNoiseOffset=False,
     activeFieldName="layer",
     addPileup=False,
-    numRadialLayers=10,
+    numHistograms=10,
     OutputLevel=DEBUG,
 )
 
