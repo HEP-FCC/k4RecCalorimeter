@@ -87,13 +87,12 @@ StatusCode CreatePositionedCaloCells::initialize() {
         const double toMM = 1.0 / dd4hep::mm;
         for (const auto& [cellId, _] : m_cellsMap) {
           dd4hep::Position pos = m_cellPositionsTool->xyzPosition(cellId);
-          posMap.emplace(cellId, edm4hep::Vector3f{float(pos.x() * toMM),
-                                                    float(pos.y() * toMM),
-                                                    float(pos.z() * toMM)});
+          posMap.emplace(cellId,
+                         edm4hep::Vector3f{float(pos.x() * toMM), float(pos.y() * toMM), float(pos.z() * toMM)});
         }
         m_constantsSvc->putObj(svcKey, std::move(posMap));
-        info() << "Built and stored shared positions map '" << svcKey
-               << "' (" << m_cellsMap.size() << " cells)" << endmsg;
+        info() << "Built and stored shared positions map '" << svcKey << "' (" << m_cellsMap.size() << " cells)"
+               << endmsg;
       } else {
         info() << "Using existing shared positions map '" << svcKey << "'" << endmsg;
       }

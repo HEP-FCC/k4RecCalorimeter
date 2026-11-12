@@ -117,8 +117,7 @@ private:
   /// Instances processing the same detector should use the same key so they share
   /// a single copy of the positions map.  Empty (the default) disables sharing.
   Gaudi::Property<std::string> m_positionsCacheKey{
-      this, "positionsCacheKey", "",
-      "Key for sharing positions via CaloCellConstantsSvc (empty = per-instance cache)"};
+      this, "positionsCacheKey", "", "Key for sharing positions via CaloCellConstantsSvc (empty = per-instance cache)"};
   /// Service holding cell-level constants shared across algorithm instances.
   ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc{
       this, "CaloCellConstantsSvc", "k4::recCalo::CaloCellConstantsSvc",
