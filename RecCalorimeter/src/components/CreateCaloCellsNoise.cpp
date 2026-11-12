@@ -106,7 +106,7 @@ StatusCode CreateCaloCellsNoise::execute(const EventContext&) const {
   }
 
   // 4. Copy information to CaloHitCollection
-  edm4hep::CalorimeterHitCollection* edmCellsCollection = new edm4hep::CalorimeterHitCollection();
+  auto* edmCellsCollection = m_cells.createAndPut();
   for (const auto& cell : m_cellsMap) {
     if (m_addCellNoise || (!m_addCellNoise && cell.second != 0)) {
       auto newCell = edmCellsCollection->create();
@@ -123,9 +123,6 @@ StatusCode CreateCaloCellsNoise::execute(const EventContext&) const {
       }
     }
   }
-
-  // push the CaloHitCollection to event store
-  m_cells.put(edmCellsCollection);
   debug() << "Output Cell collection size: " << edmCellsCollection->size() << endmsg;
 
   return StatusCode::SUCCESS;
