@@ -10,9 +10,14 @@ gaudi_add_library(RecCaloCommon
                        EDM4HEP::edm4hep
                        k4FWCore::k4FWCore
                        k4FWCore::k4Interface
+                       k4geo::detectorSegmentations
                        DD4hep::DDCore
+                       DD4hep::DDG4
                        ${FASTJET_LIBRARIES}
-)
+                     )
+# Make sure that when we run genconf on the plugin libraries that we find
+# the library we've just built here before the version from the release.
+_gaudi_runtime_prepend(ld_library_path $<TARGET_FILE_DIR:RecCaloCommon>)
 
 target_include_directories(RecCaloCommon PUBLIC ${FASTJET_INCLUDE_DIRS})
 target_link_directories(RecCaloCommon PUBLIC ${FASTJET_LIBRARY_DIRS})
