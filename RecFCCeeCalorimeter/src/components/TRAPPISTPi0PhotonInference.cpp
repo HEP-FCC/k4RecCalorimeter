@@ -4,7 +4,9 @@
 #include "k4FWCore/Transformer.h"
 
 // Gaudi
+#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
+#include "RecCaloCommon/ICaloCellConstantsSvc.h"
 
 // EDM4hep
 #include "edm4hep/CalorimeterHitCollection.h"
@@ -16,7 +18,20 @@
 #include "onnxruntime_run_options_config_keys.h"
 
 // STL
+#include <memory>
 #include <vector>
+
+namespace {
+/// An ONNX Runtime environment together with a session created from it.
+/// ONNX Runtime requires the environment to outlive every session made from it, so
+/// the two are kept together and shared as a pair. Members are destroyed in reverse
+/// declaration order, so the session is always destroyed before the environment.
+struct OnnxModel {
+  Ort::Env env{ORT_LOGGING_LEVEL_WARNING, "ONNX_Runtime"};
+  Ort::Session session;
+  OnnxModel(const std::string& path, const Ort::SessionOptions& opts) : session(env, path.c_str(), opts) {}
+};
+} // namespace
 
 /** @struct TRAPPISTPi0PhotonInference
  *
@@ -42,23 +57,34 @@ public:
                          {KeyValues("outClusters", {"clustersWithScore"})}) {}
 
   StatusCode initialize() override {
-    // Initialize ONNX memory allocation and environment
+    // Initialize ONNX memory allocation
     m_memoryInfo = std::make_unique<Ort::MemoryInfo>(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
-    m_Env = std::make_unique<Ort::Env>(Ort::Env(ORT_LOGGING_LEVEL_WARNING, "ONNX_Runtime"));
-    // Set session options: single-threaded execution, disable graph optimizations
-    Ort::SessionOptions session_opts;
-    session_opts.SetIntraOpNumThreads(1);
-    session_opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
-    // Create ONNX inference session to load the model specified by modelPath
-    m_ortSession = std::make_unique<Ort::Session>(Ort::Session(*m_Env, m_modelPath.value().c_str(), session_opts));
+
+    // Retrieve the shared constants service
+    if (m_constantsSvc.retrieve().isFailure()) {
+      error() << "Failed to retrieve CaloCellConstantsSvc" << endmsg;
+      return StatusCode::FAILURE;
+    }
+
+    // Share the ONNX environment and session across instances using the same model file.
+    // The first instance to initialize creates them; subsequent ones reuse them.
+    const std::string svcKey = "ort_model:" + m_modelPath.value();
+    if (m_constantsSvc->getObj<std::shared_ptr<OnnxModel>>(svcKey) == nullptr) {
+      Ort::SessionOptions session_opts;
+      session_opts.SetIntraOpNumThreads(1);
+      session_opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+      m_constantsSvc->putObj(svcKey, std::make_shared<OnnxModel>(m_modelPath.value(), session_opts));
+    }
+    m_ortModel = *m_constantsSvc->getObj<std::shared_ptr<OnnxModel>>(svcKey);
+    Ort::Session& session = m_ortModel->session;
     // Create ONNX allocator to manage memory allocations during runtime
     Ort::AllocatorWithDefaultOptions allocator;
     // Retrieve input and output names from the ONNX model for inference
-    for (std::size_t i = 0; i < m_ortSession->GetInputCount(); i++) {
-      m_input_names.emplace_back(m_ortSession->GetInputNameAllocated(i, allocator).release());
+    for (std::size_t i = 0; i < session.GetInputCount(); i++) {
+      m_input_names.emplace_back(session.GetInputNameAllocated(i, allocator).release());
     }
-    for (std::size_t i = 0; i < m_ortSession->GetOutputCount(); i++) {
-      m_output_names.emplace_back(m_ortSession->GetOutputNameAllocated(i, allocator).release());
+    for (std::size_t i = 0; i < session.GetOutputCount(); i++) {
+      m_output_names.emplace_back(session.GetOutputNameAllocated(i, allocator).release());
     }
     // Hooks for handling collection metadata
     auto inputKey = this->inputLocations("inClusters")[0];
@@ -100,8 +126,9 @@ public:
       input_tensors.emplace_back(vec_to_tensor<float>(positions, pos_shape, *m_memoryInfo));
       input_tensors.emplace_back(vec_to_tensor<float>(energies, en_shape, *m_memoryInfo));
       // Run ONNX inference
-      auto output_tensors = m_ortSession->Run(Ort::RunOptions{nullptr}, m_input_names.data(), input_tensors.data(),
-                                              input_tensors.size(), m_output_names.data(), m_output_names.size());
+      auto output_tensors =
+          m_ortModel->session.Run(Ort::RunOptions{nullptr}, m_input_names.data(), input_tensors.data(),
+                                  input_tensors.size(), m_output_names.data(), m_output_names.size());
       if (output_tensors.empty() || !output_tensors[0].IsTensor()) {
         error() << "Failed to get a valid output tensor from ONNX session." << endmsg;
         throw std::runtime_error("ONNX output tensor is empty or not a tensor");
@@ -128,10 +155,12 @@ public:
 private:
   // ONNX memory info: manages memory allocation for tensors during inference
   std::unique_ptr<Ort::MemoryInfo> m_memoryInfo{nullptr};
-  // ONNX environment: manages global settings and logging for ONNX Runtime
-  std::unique_ptr<Ort::Env> m_Env{nullptr};
-  // ONNX session: manages the loaded model and performs inference
-  std::unique_ptr<Ort::Session> m_ortSession{nullptr};
+  // ONNX environment and session (loaded model used for inference).
+  // Shared across instances using the same model file via ICaloCellConstantsSvc.
+  std::shared_ptr<OnnxModel> m_ortModel{nullptr};
+  // Handle to the shared constants service used to cache the ONNX model.
+  ServiceHandle<k4::recCalo::ICaloCellConstantsSvc> m_constantsSvc{this, "CaloCellConstantsSvc",
+                                                                   "k4::recCalo::CaloCellConstantsSvc", ""};
   // Input and output names for the ONNX model, used to identify tensors during inference
   std::vector<const char*> m_input_names;
   std::vector<const char*> m_output_names;
